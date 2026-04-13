@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `geminiApiKey` varchar(256);
