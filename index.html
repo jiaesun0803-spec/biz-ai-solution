@@ -16,6 +16,8 @@
                 <div class="form-group"><label>이메일</label><input type="email" id="login-email" placeholder="email@example.com"></div>
                 <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="••••••••"></div>
                 <button class="btn-primary auth-btn" onclick="handleLogin()">로그인</button>
+                <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top: 10px; font-size: 13px; background: #f8fafc; color: #475569;">🛠️ 테스트 계정으로 바로 접속 (개발용)</button>
+
                 <p class="auth-footer">계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입</span></p>
             </div>
             <div id="signup-form-area" style="display: none;">
