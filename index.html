@@ -21,7 +21,7 @@
                 <ul>
                     <li onclick="showTab('dashboard')" id="menu-dashboard"><span>📊</span> 대시보드</li>
                     <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
-                    <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 보고서 목록</li>
+                    <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 업체 및 보고서 목록</li>
                     <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
                     <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
                     <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> AI 정책자금매칭</li>
@@ -41,7 +41,6 @@
                 <div class="welcome-banner">
                     <p>안녕하세요 👋</p><h3>선지영 컨설턴트님</h3><p class="company-name">솔루션빌더스</p>
                     <div class="banner-buttons">
-                        <button class="btn-white">📷 카메라로 서류 등록</button>
                         <button class="btn-outline" onclick="showTab('company')">+ 업체 직접 등록</button>
                     </div>
                 </div>
@@ -72,6 +71,7 @@
                 <div class="page-header">
                     <h2 class="page-title">업체 정보 등록</h2>
                     <div class="header-btns">
+                        <button class="btn-outline" onclick="loadCompanyData()">기존 업체 불러오기</button>
                         <button class="btn-outline" onclick="window.print()">프린트하기</button>
                         <button class="btn-primary" onclick="saveCompanyData()">저장하기</button>
                     </div>
@@ -239,12 +239,44 @@
 
             <section id="reportList" class="tab-content">
                 <div class="page-header" style="margin-bottom: 20px;">
-                    <h2 class="page-title">보고서 목록</h2>
+                    <h2 class="page-title">업체 및 보고서 목록</h2>
                     <div class="header-btns">
-                        <button class="btn-primary" onclick="showTab('aiBiz')">+ 새 보고서 생성</button>
+                        <button class="btn-primary" onclick="showTab('company')">+ 새 업체 등록</button>
                     </div>
                 </div>
                 
+                <h3 style="font-size: 16px; color: #1e293b; margin-bottom: 12px; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px;">🏢 등록된 업체 목록</h3>
+                <div class="list-card" style="margin-bottom: 40px;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>업체명</th>
+                                <th>대표자</th>
+                                <th>사업자등록번호</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>주식회사 대박컴퍼니</strong></td>
+                                <td>오가은</td>
+                                <td>732-86-03582</td>
+                                <td>2026.04.05</td>
+                                <td><button class="btn-small-outline" onclick="showTab('company')">수정/보기</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>주식회사 진에프앤비</strong></td>
+                                <td>김서진</td>
+                                <td>444-87-03848</td>
+                                <td>2026.04.01</td>
+                                <td><button class="btn-small-outline" onclick="showTab('company')">수정/보기</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="font-size: 16px; color: #1e293b; margin-bottom: 12px; font-weight: bold; border-left: 4px solid #ea580c; padding-left: 10px;">📄 생성된 보고서 목록</h3>
                 <div class="list-card">
                     <table class="report-table">
                         <thead>
