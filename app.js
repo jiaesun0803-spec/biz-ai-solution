@@ -13,18 +13,17 @@ document.addEventListener("DOMContentLoaded", function() {
    1. 인증 및 프리패스 로직
 ========================================= */
 
-// ★ 개발용 프리패스 (버튼 클릭 시 작동) ★
+// 개발용 프리패스
 function devBypassLogin() {
     const testUser = { 
         email: 'test@biz.com', 
         pw: '1234', 
         name: '선지영', 
         dept: '솔루션빌더스(테스트)', 
-        apiKey: '' // API 키는 접속 후 설정 탭에서 입력하세요
+        apiKey: '' 
     };
     
     let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-    
     if(!users.find(u => u.email === testUser.email)) {
         users.push(testUser);
         localStorage.setItem(DB_USERS, JSON.stringify(users));
@@ -32,7 +31,6 @@ function devBypassLogin() {
     
     localStorage.setItem(DB_SESSION, JSON.stringify(testUser));
     checkAuth(); 
-    
     alert('🛠️ 테스트 계정으로 강제 접속되었습니다!\n\n(※ AI 리포트 생성을 위해 설정 탭에서 API Key를 넣어주세요.)');
 }
 
@@ -264,7 +262,6 @@ function loadCompanyData() {
     if(document.getElementById('biz_number')) document.getElementById('biz_number').value = "732-86-03582";
     if(document.getElementById('comp_industry')) document.getElementById('comp_industry').value = "제조업"; 
     
-    // 부채 값 임의 할당 후 강제 재계산
     const debtInputs = document.querySelectorAll('.debt-input');
     if(debtInputs.length > 4) {
         debtInputs[0].value = "20,000"; 
@@ -303,6 +300,7 @@ function toggleCorpNumber() { /* 로직 생략 */ }
 function toggleRentInputs() { /* 로직 생략 */ }
 function toggleExportInputs() { /* 로직 생략 */ }
 
+
 /* =========================================
    5. AI API 연동 및 리포트 생성 로직
 ========================================= */
@@ -317,7 +315,8 @@ async function callGeminiAPI(prompt) {
         return null;
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // ★ 구글 최신 규격 모델인 gemini-2.5-flash 로 업데이트 완료 ★
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(endpoint, {
@@ -330,7 +329,13 @@ async function callGeminiAPI(prompt) {
         });
 
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
+        
+        // 오류 응답 처리 강화
+        if (!response.ok || data.error) {
+            const errorMsg = data.error ? data.error.message : '알 수 없는 API 에러';
+            throw new Error(errorMsg);
+        }
+        
         return data.candidates[0].content.parts[0].text;
     } catch (error) {
         console.error("API 오류:", error);
