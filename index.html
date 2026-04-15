@@ -10,58 +10,120 @@
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
-                <h2>BizConsult</h2>
-                <p>경영컨설팅 플랫폼</p>
+                <div class="logo-icon">🏢</div>
+                <div>
+                    <h2>BizConsult</h2>
+                    <p>경영컨설팅 플랫폼</p>
+                </div>
             </div>
-            <div class="user-info">
-                <p>선지영 컨설턴트</p>
+            
+            <div class="user-profile">
+                <div class="profile-icon">👤</div>
+                <div>
+                    <p class="user-name">선지영</p>
+                    <p class="user-role">경영컨설턴트</p>
+                </div>
             </div>
+
             <nav class="menu">
                 <ul>
-                    <li onclick="showTab('dashboard')">대시보드</li>
-                    <li onclick="showTab('company')">업체 관리</li>
-                    <li onclick="showTab('report')">경영진단보고서</li>
-                    <li onclick="showTab('settings')">설정 (API 키 입력)</li>
+                    <li class="active" onclick="showTab('dashboard')"><span>📊</span> 대시보드</li>
+                    <li onclick="showTab('company')"><span>🏢</span> 업체 관리</li>
+                    <li onclick="showTab('reportList')"><span>📋</span> 보고서 목록</li>
+                    <li onclick="showTab('report')"><span>📈</span> 경영진단보고서</li>
+                    <li onclick="showTab('aiBiz')"><span>💡</span> AI 사업계획서</li>
+                    <li onclick="showTab('aiFund')"><span>🎯</span> AI 정책자금매칭</li>
+                    <li onclick="showTab('settings')"><span>⚙️</span> 설정</li>
                 </ul>
             </nav>
+            <div class="version-info">BizConsult v1.0</div>
         </aside>
 
         <main class="main-content">
-            
             <section id="dashboard" class="tab-content active">
-                <h2>대시보드</h2>
+                <h2 class="page-title">대시보드</h2>
+                
+                <div class="welcome-banner">
+                    <p>안녕하세요 👋</p>
+                    <h3>선지영 컨설턴트님</h3>
+                    <p class="company-name">솔루션빌더스</p>
+                    <div class="banner-buttons">
+                        <button class="btn-white">📷 카메라로 서류 등록</button>
+                        <button class="btn-outline">+ 업체 직접 등록</button>
+                    </div>
+                </div>
+
                 <div class="summary-cards">
-                    <div class="card">관리 업체: 2건</div>
-                    <div class="card">경영진단보고서: 1건</div>
-                    <div class="card">AI 사업계획서: 2건</div>
-                    <div class="card">전체 보고서: 5건</div>
+                    <div class="card">
+                        <div class="card-icon blue">🏢</div>
+                        <div class="card-info"><h2>2</h2><p>관리 업체</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon purple">📈</div>
+                        <div class="card-info"><h2>1</h2><p>경영진단보고서</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon green">💡</div>
+                        <div class="card-info"><h2>2</h2><p>AI 사업계획서</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon orange">📝</div>
+                        <div class="card-info"><h2>5</h2><p>전체 보고서</p></div>
+                    </div>
+                </div>
+
+                <div class="middle-section">
+                    <div class="quick-actions-box">
+                        <h3 class="section-title">빠른 실행</h3>
+                        <div class="quick-grid">
+                            <div class="quick-item">🏢<br>업체 등록<br><span>새 관리업체를 등록합니다</span></div>
+                            <div class="quick-item">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
+                            <div class="quick-item">💡<br>AI 사업계획서<br><span>AI 사업계획서 작성</span></div>
+                            <div class="quick-item">🎯<br>AI 정책자금매칭<br><span>AI 정책자금 매칭 리포트 작성</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-reports-box">
+                        <div class="section-header">
+                            <h3 class="section-title">최근 보고서</h3>
+                            <a href="#" class="view-all">전체 보기 →</a>
+                        </div>
+                        <ul class="report-list">
+                            <li>
+                                <div class="report-info">
+                                    <span class="icon green">💡</span>
+                                    <div><p class="title">AI 사업계획서 - 주식회사 대박컴퍼니</p><p class="sub">주식회사 대박컴퍼니</p></div>
+                                </div>
+                                <div class="report-meta"><span class="tag green-tag">AI 사업계획서</span> <span>2026.04.09</span></div>
+                            </li>
+                            <li>
+                                <div class="report-info">
+                                    <span class="icon orange">🎯</span>
+                                    <div><p class="title">AI 정책자금 매칭리포트 - 주식회사 진에프앤비</p><p class="sub">주식회사 진에프앤비</p></div>
+                                </div>
+                                <div class="report-meta"><span class="tag orange-tag">AI 정책자금</span> <span>2026.04.09</span></div>
+                            </li>
+                             <li>
+                                <div class="report-info">
+                                    <span class="icon blue">📈</span>
+                                    <div><p class="title">경영진단보고서 - 주식회사 대박컴퍼니</p><p class="sub">주식회사 대박컴퍼니</p></div>
+                                </div>
+                                <div class="report-meta"><span class="tag blue-tag">경영진단</span> <span>2026.04.09</span></div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </section>
 
-            <section id="company" class="tab-content">
-                <h2>업체 관리</h2>
-                <p>여기에 업체의 매출, 부채, 아이템 등을 입력하는 폼이 들어갑니다.</p>
-                </section>
-
-            <section id="report" class="tab-content">
-                <h2>AI 경영진단보고서 생성</h2>
-                <p>업체를 선택하고 AI에게 분석을 요청하세요.</p>
-                <button onclick="generateAIReport()">AI 보고서 생성하기</button>
-                <div id="ai-result-area" class="result-box">
-                    결과가 이곳에 표시됩니다.
-                </div>
-            </section>
-
-            <section id="settings" class="tab-content">
-                <h2>설정 (개별 API 키 등록)</h2>
-                <p>본인의 OpenAI API 키를 입력하세요. 브라우저에 안전하게 저장됩니다.</p>
-                <input type="password" id="apiKeyInput" placeholder="sk-..." />
-                <button onclick="saveApiKey()">저장하기</button>
-            </section>
+            <section id="company" class="tab-content"><h2 class="page-title">업체 관리</h2><div class="content-box">업체 등록 기능이 들어갈 자리입니다.</div></section>
+            <section id="report" class="tab-content"><h2 class="page-title">경영진단보고서</h2><div class="content-box">AI 분석 기능이 들어갈 자리입니다.</div></section>
+            <section id="settings" class="tab-content"><h2 class="page-title">설정</h2><div class="content-box">API 키 입력 공간입니다.</div></section>
+            <section id="reportList" class="tab-content"><h2 class="page-title">보고서 목록</h2></section>
+            <section id="aiBiz" class="tab-content"><h2 class="page-title">AI 사업계획서</h2></section>
+            <section id="aiFund" class="tab-content"><h2 class="page-title">AI 정책자금매칭</h2></section>
 
         </main>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>
