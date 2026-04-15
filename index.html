@@ -40,8 +40,8 @@
             <nav class="menu">
                 <ul>
                     <li onclick="showTab('dashboard')" id="menu-dashboard"><span>📊</span> 대시보드</li>
-                    <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
-                    <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 업체 및 보고서 목록</li>
+                    <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 기업 관리</li>
+                    <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 기업 및 보고서 목록</li>
                     <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
                     <li onclick="showTab('finance')" id="menu-finance"><span>💰</span> 상세 재무진단</li>
                     <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
@@ -63,7 +63,7 @@
                         <div class="quick-actions-box">
                             <h3 class="section-title-dash">빠른 실행</h3>
                             <div class="quick-grid">
-                                <div class="quick-item" onclick="showTab('company')">🏢<br>업체 등록<br><span>새 관리업체를 등록합니다</span></div>
+                                <div class="quick-item" onclick="showTab('company')">🏢<br>기업 등록<br><span>새 관리기업을 등록합니다</span></div>
                                 <div class="quick-item" onclick="showTab('report')">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
                                 <div class="quick-item" onclick="showTab('finance')">💰<br>상세 재무진단<br><span>심층 재무제표 분석</span></div>
                                 <div class="quick-item" onclick="showTab('aiFund')">🎯<br>AI 정책자금매칭<br><span>AI 매칭 리포트 작성</span></div>
@@ -82,10 +82,10 @@
             <section id="company" class="tab-content">
                 <div class="max-width-wrapper">
                     <div class="page-header">
-                        <h2 class="page-title">업체 정보 등록</h2>
+                        <h2 class="page-title">기업 정보 등록</h2>
                         <div class="header-btns">
                             <button class="btn-outline" onclick="clearCompanyForm()" style="color:#ea580c; border-color:#ea580c;">초기화</button>
-                            <select id="load-company-select" class="btn-outline" style="width: auto; appearance: auto; cursor: pointer; color: #3b82f6; border-color: #bfdbfe;" onchange="loadSelectedCompany(this.value)"><option value="">기존 업체 불러오기</option></select>
+                            <select id="load-company-select" class="btn-outline" style="width: auto; appearance: auto; cursor: pointer; color: #3b82f6; border-color: #bfdbfe;" onchange="loadSelectedCompany(this.value)"><option value="">기존 기업 불러오기</option></select>
                             <button class="btn-outline" onclick="window.print()">프린트하기</button>
                             <button class="btn-primary" onclick="saveCompanyData()">저장하기</button>
                         </div>
@@ -100,7 +100,7 @@
                                 <div class="form-group"><label>사업자등록번호</label><input type="text" id="biz_number" placeholder="숫자만 입력" maxlength="12"></div>
                                 <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" placeholder="법인일 경우만 입력" maxlength="14"></div>
                                 <div class="form-group"><label>업종</label><select id="comp_industry"><option value="">선택하세요</option><option>제조업</option><option>IT 및 정보통신업</option><option>도매 및 소매업</option><option>음식점업</option><option>숙박업</option><option>교육업</option><option>건설업</option><option>서비스업</option><option>기타</option></select></div>
-                                <div class="form-group"><label>사업개시일</label><input type="text" id="biz_date" placeholder="YYYY-MM-DD" maxlength="10"></div>
+                                <div class="form-group"><label>설립(개시)일</label><input type="text" id="biz_date" placeholder="YYYY-MM-DD" maxlength="10"></div>
                                 <div class="form-group"><label>사업장 전화번호</label><input type="text" id="biz_phone" placeholder="숫자만 입력" maxlength="13"></div>
                                 <div class="form-group"><label>상시근로자 수</label><input type="text" id="emp_count" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
                                 <div class="form-group col-span-2"><label>사업장 주소</label><div class="input-row"><div class="radio-group"><label><input type="radio" name="rent_type" value="자가" onchange="toggleRentInputs()"> 자가</label><label><input type="radio" name="rent_type" value="임대" onchange="toggleRentInputs()"> 임대</label></div><input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;"></div></div>
@@ -221,16 +221,19 @@
                             </div>
                         </div>
 
-                        <div class="form-actions" style="margin-top: 30px; margin-bottom: 50px;"><button type="button" class="btn-primary" style="width: 100%; padding: 15px; font-size: 16px;" onclick="saveCompanyData()">위 정보를 바탕으로 업체 등록 완료</button></div>
+                        <div class="form-actions" style="margin-top: 30px; margin-bottom: 50px;"><button type="button" class="btn-primary" style="width: 100%; padding: 15px; font-size: 16px;" onclick="saveCompanyData()">위 정보를 바탕으로 기업 등록 완료</button></div>
                     </form>
                 </div>
             </section>
 
             <section id="reportList" class="tab-content">
                 <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">업체 및 보고서 목록</h2></div>
-                    <h3 class="list-sub-title">🏢 등록된 업체 목록</h3>
-                    <div class="list-card" style="margin-bottom: 40px;"><table class="report-table"><thead id="company-list-head"><tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table></div>
+                    <div class="page-header"><h2 class="page-title">기업 및 보고서 목록</h2></div>
+                    <h3 class="list-sub-title">🏢 등록된 기업 목록</h3>
+                    <div class="list-card" style="margin-bottom: 40px;"><table class="report-table"><thead id="company-list-head"><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table></div>
+                    
+                    <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
+                    <div class="list-card"><table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"></tbody></table></div>
                 </div>
             </section>
 
@@ -248,7 +251,7 @@
                         </div>
                         <div class="fund-split-layout" style="display: flex; flex-wrap: nowrap; gap: 40px;">
                             <div class="fund-left" style="flex: 1;">
-                                <div class="fund-card"><label class="fund-label">분석 대상 업체</label><select class="fund-select company-dropdown" id="report-company-select"><option value="">업체를 선택하세요</option></select></div>
+                                <div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="fund-select company-dropdown" id="report-company-select"><option value="">기업을 선택하세요</option></select></div>
                             </div>
                             <div class="fund-right fund-card" style="flex: 1;">
                                 <h4>진단 영역 가중치</h4>
@@ -257,7 +260,7 @@
                             </div>
                         </div>
                         <div class="report-action-group" style="display: flex; gap: 20px; margin-top: 30px;">
-                            <button class="btn-report-blue" style="flex: 1;" onclick="generateReport('management', 'client', event)">◎ AI 경영진단보고서 (업체전달용)</button>
+                            <button class="btn-report-blue" style="flex: 1;" onclick="generateReport('management', 'client', event)">◎ AI 경영진단보고서 (기업전달용)</button>
                             <button class="btn-report-blue" style="flex: 1; background: #1e293b; color: white;" onclick="generateReport('management', 'consultant', event)">◎ AI 경영진단보고서 (컨설턴트용)</button>
                         </div>
                     </div>
