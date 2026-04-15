@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizConsult 대시보드</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>BizConsult</h2>
+                <p>경영컨설팅 플랫폼</p>
+            </div>
+            <div class="user-info">
+                <p>선지영 컨설턴트</p>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li onclick="showTab('dashboard')">대시보드</li>
+                    <li onclick="showTab('company')">업체 관리</li>
+                    <li onclick="showTab('report')">경영진단보고서</li>
+                    <li onclick="showTab('settings')">설정 (API 키 입력)</li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            
+            <section id="dashboard" class="tab-content active">
+                <h2>대시보드</h2>
+                <div class="summary-cards">
+                    <div class="card">관리 업체: 2건</div>
+                    <div class="card">경영진단보고서: 1건</div>
+                    <div class="card">AI 사업계획서: 2건</div>
+                    <div class="card">전체 보고서: 5건</div>
+                </div>
+            </section>
+
+            <section id="company" class="tab-content">
+                <h2>업체 관리</h2>
+                <p>여기에 업체의 매출, 부채, 아이템 등을 입력하는 폼이 들어갑니다.</p>
+                </section>
+
+            <section id="report" class="tab-content">
+                <h2>AI 경영진단보고서 생성</h2>
+                <p>업체를 선택하고 AI에게 분석을 요청하세요.</p>
+                <button onclick="generateAIReport()">AI 보고서 생성하기</button>
+                <div id="ai-result-area" class="result-box">
+                    결과가 이곳에 표시됩니다.
+                </div>
+            </section>
+
+            <section id="settings" class="tab-content">
+                <h2>설정 (개별 API 키 등록)</h2>
+                <p>본인의 OpenAI API 키를 입력하세요. 브라우저에 안전하게 저장됩니다.</p>
+                <input type="password" id="apiKeyInput" placeholder="sk-..." />
+                <button onclick="saveApiKey()">저장하기</button>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
