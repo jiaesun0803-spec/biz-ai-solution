@@ -1,6 +1,7 @@
 const DB_USERS = 'biz_users'; 
 const DB_SESSION = 'biz_session'; 
 const STORAGE_KEY = 'biz_consult_companies';
+const DB_REPORTS = 'biz_reports'; // ★ 보고서 저장용 데이터베이스 키 추가 ★
 
 document.addEventListener("DOMContentLoaded", function() {
     checkAuth();
@@ -21,7 +22,7 @@ function checkAuth() {
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
     const authOverlay = document.getElementById('auth-container');
     const mainApp = document.getElementById('main-app');
-    if (session) { if(authOverlay) authOverlay.style.display = 'none'; if(mainApp) mainApp.style.display = 'flex'; loadUserProfile(); updateCompanyLists(); initInputHandlers(); } 
+    if (session) { if(authOverlay) authOverlay.style.display = 'none'; if(mainApp) mainApp.style.display = 'flex'; loadUserProfile(); updateDataLists(); initInputHandlers(); } 
     else { if(authOverlay) authOverlay.style.display = 'flex'; if(mainApp) mainApp.style.display = 'none'; }
 }
 
@@ -46,30 +47,59 @@ window.showTab = function(tabId, updateUrl = true) {
     document.querySelectorAll('.menu li, .bottom-menu li').forEach(item => item.classList.remove('active'));
     const target = document.getElementById(tabId); if(target) target.classList.add('active');
     const menu = document.getElementById('menu-' + tabId); if(menu) menu.classList.add('active');
-    if(tabId === 'settings') loadUserProfile(); if(tabId === 'reportList') updateCompanyLists();
+    if(tabId === 'settings') loadUserProfile(); 
+    
+    updateDataLists(); // ★ 어느 탭으로 가든 목록을 무조건 최신화 (드롭박스 버그 해결) ★
+    
     if (updateUrl) history.pushState(null, '', `?tab=${tabId}`);
 }
 window.addEventListener('popstate', function() { const urlParams = new URLSearchParams(window.location.search); showTab(urlParams.get('tab') || 'dashboard', false); });
 
-function updateCompanyLists() {
+// ★ 기업 목록 및 보고서 목록 통합 최신화 함수 ★
+window.updateDataLists = function() {
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+
+    // 1. 드롭박스 동기화 (보고서 탭 포함 모든 곳)
+    const dropdowns = document.querySelectorAll('.company-dropdown');
+    dropdowns.forEach(select => {
+        select.innerHTML = '<option value="">기업을 선택하세요</option>';
+        companies.forEach(c => select.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+    });
+    
     const loadSelect = document.getElementById('load-company-select');
-    if(loadSelect) { loadSelect.innerHTML = '<option value="">기존 업체 불러오기</option>'; companies.forEach(c => loadSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`); }
-    const body = document.getElementById('company-list-body');
-    if(body) { body.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 업체가 없습니다.</td></tr>'; }
+    if(loadSelect) { 
+        loadSelect.innerHTML = '<option value="">기존 기업 불러오기</option>'; 
+        companies.forEach(c => loadSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`); 
+    }
+
+    // 2. 기업 목록 테이블
+    const cBody = document.getElementById('company-list-body');
+    if(cBody) { 
+        cBody.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 기업이 없습니다.</td></tr>'; 
+    }
+
+    // 3. 보고서 목록 테이블
+    const rBody = document.getElementById('report-list-body');
+    if(rBody) {
+        rBody.innerHTML = reports.length ? reports.map(r => `<tr><td><span style="background:#eff6ff; color:#3b82f6; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
+    }
 }
 
 window.clearCompanyForm = function() { if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); } }
 window.loadSelectedCompany = function(name) { if(!name) return; window.editCompany(name); document.getElementById('load-company-select').value = ''; }
+
 window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
+    
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
         y24: parseInt((document.getElementById('rev_24') || {}).value?.replace(/,/g, '')) || 0,
         y23: parseInt((document.getElementById('rev_23') || {}).value?.replace(/,/g, '')) || 0
     };
+    
     const newCompany = { 
         name: name, rep: document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0]?.value || '-', 
         bizNum: document.getElementById('biz_number')?.value || '-', industry: document.getElementById('comp_industry')?.value || '-', 
@@ -78,10 +108,12 @@ window.saveCompanyData = function() {
         revenueData: realRevenue,
         rawData: Array.from(document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea')).map(el => ({ type: el.type, value: el.value, checked: el.checked }))
     };
+
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(companies)); alert('업체의 모든 세부 정보가 성공적으로 저장되었습니다!'); updateCompanyLists(); showTab('reportList');
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(companies)); alert('기업의 모든 세부 정보가 성공적으로 저장되었습니다!'); updateDataLists(); showTab('reportList');
 }
 
 window.editCompany = function(name) {
@@ -89,7 +121,12 @@ window.editCompany = function(name) {
     const comp = companies.find(c => c.name === name);
     if(comp && comp.rawData) {
         const formElements = document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea');
-        comp.rawData.forEach((data, idx) => { if(formElements[idx]) { if (formElements[idx].type === 'checkbox' || formElements[idx].type === 'radio') { formElements[idx].checked = data.checked; } else { formElements[idx].value = data.value; } } });
+        comp.rawData.forEach((data, idx) => {
+            if(formElements[idx]) {
+                if (formElements[idx].type === 'checkbox' || formElements[idx].type === 'radio') { formElements[idx].checked = data.checked; } 
+                else { formElements[idx].value = data.value; }
+            }
+        });
         window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
         showTab('company'); alert(`[${name}]의 상세 정보를 불러왔습니다.`);
     } else { alert('저장된 상세 데이터가 없습니다.'); }
@@ -135,7 +172,7 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   5. ★ AI 연동 및 프리미엄 표지 자동 생성 ★
+   5. AI API 연동 및 보고서 출력 로직
 ========================================= */
 async function callGeminiAPI(prompt) {
     const session = JSON.parse(localStorage.getItem('biz_session'));
@@ -150,25 +187,77 @@ async function callGeminiAPI(prompt) {
     } catch (error) { console.error("API 오류:", error); alert("오류 발생: " + error.message); return null; }
 }
 
-window.generateReport = async function(reportType, version, event) {
-    const selectId = event.target.closest('.tab-content').querySelector('.company-dropdown').id;
-    const companyName = document.getElementById(selectId).value;
-    if (!companyName) { alert('업체를 선택해주세요.'); return; }
-
-    const companies = JSON.parse(localStorage.getItem('biz_consult_companies') || '[]');
-    const companyData = companies.find(c => c.name === companyName);
-    const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
-    
-    // 세션에서 컨설턴트 이름/소속 가져오기
+// ★ 공통 렌더링 함수 (생성 직후 & 보기 버튼 클릭 시 모두 사용) ★
+function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
+    const contentArea = document.getElementById('report-content-area');
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
     const consultantName = session ? session.name : "담당자";
     const consultantDept = session ? session.dept : "솔루션빌더스";
 
-    const regDate = companyData.date || new Date().toISOString().split('T')[0];
-    const regMonth = parseInt(regDate.split('-')[1], 10);
+    const regDate = companyData.date || dateStr;
+    const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
     let passedMonths = regMonth - 1; 
     if (passedMonths <= 0) passedMonths = 1; 
     const expectedCurRev = Math.round((rev.cur / passedMonths) * 12); 
+
+    let titleAdd = version === 'client' ? "기업전달용" : "컨설턴트용";
+    let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
+    
+    contentArea.innerHTML = `
+        <div class="paper-inner">
+            <div class="cover-page cover-theme-blue">
+                <div class="cover-header">
+                    <h4>AI 경영진단보고서 리포트</h4>
+                    <h1>AI 경영진단<br>보고서</h1>
+                </div>
+                <div class="cover-middle">
+                    <h2>${companyData.name} <span style="font-size:18px; color:#94a3b8;">(${titleAdd})</span></h2>
+                    <div class="cover-table">
+                        <table>
+                            <tr><th>사업자번호</th><td>${companyData.bizNum || '-'}</td><th>업종</th><td>${companyData.industry || '-'}</td></tr>
+                            <tr><th>대표자명</th><td>${companyData.rep || '-'}</td><th>핵심아이템</th><td>${companyData.coreItem || '-'}</td></tr>
+                            <tr><th>전년도매출</th><td>${(rev.y24).toLocaleString()} 만원</td><th>금년예상매출</th><td>${(expectedCurRev).toLocaleString()} 만원 <span style="font-size:12px; color:#64748b;">(${passedMonths}개월 기준 연간 환산)</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="cover-chart-area"><canvas id="cover-bar-chart"></canvas></div>
+                </div>
+                <div class="cover-footer">
+                    <div>작성일: ${dateStr}</div>
+                    <div>담당자: ${consultantName}</div>
+                    <div>소속: ${consultantDept}</div>
+                </div>
+            </div>
+            ${cleanHTML}
+            <div class="alert-box ${version === 'client' ? 'blue' : 'green'}">
+                ★ 본 리포트는 입력된 경영 데이터를 바탕으로 AI 컨설턴트가 분석한 ${subAdd} 자료입니다.
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        const radarEl = document.getElementById('report-radar-chart');
+        if (radarEl) {
+            new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
+        }
+        const barEl = document.getElementById('report-bar-chart');
+        if (barEl) {
+            new Chart(barEl.getContext('2d'), { type: 'bar', data: { labels: ['23년도', '24년도', '25년도', '금년(예상)'], datasets: [{ label: '매출 현황 (단위: 만원)', data: [rev.y23, rev.y24, rev.y25, expectedCurRev], backgroundColor: 'rgba(22, 163, 74, 0.7)', borderRadius: 4 }] }, options: { maintainAspectRatio: false } });
+        }
+        const coverBarEl = document.getElementById('cover-bar-chart');
+        if (coverBarEl) {
+            new Chart(coverBarEl.getContext('2d'), { type: 'bar', data: { labels: ['전전년도 (23년)', '전년도 (24년)', '금년 예상 (연환산)'], datasets: [{ label: '매출 현황 (단위: 만원)', data: [rev.y23, rev.y24, expectedCurRev], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+    }, 100);
+}
+
+window.generateReport = async function(reportType, version, event) {
+    const selectId = event.target.closest('.tab-content').querySelector('.company-dropdown').id;
+    const companyName = document.getElementById(selectId).value;
+    if (!companyName) { alert('기업을 선택해주세요.'); return; }
+
+    const companies = JSON.parse(localStorage.getItem('biz_consult_companies') || '[]');
+    const companyData = companies.find(c => c.name === companyName);
+    const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
@@ -198,87 +287,52 @@ window.generateReport = async function(reportType, version, event) {
     document.getElementById('ai-loading-overlay').style.display = 'none';
 
     if (aiResponse) {
+        let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
+        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?경영진단 개요.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
+        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?재무 현황 분석.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // ★ 생성된 보고서를 DB에 저장 ★
+        const reportObj = {
+            id: 'rep_' + Date.now(),
+            type: '경영진단',
+            company: companyData.name,
+            title: `AI 경영진단보고서 (${version === 'client' ? '기업전달용' : '컨설턴트용'})`,
+            date: todayStr,
+            content: cleanHTML,
+            version: version,
+            revenueData: rev
+        };
+        const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+        reports.push(reportObj);
+        localStorage.setItem(DB_REPORTS, JSON.stringify(reports));
+
+        updateDataLists(); // 목록 갱신
+
         const tabContent = event.target.closest('.tab-content');
         tabContent.querySelector('[id$="-input-step"]').style.display = 'none';
         tabContent.querySelector('[id$="-result-step"]').style.display = 'block';
 
-        let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
-        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?경영진단 개요.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
-
-        const contentArea = tabContent.querySelector('[id$="-content-area"]');
-        const today = new Date().toISOString().split('T')[0];
-        let titleAdd = version === 'client' ? "업체전달용" : "컨설턴트용";
-        let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
-        
-        // ★ 프리미엄 표지 (Cover Page) 삽입 ★
-        contentArea.innerHTML = `
-            <div class="paper-inner">
-                <div class="cover-page cover-theme-blue">
-                    <div class="cover-header">
-                        <h4>AI 경영진단보고서 리포트</h4>
-                        <h1>AI 경영진단<br>보고서</h1>
-                    </div>
-                    
-                    <div class="cover-middle">
-                        <h2>${companyData.name} <span style="font-size:18px; color:#94a3b8;">(${titleAdd})</span></h2>
-                        <div class="cover-table">
-                            <table>
-                                <tr><th>사업자번호</th><td>${companyData.bizNum || '-'}</td><th>업종</th><td>${companyData.industry || '-'}</td></tr>
-                                <tr><th>대표자명</th><td>${companyData.rep || '-'}</td><th>핵심아이템</th><td>${companyData.coreItem || '-'}</td></tr>
-                                <tr><th>전년도매출</th><td>${(rev.y24).toLocaleString()} 만원</td><th>금년예상매출</th><td>${(expectedCurRev).toLocaleString()} 만원 <span style="font-size:12px; color:#64748b;">(${passedMonths}개월 기준 연간 환산)</span></td></tr>
-                            </table>
-                        </div>
-                        
-                        <div class="cover-chart-area">
-                            <canvas id="cover-bar-chart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="cover-footer">
-                        <div>작성일: ${today}</div>
-                        <div>담당자: ${consultantName}</div>
-                        <div>소속: ${consultantDept}</div>
-                    </div>
-                </div>
-
-                ${cleanHTML}
-                
-                <div class="alert-box ${version === 'client' ? 'blue' : 'green'}">
-                    ★ 본 리포트는 입력된 경영 데이터를 바탕으로 AI 컨설턴트가 분석한 ${subAdd} 자료입니다.
-                </div>
-            </div>
-        `;
-
-        setTimeout(() => {
-            // 본문 1번 목차 밑에 그려지는 레이더 차트
-            const radarEl = document.getElementById('report-radar-chart');
-            if (radarEl) {
-                new Chart(radarEl.getContext('2d'), {
-                    type: 'radar',
-                    data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] },
-                    options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false }
-                });
-            }
-
-            // ★ 표지에 그려지는 매출 차트 ★
-            const barEl = document.getElementById('cover-bar-chart');
-            if (barEl) {
-                new Chart(barEl.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: ['전전년도 (23년)', '전년도 (24년)', '금년 예상 (연환산)'],
-                        datasets: [{
-                            label: '매출 현황 (단위: 만원)',
-                            data: [rev.y23, rev.y24, expectedCurRev], 
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40
-                        }]
-                    },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } // 표지는 심플하게 범례 숨김
-                });
-            }
-        }, 100);
+        renderReportToScreen(companyData, cleanHTML, version, rev, todayStr);
     }
 }
+
+// ★ 리스트에서 [보기] 버튼 클릭 시 보고서 화면 열기 ★
+window.viewReport = function(id) {
+    const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+    const r = reports.find(x => x.id === id);
+    if(!r) return;
+
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const companyData = companies.find(c => c.name === r.company) || { name: r.company };
+
+    showTab('report');
+    document.getElementById('report-input-step').style.display = 'none';
+    document.getElementById('report-result-step').style.display = 'block';
+
+    renderReportToScreen(companyData, r.content, r.version, r.revenueData, r.date);
+};
 
 window.backToInput = function(tab) {
     document.getElementById(tab + '-input-step').style.display = 'block';
