@@ -353,3 +353,30 @@ function backToInput(tab) {
     document.getElementById(tab + '-input-step').style.display = 'block';
     document.getElementById(tab + '-result-step').style.display = 'none';
 }
+
+
+/* ★ 개발용 프리패스 (테스트 계정 자동 생성 및 로그인) ★ */
+function devBypassLogin() {
+    // 테스트용 임시 계정 정보 생성
+    const testUser = { 
+        email: 'test@biz.com', 
+        pw: '1234', 
+        name: '선지영', 
+        dept: '솔루션빌더스(테스트)', 
+        apiKey: '' // API 키는 설정 탭에서 따로 넣어주세요
+    };
+    
+    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
+    
+    // DB에 테스트 계정이 없으면 몰래 추가해둠
+    if(!users.find(u => u.email === testUser.email)) {
+        users.push(testUser);
+        localStorage.setItem(DB_USERS, JSON.stringify(users));
+    }
+    
+    // 바로 로그인 상태(Session)로 만듦
+    localStorage.setItem(DB_SESSION, JSON.stringify(testUser));
+    checkAuth(); // 화면 전환
+    
+    alert('🛠️ 테스트 계정으로 강제 접속되었습니다!\n\n(※ AI 리포트 테스트를 위해 설정 탭에서 API Key를 다시 한 번 확인해 주세요.)');
+}
