@@ -58,40 +58,34 @@ function updateCompanyLists() {
         select.innerHTML = '<option value="">업체를 선택하세요</option>';
         companies.forEach(c => select.innerHTML += `<option value="${c.name}">${c.name}</option>`);
     });
+    
+    // ★ '기존 업체 불러오기' 드롭박스 동기화 ★
+    const loadSelect = document.getElementById('load-company-select');
+    if(loadSelect) {
+        loadSelect.innerHTML = '<option value="">기존 업체 불러오기</option>';
+        companies.forEach(c => loadSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+    }
+
     const body = document.getElementById('company-list-body');
     if(body) { body.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 업체가 없습니다.</td></tr>'; }
 }
 
 /* =========================================
-   3. 업체 저장 및 불러오기 (ID 기반 완벽 매칭)
+   3. 업체 저장 및 불러오기 (드롭박스 기능)
 ========================================= */
 window.clearCompanyForm = function() { if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); } }
 
-window.loadCompanyData = function() {
-    alert('테스트용 샘플 데이터(주식회사 대박컴퍼니)를 불러옵니다.');
-    if(document.getElementById('comp_name')) document.getElementById('comp_name').value = "주식회사 대박컴퍼니";
-    if(document.querySelector('input[value="법인"]')) document.querySelector('input[value="법인"]').checked = true;
-    if(document.getElementById('biz_number')) document.getElementById('biz_number').value = "732-86-03582";
-    if(document.getElementById('comp_industry')) document.getElementById('comp_industry').value = "제조업"; 
-    
-    // ★ 지정된 ID에 직접 값 꽂아넣기 ★
-    if(document.getElementById('rev_cur')) document.getElementById('rev_cur').value = "11,000";
-    if(document.getElementById('rev_25')) document.getElementById('rev_25').value = "138,000";
-    if(document.getElementById('rev_24')) document.getElementById('rev_24').value = "114,000";
-    if(document.getElementById('rev_23')) document.getElementById('rev_23').value = "50,000";
-    if(document.getElementById('emp_count')) document.getElementById('emp_count').value = "15";
-    if(document.getElementById('core_item')) document.getElementById('core_item').value = "HMR 가정간편식 제조 및 판매";
-
-    const debtInputs = document.querySelectorAll('.debt-input');
-    if(debtInputs.length > 4) { debtInputs[0].value = "20,000"; debtInputs[3].value = "10,000"; debtInputs[4].value = "7,000"; }
-    window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleExportInputs();
+// 드롭박스에서 선택 시 불러오기 실행
+window.loadSelectedCompany = function(name) {
+    if(!name) return;
+    window.editCompany(name);
+    document.getElementById('load-company-select').value = ''; // 선택 후 기본값으로 초기화
 }
 
 window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
     
-    // ★ 명시적 ID를 통해 값 추출 (오류 원천 차단) ★
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
@@ -104,9 +98,9 @@ window.saveCompanyData = function() {
         rep: document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0]?.value || '-', 
         bizNum: document.getElementById('biz_number')?.value || '-', 
         industry: document.getElementById('comp_industry')?.value || '-', 
-        bizDate: document.getElementById('biz_date')?.value || '-',  // ★ 추가
-        empCount: document.getElementById('emp_count')?.value || '-', // ★ 추가
-        coreItem: document.getElementById('core_item')?.value || '-', // ★ 추가
+        bizDate: document.getElementById('biz_date')?.value || '-',  
+        empCount: document.getElementById('emp_count')?.value || '-', 
+        coreItem: document.getElementById('core_item')?.value || '-', 
         date: new Date().toISOString().split('T')[0], 
         revenueData: realRevenue,
         rawData: Array.from(document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea')).map(el => ({ type: el.type, value: el.value, checked: el.checked }))
@@ -135,15 +129,59 @@ window.editCompany = function(name) {
     } else { alert('저장된 상세 데이터가 없습니다.'); }
 };
 
+/* =========================================
+   4. ★ 자동 하이픈 및 양식 복구 로직 ★
+========================================= */
 window.toggleExportInputs = function() { const radios = document.getElementsByName('export'); const exportInputs = document.querySelectorAll('.export-money'); let isExp = false; for(let r of radios) { if(r.checked && r.value === '수출중') { isExp = true; break; } } exportInputs.forEach(i => { i.disabled = !isExp; if(!isExp) i.value = ''; }); };
 window.toggleCorpNumber = function() { const radios = document.getElementsByName('biz_type'); const cInput = document.getElementById('corp_number'); let isC = false; for(let r of radios) { if(r.checked && r.value === '법인') { isC = true; break; } } if(cInput) { cInput.disabled = !isC; if(!isC) cInput.value = ''; } };
 window.toggleRentInputs = function() { const radios = document.getElementsByName('rent_type'); const dInput = document.getElementById('rent_deposit'); const mInput = document.getElementById('rent_monthly'); let isR = false; for(let r of radios) { if(r.checked && r.value === '임대') { isR = true; break; } } if(dInput) { dInput.disabled = !isR; if(!isR) dInput.value = ''; } if(mInput) { mInput.disabled = !isR; if(!isR) mInput.value = ''; } };
 window.calculateTotalDebt = function() { let tot = 0; document.querySelectorAll('.debt-input').forEach(i => { let v = i.value.replace(/[^0-9]/g, ''); if (v) tot += parseInt(v, 10); }); const tEl = document.getElementById('total-debt'); if(tEl) tEl.innerText = tot.toLocaleString('ko-KR'); };
-function initInputHandlers() { document.querySelectorAll('.number-only').forEach(i => { i.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); }); }); document.querySelectorAll('.money-format').forEach(i => { i.addEventListener('input', function() { let v = this.value.replace(/[^0-9\-]/g, ''); this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }); }); document.querySelectorAll('.debt-input').forEach(i => { i.addEventListener('input', window.calculateTotalDebt); }); }
 
+function initInputHandlers() { 
+    // 숫자, 금액 콤마 세팅
+    document.querySelectorAll('.number-only').forEach(i => { i.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); }); }); 
+    document.querySelectorAll('.money-format').forEach(i => { i.addEventListener('input', function() { let v = this.value.replace(/[^0-9\-]/g, ''); this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }); }); 
+    document.querySelectorAll('.debt-input').forEach(i => { i.addEventListener('input', window.calculateTotalDebt); }); 
+
+    // ★ 날짜, 사업자번호 자동 하이픈 복구 ★
+    const formatInputs = [
+        { id: 'biz_number', len: [4, 6], split: [3, 5, 10] },
+        { id: 'corp_number', len: [7], split: [6, 13] },
+        { id: 'biz_date', len: [5, 7], split: [4, 6, 8] },
+        { id: 'rep_birth', len: [5, 7], split: [4, 6, 8] },
+        { id: 'write_date', len: [5, 7], split: [4, 6, 8] }
+    ];
+    formatInputs.forEach(item => {
+        const el = document.getElementById(item.id);
+        if(el) {
+            el.addEventListener('input', function() {
+                let val = this.value.replace(/[^0-9]/g, '');
+                if (item.id === 'corp_number') { if (val.length < 7) this.value = val; else this.value = val.slice(0,6) + '-' + val.slice(6,13); } 
+                else if(item.id === 'biz_number') { if (val.length < 4) this.value = val; else if (val.length < 6) this.value = val.slice(0,3) + '-' + val.slice(3); else this.value = val.slice(0,3) + '-' + val.slice(3,5) + '-' + val.slice(5,10); } 
+                else { if (val.length < 5) this.value = val; else if (val.length < 7) this.value = val.slice(0,4) + '-' + val.slice(4); else this.value = val.slice(0,4) + '-' + val.slice(4,6) + '-' + val.slice(6,8); }
+            });
+        }
+    });
+
+    // ★ 전화번호 자동 하이픈 복구 ★
+    const phoneInputs = ['biz_phone', 'rep_phone'];
+    phoneInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('input', function() {
+                let val = this.value.replace(/[^0-9]/g, '');
+                if(val.startsWith('02')) {
+                    if(val.length < 3) this.value = val; else if(val.length < 6) this.value = val.slice(0,2) + '-' + val.slice(2); else if(val.length < 10) this.value = val.slice(0,2) + '-' + val.slice(2,5) + '-' + val.slice(5); else this.value = val.slice(0,2) + '-' + val.slice(2,6) + '-' + val.slice(6,10);
+                } else {
+                    if(val.length < 4) this.value = val; else if(val.length < 7) this.value = val.slice(0,3) + '-' + val.slice(3); else if(val.length < 11) this.value = val.slice(0,3) + '-' + val.slice(3,6) + '-' + val.slice(6); else this.value = val.slice(0,3) + '-' + val.slice(3,7) + '-' + val.slice(7,11);
+                }
+            });
+        }
+    });
+}
 
 /* =========================================
-   5. ★ AI API 연동 및 소박스 랩핑 통제 ★
+   5. AI API 연동 및 연간 예상 매출 로직
 ========================================= */
 
 async function callGeminiAPI(prompt) {
@@ -168,13 +206,19 @@ window.generateReport = async function(reportType, version, event) {
     const companyData = companies.find(c => c.name === companyName);
     const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
 
+    // ★ 연간 예상 매출 계산 로직 (등록일의 월 기준) ★
+    const regDate = companyData.date || new Date().toISOString().split('T')[0];
+    const regMonth = parseInt(regDate.split('-')[1], 10);
+    let passedMonths = regMonth - 1; // 전달까지의 누적
+    if (passedMonths <= 0) passedMonths = 1; // 1월 등록 시 나눗셈 오류 방지
+    const expectedCurRev = Math.round((rev.cur / passedMonths) * 12); // 연환산 예상 매출
+
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
-    // ★ 프롬프트 통제: 기업현황분석 삭제 & 파스텔 소박스 태그 강제 삽입 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
 
-    제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 반드시 작성해. (기업의 기초 정보는 이미 최상단 표에 있으니 중복으로 언급하지 마.)
+    제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 반드시 작성해. 
     1. 경영진단 개요
     2. 재무 현황 분석
     3. 전략 및 마케팅 분석
@@ -184,14 +228,11 @@ window.generateReport = async function(reportType, version, event) {
     7. 개선 방향 및 로드맵
 
     [★작성 규칙 - 절대 준수★]
-    - 제공된 수치(매출, 부채 등)를 절대 임의로 변경하지 마.
-    - 각 목차 전체(제목 <h3>부터 내용 <ul>까지)를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
-      예시: <div class="report-section-box"><h3>1. 경영진단 개요</h3><ul><li>내용...</li></ul></div>
+    - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
     - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-    - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식(음/슴체)으로 맺을 것.
+    - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
-    - 표(Table)는 절대 그리지 말 것.
     `;
 
     const promptData = { ...companyData }; delete promptData.rawData; 
@@ -206,8 +247,6 @@ window.generateReport = async function(reportType, version, event) {
         tabContent.querySelector('[id$="-result-step"]').style.display = 'block';
 
         let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
-        
-        // ★ 소박스 안에 차트 컨테이너 꽂아넣기 (정규식 활용으로 더 안전하게) ★
         cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?경영진단 개요.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
         cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?재무 현황 분석.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
 
@@ -215,7 +254,6 @@ window.generateReport = async function(reportType, version, event) {
         const today = new Date().toISOString().split('T')[0];
         let titleAdd = version === 'client' ? "<span style='color:#334155;'>(업체전달용)</span>" : "<span style='color:#ef4444;'>(컨설턴트 피드백용)</span>";
         
-        // ★ 상단 표 통합 확장 (기업현황) ★
         contentArea.innerHTML = `
             <div class="paper-inner">
                 <h1 style="text-align:center; font-size: 28px; margin-bottom: 50px;">경영진단보고서 ${titleAdd}</h1>
@@ -247,11 +285,12 @@ window.generateReport = async function(reportType, version, event) {
                 new Chart(barEl.getContext('2d'), {
                     type: 'bar',
                     data: {
-                        labels: ['23년도', '24년도', '25년도', '금년(현재)'],
+                        // ★ 라벨을 '금년(예상)'으로 변경 ★
+                        labels: ['23년도', '24년도', '25년도', '금년(예상)'],
                         datasets: [{
                             label: '매출 현황 (단위: 만원)',
-                            // ★ 폼에서 긁어온 실제 매출 데이터가 여기에 꽂힙니다! ★
-                            data: [rev.y23, rev.y24, rev.y25, rev.cur], 
+                            // ★ 연환산된 예상 매출(expectedCurRev) 데이터 적용 ★
+                            data: [rev.y23, rev.y24, rev.y25, expectedCurRev], 
                             backgroundColor: 'rgba(22, 163, 74, 0.7)', borderRadius: 4
                         }]
                     },
