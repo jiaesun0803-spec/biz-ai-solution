@@ -17,8 +17,8 @@ body { background-color: #f8fafc; color: #333; }
 .logo { display: flex; align-items: center; justify-content: center; padding: 20px; border-bottom: 1px solid #1c2841; }
 .logo img { max-width: 100%; height: auto; }
 .user-profile { display: flex; align-items: center; padding: 20px; }
-.profile-icon { background: #475569; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
-.user-name { font-weight: bold; font-size: 14px; }
+.profile-icon { background: #475569; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 18px; }
+.user-name { font-weight: bold; font-size: 14px; margin-bottom: 2px;}
 .user-role { font-size: 12px; color: #94a3b8; }
 .menu { flex: 1; overflow-y: auto; padding: 10px; }
 .menu ul { list-style: none; }
@@ -41,8 +41,19 @@ body { background-color: #f8fafc; color: #333; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .max-width-wrapper { max-width: 950px; margin: 0 auto; }
 
+/* ★ 대시보드 레이아웃 (복구됨) ★ */
+.middle-section { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin-bottom: 40px; align-items: stretch; }
+.section-title-dash { font-size: 16px; margin-bottom: 15px; font-weight: bold; color: #1e293b; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.view-all { font-size: 12px; color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
+.quick-actions-box, .recent-reports-box { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); height: 100%; }
+.quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.quick-item { border: 1px solid #e2e8f0; padding: 20px 10px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #f8fafc; color: #334155; }
+.quick-item:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(59,130,246,0.1); }
+.quick-item span { display: block; font-size: 11px; color: #64748b; margin-top: 8px; font-weight: normal; line-height: 1.4; }
+
 /* 폼, 카드 및 인풋 */
-.fund-card, .quick-actions-box, .recent-reports-box, .list-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+.fund-card, .list-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
 .form-section { background: transparent; padding: 0 0 50px 0; margin-bottom: 50px; border-bottom: 1px solid #e2e8f0; }
 .section-title { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-left: 4px solid #1e3a8a; padding-left: 10px; }
 .section-title h3 { font-size: 16px; font-weight: bold; color: #1e3a8a; line-height: 1; }
@@ -55,8 +66,8 @@ body { background-color: #f8fafc; color: #333; }
 .split-layout, .fund-split-layout { display: flex; gap: 40px; margin-bottom: 30px; }
 .split-half, .fund-left, .fund-right { flex: 1; }
 
-.form-group { display: flex; flex-direction: column; gap: 8px; text-align: left; }
-.form-group label, .fund-label { font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 15px; }
+.form-group label, .fund-label { font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 2px; }
 .input-row { display: flex; gap: 15px; align-items: center; width: 100%; }
 
 input[type="text"], input[type="number"], input[type="date"], input[type="password"], input[type="email"], select, textarea { 
@@ -115,17 +126,23 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-report-teal { background: #ccfbf1; color: #134e4a; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 .btn-report-pink { background: #fecdd3; color: #881337; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 
-/* 리포트 뷰어 (웹에서 볼 때) */
-.report-view-container { padding: 20px; background: #f1f5f9; border-radius: 12px; }
+/* ★ 리포트 뷰어 (PDF 느낌) ★ */
+.report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
-.report-paper h3 { margin-top: 30px; margin-bottom: 15px; color: #1e293b; border-left: 4px solid #3b82f6; padding-left: 12px; font-size: 18px; }
-.report-paper p { line-height: 1.8; color: #475569; margin-bottom: 20px; font-size: 14px; }
-.simple-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-.simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 13px; width: 100px; color: #475569; }
-.simple-table td { border: 1px solid #e2e8f0; padding: 12px; font-size: 14px; color: #1e293b; }
-.alert-box { padding: 20px; border-radius: 8px; font-weight: bold; margin: 20px 0; font-size: 14px; }
+.report-paper h3 { margin-top: 35px; margin-bottom: 15px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 18px; font-weight: bold;}
+.report-paper p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 15px; text-align: justify; word-break: keep-all; }
+.report-paper ul { margin-left: 20px; margin-bottom: 20px; color: #334155; line-height: 1.8;}
+.report-paper li { margin-bottom: 8px; font-size: 15px;}
+
+/* 표(Table) 스타일 강화 */
+.simple-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid #1e293b; }
+.simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; text-align: center; font-size: 14px; width: 15%; color: #475569; font-weight: bold; }
+.simple-table td { border: 1px solid #e2e8f0; padding: 15px; font-size: 15px; color: #1e293b; width: 35%; }
+
+/* 핵심 요약 박스 */
+.alert-box { padding: 20px; border-radius: 8px; font-weight: bold; margin: 30px 0; font-size: 15px; line-height: 1.6;}
 .alert-box.blue { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; }
 .alert-box.green { background: #f0fdf4; color: #166534; border-left: 5px solid #22c55e; }
 
@@ -133,43 +150,20 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .simulator-layout { display: flex; gap: 30px; }
 .sim-controls, .sim-results { flex: 1; }
 .sim-results { display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 2px dashed #cbd5e1; }
-.sim-step { display: flex; align-items: center; font-size: 18px; font-weight: bold; margin-bottom: 25px; }
-.step-num { background: #e0e7ff; color: #4f46e5; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 10px; font-size: 14px; }
 
-/* ★ PDF 인쇄 (프린트) 최적화 스타일 ★ 
-   이 코드가 프린트를 눌렀을 때 껍데기를 모두 벗기고 리포트만 A4 사이즈로 깔끔하게 뽑아줍니다! */
+/* ★ PDF 인쇄 (프린트) 최적화 스타일 ★ */
 @media print {
     @page { size: A4; margin: 20mm; }
-    
-    /* 전체 배경을 하얗게, 기본 폰트 사이즈 조정 */
     body { background: white !important; font-size: 12pt; }
-    
-    /* 인쇄 시 절대 보이면 안 되는 UI 요소들 (사이드바, 헤더, 버튼 등) 싹 다 숨김 */
-    .auth-overlay, .sidebar, .page-header, .back-btn, .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner, .toggle-tabs, .info-yellow-box, .fund-split-layout, .report-action-group, .report-view-header, .header-btns, button, nav, aside {
-        display: none !important;
-    }
-
-    /* 컨테이너의 스크롤을 풀고 100% 화면으로 확장 */
-    .container, .main-content {
-        display: block !important; width: 100% !important; height: auto !important;
-        overflow: visible !important; padding: 0 !important; margin: 0 !important;
-        background: white !important;
-    }
-
-    /* 다른 모든 탭 숨기고 오직 리포트 뷰어 결과 화면만 강제 출력 */
+    .auth-overlay, .sidebar, .page-header, .back-btn, .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner, .toggle-tabs, .info-yellow-box, .fund-split-layout, .report-action-group, .report-view-header, .header-btns, button, nav, aside { display: none !important; }
+    .container, .main-content { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; background: white !important; }
     .tab-content { display: none !important; }
     #report { display: block !important; }
     #report-input-step { display: none !important; }
     #report-result-step { display: block !important; }
-
-    /* 리포트 종이의 그림자, 여백 제거하여 A4에 딱 맞게 정렬 */
     .report-view-container { padding: 0 !important; background: white !important; }
     .report-paper { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: auto !important; }
     .paper-inner { max-width: 100% !important; width: 100% !important; }
-    
-    /* 표나 박스가 페이지 중간에서 두 동강 나지 않도록 보호 */
     .simple-table, .alert-box, h3, p { page-break-inside: avoid; }
-    
-    /* 알림 박스의 테두리를 살려서 흑백 인쇄 시에도 구분되도록 처리 */
     .alert-box { border: 2px solid #e2e8f0; }
 }
