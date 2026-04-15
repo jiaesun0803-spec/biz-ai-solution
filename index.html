@@ -11,10 +11,7 @@
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-icon">🏢</div>
-                <div>
-                    <h2>BizConsult</h2>
-                    <p>경영컨설팅 플랫폼</p>
-                </div>
+                <div><h2>BizConsult</h2><p>경영컨설팅 플랫폼</p></div>
             </div>
             <div class="user-profile">
                 <div class="profile-icon">👤</div>
@@ -22,28 +19,27 @@
             </div>
             <nav class="menu">
                 <ul>
-                    <li onclick="showTab('dashboard')"><span>📊</span> 대시보드</li>
-                    <li class="active" onclick="showTab('company')"><span>🏢</span> 업체 관리</li>
-                    <li onclick="showTab('reportList')"><span>📋</span> 보고서 목록</li>
-                    <li onclick="showTab('report')"><span>📈</span> 경영진단보고서</li>
-                    <li onclick="showTab('aiBiz')"><span>💡</span> AI 사업계획서</li>
-                    <li onclick="showTab('aiFund')"><span>🎯</span> AI 정책자금매칭</li>
-                    <li onclick="showTab('aiTrade')"><span>🏪</span> AI 상권분석</li>
-                    <li onclick="showTab('aiMarketing')"><span>📢</span> 마케팅제안</li>
+                    <li onclick="showTab('dashboard')" id="menu-dashboard"><span>📊</span> 대시보드</li>
+                    <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
+                    <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 보고서 목록</li>
+                    <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
+                    <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
+                    <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> AI 정책자금매칭</li>
+                    <li onclick="showTab('aiTrade')" id="menu-aiTrade"><span>🏪</span> AI 상권분석</li>
+                    <li onclick="showTab('aiMarketing')" id="menu-aiMarketing"><span>📢</span> 마케팅제안</li>
                 </ul>
             </nav>
-            <div class="bottom-menu"><ul><li onclick="showTab('settings')"><span>⚙️</span> 설정</li></ul></div>
+            <div class="bottom-menu"><ul><li onclick="showTab('settings')" id="menu-settings"><span>⚙️</span> 설정</li></ul></div>
             <div class="version-info">BizConsult v1.0</div>
         </aside>
 
         <main class="main-content">
-            
             <section id="dashboard" class="tab-content">
                 <h2 class="page-title">대시보드</h2>
                 <div class="welcome-banner"><h3>환영합니다, 선지영 컨설턴트님</h3></div>
             </section>
 
-            <section id="company" class="tab-content active">
+            <section id="company" class="tab-content">
                 <div class="section-header">
                     <h2 class="page-title">업체 정보 상세 등록</h2>
                     <div class="header-btns">
@@ -60,15 +56,15 @@
                             <div class="form-group">
                                 <label>사업자유형</label>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="biz_type"> 법인사업자</label>
-                                    <label><input type="radio" name="biz_type"> 개인사업자</label>
+                                    <label><input type="radio" name="biz_type" value="법인" onchange="toggleCorpNumber()"> 법인사업자</label>
+                                    <label><input type="radio" name="biz_type" value="개인" onchange="toggleCorpNumber()"> 개인사업자</label>
                                 </div>
                             </div>
-                            <div class="form-group"><label>사업자등록번호</label><input type="text" placeholder="예) 000-00-00000"></div>
-                            <div class="form-group"><label>법인등록번호</label><input type="text" placeholder="법인일 경우만 입력"></div>
+                            <div class="form-group"><label>사업자등록번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
+                            <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" class="number-only" placeholder="법인일 경우만 입력"></div>
                             <div class="form-group"><label>사업개시일</label><input type="date"></div>
-                            <div class="form-group"><label>사업장 전화번호</label><input type="text" placeholder="예) 02-0000-0000"></div>
-                            <div class="form-group"><label>상시근로자 수</label><input type="number" placeholder="명 (4대보험 가입 기준)"></div>
+                            <div class="form-group"><label>사업장 전화번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
+                            <div class="form-group"><label>상시근로자 수</label><input type="text" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
                             <div class="form-group"><label>업종</label><input type="text" placeholder="주요 업종 입력"></div>
                             <div class="form-group full">
                                 <label>사업장 주소</label>
@@ -80,8 +76,8 @@
                                     <input type="text" placeholder="상세 주소를 입력하세요" class="full">
                                 </div>
                             </div>
-                            <div class="form-group"><label>보증금 (만원)</label><input type="number" placeholder="임대인 경우만 기재"></div>
-                            <div class="form-group"><label>월임대료 (만원)</label><input type="number" placeholder="임대인 경우만 기재"></div>
+                            <div class="form-group"><label>보증금 (만원)</label><input type="text" class="money-format" placeholder="임대인 경우만 기재"></div>
+                            <div class="form-group"><label>월임대료 (만원)</label><input type="text" class="money-format" placeholder="임대인 경우만 기재"></div>
                         </div>
                     </div>
 
@@ -89,22 +85,11 @@
                         <h3 class="card-title">2. 대표자 정보</h3>
                         <div class="form-grid">
                             <div class="form-group"><label>대표자명</label><input type="text" placeholder="성함"></div>
-                            <div class="form-group"><label>생년월일</label><input type="text" placeholder="예) 80.03.15"></div>
-                            <div class="form-group"><label>연락처</label><input type="text" placeholder="예) 010-0000-0000"></div>
-                            <div class="form-group">
-                                <label>통신사</label>
-                                <div class="radio-group">
-                                    <label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label>
-                                    <label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label>
-                                </div>
-                            </div>
+                            <div class="form-group"><label>생년월일</label><input type="text" class="number-only" placeholder="숫자만 입력 (예: 800315)"></div>
+                            <div class="form-group"><label>연락처</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
+                            <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label><label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label></div></div>
                             <div class="form-group full"><label>거주지 주소</label><input type="text" placeholder="상세 주소"></div>
-                            <div class="form-group">
-                                <label>최종학력</label>
-                                <select>
-                                    <option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option>
-                                </select>
-                            </div>
+                            <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
                             <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
                             <div class="form-group full"><label>주요 경력사항</label><textarea rows="3" placeholder="경력 1, 경력 2 등 상세 기술"></textarea></div>
                         </div>
@@ -113,102 +98,53 @@
                     <div class="form-row">
                         <div class="form-card half">
                             <h3 class="card-title">3. 대표자 신용정보</h3>
-                            <div class="form-group">
-                                <label>연체/세금체납 여부</label>
-                                <div class="radio-group">
-                                    <label><input type="checkbox"> 금융연체</label><label><input type="checkbox"> 세금체납</label>
-                                </div>
-                            </div>
-                            <div class="form-group"><label>KCB 신용점수</label><input type="number" placeholder="점"></div>
-                            <div class="form-group"><label>NICE 신용점수</label><input type="number" placeholder="점"></div>
+                            <div class="form-group"><label>연체/세금체납 여부</label><div class="radio-group"><label><input type="checkbox"> 금융연체</label><label><input type="checkbox"> 세금체납</label></div></div>
+                            <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
+                            <div class="form-group"><label>NICE 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
                         </div>
                         <div class="form-card half">
                             <h3 class="card-title">4. 매출현황 (만원)</h3>
                             <table class="data-table">
                                 <thead><tr><th>연도</th><th>국내 매출</th><th>수출 매출</th></tr></thead>
                                 <tbody>
-                                    <tr><td>금년(누적)</td><td><input type="number"></td><td><input type="number"></td></tr>
-                                    <tr><td>25년</td><td><input type="number"></td><td><input type="number"></td></tr>
-                                    <tr><td>24년</td><td><input type="number"></td><td><input type="number"></td></tr>
+                                    <tr><td>금년(누적)</td><td><input type="text" class="money-format"></td><td><input type="text" class="money-format"></td></tr>
+                                    <tr><td>25년</td><td><input type="text" class="money-format"></td><td><input type="text" class="money-format"></td></tr>
+                                    <tr><td>24년</td><td><input type="text" class="money-format"></td><td><input type="text" class="money-format"></td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     <div class="form-card">
-                        <h3 class="card-title">5. 부채현황 (만원) <span>※ 해당 없는 항목은 0 기재</span></h3>
+                        <h3 class="card-title">5. 부채현황 (만원) <span>※ 실시간 자동 합계 산출</span></h3>
                         <div class="form-grid-4">
-                            <div class="form-group"><label>중진공</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>소진공</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>신보</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>기보</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>재단</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>회사담보</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>대표신용</label><input type="number" value="0"></div>
-                            <div class="form-group"><label>대표담보</label><input type="number" value="0"></div>
+                            <div class="form-group"><label>중진공</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>소진공</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>신보</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>기보</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>재단</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>회사담보</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>대표신용</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>대표담보</label><input type="text" class="money-format debt-input" value="0"></div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 15px; background: #ebf8ff; border-radius: 8px; text-align: right; border: 1px solid #90cdf4;">
+                            <strong style="color: #2b6cb0; font-size: 16px;">총 부채 합계: <span id="total-debt" style="font-size: 20px;">0</span> 만원</strong>
                         </div>
                     </div>
 
-                    <div class="form-card">
-                        <h3 class="card-title">6. 보유 인증 <span>※ 해당하는 항목 모두 체크</span></h3>
-                        <div class="checkbox-grid">
-                            <label><input type="checkbox"> 이노비즈</label>
-                            <label><input type="checkbox"> 메인비즈</label>
-                            <label><input type="checkbox"> 벤처기업</label>
-                            <label><input type="checkbox"> 기업부설연구소</label>
-                            <label><input type="checkbox"> 연구개발전담부서</label>
-                            <label><input type="checkbox"> ISO 인증</label>
-                            <label><input type="checkbox"> 여성기업</label>
-                            <label><input type="checkbox"> 장애인기업</label>
-                            <label><input type="checkbox"> 사회적기업</label>
-                            <label><input type="checkbox"> 협동조합</label>
-                            <label><input type="checkbox"> 소공인</label>
-                            <label><input type="checkbox"> 해당 없음</label>
-                        </div>
-                        <div class="form-group full" style="margin-top:15px;"><label>기타 인증</label><input type="text"></div>
-                    </div>
-
-                    <div class="form-card">
-                        <h3 class="card-title">8. 비즈니스 상세 정보 <span>※ AI 분석의 핵심 데이터입니다</span></h3>
-                        <div class="form-grid">
-                            <div class="form-group full"><label>핵심 아이템</label><textarea rows="2" placeholder="비즈니스 핵심 설명"></textarea></div>
-                            <div class="form-group full"><label>판매 루트(유통망)</label><textarea rows="2" placeholder="주요 거래처, 판매 채널 등"></textarea></div>
-                            <div class="form-group full"><label>경쟁력 및 차별성</label><textarea rows="2" placeholder="타사 대비 강점"></textarea></div>
-                            <div class="form-group full"><label>시장 현황</label><textarea rows="2" placeholder="해당 업계 동향"></textarea></div>
-                            <div class="form-group full"><label>수익 모델</label><textarea rows="2" placeholder="수익 창출 구조"></textarea></div>
-                            <div class="form-group full"><label>앞으로의 계획</label><textarea rows="2" placeholder="단기 및 중기 계획"></textarea></div>
-                        </div>
-                    </div>
-
-                    <div class="form-card">
-                        <h3 class="card-title">10. 컨설턴트 메모 및 서명</h3>
-                        <textarea rows="4" class="full" placeholder="기타 메모 및 특이사항을 자유롭게 입력하세요"></textarea>
-                        
-                        <div class="signature-box">
-                            <table class="sig-table">
-                                <tr>
-                                    <th>작성자(고객)</th><td><input type="text"></td>
-                                    <th>서명</th><td class="sig-pad">인</td>
-                                </tr>
-                                <tr>
-                                    <th>담당 컨설턴트</th><td><input type="text" value="선지영"></td>
-                                    <th>서명</th><td class="sig-pad">인</td>
-                                </tr>
-                                <tr>
-                                    <th>작성일</th><td colspan="3"><input type="date"></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
+                    <div class="form-actions" style="margin-top: 30px;">
                         <button type="button" class="btn-primary-large" onclick="saveCompanyData()">위 정보를 바탕으로 업체 등록 완료</button>
                     </div>
                 </form>
             </section>
 
-            <section id="report" class="tab-content"><h2 class="page-title">경영진단보고서</h2></section>
-            <section id="settings" class="tab-content"><h2 class="page-title">설정</h2></section>
+             <section id="reportList" class="tab-content"><h2 class="page-title">보고서 목록</h2><div class="content-box">저장된 업체 리스트가 이곳에 표시될 예정입니다.</div></section>
+             <section id="report" class="tab-content"><h2 class="page-title">경영진단보고서</h2></section>
+             <section id="aiBiz" class="tab-content"><h2 class="page-title">AI 사업계획서</h2></section>
+             <section id="aiFund" class="tab-content"><h2 class="page-title">AI 정책자금매칭</h2></section>
+             <section id="aiTrade" class="tab-content"><h2 class="page-title">AI 상권분석</h2></section>
+             <section id="aiMarketing" class="tab-content"><h2 class="page-title">마케팅 제안</h2></section>
+             <section id="settings" class="tab-content"><h2 class="page-title">설정</h2></section>
         </main>
     </div>
     <script src="app.js"></script>
