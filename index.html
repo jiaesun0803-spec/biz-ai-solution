@@ -32,7 +32,7 @@
     <div class="container" id="main-app" style="display: none;">
         <aside class="sidebar">
             <div class="logo">
-                <img src="logo.png" alt="BizConsult 로고" id="sidebar-logo">
+                <img src="logo.png" alt="BizConsult 로고" id="sidebar-logo" style="max-width: 100%; height: auto;">
             </div>
             <div class="user-profile">
                 <div class="profile-icon">👤</div>
@@ -128,35 +128,46 @@
                         </div>
 
                         <div class="split-layout">
-                            <div class="split-half form-section">
-                                <div class="section-title"><h3>대표자 정보</h3></div>
-                                <div class="grid-2">
-                                    <div class="form-group"><label>대표자명</label><input type="text" placeholder="대표자명을 입력하세요"></div>
-                                    <div class="form-group"><label>생년월일</label><input type="text" id="rep_birth" placeholder="YYYY-MM-DD" maxlength="10"></div>
-                                    <div class="form-group col-span-2"><label>거주지 주소</label>
-                                        <div class="input-row">
-                                            <div class="radio-group"><label><input type="radio" name="home_rent"> 자가</label><label><input type="radio" name="home_rent"> 임대</label></div>
-                                            <input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;">
+                            <div class="split-half form-section" style="display: flex; flex-direction: column;">
+                                <div>
+                                    <div class="section-title"><h3>대표자 정보</h3></div>
+                                    <div class="grid-2">
+                                        <div class="form-group"><label>대표자명</label><input type="text" placeholder="대표자명을 입력하세요"></div>
+                                        <div class="form-group"><label>생년월일</label><input type="text" id="rep_birth" placeholder="YYYY-MM-DD" maxlength="10"></div>
+                                        <div class="form-group col-span-2"><label>거주지 주소</label>
+                                            <div class="input-row">
+                                                <div class="radio-group"><label><input type="radio" name="home_rent"> 자가</label><label><input type="radio" name="home_rent"> 임대</label></div>
+                                                <input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;">
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="form-group"><label>연락처</label><input type="text" id="rep_phone" placeholder="숫자만 입력" maxlength="13"></div>
-                                    <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label><label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label></div></div>
-                                    <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
-                                    <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
+                                </div>
+                                <div style="margin-top: auto;">
+                                    <div class="grid-2">
+                                        <div class="form-group"><label>연락처</label><input type="text" id="rep_phone" placeholder="숫자만 입력" maxlength="13"></div>
+                                        <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label><label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label></div></div>
+                                        <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
+                                        <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="split-half form-section">
-                                <div class="section-title"><h3>신용정보</h3></div>
-                                <div class="grid-2">
-                                    <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
-                                    <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
-                                    <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
-                                    <div class="form-group"><label>NICE 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
+
+                            <div class="split-half form-section" style="display: flex; flex-direction: column;">
+                                <div>
+                                    <div class="section-title"><h3>신용정보</h3></div>
+                                    <div class="grid-2">
+                                        <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
+                                        <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
+                                        <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
+                                        <div class="form-group"><label>NICE 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
+                                    </div>
                                 </div>
-                                <div class="section-title" style="margin-top: 30px;"><h3>경력사항</h3></div>
-                                <div class="grid-1">
-                                    <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
-                                    <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
+                                <div style="margin-top: auto;">
+                                    <div class="section-title" style="margin-top: 30px;"><h3>경력사항</h3></div>
+                                    <div class="grid-1">
+                                        <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
+                                        <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -171,7 +182,7 @@
                                 <div class="form-group col-span-4"><label>수출여부</label>
                                     <div class="radio-group"><label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()" checked> 수출중</label><label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label><label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label></div>
                                 </div>
-                                <div class="form-group"><label>금년수출매출</label><input type="text" class="money-format export-money" placeholder="1억 입력=10000으로 입력"></div>
+                                <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format export-money" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" id="export_25" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" id="export_24" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" id="export_23" placeholder="1억 입력=10000으로 입력"></div>
@@ -248,7 +259,7 @@
                     <div class="page-header"><h2 class="page-title">업체 및 보고서 목록</h2></div>
                     <h3 class="list-sub-title">🏢 등록된 업체 목록</h3>
                     <div class="list-card" style="margin-bottom: 40px;">
-                        <table class="report-table"><thead id="company-list-head"><tr><th>업체명</th><th>사업자번호</th><th>업종</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table>
+                        <table class="report-table"><thead id="company-list-head"><tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table>
                     </div>
                     <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
                     <div class="list-card">
@@ -280,15 +291,10 @@
                             <button class="btn-report-blue" style="flex: 1; background: #1e293b; color: white;" onclick="generateReport('management', 'consultant', event)">◎ AI 경영진단보고서 (컨설턴트용)</button>
                         </div>
                     </div>
-
                     <div id="report-result-step" style="display: none;">
                         <div class="report-view-container">
-                            <div class="report-view-header">
-                                <button class="btn-small-outline" onclick="backToInput('report')">← 다시 생성</button>
-                                <div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div>
-                            </div>
-                            <div id="report-content-area" class="report-paper">
-                                </div>
+                            <div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('report')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div>
+                            <div id="report-content-area" class="report-paper"></div>
                         </div>
                     </div>
                 </div>
@@ -354,8 +360,8 @@
                 <div class="max-width-wrapper">
                     <div class="page-header"><h2 class="page-title">AI 상권분석 리포트 생성</h2></div>
                     <div class="teal-banner"><h3>◎ AI 빅데이터 상권분석</h3><p>유동인구, 경쟁점포, 배후 수요를 정밀 분석합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="color:#134e4a;">🏆 상권분석 리포트 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 입지 요약</li><li>3. 경쟁점포 현황</li></ul><ul class="info-list"><li>2. 유동인구 패턴</li><li>4. 상권 활성도 평가</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 업체</label><select class="fund-select company-dropdown" id="trade-company-select"><option value="">업체를 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4>AI 상권분석 주요 지표</h4><div class="criteria-item"><div class="dot teal"></div><div><strong>인구 통계</strong></div></div></div></div>
+                    <div class="info-yellow-box"><h4 style="color:#134e4a;">🏆 상권분석 리포트 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 입지 및 지리적 접근성 요약</li></ul></div></div>
+                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 업체</label><select class="fund-select company-dropdown" id="trade-company-select"><option value="">업체를 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4>AI 상권분석 주요 지표</h4></div></div>
                     <button class="btn-report-teal">◎ AI 상권분석 리포트 생성하기</button>
                 </div>
             </section>
@@ -364,10 +370,10 @@
                 <div class="max-width-wrapper">
                     <div class="page-header"><h2 class="page-title">AI 마케팅 제안서 생성</h2></div>
                     <div class="pink-banner"><h3>◎ AI 맞춤형 마케팅 제안</h3><p>가장 효율적인 최신 홍보 전략을 제안합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="color:#881337;">🏆 마케팅 제안서 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 현행 채널 진단</li><li>3. 핵심 추천 채널</li></ul><ul class="info-list"><li>2. 타겟 고객 정의</li><li>4. ROI 기대 효과</li></ul></div></div>
+                    <div class="info-yellow-box"><h4 style="color:#881337;">🏆 마케팅 제안서 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 현행 마케팅 채널 진단</li></ul></div></div>
                     <div class="fund-split-layout">
                         <div class="fund-left"><div class="fund-card"><label class="fund-label">제안 대상 업체</label><select class="fund-select company-dropdown" id="market-company-select"><option value="">업체를 선택하세요</option></select></div></div>
-                        <div class="fund-right fund-card"><h4>AI 제안 도출 기준</h4><div class="criteria-item"><div class="dot pink"></div><div><strong>타겟 적합도</strong></div></div></div>
+                        <div class="fund-right fund-card"><h4>AI 제안 도출 기준</h4></div>
                     </div>
                     <button class="btn-report-pink">◎ AI 마케팅 제안서 생성하기</button>
                 </div>
@@ -404,6 +410,7 @@
                     </div>
                 </div>
             </section>
+
         </main>
     </div>
     <script src="app.js"></script>
