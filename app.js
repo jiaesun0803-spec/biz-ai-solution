@@ -9,9 +9,6 @@ document.addEventListener("DOMContentLoaded", function() {
     window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
 });
 
-/* =========================================
-   1. 인증 및 설정 로직
-========================================= */
 window.devBypassLogin = function() {
     const testUser = { email: 'test@biz.com', pw: '1234', name: '선지영', dept: '솔루션빌더스(테스트)', apiKey: '' };
     let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
@@ -24,33 +21,13 @@ function checkAuth() {
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
     const authOverlay = document.getElementById('auth-container');
     const mainApp = document.getElementById('main-app');
-
-    if (session) {
-        if(authOverlay) authOverlay.style.display = 'none';
-        if(mainApp) mainApp.style.display = 'flex';
-        loadUserProfile(); updateCompanyLists(); initInputHandlers();
-    } else {
-        if(authOverlay) authOverlay.style.display = 'flex';
-        if(mainApp) mainApp.style.display = 'none';
-    }
+    if (session) { if(authOverlay) authOverlay.style.display = 'none'; if(mainApp) mainApp.style.display = 'flex'; loadUserProfile(); updateCompanyLists(); initInputHandlers(); } 
+    else { if(authOverlay) authOverlay.style.display = 'flex'; if(mainApp) mainApp.style.display = 'none'; }
 }
 
 window.toggleAuthMode = function(mode) { document.getElementById('login-form-area').style.display = mode === 'login' ? 'block' : 'none'; document.getElementById('signup-form-area').style.display = mode === 'signup' ? 'block' : 'none'; }
-window.handleSignup = function() {
-    const email = document.getElementById('signup-email').value; const pw = document.getElementById('signup-pw').value; const name = document.getElementById('signup-name').value;
-    if (!email || !pw || !name) { alert('모든 정보를 입력해주세요.'); return; }
-    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-    if (users.find(u => u.email === email)) { alert('이미 가입된 이메일입니다.'); return; }
-    const newUser = { email, pw, name, dept: '솔루션빌더스', apiKey: '' };
-    users.push(newUser); localStorage.setItem(DB_USERS, JSON.stringify(users));
-    alert('회원가입이 완료되었습니다! 로그인해주세요.'); toggleAuthMode('login');
-}
-window.handleLogin = function() {
-    const email = document.getElementById('login-email').value; const pw = document.getElementById('login-pw').value;
-    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-    const user = users.find(u => u.email === email && u.pw === pw);
-    if (user) { localStorage.setItem(DB_SESSION, JSON.stringify(user)); checkAuth(); } else { alert('이메일 또는 비밀번호가 일치하지 않습니다.'); }
-}
+window.handleSignup = function() { const email = document.getElementById('signup-email').value; const pw = document.getElementById('signup-pw').value; const name = document.getElementById('signup-name').value; if (!email || !pw || !name) { alert('모든 정보를 입력해주세요.'); return; } let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]'); if (users.find(u => u.email === email)) { alert('이미 가입된 이메일입니다.'); return; } const newUser = { email, pw, name, dept: '솔루션빌더스', apiKey: '' }; users.push(newUser); localStorage.setItem(DB_USERS, JSON.stringify(users)); alert('회원가입이 완료되었습니다! 로그인해주세요.'); toggleAuthMode('login'); }
+window.handleLogin = function() { const email = document.getElementById('login-email').value; const pw = document.getElementById('login-pw').value; let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]'); const user = users.find(u => u.email === email && u.pw === pw); if (user) { localStorage.setItem(DB_SESSION, JSON.stringify(user)); checkAuth(); } else { alert('이메일 또는 비밀번호가 일치하지 않습니다.'); } }
 window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location.reload(); }
 
 function loadUserProfile() {
@@ -59,11 +36,7 @@ function loadUserProfile() {
     if(document.getElementById('display-user-dept')) document.getElementById('display-user-dept').innerText = user.dept || '솔루션빌더스';
     if(document.getElementById('set-user-name')) { document.getElementById('set-user-name').value = user.name; document.getElementById('set-user-email').value = user.email; document.getElementById('set-user-dept').value = user.dept || ''; document.getElementById('set-api-key').value = user.apiKey || ''; }
 }
-function updateUserDB(updatedUser) {
-    let users = JSON.parse(localStorage.getItem(DB_USERS));
-    const userIdx = users.findIndex(u => u.email === updatedUser.email);
-    users[userIdx] = updatedUser; localStorage.setItem(DB_USERS, JSON.stringify(users)); localStorage.setItem(DB_SESSION, JSON.stringify(updatedUser)); loadUserProfile();
-}
+function updateUserDB(updatedUser) { let users = JSON.parse(localStorage.getItem(DB_USERS)); const userIdx = users.findIndex(u => u.email === updatedUser.email); users[userIdx] = updatedUser; localStorage.setItem(DB_USERS, JSON.stringify(users)); localStorage.setItem(DB_SESSION, JSON.stringify(updatedUser)); loadUserProfile(); }
 window.saveProfileSettings = function() { let session = JSON.parse(localStorage.getItem(DB_SESSION)); session.name = document.getElementById('set-user-name').value; session.dept = document.getElementById('set-user-dept').value; updateUserDB(session); alert('프로필 정보가 저장되었습니다.'); }
 window.saveApiSettings = function() { let session = JSON.parse(localStorage.getItem(DB_SESSION)); session.apiKey = document.getElementById('set-api-key').value; updateUserDB(session); alert('API 키가 저장되었습니다.'); }
 window.savePasswordSettings = function() { const curPw = document.getElementById('set-cur-pw').value; const newPw = document.getElementById('set-new-pw').value; let session = JSON.parse(localStorage.getItem(DB_SESSION)); if (!curPw || !newPw) { alert('비밀번호를 모두 입력해주세요.'); return; } if (session.pw !== curPw) { alert('현재 비밀번호가 틀립니다.'); return; } session.pw = newPw; updateUserDB(session); document.getElementById('set-cur-pw').value = ''; document.getElementById('set-new-pw').value = ''; alert('비밀번호가 변경되었습니다.'); }
@@ -86,17 +59,13 @@ function updateCompanyLists() {
         companies.forEach(c => select.innerHTML += `<option value="${c.name}">${c.name}</option>`);
     });
     const body = document.getElementById('company-list-body');
-    if(body) {
-        body.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 업체가 없습니다.</td></tr>';
-    }
+    if(body) { body.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 업체가 없습니다.</td></tr>'; }
 }
 
 /* =========================================
-   3. 업체 저장 및 불러오기 (데이터 오류 수정)
+   3. 업체 저장 및 불러오기 (ID 기반 완벽 매칭)
 ========================================= */
-window.clearCompanyForm = function() {
-    if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); }
-}
+window.clearCompanyForm = function() { if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); } }
 
 window.loadCompanyData = function() {
     alert('테스트용 샘플 데이터(주식회사 대박컴퍼니)를 불러옵니다.');
@@ -105,14 +74,13 @@ window.loadCompanyData = function() {
     if(document.getElementById('biz_number')) document.getElementById('biz_number').value = "732-86-03582";
     if(document.getElementById('comp_industry')) document.getElementById('comp_industry').value = "제조업"; 
     
-    // ★ 매출 샘플 데이터 강제 주입 ★
-    const moneyInputs = document.querySelectorAll('.money-format');
-    if(moneyInputs.length > 5) {
-        moneyInputs[2].value = "11,000"; // 금년매출
-        moneyInputs[3].value = "138,000"; // 25년매출
-        moneyInputs[4].value = "114,000"; // 24년매출
-        moneyInputs[5].value = "50,000"; // 23년매출
-    }
+    // ★ 지정된 ID에 직접 값 꽂아넣기 ★
+    if(document.getElementById('rev_cur')) document.getElementById('rev_cur').value = "11,000";
+    if(document.getElementById('rev_25')) document.getElementById('rev_25').value = "138,000";
+    if(document.getElementById('rev_24')) document.getElementById('rev_24').value = "114,000";
+    if(document.getElementById('rev_23')) document.getElementById('rev_23').value = "50,000";
+    if(document.getElementById('emp_count')) document.getElementById('emp_count').value = "15";
+    if(document.getElementById('core_item')) document.getElementById('core_item').value = "HMR 가정간편식 제조 및 판매";
 
     const debtInputs = document.querySelectorAll('.debt-input');
     if(debtInputs.length > 4) { debtInputs[0].value = "20,000"; debtInputs[3].value = "10,000"; debtInputs[4].value = "7,000"; }
@@ -122,30 +90,29 @@ window.loadCompanyData = function() {
 window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
-    const rep = document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0] ? document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0].value : "";
-    const bizNum = document.getElementById('biz_number') ? document.getElementById('biz_number').value : "";
-    const industry = document.getElementById('comp_industry') ? document.getElementById('comp_industry').value : "";
     
-    // ★ 실제 매출 데이터 추출 완벽 수정 (0, 1번은 보증금/월세이므로 2, 3, 4, 5번 인덱스 추출) ★
-    const moneyInputs = document.querySelectorAll('.money-format');
+    // ★ 명시적 ID를 통해 값 추출 (오류 원천 차단) ★
     let realRevenue = {
-        cur: parseInt(moneyInputs[2] ? moneyInputs[2].value.replace(/,/g, '') : '0') || 0,
-        y25: parseInt(moneyInputs[3] ? moneyInputs[3].value.replace(/,/g, '') : '0') || 0,
-        y24: parseInt(moneyInputs[4] ? moneyInputs[4].value.replace(/,/g, '') : '0') || 0,
-        y23: parseInt(moneyInputs[5] ? moneyInputs[5].value.replace(/,/g, '') : '0') || 0
+        cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
+        y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
+        y24: parseInt((document.getElementById('rev_24') || {}).value?.replace(/,/g, '')) || 0,
+        y23: parseInt((document.getElementById('rev_23') || {}).value?.replace(/,/g, '')) || 0
     };
-
-    const formElements = document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea');
-    const rawData = Array.from(formElements).map(el => ({ type: el.type, value: el.value, checked: el.checked }));
-    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     
     const newCompany = { 
-        name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-', 
+        name: name, 
+        rep: document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0]?.value || '-', 
+        bizNum: document.getElementById('biz_number')?.value || '-', 
+        industry: document.getElementById('comp_industry')?.value || '-', 
+        bizDate: document.getElementById('biz_date')?.value || '-',  // ★ 추가
+        empCount: document.getElementById('emp_count')?.value || '-', // ★ 추가
+        coreItem: document.getElementById('core_item')?.value || '-', // ★ 추가
         date: new Date().toISOString().split('T')[0], 
-        revenueData: realRevenue, // 차트용 매출 데이터 저장
-        rawData: rawData 
+        revenueData: realRevenue,
+        rawData: Array.from(document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea')).map(el => ({ type: el.type, value: el.value, checked: el.checked }))
     };
 
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
 
@@ -176,28 +143,20 @@ function initInputHandlers() { document.querySelectorAll('.number-only').forEach
 
 
 /* =========================================
-   5. ★ AI API 연동 및 실제 데이터 기반 차트 생성 ★
+   5. ★ AI API 연동 및 소박스 랩핑 통제 ★
 ========================================= */
 
 async function callGeminiAPI(prompt) {
     const session = JSON.parse(localStorage.getItem('biz_session'));
     const apiKey = session ? session.apiKey : null;
     if (!apiKey) { alert("설정 탭에서 Gemini API 키를 등록해주세요."); showTab('settings'); return null; }
-
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
     try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 4096 } })
-        });
+        const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 4096 } }) });
         const data = await response.json();
         if (!response.ok || data.error) throw new Error(data.error ? data.error.message : 'API 에러');
         return data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        console.error("API 오류:", error); alert("오류 발생: " + error.message); return null;
-    }
+    } catch (error) { console.error("API 오류:", error); alert("오류 발생: " + error.message); return null; }
 }
 
 window.generateReport = async function(reportType, version, event) {
@@ -207,88 +166,78 @@ window.generateReport = async function(reportType, version, event) {
 
     const companies = JSON.parse(localStorage.getItem('biz_consult_companies') || '[]');
     const companyData = companies.find(c => c.name === companyName);
-    
-    // 차트용 실제 매출 데이터 확보 (기본값 0)
     const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
 
-    const loadingOverlay = document.getElementById('ai-loading-overlay');
-    loadingOverlay.style.display = 'flex';
+    document.getElementById('ai-loading-overlay').style.display = 'flex';
 
-    // ★ 프롬프트 통제 강화: ** 사용 금지 추가 ★
+    // ★ 프롬프트 통제: 기업현황분석 삭제 & 파스텔 소박스 태그 강제 삽입 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
 
-    [기업 데이터]를 분석해서 다음 8개 목차를 반드시 작성해.
+    제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 반드시 작성해. (기업의 기초 정보는 이미 최상단 표에 있으니 중복으로 언급하지 마.)
     1. 경영진단 개요
-    2. 기업 현황 분석
-    3. 재무 현황 분석
-    4. 전략 및 마케팅 분석
-    5. 인사/조직 및 운영/생산 분석
-    6. IT/디지털 및 정부지원 활용
-    7. 핵심 문제점 및 리스크
-    8. 개선 방향 및 로드맵
+    2. 재무 현황 분석
+    3. 전략 및 마케팅 분석
+    4. 인사/조직 및 운영/생산 분석
+    5. IT/디지털 및 정부지원 활용
+    6. 핵심 문제점 및 리스크
+    7. 개선 방향 및 로드맵
 
     [★작성 규칙 - 절대 준수★]
-    - 제공된 [기업 데이터]의 수치(매출, 부채 등)를 절대 임의로 변경하거나 지어내지 말고 있는 그대로 인용할 것.
-    - 각 목차의 제목은 <h3> 태그를 사용할 것. (예: <h3>1. 경영진단 개요</h3>)
-    - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 깔끔하게 정리할 것.
-    - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식(음/슴체)으로 맺을 것. 서술형(~습니다) 금지.
+    - 제공된 수치(매출, 부채 등)를 절대 임의로 변경하지 마.
+    - 각 목차 전체(제목 <h3>부터 내용 <ul>까지)를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
+      예시: <div class="report-section-box"><h3>1. 경영진단 개요</h3><ul><li>내용...</li></ul></div>
+    - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
+    - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
+    - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식(음/슴체)으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
     - 표(Table)는 절대 그리지 말 것.
-    - 마크다운 기호(\`\`\`html 등)는 절대 출력하지 말 것.
     `;
 
-    const promptData = { ...companyData };
-    delete promptData.rawData; 
-
+    const promptData = { ...companyData }; delete promptData.rawData; 
     const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData)}\n\n출력 목적: ${version === 'client' ? '긍정적/객관적 분석' : '리스크/단점 지적 위주'}`;
-
     const aiResponse = await callGeminiAPI(fullPrompt);
 
-    loadingOverlay.style.display = 'none';
+    document.getElementById('ai-loading-overlay').style.display = 'none';
 
     if (aiResponse) {
         const tabContent = event.target.closest('.tab-content');
         tabContent.querySelector('[id$="-input-step"]').style.display = 'none';
         tabContent.querySelector('[id$="-result-step"]').style.display = 'block';
 
-        // ★ 마크다운과 ** 기호 완전 삭제 정규식 처리 ★
         let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
         
-        // 차트 삽입 로직
-        cleanHTML = cleanHTML.replace('<h3>2. 기업 현황 분석</h3>', '<h3>2. 기업 현황 분석</h3>\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
-        cleanHTML = cleanHTML.replace('<h3>3. 재무 현황 분석</h3>', '<h3>3. 재무 현황 분석</h3>\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
+        // ★ 소박스 안에 차트 컨테이너 꽂아넣기 (정규식 활용으로 더 안전하게) ★
+        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?경영진단 개요.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
+        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?재무 현황 분석.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
 
         const contentArea = tabContent.querySelector('[id$="-content-area"]');
         const today = new Date().toISOString().split('T')[0];
         let titleAdd = version === 'client' ? "<span style='color:#334155;'>(업체전달용)</span>" : "<span style='color:#ef4444;'>(컨설턴트 피드백용)</span>";
         
+        // ★ 상단 표 통합 확장 (기업현황) ★
         contentArea.innerHTML = `
             <div class="paper-inner">
                 <h1 style="text-align:center; font-size: 28px; margin-bottom: 50px;">경영진단보고서 ${titleAdd}</h1>
                 <table class="simple-table">
                     <tr><th>기업명</th><td>${companyData.name}</td><th>사업자번호</th><td>${companyData.bizNum || '-'}</td></tr>
-                    <tr><th>대표자</th><td>${companyData.rep || '-'}</td><th>작성일</th><td>${today}</td></tr>
-                    <tr><th>업종</th><td>${companyData.industry || '-'}</td><th>데이터기준</th><td>최근 입력일 기준</td></tr>
+                    <tr><th>대표자</th><td>${companyData.rep || '-'}</td><th>설립(개시)일</th><td>${companyData.bizDate || '-'}</td></tr>
+                    <tr><th>업종</th><td>${companyData.industry || '-'}</td><th>상시근로자</th><td>${companyData.empCount || '-'} 명</td></tr>
+                    <tr><th>핵심아이템</th><td colspan="3">${companyData.coreItem || '-'}</td></tr>
                 </table>
                 ${cleanHTML}
+                <div class="alert-box ${version === 'client' ? 'blue' : 'green'}">
+                    ★ 본 리포트는 입력된 경영 데이터를 바탕으로 AI 컨설턴트가 분석한 ${version === 'client' ? '제언' : '내부 검토용'} 자료입니다.
+                </div>
             </div>
         `;
 
-        // 차트 그리기
         setTimeout(() => {
             const radarEl = document.getElementById('report-radar-chart');
             if (radarEl) {
                 new Chart(radarEl.getContext('2d'), {
                     type: 'radar',
-                    data: {
-                        labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'],
-                        datasets: [{
-                            label: '기업 역량 진단 스코어',
-                            data: [75, 90, 85, 65, 80],
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a'
-                        }]
-                    },
+                    data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] },
                     options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false }
                 });
             }
