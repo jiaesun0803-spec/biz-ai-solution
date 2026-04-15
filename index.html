@@ -22,6 +22,7 @@
                     <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
                     <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 업체 및 보고서 목록</li>
                     <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
+                    <li onclick="showTab('finance')" id="menu-finance"><span>💰</span> 상세 재무진단</li>
                     <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
                     <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> AI 정책자금매칭</li>
                     <li onclick="showTab('simulator')" id="menu-simulator"><span>🧮</span> 매칭 시뮬레이터</li>
@@ -43,7 +44,7 @@
                         <div class="quick-grid">
                             <div class="quick-item" onclick="showTab('company')">🏢<br>업체 등록<br><span>새 관리업체를 등록합니다</span></div>
                             <div class="quick-item" onclick="showTab('report')">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
-                            <div class="quick-item" onclick="showTab('aiBiz')">💡<br>AI 사업계획서<br><span>AI 사업계획서 작성</span></div>
+                            <div class="quick-item" onclick="showTab('finance')">💰<br>상세 재무진단<br><span>심층 재무제표 분석</span></div>
                             <div class="quick-item" onclick="showTab('aiFund')">🎯<br>AI 정책자금매칭<br><span>AI 매칭 리포트 작성</span></div>
                             <div class="quick-item" onclick="showTab('aiTrade')">🏪<br>AI 상권분석<br><span>맞춤형 상권분석 리포트</span></div>
                             <div class="quick-item" onclick="showTab('aiMarketing')">📢<br>마케팅 제안<br><span>최적의 마케팅 전략 기획</span></div>
@@ -239,24 +240,16 @@
                     <h3 style="font-size: 16px; color: #1e293b; margin-bottom: 12px; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px;">🏢 등록된 업체 목록</h3>
                     <div class="list-card" style="margin-bottom: 40px;">
                         <table class="report-table">
-                            <thead>
-                                <tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">등록된 업체가 없습니다.</td></tr>
-                            </tbody>
+                            <thead><tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead>
+                            <tbody><tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">등록된 업체가 없습니다.</td></tr></tbody>
                         </table>
                     </div>
 
                     <h3 style="font-size: 16px; color: #1e293b; margin-bottom: 12px; font-weight: bold; border-left: 4px solid #ea580c; padding-left: 10px;">📄 생성된 보고서 목록</h3>
                     <div class="list-card">
                         <table class="report-table">
-                            <thead>
-                                <tr><th>구분</th><th>대상 업체</th><th>보고서 명칭</th><th>발행일</th><th>담당자</th><th>관리</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">생성된 보고서가 없습니다.</td></tr>
-                            </tbody>
+                            <thead><tr><th>구분</th><th>대상 업체</th><th>보고서 명칭</th><th>발행일</th><th>담당자</th><th>관리</th></tr></thead>
+                            <tbody><tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">생성된 보고서가 없습니다.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -302,7 +295,7 @@
                             </div>
                             <div class="fund-card" style="margin-top: 20px;">
                                 <label class="fund-label">컨설턴트 추가 코멘트 (선택)</label>
-                                <textarea class="fund-textarea" rows="4" placeholder="재무 건전성 파악을 위해 총자산, 자본총계, 자본금, 영업이익 등을 입력해주시면 AI가 자본잠식 및 위험도를 더욱 정밀하게 분석합니다."></textarea>
+                                <textarea class="fund-textarea" rows="4" placeholder="AI가 참고할 컨설턴트님의 특별 의견을 적어주세요."></textarea>
                             </div>
                         </div>
                         <div class="fund-right fund-card">
@@ -315,6 +308,81 @@
                         </div>
                     </div>
                     <button class="btn-report-blue">◎ AI 경영진단보고서 생성하기</button>
+                </div>
+            </section>
+
+            <section id="finance" class="tab-content">
+                <div class="max-width-wrapper">
+                    <div class="page-header" style="margin-bottom: 20px;">
+                        <h2 class="page-title">상세 재무진단 데이터 입력</h2>
+                        <div class="header-btns">
+                            <button class="btn-primary" onclick="alert('재무 데이터가 저장되었습니다.')">저장하기</button>
+                        </div>
+                    </div>
+                    <div class="back-btn" onclick="showTab('dashboard')">← 뒤로가기</div>
+
+                    <div class="blue-banner" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+                        <h3>◎ 법인/심화용 상세 재무진단</h3>
+                        <p>재무상태표와 손익계산서의 핵심 지표를 입력하여 자본잠식, 유동성, 수익성을 정밀 타격 분석합니다.</p>
+                    </div>
+
+                    <div class="fund-card" style="margin-bottom: 30px;">
+                        <label class="fund-label">분석 대상 업체 선택</label>
+                        <select class="fund-select" style="width: 50%;"><option>업체를 먼저 선택하세요</option></select>
+                    </div>
+
+                    <div style="display: flex; gap: 20px;">
+                        
+                        <div class="fund-card" style="flex: 1; border-top: 4px solid #3b82f6;">
+                            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #1e293b;">📊 당기 (최근 결산 연도)</h3>
+                            
+                            <h4 style="font-size: 13px; color: #64748b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">[재무상태표 항목]</h4>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>총자산 (만원)</label><input type="text" class="money-format fin-input" id="ast_1" placeholder="자본 + 부채"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>유동자산 (만원)</label><input type="text" class="money-format fin-input" id="ca_1" placeholder="1년 내 현금화 가능 자산"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>총부채 (만원)</label><input type="text" class="money-format fin-input" id="lbl_1" placeholder="갚아야 할 빚 총액"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>유동부채 (만원)</label><input type="text" class="money-format fin-input" id="cl_1" placeholder="1년 내 갚을 빚"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>자본금 (만원)</label><input type="text" class="money-format fin-input" id="cap_1" placeholder="초기 액면 자본금"></div>
+                            <div class="form-group" style="margin-bottom: 25px;">
+                                <label>자본총계 (만원) <span style="color:#ef4444; font-weight:normal;">*마이너스면 완전잠식</span></label>
+                                <input type="text" class="money-format fin-input" id="eq_1" placeholder="총자산 - 총부채 (순자산)">
+                            </div>
+
+                            <h4 style="font-size: 13px; color: #64748b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">[손익계산서 항목]</h4>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>매출액 (만원)</label><input type="text" class="money-format fin-input" placeholder="연간 총 매출"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>영업이익 (만원)</label><input type="text" class="money-format fin-input" placeholder="매출 - 원가 - 판관비"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>당기순이익 (만원)</label><input type="text" class="money-format fin-input" placeholder="최종 마진"></div>
+                            
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px dashed #cbd5e1;">
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 5px;">👉 유동비율 (단기 상환 능력): <strong id="res_liq_1" style="color: #3b82f6;">- %</strong></p>
+                                <p style="font-size: 12px; color: #475569;">👉 자본잠식률: <strong id="res_imp_1" style="color: #ef4444;">- %</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="fund-card" style="flex: 1; border-top: 4px solid #94a3b8; background: #fcfcfc;">
+                            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #64748b;">📉 전기 (직전 연도)</h3>
+                            
+                            <h4 style="font-size: 13px; color: #64748b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">[재무상태표 항목]</h4>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>총자산 (만원)</label><input type="text" class="money-format fin-input" id="ast_2" placeholder="자본 + 부채"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>유동자산 (만원)</label><input type="text" class="money-format fin-input" id="ca_2" placeholder="1년 내 현금화 가능 자산"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>총부채 (만원)</label><input type="text" class="money-format fin-input" id="lbl_2" placeholder="갚아야 할 빚 총액"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>유동부채 (만원)</label><input type="text" class="money-format fin-input" id="cl_2" placeholder="1년 내 갚을 빚"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>자본금 (만원)</label><input type="text" class="money-format fin-input" id="cap_2" placeholder="초기 액면 자본금"></div>
+                            <div class="form-group" style="margin-bottom: 25px;"><label>자본총계 (만원)</label><input type="text" class="money-format fin-input" id="eq_2" placeholder="총자산 - 총부채 (순자산)"></div>
+
+                            <h4 style="font-size: 13px; color: #64748b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">[손익계산서 항목]</h4>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>매출액 (만원)</label><input type="text" class="money-format fin-input" placeholder="연간 총 매출"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>영업이익 (만원)</label><input type="text" class="money-format fin-input" placeholder="매출 - 원가 - 판관비"></div>
+                            <div class="form-group" style="margin-bottom: 15px;"><label>당기순이익 (만원)</label><input type="text" class="money-format fin-input" placeholder="최종 마진"></div>
+                            
+                             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px dashed #cbd5e1;">
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 5px;">👉 유동비율 (단기 상환 능력): <strong id="res_liq_2" style="color: #64748b;">- %</strong></p>
+                                <p style="font-size: 12px; color: #475569;">👉 자본잠식률: <strong id="res_imp_2" style="color: #64748b;">- %</strong></p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button class="btn-report-blue" style="margin-top: 30px; background: #1e293b; color: white;">◎ 입력된 데이터로 상세 재무진단 리포트 생성</button>
                 </div>
             </section>
 
