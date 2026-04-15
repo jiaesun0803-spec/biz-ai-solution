@@ -1,30 +1,88 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. URL 파라미터 확인 후 해당 탭 열기 (주소창 연동)
+    // 1. URL 파라미터 연동
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'dashboard';
     showTab(tabParam, false);
 
-    // 2. 숫자만 입력되게 강제 로직
-    const numberInputs = document.querySelectorAll('.number-only');
-    numberInputs.forEach(input => {
+    // 2. 일반 숫자만 입력
+    document.querySelectorAll('.number-only').forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
     });
 
-    // 3. 금액에 세자리마다 콤마(,) 찍어주는 로직 (.money-format)
-    const moneyInputs = document.querySelectorAll('.money-format');
-    moneyInputs.forEach(input => {
+    // 3. 금액 콤마 포맷
+    document.querySelectorAll('.money-format').forEach(input => {
         input.addEventListener('input', function() {
             let value = this.value.replace(/[^0-9]/g, '');
             this.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         });
     });
 
-    // 4. 부채 입력 시 실시간 합계 계산
-    const debtInputs = document.querySelectorAll('.debt-input');
-    debtInputs.forEach(input => {
+    // 4. 부채 실시간 합계
+    document.querySelectorAll('.debt-input').forEach(input => {
         input.addEventListener('input', calculateTotalDebt);
+    });
+
+    // ★ 5. 자동 하이픈 변환 기능들 ★
+
+    // [사업자등록번호] 000-00-00000 (10자리)
+    const bizNumber = document.getElementById('biz_number');
+    if(bizNumber) {
+        bizNumber.addEventListener('input', function() {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val.length < 4) this.value = val;
+            else if (val.length < 6) this.value = val.slice(0,3) + '-' + val.slice(3);
+            else this.value = val.slice(0,3) + '-' + val.slice(3,5) + '-' + val.slice(5,10);
+        });
+    }
+
+    // [법인등록번호] 000000-0000000 (13자리)
+    const corpNumber = document.getElementById('corp_number');
+    if(corpNumber) {
+        corpNumber.addEventListener('input', function() {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val.length < 7) this.value = val;
+            else this.value = val.slice(0,6) + '-' + val.slice(6,13);
+        });
+    }
+
+    // [날짜 포맷 공통] YYYY-MM-DD
+    const dateInputs = ['biz_date', 'rep_birth', 'write_date'];
+    dateInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('input', function() {
+                let val = this.value.replace(/[^0-9]/g, '');
+                if (val.length < 5) this.value = val;
+                else if (val.length < 7) this.value = val.slice(0,4) + '-' + val.slice(4);
+                else this.value = val.slice(0,4) + '-' + val.slice(4,6) + '-' + val.slice(6,8);
+            });
+        }
+    });
+
+    // [전화번호 공통] 일반전화(02 포함) 및 휴대폰 자동 인식
+    const phoneInputs = ['biz_phone', 'rep_phone'];
+    phoneInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('input', function() {
+                let val = this.value.replace(/[^0-9]/g, '');
+                let res = '';
+                if(val.startsWith('02')) { // 서울 지역번호 처리
+                    if(val.length < 3) res = val;
+                    else if(val.length < 6) res = val.slice(0,2) + '-' + val.slice(2);
+                    else if(val.length < 10) res = val.slice(0,2) + '-' + val.slice(2,5) + '-' + val.slice(5);
+                    else res = val.slice(0,2) + '-' + val.slice(2,6) + '-' + val.slice(6,10);
+                } else { // 기타 전화번호 (010, 031 등)
+                    if(val.length < 4) res = val;
+                    else if(val.length < 7) res = val.slice(0,3) + '-' + val.slice(3);
+                    else if(val.length < 11) res = val.slice(0,3) + '-' + val.slice(3,6) + '-' + val.slice(6);
+                    else res = val.slice(0,3) + '-' + val.slice(3,7) + '-' + val.slice(7,11);
+                }
+                this.value = res;
+            });
+        }
     });
 });
 
@@ -48,7 +106,6 @@ function showTab(tabId, updateUrl = true) {
     }
 }
 
-// 브라우저 뒤로가기 버튼 연동
 window.addEventListener('popstate', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'dashboard';
