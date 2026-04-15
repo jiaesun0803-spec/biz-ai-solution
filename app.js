@@ -1,17 +1,17 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. URL 파라미터 연동
+    // URL 파라미터 연동
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'dashboard';
     showTab(tabParam, false);
 
-    // 2. 일반 숫자만 입력
+    // 숫자만 입력
     document.querySelectorAll('.number-only').forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
     });
 
-    // 3. 금액 콤마 포맷
+    // 금액 콤마
     document.querySelectorAll('.money-format').forEach(input => {
         input.addEventListener('input', function() {
             let value = this.value.replace(/[^0-9]/g, '');
@@ -19,12 +19,12 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // 4. 부채 실시간 합계
+    // 부채 합계
     document.querySelectorAll('.debt-input').forEach(input => {
         input.addEventListener('input', calculateTotalDebt);
     });
 
-    // 5. 자동 하이픈 (사업자번호)
+    // 자동 하이픈 (사업자번호)
     const bizNumber = document.getElementById('biz_number');
     if(bizNumber) {
         bizNumber.addEventListener('input', function() {
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 6. 자동 하이픈 (법인번호)
+    // 자동 하이픈 (법인번호)
     const corpNumber = document.getElementById('corp_number');
     if(corpNumber) {
         corpNumber.addEventListener('input', function() {
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 7. 날짜 포맷 (YYYY-MM-DD)
+    // 자동 하이픈 (날짜)
     const dateInputs = ['biz_date', 'rep_birth', 'write_date'];
     dateInputs.forEach(id => {
         const el = document.getElementById(id);
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // 8. 전화번호 포맷
+    // 자동 하이픈 (전화번호)
     const phoneInputs = ['biz_phone', 'rep_phone'];
     phoneInputs.forEach(id => {
         const el = document.getElementById(id);
@@ -83,12 +83,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // 9. 시뮬레이터 슬라이더 연동
+    // 시뮬레이터 슬라이더
     const sliderScore = document.getElementById('slider-score');
     const valScore = document.getElementById('val-score');
-    if(sliderScore) {
-        sliderScore.addEventListener('input', function() { valScore.innerText = this.value + "점"; });
-    }
+    if(sliderScore) sliderScore.addEventListener('input', function() { valScore.innerText = this.value + "점"; });
 
     const sliderSales = document.getElementById('slider-sales');
     const valSales = document.getElementById('val-sales');
@@ -103,9 +101,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const sliderEmp = document.getElementById('slider-emp');
     const valEmp = document.getElementById('val-emp');
-    if(sliderEmp) {
-        sliderEmp.addEventListener('input', function() { valEmp.innerText = this.value + "명"; });
-    }
+    if(sliderEmp) sliderEmp.addEventListener('input', function() { valEmp.innerText = this.value + "명"; });
 });
 
 // 탭 전환
@@ -134,7 +130,7 @@ window.addEventListener('popstate', function() {
     showTab(tabParam, false);
 });
 
-// 각종 입력 잠금 토글 로직
+// 폼 로직
 function toggleCorpNumber() {
     const radios = document.getElementsByName('biz_type');
     const corpInput = document.getElementById('corp_number');
