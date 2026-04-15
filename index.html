@@ -32,9 +32,7 @@
 
     <div class="container" id="main-app" style="display: none;">
         <aside class="sidebar">
-            <div class="logo">
-                <img src="logo.png" alt="BizConsult 로고" id="sidebar-logo" style="max-width: 100%; height: auto;">
-            </div>
+            <div class="logo"><img src="logo.png" alt="BizConsult 로고" id="sidebar-logo" style="max-width: 100%; height: auto;"></div>
             <div class="user-profile">
                 <div class="profile-icon">👤</div>
                 <div><p class="user-name" id="display-user-name">컨설턴트</p><p class="user-role" id="display-user-dept">솔루션빌더스</p></div>
@@ -53,12 +51,7 @@
                     <li onclick="showTab('aiMarketing')" id="menu-aiMarketing"><span>📢</span> 마케팅제안</li>
                 </ul>
             </nav>
-            <div class="bottom-menu">
-                <ul>
-                    <li onclick="showTab('settings')" id="menu-settings"><span>⚙️</span> 설정</li>
-                    <li onclick="handleLogout()"><span>🚪</span> 로그아웃</li>
-                </ul>
-            </div>
+            <div class="bottom-menu"><ul><li onclick="showTab('settings')" id="menu-settings"><span>⚙️</span> 설정</li><li onclick="handleLogout()"><span>🚪</span> 로그아웃</li></ul></div>
             <div class="version-info">BizConsult v1.0</div>
         </aside>
 
@@ -209,12 +202,18 @@
                         <div class="form-section">
                             <div class="section-title"><h3>보유 인증</h3></div>
                             <div class="checkbox-grid" style="gap:15px;">
-                                <label class="small-label"><input type="checkbox"> 이노비즈</label><label class="small-label"><input type="checkbox"> 메인비즈</label>
-                                <label class="small-label"><input type="checkbox"> 벤처기업</label><label class="small-label"><input type="checkbox"> 기업부설연구소</label>
-                                <label class="small-label"><input type="checkbox"> 연구개발전담부서</label><label class="small-label"><input type="checkbox"> ISO 인증</label>
-                                <label class="small-label"><input type="checkbox"> 여성기업</label><label class="small-label"><input type="checkbox"> 장애인기업</label>
-                                <label class="small-label"><input type="checkbox"> 사회적기업</label><label class="small-label"><input type="checkbox"> 협동조합</label>
-                                <label class="small-label"><input type="checkbox"> 소공인</label><label class="small-label"><input type="checkbox"> 해당 없음</label>
+                                <label class="small-label"><input type="checkbox"> 중소기업(소상공인) 확인서</label>
+                                <label class="small-label"><input type="checkbox"> 창업확인서</label>
+                                <label class="small-label"><input type="checkbox"> 여성기업확인서</label>
+                                <label class="small-label"><input type="checkbox"> 소부장확인서</label>
+                                <label class="small-label"><input type="checkbox"> 뿌리기업확인서</label>
+                                <label class="small-label"><input type="checkbox"> 벤처인증</label>
+                                <label class="small-label"><input type="checkbox"> 메인비즈</label>
+                                <label class="small-label"><input type="checkbox"> 이노비즈</label>
+                                <label class="small-label"><input type="checkbox"> ISO인증</label>
+                                <label class="small-label"><input type="checkbox"> HACCP 인증</label>
+                                <label class="small-label"><input type="checkbox"> 연구소 보유</label>
+                                <label class="small-label"><input type="checkbox"> 연구개발전담부서 보유</label>
                             </div>
                         </div>
 
@@ -227,6 +226,42 @@
                                 <div class="form-group"><label>수익 모델</label><textarea rows="3" placeholder="수익 창출 구조"></textarea></div>
                                 <div class="form-group"><label>경쟁력 및 차별성</label><textarea rows="3" placeholder="타사 대비 강점"></textarea></div>
                                 <div class="form-group"><label>앞으로의 계획</label><textarea rows="3" placeholder="단기 및 중기 계획"></textarea></div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="section-title"><h3>자금계획</h3></div>
+                            <div class="grid-1">
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>필요자금</label>
+                                        <input type="text" class="money-format" placeholder="1억 입력=10000으로 입력">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: 10px;">
+                                    <label>자금사용계획 (상세)</label>
+                                    <textarea rows="3" placeholder="자금 사용의 구체적인 계획을 적어주세요."></textarea>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 20px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
+                                    <label style="margin-bottom: 10px;">자금용도</label>
+                                    <div class="checkbox-grid" style="gap: 15px;">
+                                        <label class="small-label"><input type="checkbox"> 운전자금</label>
+                                        <label class="small-label"><input type="checkbox"> 시설자금</label>
+                                        <label class="small-label"><input type="checkbox"> 수출자금</label>
+                                        <label class="small-label"><input type="checkbox"> 기타</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 10px;">
+                                    <label style="margin-bottom: 10px;">희망조달방법</label>
+                                    <div class="checkbox-grid" style="gap: 15px;">
+                                        <label class="small-label"><input type="checkbox"> 정부정책자금</label>
+                                        <label class="small-label"><input type="checkbox"> 정부지원금</label>
+                                        <label class="small-label"><input type="checkbox"> 은행조달(대표 신용대출)</label>
+                                        <label class="small-label"><input type="checkbox"> 기타</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -252,6 +287,10 @@
                     <h3 class="list-sub-title">🏢 등록된 업체 목록</h3>
                     <div class="list-card" style="margin-bottom: 40px;">
                         <table class="report-table"><thead id="company-list-head"><tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table>
+                    </div>
+                    <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
+                    <div class="list-card">
+                        <table class="report-table"><thead><tr><th>구분</th><th>대상 업체</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"><tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">생성된 보고서가 없습니다.</td></tr></tbody></table>
                     </div>
                 </div>
             </section>
