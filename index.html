@@ -34,7 +34,6 @@
         </aside>
 
         <main class="main-content">
-            
             <section id="dashboard" class="tab-content">
                 <h2 class="page-title">대시보드</h2>
                 <div class="welcome-banner">
@@ -87,19 +86,25 @@
                             <div class="form-group"><label>사업자등록번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
                             <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" class="number-only" placeholder="법인일 경우만 입력"></div>
 
-                            <div class="form-group"><label>업종</label><input type="text" placeholder="주요 업종 입력"></div>
+                            <div class="form-group">
+                                <label>업종</label>
+                                <select>
+                                    <option value="">선택하세요</option>
+                                    <option>제조업</option><option>IT 및 정보통신업</option><option>도매 및 소매업</option><option>음식점업</option><option>숙박업</option><option>교육업</option><option>건설업</option><option>서비스업</option><option>예술 및 스포츠 서비스업</option><option>기타</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>사업개시일</label><input type="text" placeholder="연도-월-일"></div>
                             <div class="form-group"><label>사업장 전화번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
                             <div class="form-group"><label>상시근로자 수</label><input type="text" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
 
                             <div class="form-group col-span-2"><label>사업장 주소</label>
                                 <div class="input-row">
-                                    <div class="radio-group"><label><input type="radio" name="rent_type"> 자가</label><label><input type="radio" name="rent_type"> 임대</label></div>
+                                    <div class="radio-group"><label><input type="radio" name="rent_type" value="자가" onchange="toggleRentInputs()"> 자가</label><label><input type="radio" name="rent_type" value="임대" onchange="toggleRentInputs()"> 임대</label></div>
                                     <input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;">
                                 </div>
                             </div>
-                            <div class="form-group"><label>보증금 (만원)</label><input type="text" class="money-format" placeholder="임대인 경우만 기재"></div>
-                            <div class="form-group"><label>월임대료 (만원)</label><input type="text" class="money-format" placeholder="임대인 경우만 기재"></div>
+                            <div class="form-group"><label>보증금 (만원)</label><input type="text" id="rent_deposit" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>월임대료 (만원)</label><input type="text" id="rent_monthly" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
                         </div>
                     </div>
 
@@ -123,8 +128,7 @@
                         </div>
 
                         <div class="split-half form-section">
-                            <div class="section-title"><h3>대표자 신용정보</h3></div>
-                            <div class="grid-2">
+                            <div class="section-title"><h3>신용정보</h3></div> <div class="grid-2">
                                 <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
                                 <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
                                 <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
@@ -133,11 +137,11 @@
                             
                             <div class="section-title" style="margin-top: 30px;"><h3>경력사항</h3></div>
                             <div class="grid-1">
-                                <div class="form-group"><label>주요 경력사항</label>
-                                    <div class="input-row"><input type="text" placeholder="경력기간 입력 (00.00.00~00.00.00)" style="width:40%;"><input type="text" placeholder="경력 1, 경력 2 등 상세 기술" style="flex:1;"></div>
+                                <div class="form-group">
+                                    <div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div>
                                 </div>
                                 <div class="form-group">
-                                    <div class="input-row"><input type="text" placeholder="경력기간 입력 (00.00.00~00.00.00)" style="width:40%;"><input type="text" placeholder="경력 1, 경력 2 등 상세 기술" style="flex:1;"></div>
+                                    <div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div>
                                 </div>
                             </div>
                         </div>
@@ -146,19 +150,23 @@
                     <div class="form-section">
                         <div class="section-title"><h3>매출현황 (만원)</h3></div>
                         <div class="grid-4">
-                            <div class="form-group"><label>금년매출 (전월말 기준)</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>25년도 매출</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>24년도 매출</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>23년도 매출</label><input type="text" class="money-format"></div>
+                            <div class="form-group"><label>금년매출 (전월말 기준)</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>25년도 매출</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>24년도 매출</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>23년도 매출</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
                             
                             <div class="form-group col-span-4"><label>수출여부</label>
-                                <div class="radio-group"><label><input type="radio" name="export"> 수출중</label><label><input type="radio" name="export"> 수출준비중</label><label><input type="radio" name="export"> 계획없음</label></div>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()" checked> 수출중</label>
+                                    <label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label>
+                                    <label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label>
+                                </div>
                             </div>
                             
-                            <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format"></div>
-                            <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format"></div>
+                            <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format export-money"></div>
+                            <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" id="export_25"></div>
+                            <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" id="export_24"></div>
+                            <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" id="export_23"></div>
                         </div>
                     </div>
 
@@ -181,18 +189,18 @@
                     <div class="form-section">
                         <div class="section-title"><h3>보유 인증</h3></div>
                         <div class="grid-4" style="gap:15px;">
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 이노비즈</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 메인비즈</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 벤처기업</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 기업부설연구소</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 연구개발전담부서</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> ISO 인증</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 여성기업</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 장애인기업</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 사회적기업</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 협동조합</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 소공인</label></div>
-                            <div class="form-group"><label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 해당 없음</label></div>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 이노비즈</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 메인비즈</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 벤처기업</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 기업부설연구소</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 연구개발전담부서</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> ISO 인증</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 여성기업</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 장애인기업</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 사회적기업</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 협동조합</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 소공인</label>
+                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 해당 없음</label>
                         </div>
                     </div>
 
@@ -208,23 +216,23 @@
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section" style="border-bottom: none;">
                         <div class="section-title"><h3>컨설턴트 메모 및 서명</h3></div>
                         <textarea rows="5" placeholder="기타 메모 및 특이사항을 자유롭게 입력하세요" style="width:100%; margin-bottom: 20px;"></textarea>
                         
                         <div class="grid-2">
                             <div class="form-group">
                                 <div class="input-row">
-                                    <div style="width: 120px; background:#f8f9fa; padding:12px; border:1px solid #d1d5db; border-radius:6px; font-weight:bold; font-size:13px; text-align:center;">담당 컨설턴트</div>
+                                    <div class="label-box">담당 컨설턴트</div>
                                     <input type="text" value="선지영" style="flex:1;">
-                                    <div style="width: 80px; background:#f8f9fa; padding:12px; border:1px solid #d1d5db; border-radius:6px; font-weight:bold; font-size:13px; text-align:center;">서명</div>
-                                    <div style="width: 60px; padding:12px; color:#a0aec0; text-align:center;">인</div>
+                                    <div class="label-box" style="width:80px;">서명</div>
+                                    <div class="sign-box">인</div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="input-row">
-                                    <div style="width: 120px; background:#f8f9fa; padding:12px; border:1px solid #d1d5db; border-radius:6px; font-weight:bold; font-size:13px; text-align:center;">작성일</div>
-                                    <input type="text" placeholder="연도-월-일" style="flex:1;">
+                                    <div class="label-box">작성일</div>
+                                    <input type="date" style="flex:1;">
                                 </div>
                             </div>
                         </div>
