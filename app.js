@@ -137,14 +137,10 @@ function updateCompanyLists() {
 /* =========================================
    3. 완벽한 업체 저장 및 불러오기 로직
 ========================================= */
-
 window.clearCompanyForm = function() {
     if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) {
         document.getElementById('companyForm').reset();
-        window.calculateTotalDebt();
-        window.toggleCorpNumber();
-        window.toggleRentInputs();
-        window.toggleExportInputs();
+        window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
     }
 }
 
@@ -157,10 +153,7 @@ window.loadCompanyData = function() {
     
     const debtInputs = document.querySelectorAll('.debt-input');
     if(debtInputs.length > 4) { debtInputs[0].value = "20,000"; debtInputs[3].value = "10,000"; debtInputs[4].value = "7,000"; }
-    
-    window.calculateTotalDebt(); 
-    window.toggleCorpNumber();
-    window.toggleExportInputs();
+    window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleExportInputs();
 }
 
 window.saveCompanyData = function() {
@@ -172,18 +165,10 @@ window.saveCompanyData = function() {
     const industry = document.getElementById('comp_industry') ? document.getElementById('comp_industry').value : "";
     
     const formElements = document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea');
-    const rawData = Array.from(formElements).map(el => ({
-        type: el.type,
-        value: el.value,
-        checked: el.checked
-    }));
+    const rawData = Array.from(formElements).map(el => ({ type: el.type, value: el.value, checked: el.checked }));
 
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const newCompany = {
-        name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-',
-        date: new Date().toISOString().split('T')[0],
-        rawData: rawData 
-    };
+    const newCompany = { name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-', date: new Date().toISOString().split('T')[0], rawData: rawData };
 
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany;
@@ -191,44 +176,28 @@ window.saveCompanyData = function() {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
     alert('업체의 모든 세부 정보가 성공적으로 저장되었습니다!');
-    
-    updateCompanyLists();
-    showTab('reportList');
+    updateCompanyLists(); showTab('reportList');
 }
 
 window.editCompany = function(name) {
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const comp = companies.find(c => c.name === name);
-    
     if(comp && comp.rawData) {
         const formElements = document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea');
-        
         comp.rawData.forEach((data, idx) => {
             if(formElements[idx]) {
-                if (formElements[idx].type === 'checkbox' || formElements[idx].type === 'radio') {
-                    formElements[idx].checked = data.checked;
-                } else {
-                    formElements[idx].value = data.value;
-                }
+                if (formElements[idx].type === 'checkbox' || formElements[idx].type === 'radio') { formElements[idx].checked = data.checked; } 
+                else { formElements[idx].value = data.value; }
             }
         });
-        
-        window.calculateTotalDebt(); 
-        window.toggleCorpNumber();
-        window.toggleRentInputs();
-        window.toggleExportInputs();
-        
-        showTab('company'); 
-        alert(`[${name}]의 상세 정보를 불러왔습니다. 내용을 수정하실 수 있습니다.`);
-    } else {
-        alert('저장된 상세 데이터가 없습니다.');
-    }
+        window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
+        showTab('company'); alert(`[${name}]의 상세 정보를 불러왔습니다. 내용을 수정하실 수 있습니다.`);
+    } else { alert('저장된 상세 데이터가 없습니다.'); }
 };
 
 /* =========================================
    4. 입력칸 잠금(Toggle) 및 자동계산 로직
 ========================================= */
-
 window.toggleExportInputs = function() {
     const radios = document.getElementsByName('export');
     const exportInputs = document.querySelectorAll('.export-money');
@@ -272,7 +241,7 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   5. AI API 연동 및 애니메이션 제어
+   5. ★ AI API 연동, 문체 제어 및 그래프 생성 ★
 ========================================= */
 
 async function callGeminiAPI(prompt) {
@@ -314,12 +283,13 @@ window.generateReport = async function(reportType, version, event) {
     const loadingOverlay = document.getElementById('ai-loading-overlay');
     loadingOverlay.style.display = 'flex';
 
+    // ★ 프롬프트: 서술형(줄글) 금지, 불릿(ul, li) 사용, 개조식 종결어미 강제 ★
     let reportTitle = "경영진단보고서";
     let systemInstruction = `
     너의 역할은 20년 경력의 날카롭고 통찰력 있는 '경영 컨설턴트'야. 
-    네가 컨설팅을 해줄 고객사(대상 기업)의 이름은 '${companyData.name}'이야. 
+    네가 컨설팅을 해줄 대상 기업명은 '${companyData.name}'이야. 
 
-    아래 제공된 [기업 데이터]를 분석해서 다음 8개 목차에 따라 상세한 리포트 본문을 작성해줘.
+    제공된 [기업 데이터]를 바탕으로 1부터 8까지의 목차에 따라 아주 전문적이고 풍성한 리포트 본문을 작성해.
     
     [작성 목차]
     1. 경영진단 개요
@@ -331,11 +301,13 @@ window.generateReport = async function(reportType, version, event) {
     7. 핵심 문제점 및 리스크
     8. 개선 방향 및 로드맵
 
-    [형식 조건 - 매우 중요]
-    - 반드시 각 목차의 제목은 <h3> 태그를 사용할 것
-    - 각 목차 아래에는 <p> 태그로 3~4문장 이상의 풍부한 분석 내용을 작성할 것. 
+    [★형식 조건 - 매우 중요★]
+    - 각 목차의 제목은 <h3> 태그를 사용할 것.
+    - 절대 서술형 줄글(<p>)로 길게 쓰지 마. 반드시 <ul>과 <li> 태그를 사용하여 글머리 기호(불릿) 형태로 요점을 정리할 것.
+    - 모든 문장의 끝맺음은 '~함', '~임', '~있음', '~됨' 등 간결한 개조식(음/슴체)으로 마무리할 것 (예: "매출이 상승함.", "리스크가 존재함.").
+    - 각 목차별로 최소 3개 이상의 <li> 항목을 작성하여 내용이 풍성해 보이게 할 것.
     - 문서 최하단에는 반드시 <div class="alert-box ${version === 'client' ? 'blue' : 'green'}"> 태그 안에 2~3줄의 핵심 요약(제언)을 넣을 것.
-    - 표(Table)는 절대 그리지 마.
+    - 표(Table)는 시스템이 그릴 것이므로, 너는 표를 그리지 마.
     - 마크다운 기호(\`\`\`html 등)는 절대 출력하지 마.
     `;
 
@@ -359,6 +331,7 @@ window.generateReport = async function(reportType, version, event) {
 
         let titleAdd = version === 'client' ? "<span style='color:#334155;'>(업체전달용)</span>" : "<span style='color:#ef4444;'>(컨설턴트 피드백용)</span>";
         
+        // ★ HTML에 차트(Canvas) 영역 추가 ★
         contentArea.innerHTML = `
             <div class="paper-inner">
                 <h1 style="text-align:center; font-size: 28px; margin-bottom: 50px;">경영진단보고서 ${titleAdd}</h1>
@@ -369,9 +342,50 @@ window.generateReport = async function(reportType, version, event) {
                     <tr><th>업종</th><td>${companyData.industry || '-'}</td><th>데이터기준</th><td>최근 입력일 기준</td></tr>
                 </table>
 
+                <div class="chart-container">
+                    <div class="chart-box"><canvas id="report-radar-chart"></canvas></div>
+                    <div class="chart-box"><canvas id="report-bar-chart"></canvas></div>
+                </div>
+
                 ${cleanHTML}
             </div>
         `;
+
+        // ★ Chart.js를 이용해 그래프 그리기 ★
+        setTimeout(() => {
+            // 1. 역량 진단 레이더 차트
+            const radarCtx = document.getElementById('report-radar-chart').getContext('2d');
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'],
+                    datasets: [{
+                        label: '기업 역량 진단 스코어',
+                        data: [75, 90, 85, 65, 80], // 임의의 예시 데이터
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: '#3b82f6',
+                        pointBackgroundColor: '#1e3a8a'
+                    }]
+                },
+                options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false }
+            });
+
+            // 2. 매출 추이 막대 그래프
+            const barCtx = document.getElementById('report-bar-chart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['23년도', '24년도', '25년도', '금년(예상)'],
+                    datasets: [{
+                        label: '매출 추이 (만원)',
+                        data: [10000, 35000, 78000, 120000], // 임의의 예시 데이터
+                        backgroundColor: 'rgba(22, 163, 74, 0.7)',
+                        borderRadius: 4
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }, 100);
     }
 }
 
