@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", function() {
     window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
 });
 
+/* =========================================
+   1. 인증 및 설정 로직
+========================================= */
 window.devBypassLogin = function() {
     const testUser = { email: 'test@biz.com', pw: '1234', name: '선지영', dept: '솔루션빌더스(테스트)', apiKey: '' };
     let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
@@ -88,6 +91,9 @@ function updateCompanyLists() {
     }
 }
 
+/* =========================================
+   3. 업체 저장 및 불러오기 (데이터 오류 수정)
+========================================= */
 window.clearCompanyForm = function() {
     if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); }
 }
@@ -99,13 +105,13 @@ window.loadCompanyData = function() {
     if(document.getElementById('biz_number')) document.getElementById('biz_number').value = "732-86-03582";
     if(document.getElementById('comp_industry')) document.getElementById('comp_industry').value = "제조업"; 
     
-    // 매출 샘플 데이터 할당
+    // ★ 매출 샘플 데이터 강제 주입 ★
     const moneyInputs = document.querySelectorAll('.money-format');
-    if(moneyInputs.length > 3) {
-        moneyInputs[0].value = "11,000"; // 금년매출
-        moneyInputs[1].value = "138,000"; // 25년매출
-        moneyInputs[2].value = "114,000"; // 24년매출
-        moneyInputs[3].value = "50,000"; // 23년매출
+    if(moneyInputs.length > 5) {
+        moneyInputs[2].value = "11,000"; // 금년매출
+        moneyInputs[3].value = "138,000"; // 25년매출
+        moneyInputs[4].value = "114,000"; // 24년매출
+        moneyInputs[5].value = "50,000"; // 23년매출
     }
 
     const debtInputs = document.querySelectorAll('.debt-input');
@@ -120,19 +126,25 @@ window.saveCompanyData = function() {
     const bizNum = document.getElementById('biz_number') ? document.getElementById('biz_number').value : "";
     const industry = document.getElementById('comp_industry') ? document.getElementById('comp_industry').value : "";
     
-    // ★ 실제 매출 데이터 추출 (차트용) ★
+    // ★ 실제 매출 데이터 추출 완벽 수정 (0, 1번은 보증금/월세이므로 2, 3, 4, 5번 인덱스 추출) ★
     const moneyInputs = document.querySelectorAll('.money-format');
     let realRevenue = {
-        cur: parseInt(moneyInputs[0].value.replace(/,/g, '')) || 0,
-        y25: parseInt(moneyInputs[1].value.replace(/,/g, '')) || 0,
-        y24: parseInt(moneyInputs[2].value.replace(/,/g, '')) || 0,
-        y23: parseInt(moneyInputs[3].value.replace(/,/g, '')) || 0
+        cur: parseInt(moneyInputs[2] ? moneyInputs[2].value.replace(/,/g, '') : '0') || 0,
+        y25: parseInt(moneyInputs[3] ? moneyInputs[3].value.replace(/,/g, '') : '0') || 0,
+        y24: parseInt(moneyInputs[4] ? moneyInputs[4].value.replace(/,/g, '') : '0') || 0,
+        y23: parseInt(moneyInputs[5] ? moneyInputs[5].value.replace(/,/g, '') : '0') || 0
     };
 
     const formElements = document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea');
     const rawData = Array.from(formElements).map(el => ({ type: el.type, value: el.value, checked: el.checked }));
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const newCompany = { name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-', date: new Date().toISOString().split('T')[0], revenueData: realRevenue, rawData: rawData };
+    
+    const newCompany = { 
+        name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-', 
+        date: new Date().toISOString().split('T')[0], 
+        revenueData: realRevenue, // 차트용 매출 데이터 저장
+        rawData: rawData 
+    };
 
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
@@ -202,7 +214,7 @@ window.generateReport = async function(reportType, version, event) {
     const loadingOverlay = document.getElementById('ai-loading-overlay');
     loadingOverlay.style.display = 'flex';
 
-    // ★ 프롬프트: 개조식(~함/~임) 강제, 제공된 수치 인용, 표 금지 ★
+    // ★ 프롬프트 통제 강화: ** 사용 금지 추가 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
 
@@ -218,9 +230,10 @@ window.generateReport = async function(reportType, version, event) {
 
     [★작성 규칙 - 절대 준수★]
     - 제공된 [기업 데이터]의 수치(매출, 부채 등)를 절대 임의로 변경하거나 지어내지 말고 있는 그대로 인용할 것.
-    - 각 목차의 제목은 <h3> 태그를 사용할 것. (예: <h3>1. 경영진단 개요</h3>) - 이 목차명을 정확히 출력해야 시스템이 차트를 삽입할 수 있음.
+    - 각 목차의 제목은 <h3> 태그를 사용할 것. (예: <h3>1. 경영진단 개요</h3>)
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 깔끔하게 정리할 것.
     - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식(음/슴체)으로 맺을 것. 서술형(~습니다) 금지.
+    - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
     - 표(Table)는 절대 그리지 말 것.
     - 마크다운 기호(\`\`\`html 등)는 절대 출력하지 말 것.
     `;
@@ -239,9 +252,10 @@ window.generateReport = async function(reportType, version, event) {
         tabContent.querySelector('[id$="-input-step"]').style.display = 'none';
         tabContent.querySelector('[id$="-result-step"]').style.display = 'block';
 
-        let cleanHTML = aiResponse.replace(/```html|```/g, ''); 
+        // ★ 마크다운과 ** 기호 완전 삭제 정규식 처리 ★
+        let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
         
-        // ★ 중간 차트 삽입 로직: AI가 생성한 특정 목차 <h3> 아래에 캔버스를 꽂아 넣습니다 ★
+        // 차트 삽입 로직
         cleanHTML = cleanHTML.replace('<h3>2. 기업 현황 분석</h3>', '<h3>2. 기업 현황 분석</h3>\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
         cleanHTML = cleanHTML.replace('<h3>3. 재무 현황 분석</h3>', '<h3>3. 재무 현황 분석</h3>\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
 
@@ -261,7 +275,7 @@ window.generateReport = async function(reportType, version, event) {
             </div>
         `;
 
-        // 차트 렌더링 (DOM 요소가 생긴 후 그려야 하므로 setTimeout 사용)
+        // 차트 그리기
         setTimeout(() => {
             const radarEl = document.getElementById('report-radar-chart');
             if (radarEl) {
@@ -271,7 +285,7 @@ window.generateReport = async function(reportType, version, event) {
                         labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'],
                         datasets: [{
                             label: '기업 역량 진단 스코어',
-                            data: [75, 90, 85, 65, 80], // 역량 스코어는 샘플 유지
+                            data: [75, 90, 85, 65, 80],
                             backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a'
                         }]
                     },
@@ -287,7 +301,7 @@ window.generateReport = async function(reportType, version, event) {
                         labels: ['23년도', '24년도', '25년도', '금년(현재)'],
                         datasets: [{
                             label: '매출 현황 (단위: 만원)',
-                            // ★ 폼에서 긁어온 실제 매출 데이터 반영 ★
+                            // ★ 폼에서 긁어온 실제 매출 데이터가 여기에 꽂힙니다! ★
                             data: [rev.y23, rev.y24, rev.y25, rev.cur], 
                             backgroundColor: 'rgba(22, 163, 74, 0.7)', borderRadius: 4
                         }]
