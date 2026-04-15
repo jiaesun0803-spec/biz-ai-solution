@@ -1,3 +1,4 @@
+// 데이터베이스 키 (localStorage)
 const DB_USERS = 'biz_users'; 
 const DB_SESSION = 'biz_session'; 
 const STORAGE_KEY = 'biz_consult_companies';
@@ -8,7 +9,33 @@ document.addEventListener("DOMContentLoaded", function() {
     showTab(urlParams.get('tab') || 'dashboard', false);
 });
 
-/* --- 인증 및 설정 관련 로직 --- */
+/* =========================================
+   1. 인증 및 프리패스 로직
+========================================= */
+
+// ★ 개발용 프리패스 (버튼 클릭 시 작동) ★
+function devBypassLogin() {
+    const testUser = { 
+        email: 'test@biz.com', 
+        pw: '1234', 
+        name: '선지영', 
+        dept: '솔루션빌더스(테스트)', 
+        apiKey: '' // API 키는 접속 후 설정 탭에서 입력하세요
+    };
+    
+    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
+    
+    if(!users.find(u => u.email === testUser.email)) {
+        users.push(testUser);
+        localStorage.setItem(DB_USERS, JSON.stringify(users));
+    }
+    
+    localStorage.setItem(DB_SESSION, JSON.stringify(testUser));
+    checkAuth(); 
+    
+    alert('🛠️ 테스트 계정으로 강제 접속되었습니다!\n\n(※ AI 리포트 생성을 위해 설정 탭에서 API Key를 넣어주세요.)');
+}
+
 function checkAuth() {
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
     const authOverlay = document.getElementById('auth-container');
@@ -59,6 +86,10 @@ function handleLogin() {
 
 function handleLogout() { localStorage.removeItem(DB_SESSION); location.reload(); }
 
+/* =========================================
+   2. 설정 관련 로직
+========================================= */
+
 function loadUserProfile() {
     const user = JSON.parse(localStorage.getItem(DB_SESSION));
     if (!user) return;
@@ -103,6 +134,10 @@ function savePasswordSettings() {
     alert('비밀번호가 변경되었습니다.');
 }
 
+/* =========================================
+   3. 탭 이동 및 데이터 불러오기
+========================================= */
+
 function showTab(tabId, updateUrl = true) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.menu li, .bottom-menu li').forEach(item => item.classList.remove('active'));
@@ -138,9 +173,10 @@ function updateCompanyLists() {
     }
 }
 
-/* --- 입력 폼 계산 및 하이픈 로직 --- */
+/* =========================================
+   4. 폼 동작 및 하이픈/콤마 로직
+========================================= */
 
-// ★ 부채 합계 계산 전역 함수 (안정성 강화) ★
 window.calculateTotalDebt = function() {
     let total = 0;
     document.querySelectorAll('.debt-input').forEach(input => {
@@ -148,9 +184,7 @@ window.calculateTotalDebt = function() {
         if (cleanVal) total += parseInt(cleanVal, 10);
     });
     const totalEl = document.getElementById('total-debt');
-    if(totalEl) {
-        totalEl.innerText = total.toLocaleString('ko-KR');
-    }
+    if(totalEl) totalEl.innerText = total.toLocaleString('ko-KR');
 };
 
 function initInputHandlers() {
@@ -164,7 +198,6 @@ function initInputHandlers() {
         });
     });
     
-    // ★ 부채 입력칸에 이벤트 리스너 확실히 부착 ★
     document.querySelectorAll('.debt-input').forEach(input => {
         input.addEventListener('input', window.calculateTotalDebt);
     });
@@ -237,7 +270,7 @@ function loadCompanyData() {
         debtInputs[0].value = "20,000"; 
         debtInputs[3].value = "10,000"; 
         debtInputs[4].value = "7,000";  
-        window.calculateTotalDebt(); // ★ 테스트 데이터 로드 시 합산 강제 실행 ★
+        window.calculateTotalDebt(); 
     }
 }
 
@@ -270,7 +303,10 @@ function toggleCorpNumber() { /* 로직 생략 */ }
 function toggleRentInputs() { /* 로직 생략 */ }
 function toggleExportInputs() { /* 로직 생략 */ }
 
-/* --- AI 및 리포트 관련 로직 --- */
+/* =========================================
+   5. AI API 연동 및 리포트 생성 로직
+========================================= */
+
 async function callGeminiAPI(prompt) {
     const session = JSON.parse(localStorage.getItem('biz_session'));
     const apiKey = session ? session.apiKey : null;
@@ -319,7 +355,7 @@ async function generateReport(reportType, version, event) {
 
     let reportTitle = "경영진단보고서";
     let systemInstruction = `너는 20년 경력의 전문 경영컨설턴트야. 다음 데이터를 바탕으로 [1.개요, 2.현황분석, 3.재무진단, 4.전략, 5.운영, 6.IT활용, 7.리스크, 8.로드맵] 순서로 상세한 보고서를 작성해줘. 
-    반드시 HTML 태그(h3, p, table, div class='alert-box blue' 또는 'alert-box green')만을 사용해서 시각적으로 구성해. 마크다운 기호(```html)는 절대 쓰지 마.`;
+    반드시 HTML 태그(h3, p, table, div class='alert-box blue' 또는 'alert-box green')만을 사용해서 시각적으로 구성해. 마크다운 기호(\`\`\`html)는 절대 쓰지 마.`;
 
     const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(companyData)}\n\n출력 목적: ${version === 'client' ? '업체 전달용(격려 및 긍정적 분석 위주)' : '컨설턴트 내부 피드백용(냉정하고 날카로운 리스크 지적 위주)'}`;
 
@@ -334,7 +370,6 @@ async function generateReport(reportType, version, event) {
         tabContent.querySelector('[id$="-result-step"]').style.display = 'block';
 
         const contentArea = tabContent.querySelector('[id$="-content-area"]');
-        // AI가 마크다운 코드블록을 넣었을 경우 제거하는 정규식
         const cleanHTML = aiResponse.replace(/```html|```/g, ''); 
 
         contentArea.innerHTML = `
@@ -352,31 +387,4 @@ async function generateReport(reportType, version, event) {
 function backToInput(tab) {
     document.getElementById(tab + '-input-step').style.display = 'block';
     document.getElementById(tab + '-result-step').style.display = 'none';
-}
-
-
-/* ★ 개발용 프리패스 (테스트 계정 자동 생성 및 로그인) ★ */
-function devBypassLogin() {
-    // 테스트용 임시 계정 정보 생성
-    const testUser = { 
-        email: 'test@biz.com', 
-        pw: '1234', 
-        name: '선지영', 
-        dept: '솔루션빌더스(테스트)', 
-        apiKey: '' // API 키는 설정 탭에서 따로 넣어주세요
-    };
-    
-    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-    
-    // DB에 테스트 계정이 없으면 몰래 추가해둠
-    if(!users.find(u => u.email === testUser.email)) {
-        users.push(testUser);
-        localStorage.setItem(DB_USERS, JSON.stringify(users));
-    }
-    
-    // 바로 로그인 상태(Session)로 만듦
-    localStorage.setItem(DB_SESSION, JSON.stringify(testUser));
-    checkAuth(); // 화면 전환
-    
-    alert('🛠️ 테스트 계정으로 강제 접속되었습니다!\n\n(※ AI 리포트 테스트를 위해 설정 탭에서 API Key를 다시 한 번 확인해 주세요.)');
 }
