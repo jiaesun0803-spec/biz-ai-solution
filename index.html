@@ -83,8 +83,8 @@
                             <div class="form-group"><label>사업자유형</label>
                                 <div class="radio-group"><label><input type="radio" name="biz_type" value="법인" onchange="toggleCorpNumber()"> 법인사업자</label><label><input type="radio" name="biz_type" value="개인" onchange="toggleCorpNumber()"> 개인사업자</label></div>
                             </div>
-                            <div class="form-group"><label>사업자등록번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
-                            <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" class="number-only" placeholder="법인일 경우만 입력"></div>
+                            <div class="form-group"><label>사업자등록번호</label><input type="text" id="biz_number" placeholder="숫자만 입력 (자동 하이픈)" maxlength="12"></div>
+                            <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" placeholder="법인일 경우만 입력" maxlength="14"></div>
 
                             <div class="form-group">
                                 <label>업종</label>
@@ -93,8 +93,8 @@
                                     <option>제조업</option><option>IT 및 정보통신업</option><option>도매 및 소매업</option><option>음식점업</option><option>숙박업</option><option>교육업</option><option>건설업</option><option>서비스업</option><option>예술 및 스포츠 서비스업</option><option>기타</option>
                                 </select>
                             </div>
-                            <div class="form-group"><label>사업개시일</label><input type="text" placeholder="연도-월-일"></div>
-                            <div class="form-group"><label>사업장 전화번호</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
+                            <div class="form-group"><label>사업개시일</label><input type="text" id="biz_date" placeholder="YYYY-MM-DD" maxlength="10"></div>
+                            <div class="form-group"><label>사업장 전화번호</label><input type="text" id="biz_phone" placeholder="숫자만 입력" maxlength="13"></div>
                             <div class="form-group"><label>상시근로자 수</label><input type="text" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
 
                             <div class="form-group col-span-2"><label>사업장 주소</label>
@@ -113,14 +113,14 @@
                             <div class="section-title"><h3>대표자 정보</h3></div>
                             <div class="grid-2">
                                 <div class="form-group"><label>대표자명</label><input type="text" placeholder="대표자명을 입력하세요"></div>
-                                <div class="form-group"><label>생년월일</label><input type="text" placeholder="연도-월-일"></div>
+                                <div class="form-group"><label>생년월일</label><input type="text" id="rep_birth" placeholder="YYYY-MM-DD" maxlength="10"></div>
                                 <div class="form-group col-span-2"><label>거주지 주소</label>
                                     <div class="input-row">
                                         <div class="radio-group"><label><input type="radio" name="home_rent"> 자가</label><label><input type="radio" name="home_rent"> 임대</label></div>
                                         <input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;">
                                     </div>
                                 </div>
-                                <div class="form-group"><label>연락처</label><input type="text" class="number-only" placeholder="숫자만 입력"></div>
+                                <div class="form-group"><label>연락처</label><input type="text" id="rep_phone" placeholder="숫자만 입력" maxlength="13"></div>
                                 <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label><label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label></div></div>
                                 <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
                                 <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
@@ -128,7 +128,8 @@
                         </div>
 
                         <div class="split-half form-section">
-                            <div class="section-title"><h3>신용정보</h3></div> <div class="grid-2">
+                            <div class="section-title"><h3>신용정보</h3></div>
+                            <div class="grid-2">
                                 <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
                                 <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
                                 <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
@@ -232,7 +233,7 @@
                             <div class="form-group">
                                 <div class="input-row">
                                     <div class="label-box">작성일</div>
-                                    <input type="date" style="flex:1;">
+                                    <input type="text" id="write_date" placeholder="YYYY-MM-DD" style="flex:1;" maxlength="10">
                                 </div>
                             </div>
                         </div>
