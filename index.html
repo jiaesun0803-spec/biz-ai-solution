@@ -17,7 +17,6 @@
                 <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="••••••••"></div>
                 <button class="btn-primary auth-btn" onclick="handleLogin()">로그인</button>
                 <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top: 10px; font-size: 13px; background: #f8fafc; color: #475569;">🛠️ 테스트 계정으로 바로 접속 (개발용)</button>
-
                 <p class="auth-footer">계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입</span></p>
             </div>
             <div id="signup-form-area" style="display: none;">
@@ -95,7 +94,8 @@
                     <div class="page-header">
                         <h2 class="page-title">업체 정보 등록</h2>
                         <div class="header-btns">
-                            <button class="btn-outline" onclick="loadCompanyData()">기존 업체 불러오기</button>
+                            <button class="btn-outline" onclick="clearCompanyForm()" style="color:#ea580c; border-color:#ea580c;">초기화</button>
+                            <button class="btn-outline" onclick="loadCompanyData()">기존 업체 불러오기(샘플)</button>
                             <button class="btn-outline" onclick="window.print()">프린트하기</button>
                             <button class="btn-primary" onclick="saveCompanyData()">저장하기</button>
                         </div>
@@ -138,7 +138,7 @@
                                         <div class="form-group"><label>생년월일</label><input type="text" id="rep_birth" placeholder="YYYY-MM-DD" maxlength="10"></div>
                                         <div class="form-group col-span-2"><label>거주지 주소</label>
                                             <div class="input-row">
-                                                <div class="radio-group"><label><input type="radio" name="home_rent"> 자가</label><label><input type="radio" name="home_rent"> 임대</label></div>
+                                                <div class="radio-group"><label><input type="radio" name="home_rent" value="자가"> 자가</label><label><input type="radio" name="home_rent" value="임대"> 임대</label></div>
                                                 <input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;">
                                             </div>
                                         </div>
@@ -147,7 +147,7 @@
                                 <div style="margin-top: auto;">
                                     <div class="grid-2">
                                         <div class="form-group"><label>연락처</label><input type="text" id="rep_phone" placeholder="숫자만 입력" maxlength="13"></div>
-                                        <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="checkbox"> SKT</label><label><input type="checkbox"> KT</label><label><input type="checkbox"> LGU+</label><label><input type="checkbox"> 알뜰폰</label></div></div>
+                                        <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="radio" name="telecom" value="SKT"> SKT</label><label><input type="radio" name="telecom" value="KT"> KT</label><label><input type="radio" name="telecom" value="LGU+"> LGU+</label><label><input type="radio" name="telecom" value="알뜰폰"> 알뜰폰</label></div></div>
                                         <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
                                         <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
                                     </div>
@@ -158,9 +158,9 @@
                                 <div>
                                     <div class="section-title"><h3>신용정보</h3></div>
                                     <div class="grid-2">
-                                        <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
+                                        <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="radio" name="fin_over" value="없음"> 없음</label><label><input type="radio" name="fin_over" value="있음"> 있음</label></div></div>
                                         <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
-                                        <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="checkbox"> 없음</label><label><input type="checkbox"> 있음</label></div></div>
+                                        <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="radio" name="tax_over" value="없음"> 없음</label><label><input type="radio" name="tax_over" value="있음"> 있음</label></div></div>
                                         <div class="form-group"><label>NICE 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
                                     </div>
                                 </div>
@@ -182,7 +182,7 @@
                                 <div class="form-group"><label>24년도 매출</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group"><label>23년도 매출</label><input type="text" class="money-format" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group col-span-4"><label>수출여부</label>
-                                    <div class="radio-group"><label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()" checked> 수출중</label><label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label><label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label></div>
+                                    <div class="radio-group"><label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()"> 수출중</label><label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label><label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label></div>
                                 </div>
                                 <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format export-money" placeholder="1억 입력=10000으로 입력"></div>
                                 <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" id="export_25" placeholder="1억 입력=10000으로 입력"></div>
@@ -209,18 +209,12 @@
                         <div class="form-section">
                             <div class="section-title"><h3>보유 인증</h3></div>
                             <div class="checkbox-grid" style="gap:15px;">
-                                <label class="small-label"><input type="checkbox"> 이노비즈</label>
-                                <label class="small-label"><input type="checkbox"> 메인비즈</label>
-                                <label class="small-label"><input type="checkbox"> 벤처기업</label>
-                                <label class="small-label"><input type="checkbox"> 기업부설연구소</label>
-                                <label class="small-label"><input type="checkbox"> 연구개발전담부서</label>
-                                <label class="small-label"><input type="checkbox"> ISO 인증</label>
-                                <label class="small-label"><input type="checkbox"> 여성기업</label>
-                                <label class="small-label"><input type="checkbox"> 장애인기업</label>
-                                <label class="small-label"><input type="checkbox"> 사회적기업</label>
-                                <label class="small-label"><input type="checkbox"> 협동조합</label>
-                                <label class="small-label"><input type="checkbox"> 소공인</label>
-                                <label class="small-label"><input type="checkbox"> 해당 없음</label>
+                                <label class="small-label"><input type="checkbox"> 이노비즈</label><label class="small-label"><input type="checkbox"> 메인비즈</label>
+                                <label class="small-label"><input type="checkbox"> 벤처기업</label><label class="small-label"><input type="checkbox"> 기업부설연구소</label>
+                                <label class="small-label"><input type="checkbox"> 연구개발전담부서</label><label class="small-label"><input type="checkbox"> ISO 인증</label>
+                                <label class="small-label"><input type="checkbox"> 여성기업</label><label class="small-label"><input type="checkbox"> 장애인기업</label>
+                                <label class="small-label"><input type="checkbox"> 사회적기업</label><label class="small-label"><input type="checkbox"> 협동조합</label>
+                                <label class="small-label"><input type="checkbox"> 소공인</label><label class="small-label"><input type="checkbox"> 해당 없음</label>
                             </div>
                         </div>
 
@@ -240,12 +234,8 @@
                             <div class="section-title"><h3>컨설턴트 메모 및 서명</h3></div>
                             <textarea rows="5" placeholder="기타 메모 및 특이사항을 자유롭게 입력하세요" style="width:100%; margin-bottom: 20px;"></textarea>
                             <div class="grid-2">
-                                <div class="form-group">
-                                    <div class="input-row"><div class="label-box">담당 컨설턴트</div><input type="text" value="선지영" style="flex:1;"><div class="label-box" style="width:80px;">서명</div><div class="sign-box">인</div></div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="input-row"><div class="label-box">작성일</div><input type="text" id="write_date" placeholder="YYYY-MM-DD" style="flex:1;" maxlength="10"></div>
-                                </div>
+                                <div class="form-group"><div class="input-row"><div class="label-box">담당 컨설턴트</div><input type="text" value="선지영" style="flex:1;"><div class="label-box" style="width:80px;">서명</div><div class="sign-box">인</div></div></div>
+                                <div class="form-group"><div class="input-row"><div class="label-box">작성일</div><input type="text" id="write_date" placeholder="YYYY-MM-DD" style="flex:1;" maxlength="10"></div></div>
                             </div>
                         </div>
 
@@ -262,10 +252,6 @@
                     <h3 class="list-sub-title">🏢 등록된 업체 목록</h3>
                     <div class="list-card" style="margin-bottom: 40px;">
                         <table class="report-table"><thead id="company-list-head"><tr><th>업체명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table>
-                    </div>
-                    <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
-                    <div class="list-card">
-                        <table class="report-table"><thead><tr><th>구분</th><th>대상 업체</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"><tr><td colspan="5" style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">생성된 보고서가 없습니다.</td></tr></tbody></table>
                     </div>
                 </div>
             </section>
@@ -302,119 +288,46 @@
                 </div>
             </section>
 
-            <section id="finance" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">상세 재무진단 데이터 입력</h2><div class="header-btns"><button class="btn-primary" onclick="alert('재무 데이터가 저장되었습니다.')">저장하기</button></div></div>
-                    <div class="blue-banner" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);"><h3>◎ 법인/심화용 상세 재무진단</h3><p>재무상태표와 손익계산서의 핵심 지표를 입력하여 자본잠식, 유동성, 수익성을 정밀 분석합니다.</p></div>
-                    <div class="fund-card" style="margin-bottom: 30px;"><label class="fund-label">분석 대상 업체 선택</label><select class="fund-select company-dropdown" id="finance-company-select"><option value="">업체를 선택하세요</option></select></div>
-                    <div style="display: flex; gap: 20px;">
-                        <div class="fund-card" style="flex: 1; border-top: 4px solid #3b82f6;"><h3 style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">📊 당기 (최근 결산 연도)</h3><div class="form-group" style="margin-bottom: 15px;"><label>총자산 (만원)</label><input type="text" class="money-format fin-input" id="ast_1" placeholder="자본 + 부채"></div><div class="form-group" style="margin-bottom: 15px;"><label>유동자산 (만원)</label><input type="text" class="money-format fin-input" id="ca_1" placeholder="1년 내 현금화 가능 자산"></div><div class="form-group" style="margin-bottom: 15px;"><label>총부채 (만원)</label><input type="text" class="money-format fin-input" id="lbl_1" placeholder="갚아야 할 빚 총액"></div><div class="form-group" style="margin-bottom: 15px;"><label>유동부채 (만원)</label><input type="text" class="money-format fin-input" id="cl_1" placeholder="1년 내 갚을 빚"></div><div class="form-group" style="margin-bottom: 15px;"><label>자본금 (만원)</label><input type="text" class="money-format fin-input" id="cap_1" placeholder="초기 액면 자본금"></div><div class="form-group" style="margin-bottom: 25px;"><label>자본총계 (만원)</label><input type="text" class="money-format fin-input" id="eq_1" placeholder="순자산"></div><div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;"><p style="font-size: 12px;">👉 유동비율: <strong id="res_liq_1" style="color: #3b82f6;">- %</strong></p><p style="font-size: 12px;">👉 자본잠식률: <strong id="res_imp_1" style="color: #ef4444;">- %</strong></p></div></div>
-                        <div class="fund-card" style="flex: 1; border-top: 4px solid #94a3b8;"><h3 style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">📉 전기 (직전 연도)</h3><div class="form-group" style="margin-bottom: 15px;"><label>총자산 (만원)</label><input type="text" class="money-format fin-input" id="ast_2" placeholder="자본 + 부채"></div><div class="form-group" style="margin-bottom: 15px;"><label>유동자산 (만원)</label><input type="text" class="money-format fin-input" id="ca_2" placeholder="1년 내 현금화 가능 자산"></div><div class="form-group" style="margin-bottom: 15px;"><label>총부채 (만원)</label><input type="text" class="money-format fin-input" id="lbl_2" placeholder="갚아야 할 빚 총액"></div><div class="form-group" style="margin-bottom: 15px;"><label>유동부채 (만원)</label><input type="text" class="money-format fin-input" id="cl_2" placeholder="1년 내 갚을 빚"></div><div class="form-group" style="margin-bottom: 15px;"><label>자본금 (만원)</label><input type="text" class="money-format fin-input" id="cap_2" placeholder="초기 액면 자본금"></div><div class="form-group" style="margin-bottom: 25px;"><label>자본총계 (만원)</label><input type="text" class="money-format fin-input" id="eq_2" placeholder="순자산"></div><div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;"><p style="font-size: 12px;">👉 유동비율: <strong id="res_liq_2" style="color: #64748b;">- %</strong></p><p style="font-size: 12px;">👉 자본잠식률: <strong id="res_imp_2" style="color: #64748b;">- %</strong></p></div></div>
-                    </div>
-                    <button class="btn-report-blue" style="margin-top: 30px; background: #1e293b; color: white;">◎ 상세 재무진단 리포트 생성</button>
-                </div>
-            </section>
-
-            <section id="aiBiz" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">AI 사업계획서 생성</h2></div>
-                    <div class="green-banner"><h3>◎ AI 맞춤형 사업계획서</h3><p>정부지원사업 및 투자 유치에 최적화된 사업계획서 초안을 작성합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="color:#14532d;">🏆 사업계획서 구성 (7개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 요약 (Executive Summary)</li><li>3. 제품/서비스 차별성</li><li>5. 재무 및 자금 조달 계획</li><li>7. 4단계 실행 로드맵</li></ul><ul class="info-list"><li>2. 기업 현황 및 조직 역량</li><li>4. 시장 분석 및 포지셔닝</li><li>6. 마케팅 및 스케일업 전략</li></ul></div></div>
-                    <div class="fund-split-layout">
-                        <div class="fund-left"><div class="fund-card"><label class="fund-label">작성 대상 업체</label><select class="fund-select company-dropdown" id="biz-company-select"><option value="">업체를 선택하세요</option></select></div><div class="fund-card" style="margin-top: 20px;"><label class="fund-label">제출 목적 (필수)</label><select class="fund-select"><option>정부지원사업 신청용</option><option>투자 유치(IR)용</option></select></div></div>
-                        <div class="fund-right fund-card"><h4>AI 작성 집중 포인트</h4><div class="criteria-item"><div class="dot green"></div><div><strong>아이템 경쟁력</strong></div></div><div class="criteria-item"><div class="dot blue"></div><div><strong>시장성 및 성장성</strong></div></div></div>
-                    </div>
-                    <button class="btn-report-green">◎ AI 사업계획서 생성하기</button>
-                </div>
-            </section>
-
-            <section id="aiFund" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">AI 정책자금매칭 생성</h2></div>
-                    <div class="orange-banner"><h3>◎ AI 정책자금 매칭</h3><p>최적의 정책자금을 자동으로 추천받으세요.</p></div>
-                    <div class="info-yellow-box"><h4>🏆 매칭리포트 구성 (7개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 보증가능성 예측 리포트</li><li>3. 승인 확률 추정 로직</li><li>5. 최적 정책자금 매칭 Top 3</li></ul><ul class="info-list"><li>2. 정책자금 가능성 스코어 리포트</li><li>4. 정책자금 매칭 알고리즘 구조</li><li>6. 기관별 자동 추천 로직 반영 결과</li></ul></div></div>
-                    <div class="fund-split-layout">
-                        <div class="fund-left"><div class="fund-card"><label class="fund-label">매칭 대상 업체</label><select class="fund-select company-dropdown" id="fund-company-select"><option value="">업체를 선택하세요</option></select></div><div class="fund-card" style="margin-top: 20px;"><label class="fund-label">추가 메모</label><textarea class="fund-textarea" rows="4"></textarea></div></div>
-                        <div class="fund-right fund-card"><h4>AI 매칭 분석 기준</h4><div class="criteria-item"><div class="dot blue"></div><div><strong>재무건전성</strong></div></div></div>
-                    </div>
-                    <button class="btn-generate-report">◎ AI 정책자금매칭 리포트 생성하기</button>
-                </div>
-            </section>
-
-            <section id="simulator" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">매칭 시뮬레이터</h2></div>
-                    <div class="purple-banner"><h3>정책자금 매칭 시뮬레이터</h3><p>업체 등록 없이 핵심 조건만 입력하여 결과를 즉시 확인하세요.</p></div>
-                    <div class="simulator-layout">
-                        <div class="sim-controls fund-card">
-                            <div class="sim-step"><span class="step-num">1</span> 조건 설정</div>
-                            <div class="sim-group"><label>업종</label><select class="fund-select"><option>제조업</option></select></div>
-                            <div class="sim-group"><label>대표자 NICE 신용점수 <span class="val-highlight" id="val-score">800점</span></label><input type="range" class="sim-slider" id="slider-score" min="300" max="1000" value="800"></div>
-                            <div class="sim-group"><label>전년도 매출 <span class="val-highlight" id="val-sales">0만원</span></label><input type="range" class="sim-slider" id="slider-sales" min="0" max="100" value="0"></div>
-                            <div class="sim-actions"><button class="btn-sim-run">시뮬레이션 실행</button><button class="btn-sim-reset">초기화</button></div>
-                        </div>
-                        <div class="sim-results fund-card"><div class="empty-state"><div class="icon-monitor">🖥️</div><p>조건을 설정하고 실행하세요</p></div></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="aiTrade" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">AI 상권분석 리포트 생성</h2></div>
-                    <div class="teal-banner"><h3>◎ AI 빅데이터 상권분석</h3><p>유동인구, 경쟁점포, 배후 수요를 정밀 분석합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="color:#134e4a;">🏆 상권분석 리포트 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 입지 및 지리적 접근성 요약</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 업체</label><select class="fund-select company-dropdown" id="trade-company-select"><option value="">업체를 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4>AI 상권분석 주요 지표</h4></div></div>
-                    <button class="btn-report-teal">◎ AI 상권분석 리포트 생성하기</button>
-                </div>
-            </section>
-
-            <section id="aiMarketing" class="tab-content">
-                <div class="max-width-wrapper">
-                    <div class="page-header"><h2 class="page-title">AI 마케팅 제안서 생성</h2></div>
-                    <div class="pink-banner"><h3>◎ AI 맞춤형 마케팅 제안</h3><p>가장 효율적인 최신 홍보 전략을 제안합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="color:#881337;">🏆 마케팅 제안서 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 현행 마케팅 채널 진단</li></ul></div></div>
-                    <div class="fund-split-layout">
-                        <div class="fund-left"><div class="fund-card"><label class="fund-label">제안 대상 업체</label><select class="fund-select company-dropdown" id="market-company-select"><option value="">업체를 선택하세요</option></select></div></div>
-                        <div class="fund-right fund-card"><h4>AI 제안 도출 기준</h4></div>
-                    </div>
-                    <button class="btn-report-pink">◎ AI 마케팅 제안서 생성하기</button>
-                </div>
-            </section>
+            <section id="finance" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">상세 재무진단</h2><div class="blue-banner"><h3>◎ 법인/심화용 상세 재무진단</h3></div></div></section>
+            <section id="aiBiz" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 사업계획서 생성</h2><div class="green-banner"><h3>◎ AI 맞춤형 사업계획서</h3></div></div></section>
+            <section id="aiFund" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 정책자금매칭 생성</h2><div class="orange-banner"><h3>◎ AI 정책자금 매칭</h3></div></div></section>
+            <section id="simulator" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">매칭 시뮬레이터</h2><div class="purple-banner"><h3>정책자금 매칭 시뮬레이터</h3></div></div></section>
+            <section id="aiTrade" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 상권분석 리포트 생성</h2><div class="teal-banner"><h3>◎ AI 빅데이터 상권분석</h3></div></div></section>
+            <section id="aiMarketing" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 마케팅 제안서 생성</h2><div class="pink-banner"><h3>◎ AI 맞춤형 마케팅 제안</h3></div></div></section>
 
             <section id="settings" class="tab-content">
                 <div class="max-width-wrapper">
                     <div class="page-header"><h2 class="page-title">플랫폼 설정</h2></div>
-
                     <div class="fund-card" style="margin-bottom: 30px;">
                         <h3 style="margin-bottom: 20px; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">👤 사용자 프로필</h3>
-                        <div class="grid-2">
-                            <div class="form-group"><label>사용자 성명</label><input type="text" id="set-user-name"></div>
-                            <div class="form-group"><label>이메일 주소 (아이디)</label><input type="email" id="set-user-email" readonly style="background: #f1f5f9;"></div>
-                            <div class="form-group"><label>소속명</label><input type="text" id="set-user-dept"></div>
-                        </div>
+                        <div class="grid-2"><div class="form-group"><label>사용자 성명</label><input type="text" id="set-user-name"></div><div class="form-group"><label>이메일 주소 (아이디)</label><input type="email" id="set-user-email" readonly style="background: #f1f5f9;"></div><div class="form-group"><label>소속명</label><input type="text" id="set-user-dept"></div></div>
                         <div style="text-align: right; margin-top: 15px;"><button class="btn-primary" style="padding: 10px 20px; font-size: 13px;" onclick="saveProfileSettings()">프로필 저장</button></div>
                     </div>
-
                     <div class="fund-card" style="margin-bottom: 30px; border-top: 4px solid #ea580c;">
                         <h3 style="margin-bottom: 10px; font-size: 16px;">🔑 AI 서비스 설정 (Google Gemini)</h3>
-                        <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Google AI Studio에서 발급받은 API 키를 입력하세요. 유료 계정 사용 시 더 빠른 분석이 가능합니다.</p>
                         <div class="form-group"><label>Gemini API Key</label><input type="password" id="set-api-key" placeholder="AIzaSy..."></div>
                         <div style="text-align: right; margin-top: 15px;"><button class="btn-primary" style="padding: 10px 20px; font-size: 13px; background: #ea580c;" onclick="saveApiSettings()">API 키 저장</button></div>
                     </div>
-
                     <div class="fund-card">
                         <h3 style="margin-bottom: 20px; font-size: 16px;">🔒 비밀번호 변경</h3>
-                        <div class="grid-2">
-                            <div class="form-group"><label>현재 비밀번호</label><input type="password" id="set-cur-pw"></div>
-                            <div class="form-group"><label>새 비밀번호</label><input type="password" id="set-new-pw"></div>
-                        </div>
+                        <div class="grid-2"><div class="form-group"><label>현재 비밀번호</label><input type="password" id="set-cur-pw"></div><div class="form-group"><label>새 비밀번호</label><input type="password" id="set-new-pw"></div></div>
                         <div style="text-align: right; margin-top: 15px;"><button class="btn-primary" style="padding: 10px 20px; font-size: 13px; background: #475569;" onclick="savePasswordSettings()">비밀번호 변경</button></div>
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
+
+    <div id="ai-loading-overlay">
+        <div class="scan-container">
+            <div class="document-icon">
+                <div class="scan-line"></div>
+            </div>
+            <h3 class="loading-title">Gemini AI 분석 중...</h3>
+            <p class="loading-desc">수십 개의 기업 데이터를 스캔하여 맞춤형 리포트를 작성하고 있습니다.<br>최대 60초가 소요될 수 있습니다.</p>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
