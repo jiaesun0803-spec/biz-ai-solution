@@ -161,43 +161,43 @@
                                 </div>
                             </div>
                             
-                            <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format export-money"></div>
-                            <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" id="export_25"></div>
-                            <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" id="export_24"></div>
-                            <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" id="export_23"></div>
+                            <div class="form-group"><label>금년수출매출 (전월말 기준)</label><input type="text" class="money-format export-money" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" id="export_25" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" id="export_24" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" id="export_23" placeholder="1억 입력=10000으로 입력"></div>
                         </div>
                     </div>
 
                     <div class="form-section">
                         <div class="section-title"><h3>부채현황 (만원)</h3><span>※ 실시간 자동 합계 산출</span></div>
                         <div class="grid-4">
-                            <div class="form-group"><label>중진공</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>소진공</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>신보</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>기보</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>재단</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>회사담보</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>대표신용</label><input type="text" class="money-format debt-input" value="0"></div>
-                            <div class="form-group"><label>대표담보</label><input type="text" class="money-format debt-input" value="0"></div>
+                            <div class="form-group"><label>중진공</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>소진공</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>신보</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>기보</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>재단</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>회사담보</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>대표신용</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
+                            <div class="form-group"><label>대표담보</label><input type="text" class="money-format debt-input" placeholder="1억 입력=10000으로 입력"></div>
                             <div class="total-box">총 부채 합계: <span id="total-debt">0</span> 만원</div>
                         </div>
                     </div>
 
                     <div class="form-section">
                         <div class="section-title"><h3>보유 인증</h3></div>
-                        <div class="grid-4" style="gap:15px;">
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 이노비즈</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 메인비즈</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 벤처기업</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 기업부설연구소</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 연구개발전담부서</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> ISO 인증</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 여성기업</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 장애인기업</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 사회적기업</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 협동조합</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 소공인</label>
-                            <label style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 해당 없음</label>
+                        <div class="checkbox-grid" style="gap:15px;">
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 이노비즈</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 메인비즈</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 벤처기업</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 기업부설연구소</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 연구개발전담부서</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> ISO 인증</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 여성기업</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 장애인기업</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 사회적기업</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 협동조합</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 소공인</label>
+                            <label class="small-label" style="font-weight:normal; display:flex; gap:5px;"><input type="checkbox"> 해당 없음</label>
                         </div>
                     </div>
 
