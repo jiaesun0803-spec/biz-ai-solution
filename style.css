@@ -1,29 +1,75 @@
-/* --- 기존 스타일 유지 및 보강 --- */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
-body { background-color: #f0f2f5; color: #333; }
+/* 기본 초기화 */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }
+body { background-color: #f4f6f9; color: #333; }
 .container { display: flex; height: 100vh; overflow: hidden; }
 
-/* 사이드바 */
+/* 좌측 사이드바 */
 .sidebar { width: 260px; background-color: #1b263b; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
 .logo { display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #2c3e50; }
-.logo-icon { background: #2a629a; padding: 10px; border-radius: 8px; margin-right: 10px; font-size: 20px; }
-.logo h2 { font-size: 18px; }
-.user-profile { display: flex; align-items: center; padding: 20px; background: rgba(255,255,255,0.05); }
+.logo-icon { background: #2a629a; padding: 10px; border-radius: 8px; margin-right: 10px; font-size: 20px;}
+.logo h2 { font-size: 18px; font-weight: bold; }
+.logo p { font-size: 11px; color: #a0aec0; }
+.user-profile { display: flex; align-items: center; padding: 20px; }
 .profile-icon { background: #4a5568; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
-.menu { flex: 1; padding: 10px; overflow-y: auto; }
-.menu li { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #cbd5e0; display: flex; align-items: center; font-size: 14px; }
+.user-name { font-weight: bold; font-size: 14px; }
+.user-role { font-size: 12px; color: #a0aec0; }
+
+.menu { flex: 1; overflow-y: auto; padding: 10px; }
+.menu ul { list-style: none; }
+.menu li { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #cbd5e0; font-size: 14px; display: flex; align-items: center; transition: all 0.2s;}
+.menu li span { margin-right: 10px; width: 20px; text-align: center; }
+.menu li:hover { background-color: #2c3e50; color: white; }
 .menu li.active { background-color: #2a629a; color: white; }
-.bottom-menu { border-top: 1px solid #2c3e50; padding: 10px; }
-.version-info { padding: 10px; font-size: 11px; color: #718096; text-align: center; }
+.bottom-menu { padding: 10px; border-top: 1px solid #2c3e50; }
+.bottom-menu ul { list-style: none; }
+.bottom-menu li { padding: 12px 15px; cursor: pointer; border-radius: 8px; color: #cbd5e0; font-size: 14px; display: flex; align-items: center; transition: all 0.2s; }
+.bottom-menu li:hover { background-color: #2c3e50; color: white; }
+.version-info { padding: 10px 20px 20px 20px; font-size: 11px; color: #718096; text-align: center; }
 
-/* 콘텐츠 영역 */
-.main-content { flex: 1; padding: 30px 50px; overflow-y: auto; }
+/* 우측 메인 콘텐츠 공통 */
+.main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+.page-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
 .tab-content { display: none; }
-.tab-content.active { display: block; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-.page-title { font-size: 22px; font-weight: bold; }
+.tab-content.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- 업체 관리 상세 폼 스타일 --- */
+/* === 대시보드 전용 스타일 === */
+.welcome-banner { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(30,60,114,0.2); }
+.welcome-banner p { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
+.welcome-banner h3 { font-size: 24px; margin-bottom: 5px; }
+.welcome-banner .company-name { font-size: 13px; opacity: 0.7; margin-bottom: 20px; }
+.banner-buttons button { padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-right: 10px; border: none; }
+.btn-white { background: white; color: #1e3c72; }
+.btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.5) !important; color: white; }
+
+.middle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.section-title { font-size: 16px; margin-bottom: 15px; font-weight: bold; }
+.section-header { display: flex; justify-content: space-between; align-items: center; }
+.view-all { font-size: 12px; color: #3182ce; text-decoration: none; }
+.quick-actions-box, .recent-reports-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.quick-item { border: 1px solid #e2e8f0; padding: 20px 10px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.quick-item:hover { border-color: #3182ce; background: #fafbfc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.quick-item span { display: block; font-size: 11px; color: #a0aec0; margin-top: 5px; font-weight: normal; }
+
+.report-list { list-style: none; }
+.report-list li { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #edf2f7; }
+.report-list li:last-child { border-bottom: none; }
+.report-info { display: flex; align-items: center; }
+.report-info .icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; }
+.report-info .icon.green { background: #f0fff4; }
+.report-info .icon.orange { background: #fffaf0; }
+.report-info .icon.blue { background: #ebf8ff; }
+.report-info .title { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
+.report-info .sub { font-size: 12px; color: #a0aec0; }
+.report-meta { display: flex; align-items: center; gap: 15px; font-size: 12px; color: #a0aec0; }
+.tag { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+.green-tag { background: #f0fff4; color: #38a169; }
+.orange-tag { background: #fffaf0; color: #dd6b20; }
+.blue-tag { background: #ebf8ff; color: #3182ce; }
+
+/* === 업체 관리 폼 전용 스타일 === */
 .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 25px; border: 1px solid #e1e4e8; }
 .card-title { font-size: 17px; font-weight: bold; margin-bottom: 20px; color: #1e3c72; border-left: 5px solid #1e3c72; padding-left: 12px; display: flex; align-items: center; justify-content: space-between; }
 .card-title span { font-size: 12px; color: #718096; font-weight: normal; }
@@ -35,13 +81,13 @@ body { background-color: #f0f2f5; color: #333; }
 .form-group label { font-size: 13px; font-weight: bold; color: #4a5568; }
 
 input[type="text"], input[type="number"], input[type="date"], select, textarea {
-    padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: #fafafa; transition: border 0.2s;
+    padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: #fafafa; transition: border 0.2s; width: 100%;
 }
 input:focus, textarea:focus { outline: none; border-color: #2a629a; background: white; }
 textarea { resize: vertical; }
 
 .radio-group { display: flex; gap: 20px; align-items: center; height: 100%; }
-.radio-group label { font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.radio-group label { font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 14px;}
 
 .checkbox-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background: #f8f9fa; padding: 15px; border-radius: 8px; }
 .checkbox-grid label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -60,5 +106,5 @@ textarea { resize: vertical; }
 .sig-pad { text-align: center; color: #cbd5e0; font-size: 20px; font-weight: bold; width: 80px; }
 
 .btn-primary { background: #2a629a; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-primary-large { width: 100%; padding: 20px; background: #1b263b; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-.btn-outline { background: white; border: 1px solid #cbd5e0; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.btn-primary-large { width: 100%; padding: 20px; background: #1b263b; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.2s;}
+.btn-primary-large:hover { background: #2a629a; }
