@@ -3,9 +3,9 @@
 body { background-color: #f8fafc; color: #333; }
 .container { display: flex; height: 100vh; overflow: hidden; }
 
-/* 좌측 사이드바 */
-.sidebar { width: 260px; background-color: #1e293b; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
-.logo { display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #334155; }
+/* === 사이드바 배경색 #0E162D 로 변경 === */
+.sidebar { width: 260px; background-color: #0E162D; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo { display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #1c2841; }
 .logo-icon { background: #3b82f6; padding: 10px; border-radius: 8px; margin-right: 10px; font-size: 20px;}
 .logo h2 { font-size: 18px; font-weight: bold; }
 .logo p { font-size: 11px; color: #94a3b8; }
@@ -18,12 +18,13 @@ body { background-color: #f8fafc; color: #333; }
 .menu ul { list-style: none; }
 .menu li { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #cbd5e1; font-size: 14px; display: flex; align-items: center; transition: all 0.2s;}
 .menu li span { margin-right: 10px; width: 20px; text-align: center; }
-.menu li:hover { background-color: #334155; color: white; }
+/* 호버 및 액티브 색상 조화롭게 수정 */
+.menu li:hover { background-color: #1c2841; color: white; }
 .menu li.active { background-color: #3b82f6; color: white; }
-.bottom-menu { padding: 10px; border-top: 1px solid #334155; }
+.bottom-menu { padding: 10px; border-top: 1px solid #1c2841; }
 .bottom-menu ul { list-style: none; }
 .bottom-menu li { padding: 12px 15px; cursor: pointer; border-radius: 8px; color: #cbd5e1; font-size: 14px; display: flex; align-items: center; transition: all 0.2s; }
-.bottom-menu li:hover { background-color: #334155; color: white; }
+.bottom-menu li:hover { background-color: #1c2841; color: white; }
 .version-info { padding: 10px 20px 20px 20px; font-size: 11px; color: #64748b; text-align: center; }
 
 /* 우측 메인 콘텐츠 */
@@ -34,14 +35,7 @@ body { background-color: #f8fafc; color: #333; }
 .tab-content.active { display: block; animation: fadeIn 0.3s; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* 대시보드 */
-.welcome-banner { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 25px; }
-.welcome-banner p { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
-.welcome-banner h3 { font-size: 24px; margin-bottom: 5px; }
-.welcome-banner .company-name { font-size: 13px; opacity: 0.7; margin-bottom: 20px; }
-.banner-buttons button { padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-right: 10px; border: none; }
-.btn-white { background: white; color: #1e3a8a; }
-.btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.5) !important; color: white; }
+/* 대시보드 (배너 삭제됨) */
 .middle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .section-title-dash { font-size: 16px; margin-bottom: 15px; font-weight: bold; }
 .section-header { display: flex; justify-content: space-between; align-items: center; }
@@ -131,6 +125,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .info-yellow-box h4 { color: #ca8a04; font-size: 15px; margin-bottom: 15px; }
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .info-list { list-style: none; }
+/* 글머리표 삭제됨 */
 .info-list li { font-size: 13px; color: #854d0e; margin-bottom: 8px; display: flex; align-items: center; }
 
 .fund-split-layout { display: flex; gap: 20px; margin-bottom: 30px; }
