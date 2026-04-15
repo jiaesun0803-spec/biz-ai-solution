@@ -59,6 +59,7 @@ body { background-color: #f8fafc; color: #333; font-size: 15px; }
 .split-layout { display: flex; gap: 40px; margin-bottom: 30px; }
 .split-half { flex: 1; }
 
+/* 레이아웃 락 (노란 박스 등) */
 .info-yellow-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-sizing: border-box !important; }
 .info-grid { display: flex !important; flex-wrap: nowrap !important; gap: 30px !important; margin-top:15px; width: 100% !important; }
 .info-list { flex: 1 !important; list-style: none; padding-left: 10px;}
@@ -104,16 +105,26 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .criteria-item .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; margin-right: 12px; flex-shrink: 0; }
 .dot.blue { background: #3b82f6; } .dot.green { background: #10b981; }
 
+/* 리포트 뷰어 베이스 */
 .report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-.cover-page { height: 1000px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-left: 30px solid #3b82f6; padding: 60px 40px; margin-bottom: 50px; page-break-after: always; break-after: page; }
+/* ★ 프리미엄 표지 CSS (한 줄 고정 및 중앙 여백 강화) ★ */
+.cover-page { 
+    height: 1000px; 
+    display: flex; flex-direction: column; justify-content: space-between; 
+    position: relative; border-left: 30px solid #3b82f6; 
+    padding: 60px 40px; margin-bottom: 50px; 
+    page-break-after: always; break-after: page; 
+}
 .cover-theme-blue { border-left-color: #3b82f6; }
 .cover-header h4 { font-size: 18px; color: #3b82f6; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 5px;}
-.cover-header h1 { font-size: 45px; font-weight: 900; color: #0f172a; margin-top: 20px; letter-spacing: -1px;}
-.cover-middle { margin-top: auto; margin-bottom: 50px; }
+/* 한 줄 고정 white-space: nowrap 추가 */
+.cover-header h1 { font-size: 45px; font-weight: 900; color: #0f172a; margin-top: 20px; letter-spacing: -1px; white-space: nowrap !important;}
+/* 기업명을 아래로 밀어내기 위해 margin-top을 넉넉히 줌 */
+.cover-middle { margin-top: auto; margin-bottom: 40px; }
 .cover-middle h2 { font-size: 32px; color: #1e3a8a; margin-bottom: 30px; }
 .cover-table { width: 100%; background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 40px;}
 .cover-table table { width: 100%; border-collapse: collapse; }
@@ -122,6 +133,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .cover-chart-area { background: #f1f5f9; padding: 30px; border-radius: 8px; height: 250px; display: flex; align-items: center; justify-content: center;}
 .cover-footer { display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 20px; color: #64748b; font-size: 14px; }
 
+/* 본문 내용 스타일 */
 .report-section-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid; }
 .report-section-box h3 { margin-top: 0 !important; margin-bottom: 18px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 20px; font-weight: bold;}
 .report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 16px; text-align: justify; word-break: keep-all; }
@@ -148,6 +160,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 @keyframes scan { 0% { top: -10px; } 50% { top: 100%; } 100% { top: -10px; } }
 .loading-title { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #93c5fd; letter-spacing: 1px; }
 
+/* PDF 인쇄 설정 */
 @media print {
     @page { size: A4; margin: 15mm; }
     body { background: white !important; font-family: 'Pretendard', 'Malgun Gothic', sans-serif !important; font-size: 12pt; }
