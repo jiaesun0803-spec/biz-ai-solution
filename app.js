@@ -1,20 +1,14 @@
-// 데이터베이스 키 (localStorage)
-const DB_USERS = 'biz_users'; // 가입된 사용자 목록
-const DB_SESSION = 'biz_session'; // 현재 로그인된 사용자 정보
+const DB_USERS = 'biz_users'; 
+const DB_SESSION = 'biz_session'; 
 const STORAGE_KEY = 'biz_consult_companies';
 
 document.addEventListener("DOMContentLoaded", function() {
-    checkAuth(); // 접속 시 로그인 상태 체크
+    checkAuth();
 
-    // URL 파라미터 체크
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'dashboard';
     showTab(tabParam, false);
 });
-
-/* =========================================
-   1. 인증 시스템 (Auth)
-========================================= */
 
 function checkAuth() {
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
@@ -25,6 +19,8 @@ function checkAuth() {
         if(authOverlay) authOverlay.style.display = 'none';
         if(mainApp) mainApp.style.display = 'flex';
         loadUserProfile();
+        updateCompanyLists();
+        initInputHandlers();
     } else {
         if(authOverlay) authOverlay.style.display = 'flex';
         if(mainApp) mainApp.style.display = 'none';
@@ -74,19 +70,13 @@ function handleLogout() {
     location.reload();
 }
 
-/* =========================================
-   2. 설정 (Settings) 기능 - 분할 업데이트
-========================================= */
-
 function loadUserProfile() {
     const user = JSON.parse(localStorage.getItem(DB_SESSION));
     if (!user) return;
 
-    // 사이드바 표시
     if(document.getElementById('display-user-name')) document.getElementById('display-user-name').innerText = user.name;
     if(document.getElementById('display-user-dept')) document.getElementById('display-user-dept').innerText = user.dept || '솔루션빌더스';
 
-    // 설정 탭 입력란 채우기
     if(document.getElementById('set-user-name')) {
         document.getElementById('set-user-name').value = user.name;
         document.getElementById('set-user-email').value = user.email;
@@ -95,7 +85,6 @@ function loadUserProfile() {
     }
 }
 
-// 헬퍼 함수: 세션과 유저 DB를 동시 업데이트
 function updateUserDB(updatedUser) {
     let users = JSON.parse(localStorage.getItem(DB_USERS));
     const userIdx = users.findIndex(u => u.email === updatedUser.email);
@@ -117,7 +106,7 @@ function saveApiSettings() {
     let session = JSON.parse(localStorage.getItem(DB_SESSION));
     session.apiKey = document.getElementById('set-api-key').value;
     updateUserDB(session);
-    alert('API 키가 안전하게 저장되었습니다.');
+    alert('API 키가 저장되었습니다.');
 }
 
 function savePasswordSettings() {
@@ -130,16 +119,10 @@ function savePasswordSettings() {
     
     session.pw = newPw;
     updateUserDB(session);
-    
-    // 입력창 초기화
     document.getElementById('set-cur-pw').value = '';
     document.getElementById('set-new-pw').value = '';
-    alert('비밀번호가 성공적으로 변경되었습니다.');
+    alert('비밀번호가 변경되었습니다.');
 }
-
-/* =========================================
-   3. 기존 앱 기능 (Tab, Table 연동 등)
-========================================= */
 
 function showTab(tabId, updateUrl = true) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -167,12 +150,11 @@ function updateCompanyLists() {
     const body = document.getElementById('company-list-body');
     if(body) {
         body.innerHTML = companies.length ? companies.map(c => `
-            <tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showTab('company')">수정</button></td></tr>
-        `).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px;">등록된 업체가 없습니다.</td></tr>';
+            <tr><td><strong>${c.name}</strong></td><td>${c.bizNum || '-'}</td><td>${c.industry || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showTab('company')">수정</button></td></tr>
+        `).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 업체가 없습니다.</td></tr>';
     }
 }
 
-// 기존 입력 포맷 및 계산 함수들 모음
 function initInputHandlers() {
     document.querySelectorAll('.number-only').forEach(input => {
         input.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
@@ -203,13 +185,9 @@ function initInputHandlers() {
                 if (item.id === 'corp_number') {
                     if (val.length < 7) this.value = val; else this.value = val.slice(0,6) + '-' + val.slice(6,13);
                 } else if(item.id === 'biz_number') {
-                    if (val.length < 4) this.value = val;
-                    else if (val.length < 6) this.value = val.slice(0,3) + '-' + val.slice(3);
-                    else this.value = val.slice(0,3) + '-' + val.slice(3,5) + '-' + val.slice(5,10);
+                    if (val.length < 4) this.value = val; else if (val.length < 6) this.value = val.slice(0,3) + '-' + val.slice(3); else this.value = val.slice(0,3) + '-' + val.slice(3,5) + '-' + val.slice(5,10);
                 } else {
-                     if (val.length < 5) this.value = val;
-                     else if (val.length < 7) this.value = val.slice(0,4) + '-' + val.slice(4);
-                     else this.value = val.slice(0,4) + '-' + val.slice(4,6) + '-' + val.slice(6,8);
+                     if (val.length < 5) this.value = val; else if (val.length < 7) this.value = val.slice(0,4) + '-' + val.slice(4); else this.value = val.slice(0,4) + '-' + val.slice(4,6) + '-' + val.slice(6,8);
                 }
             });
         }
@@ -219,7 +197,6 @@ function initInputHandlers() {
         input.addEventListener('input', function() { calcFinance('1'); calcFinance('2'); });
     });
 }
-initInputHandlers(); // 실행
 
 function calcFinance(idx) {
     const ca = parseFloat(document.getElementById('ca_' + idx) ? document.getElementById('ca_' + idx).value.replace(/,/g, '') : 0) || 0;
@@ -253,12 +230,10 @@ function loadCompanyData() {
     if(document.querySelector('input[value="법인"]')) document.querySelector('input[value="법인"]').checked = true;
     if(document.getElementById('biz_number')) document.getElementById('biz_number').value = "732-86-03582";
     if(document.getElementById('comp_industry')) document.getElementById('comp_industry').value = "제조업"; 
-    // 기타 데이터 채우기 로직...
 }
 
 function saveCompanyData() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
-    const rep = document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0] ? document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0].value : "";
     const bizNum = document.getElementById('biz_number') ? document.getElementById('biz_number').value : "";
     const industry = document.getElementById('comp_industry') ? document.getElementById('comp_industry').value : "";
     
@@ -266,7 +241,7 @@ function saveCompanyData() {
 
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const newCompany = {
-        name: name, rep: rep || '-', bizNum: bizNum || '-', industry: industry || '-',
+        name: name, bizNum: bizNum || '-', industry: industry || '-',
         date: new Date().toISOString().split('T')[0]
     };
 
@@ -281,10 +256,34 @@ function saveCompanyData() {
     showTab('reportList');
 }
 
-function toggleCorpNumber() { /* 로직 */ }
-function toggleRentInputs() { /* 로직 */ }
-function toggleExportInputs() { /* 로직 */ }
-function calculateTotalDebt() { /* 로직 */ }
+function toggleCorpNumber() {
+    const radios = document.getElementsByName('biz_type');
+    const corpInput = document.getElementById('corp_number');
+    let selectedValue = ""; radios.forEach(r => { if(r.checked) selectedValue = r.value; });
+    if(corpInput) { corpInput.disabled = selectedValue === '개인'; if (selectedValue === '개인') corpInput.value = ""; }
+}
+function toggleRentInputs() {
+    const radios = document.getElementsByName('rent_type');
+    const depositInput = document.getElementById('rent_deposit');
+    const monthlyInput = document.getElementById('rent_monthly');
+    let selectedValue = ""; radios.forEach(r => { if(r.checked) selectedValue = r.value; });
+    if(depositInput && monthlyInput) { depositInput.disabled = monthlyInput.disabled = selectedValue === '자가'; if (selectedValue === '자가') depositInput.value = monthlyInput.value = ""; }
+}
+function toggleExportInputs() {
+    const radios = document.getElementsByName('export');
+    const exportInputs = document.querySelectorAll('.export-money');
+    let selectedValue = ""; radios.forEach(r => { if(r.checked) selectedValue = r.value; });
+    exportInputs.forEach(input => { input.disabled = selectedValue !== '수출중'; if(selectedValue !== '수출중') input.value = ""; });
+}
+function calculateTotalDebt() {
+    const debtInputs = document.querySelectorAll('.debt-input');
+    let total = 0;
+    debtInputs.forEach(input => {
+        let numVal = parseInt(input.value.replace(/,/g, ''), 10);
+        if (!isNaN(numVal)) total += numVal;
+    });
+    if(document.getElementById('total-debt')) document.getElementById('total-debt').innerText = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 function generateReport(type, version, event) {
     const select = document.getElementById('report-company-select');
@@ -316,6 +315,7 @@ function renderReportContent(name, version) {
          area.innerHTML = `<div class="paper-inner"><h1 style="text-align:center; font-size: 28px; margin-bottom: 50px;">경영진단보고서 ${titleAdd}</h1><p style="text-align:center; padding: 100px 0; color:#64748b;">데이터를 분석 중입니다.</p></div>`;
     }
 }
+
 function backToInput(tab) {
     document.getElementById(tab + '-input-step').style.display = 'block';
     document.getElementById(tab + '-result-step').style.display = 'none';
