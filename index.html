@@ -33,9 +33,17 @@
                     <li onclick="showTab('report')"><span>📈</span> 경영진단보고서</li>
                     <li onclick="showTab('aiBiz')"><span>💡</span> AI 사업계획서</li>
                     <li onclick="showTab('aiFund')"><span>🎯</span> AI 정책자금매칭</li>
-                    <li onclick="showTab('settings')"><span>⚙️</span> 설정</li>
+                    <li onclick="showTab('aiTrade')"><span>🏪</span> AI 상권분석</li>
+                    <li onclick="showTab('aiMarketing')"><span>📢</span> 마케팅제안</li>
                 </ul>
             </nav>
+            
+            <div class="bottom-menu">
+                <ul>
+                    <li onclick="showTab('settings')"><span>⚙️</span> 설정</li>
+                </ul>
+            </div>
+            
             <div class="version-info">BizConsult v1.0</div>
         </aside>
 
@@ -53,33 +61,16 @@
                     </div>
                 </div>
 
-                <div class="summary-cards">
-                    <div class="card">
-                        <div class="card-icon blue">🏢</div>
-                        <div class="card-info"><h2>2</h2><p>관리 업체</p></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon purple">📈</div>
-                        <div class="card-info"><h2>1</h2><p>경영진단보고서</p></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon green">💡</div>
-                        <div class="card-info"><h2>2</h2><p>AI 사업계획서</p></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-icon orange">📝</div>
-                        <div class="card-info"><h2>5</h2><p>전체 보고서</p></div>
-                    </div>
-                </div>
-
                 <div class="middle-section">
                     <div class="quick-actions-box">
                         <h3 class="section-title">빠른 실행</h3>
                         <div class="quick-grid">
-                            <div class="quick-item">🏢<br>업체 등록<br><span>새 관리업체를 등록합니다</span></div>
-                            <div class="quick-item">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
-                            <div class="quick-item">💡<br>AI 사업계획서<br><span>AI 사업계획서 작성</span></div>
-                            <div class="quick-item">🎯<br>AI 정책자금매칭<br><span>AI 정책자금 매칭 리포트 작성</span></div>
+                            <div class="quick-item" onclick="showTab('company')">🏢<br>업체 등록<br><span>새 관리업체를 등록합니다</span></div>
+                            <div class="quick-item" onclick="showTab('report')">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
+                            <div class="quick-item" onclick="showTab('aiBiz')">💡<br>AI 사업계획서<br><span>AI 사업계획서 작성</span></div>
+                            <div class="quick-item" onclick="showTab('aiFund')">🎯<br>AI 정책자금매칭<br><span>AI 매칭 리포트 작성</span></div>
+                            <div class="quick-item" onclick="showTab('aiTrade')">🏪<br>AI 상권분석<br><span>맞춤형 상권분석 리포트</span></div>
+                            <div class="quick-item" onclick="showTab('aiMarketing')">📢<br>마케팅 제안<br><span>최적의 마케팅 전략 기획</span></div>
                         </div>
                     </div>
                     
@@ -118,9 +109,11 @@
             <section id="company" class="tab-content"><h2 class="page-title">업체 관리</h2><div class="content-box">업체 등록 기능이 들어갈 자리입니다.</div></section>
             <section id="report" class="tab-content"><h2 class="page-title">경영진단보고서</h2><div class="content-box">AI 분석 기능이 들어갈 자리입니다.</div></section>
             <section id="settings" class="tab-content"><h2 class="page-title">설정</h2><div class="content-box">API 키 입력 공간입니다.</div></section>
-            <section id="reportList" class="tab-content"><h2 class="page-title">보고서 목록</h2></section>
-            <section id="aiBiz" class="tab-content"><h2 class="page-title">AI 사업계획서</h2></section>
-            <section id="aiFund" class="tab-content"><h2 class="page-title">AI 정책자금매칭</h2></section>
+            <section id="reportList" class="tab-content"><h2 class="page-title">보고서 목록</h2><div class="content-box">보고서 목록입니다.</div></section>
+            <section id="aiBiz" class="tab-content"><h2 class="page-title">AI 사업계획서</h2><div class="content-box">AI 사업계획서 작성 공간입니다.</div></section>
+            <section id="aiFund" class="tab-content"><h2 class="page-title">AI 정책자금매칭</h2><div class="content-box">AI 정책자금매칭 공간입니다.</div></section>
+            <section id="aiTrade" class="tab-content"><h2 class="page-title">AI 상권분석</h2><div class="content-box">AI 상권분석 시스템이 들어갈 자리입니다.</div></section>
+            <section id="aiMarketing" class="tab-content"><h2 class="page-title">마케팅 제안</h2><div class="content-box">마케팅 제안 시스템이 들어갈 자리입니다.</div></section>
 
         </main>
     </div>
