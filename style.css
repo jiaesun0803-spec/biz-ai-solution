@@ -66,8 +66,7 @@ body { background-color: #f8fafc; color: #333; }
 input[type="text"], input[type="number"], input[type="date"], input[type="password"], input[type="email"], select, textarea { 
     padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #f8fafc; transition: all 0.2s; width: 100%; color: #333; outline: none; box-sizing: border-box;
 }
-input::placeholder, textarea::placeholder { color: #94a3b8; font-size: 12px; }
-input:focus, textarea:focus, select:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+input::focus, textarea:focus, select:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
 
 .radio-group { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; height: 100%; }
@@ -81,14 +80,12 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-primary:hover { background: #2563eb; }
 .btn-outline { background: white; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; color: #475569; transition: 0.2s; font-size: 14px;}
 .btn-outline:hover { background: #f8fafc; border-color:#94a3b8; }
-.btn-small { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
 .btn-small-outline { background: white; color: #475569; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
 
 .list-card { overflow-x: auto; margin-bottom: 40px;}
 .report-table { width: 100%; border-collapse: collapse; text-align: left; }
 .report-table th { background: #f8fafc; color: #64748b; font-size: 13px; padding: 15px; border-bottom: 2px solid #e2e8f0; }
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; vertical-align: middle; }
-.report-table tr:hover { background: #f8fafc; }
 .list-sub-title { font-size: 16px; margin: 25px 0 12px 0; color: #1e293b; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px; }
 
 .blue-banner { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
@@ -97,7 +94,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .purple-banner { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
 .teal-banner { background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%); color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
 .pink-banner { background: linear-gradient(135deg, #9f1239 0%, #e11d48 100%); color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
-.blue-banner h3, .green-banner h3, .orange-banner h3, .purple-banner h3, .teal-banner h3, .pink-banner h3 { font-size: 20px; margin-bottom: 8px; font-weight: bold; }
+.blue-banner h3 { font-size: 20px; margin-bottom: 8px; font-weight: bold; }
 
 .info-yellow-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top:15px;}
@@ -106,58 +103,44 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 
 .criteria-item { display: flex; margin-bottom: 15px; align-items: flex-start; }
 .criteria-item .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; margin-right: 12px; flex-shrink: 0; }
-.dot.blue { background: #3b82f6; } .dot.gray { background: #cbd5e1; } .dot.green { background: #10b981; } .dot.orange { background: #f59e0b; } .dot.red { background: #ef4444; } .dot.teal { background: #0d9488; } .dot.pink { background: #e11d48; }
-.criteria-item strong { font-size: 14px; color: #334155; display: block; margin-bottom: 3px; }
-.criteria-item p { font-size: 12px; color: #64748b; }
+.dot.blue { background: #3b82f6; } .dot.gray { background: #cbd5e1; } .dot.green { background: #10b981; }
 
 .btn-report-blue { background: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 .btn-report-blue:hover { background: #93c5fd; }
 
+/* ★ 리포트 뷰어 디자인 (줄바꿈 방지 및 글머리 기호 개선) ★ */
 .report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
-.report-paper h3 { margin-top: 35px; margin-bottom: 15px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 18px; font-weight: bold;}
+.report-paper h3 { margin-top: 40px; margin-bottom: 15px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 18px; font-weight: bold;}
 .report-paper p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 15px; text-align: justify; word-break: keep-all; }
-.report-paper ul { margin-left: 20px; margin-bottom: 20px; color: #334155; line-height: 1.8;}
-.report-paper li { margin-bottom: 8px; font-size: 15px;}
 
+/* 글머리 기호(불릿) 깔끔한 디자인 */
+.report-paper ul { list-style-type: none; margin-left: 0; padding-left: 0; margin-bottom: 25px; }
+.report-paper li { position: relative; padding-left: 18px; margin-bottom: 10px; font-size: 15px; color: #334155; line-height: 1.6; word-break: keep-all; }
+.report-paper li::before { content: '■'; position: absolute; left: 0; color: #3b82f6; font-size: 10px; top: 1px; }
+
+/* 표(Table) 줄바꿈 방지 */
 .simple-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid #1e293b; }
-.simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; text-align: center; font-size: 14px; width: 15%; color: #475569; font-weight: bold; }
-.simple-table td { border: 1px solid #e2e8f0; padding: 15px; font-size: 15px; color: #1e293b; width: 35%; }
+.simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; text-align: center; font-size: 14px; width: 15%; color: #475569; font-weight: bold; white-space: nowrap; }
+.simple-table td { border: 1px solid #e2e8f0; padding: 15px; font-size: 15px; color: #1e293b; width: 35%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .alert-box { padding: 20px; border-radius: 8px; font-weight: bold; margin: 30px 0; font-size: 15px; line-height: 1.6;}
 .alert-box.blue { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; }
 .alert-box.green { background: #f0fdf4; color: #166534; border-left: 5px solid #22c55e; }
 
-/* ★ AI 로딩 애니메이션 (스타일 3: 문서 스캔) ★ */
-#ai-loading-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.85);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 10000; backdrop-filter: blur(5px);
-}
+/* 차트 컨테이너 */
+.chart-container { display: flex; gap: 20px; margin-bottom: 40px; justify-content: center; }
+.chart-box { flex: 1; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; height: 300px; }
+
+/* AI 로딩 애니메이션 */
+#ai-loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(5px); }
 .scan-container { text-align: center; color: white; }
-.document-icon {
-    width: 80px; height: 100px; border: 4px solid #3b82f6; border-radius: 8px;
-    position: relative; margin: 0 auto 30px auto; background: rgba(255,255,255,0.05);
-    overflow: hidden;
-}
-.document-icon::before {
-    content: ''; position: absolute; top: 15px; left: 15px; right: 15px; height: 4px; 
-    background: #3b82f6; border-radius: 2px; 
-    box-shadow: 0 15px 0 #3b82f6, 0 30px 0 #3b82f6, 0 45px 0 #3b82f6, 0 60px 0 #3b82f6; opacity: 0.4;
-}
-.scan-line {
-    position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #93c5fd;
-    box-shadow: 0 0 20px 5px rgba(96, 165, 250, 0.8);
-    animation: scan 2s infinite ease-in-out;
-}
-@keyframes scan {
-    0% { top: -10px; }
-    50% { top: 100%; }
-    100% { top: -10px; }
-}
+.document-icon { width: 80px; height: 100px; border: 4px solid #3b82f6; border-radius: 8px; position: relative; margin: 0 auto 30px auto; background: rgba(255,255,255,0.05); overflow: hidden; }
+.document-icon::before { content: ''; position: absolute; top: 15px; left: 15px; right: 15px; height: 4px; background: #3b82f6; border-radius: 2px; box-shadow: 0 15px 0 #3b82f6, 0 30px 0 #3b82f6, 0 45px 0 #3b82f6, 0 60px 0 #3b82f6; opacity: 0.4; }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #93c5fd; box-shadow: 0 0 20px 5px rgba(96, 165, 250, 0.8); animation: scan 2s infinite ease-in-out; }
+@keyframes scan { 0% { top: -10px; } 50% { top: 100%; } 100% { top: -10px; } }
 .loading-title { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #93c5fd; letter-spacing: 1px; }
 .loading-desc { font-size: 15px; color: #cbd5e1; line-height: 1.6; }
 
@@ -174,6 +157,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     .report-view-container { padding: 0 !important; background: white !important; }
     .report-paper { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: auto !important; }
     .paper-inner { max-width: 100% !important; width: 100% !important; }
-    .simple-table, .alert-box, h3, p { page-break-inside: avoid; }
+    .simple-table, .alert-box, h3, p, ul, li, .chart-container { page-break-inside: avoid; }
     .alert-box { border: 2px solid #e2e8f0; }
 }
