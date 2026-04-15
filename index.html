@@ -16,7 +16,7 @@
                 <div class="form-group"><label>이메일</label><input type="email" id="login-email" placeholder="email@example.com"></div>
                 <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="••••••••"></div>
                 <button class="btn-primary auth-btn" onclick="handleLogin()">로그인</button>
-                <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top: 10px; font-size: 14px; background: #f8fafc; color: #475569;">🛠️ 테스트 계정으로 바로 접속 (개발용)</button>
+                <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top: 10px; font-size: 13px; background: #f8fafc; color: #475569;">🛠️ 테스트 계정으로 바로 접속 (개발용)</button>
                 <p class="auth-footer">계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입</span></p>
             </div>
             <div id="signup-form-area" style="display: none;">
@@ -85,7 +85,9 @@
                         <h2 class="page-title">업체 정보 등록</h2>
                         <div class="header-btns">
                             <button class="btn-outline" onclick="clearCompanyForm()" style="color:#ea580c; border-color:#ea580c;">초기화</button>
-                            <button class="btn-outline" onclick="loadCompanyData()">기존 업체 불러오기(샘플)</button>
+                            <select id="load-company-select" class="btn-outline" style="width: auto; appearance: auto; cursor: pointer; color: #3b82f6; border-color: #bfdbfe;" onchange="loadSelectedCompany(this.value)">
+                                <option value="">기존 업체 불러오기</option>
+                            </select>
                             <button class="btn-outline" onclick="window.print()">프린트하기</button>
                             <button class="btn-primary" onclick="saveCompanyData()">저장하기</button>
                         </div>
@@ -239,6 +241,13 @@
                     <div id="report-input-step">
                         <div class="page-header"><h2 class="page-title">AI 경영진단보고서 생성</h2></div>
                         <div class="blue-banner"><h3>◎ AI 경영진단보고서</h3><p>기업의 현재 상황을 다각적으로 분석하여 실질적인 개선 전략을 제안합니다.</p></div>
+                        <div class="info-yellow-box">
+                            <h4>🏆 경영진단보고서 구성 (7개 섹션 + 2개 차트)</h4>
+                            <div class="info-grid">
+                                <ul class="info-list"><li>1. 경영진단 개요</li><li>3. 재무 현황 분석 (+매출차트)</li><li>5. 운영/생산 분석</li></ul>
+                                <ul class="info-list"><li>2. 기업 현황 분석 (+역량차트)</li><li>4. 전략 및 마케팅 분석</li><li>6. 개선 방향 및 로드맵</li></ul>
+                            </div>
+                        </div>
                         <div class="fund-split-layout">
                             <div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 업체</label><select class="fund-select company-dropdown" id="report-company-select"><option value="">업체를 선택하세요</option></select></div></div>
                             <div class="fund-right fund-card"><h4>진단 영역 가중치</h4><div class="criteria-item"><div class="dot blue"></div><div><strong>재무 건전성 (15%)</strong></div></div><div class="criteria-item"><div class="dot green"></div><div><strong>전략/마케팅 (40%)</strong></div></div></div>
