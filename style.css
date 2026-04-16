@@ -68,24 +68,9 @@ body { background-color: #f8fafc; color: #333; font-size: 15px; }
 .info-list { flex: 1 !important; list-style: none; padding-left: 10px; }
 .info-list li { font-size: 14px; color: #854d0e; margin-bottom: 8px; }
 
-/* ★ fund-split-layout: 왼쪽(드롭다운) 고정폭, 오른쪽(가중치박스) 넓게 ★ */
-.fund-split-layout {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 20px !important;
-    margin-bottom: 30px;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    align-items: stretch;
-}
-.fund-left {
-    flex: 0 0 220px !important;   /* 고정 폭 */
-    min-width: 0 !important;
-}
-.fund-right {
-    flex: 1 1 0 !important;       /* 나머지 공간 모두 사용 */
-    min-width: 0 !important;
-}
+.fund-split-layout { display: flex !important; flex-wrap: nowrap !important; gap: 20px !important; margin-bottom: 30px; width: 100% !important; box-sizing: border-box !important; align-items: stretch; }
+.fund-left { flex: 0 0 220px !important; min-width: 0 !important; }
+.fund-right { flex: 1 1 0 !important; min-width: 0 !important; }
 
 .form-group { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 15px; }
 .form-group label, .fund-label { font-size: 13px; font-weight: bold; color: #475569; display: block; margin-bottom: 2px; }
@@ -106,7 +91,11 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-primary:hover { background: #2563eb; }
 .btn-outline { background: white; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; color: #475569; transition: 0.2s; font-size: 15px; }
 .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
-.btn-small-outline { background: white; color: #475569; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.btn-small-outline { background: white; color: #475569; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-small-outline:hover { background: #f8fafc; }
+/* ★ 삭제 버튼 ★ */
+.btn-delete { background: white; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
 
 .list-card { overflow-x: auto; margin-bottom: 40px; }
 .report-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -127,25 +116,12 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .label-box { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #475569; white-space: nowrap; }
 .sign-box { width: 60px; height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; background: #f8fafc; flex-shrink: 0; }
 
-/* ★ 진단 영역 가중치 - CSS Grid 2열 레이아웃 ★ */
-.criteria-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1px 1fr !important;
-    gap: 0 !important;
-    align-items: start;
-    width: 100% !important;
-    margin-bottom: 12px;
-}
+/* ★ 진단 영역 가중치 - CSS Grid 2열 ★ */
+.criteria-grid { display: grid !important; grid-template-columns: 1fr 1px 1fr !important; gap: 0 !important; align-items: start; width: 100% !important; margin-bottom: 12px; }
 .criteria-col { display: block !important; min-width: 0 !important; }
 .criteria-col:first-child { padding-right: 20px !important; padding-left: 0 !important; }
 .criteria-col:last-child  { padding-left: 20px !important;  padding-right: 0 !important; }
-.criteria-divider {
-    display: block !important;
-    width: 1px !important;
-    align-self: stretch;
-    min-height: 80px;
-    background: linear-gradient(to bottom, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%) !important;
-}
+.criteria-divider { display: block !important; width: 1px !important; align-self: stretch; min-height: 80px; background: linear-gradient(to bottom, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%) !important; }
 .criteria-item { display: flex !important; margin-bottom: 13px !important; align-items: flex-start !important; }
 .criteria-item:last-child { margin-bottom: 0 !important; }
 .criteria-item .dot { width: 10px !important; height: 10px !important; border-radius: 50% !important; margin-top: 5px !important; margin-right: 10px !important; flex-shrink: 0 !important; }
@@ -167,18 +143,8 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-/* ★ 표지 스크린 레이아웃 ★ */
-.cover-page {
-    min-height: 1050px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    border-left: 30px solid #3b82f6;
-    padding: 60px 40px 40px 40px;
-    margin-bottom: 50px;
-    page-break-after: always;
-    break-after: page;
-}
+/* ★ 표지 ★ */
+.cover-page { min-height: 1050px; display: flex; flex-direction: column; position: relative; border-left: 30px solid #3b82f6; padding: 60px 40px 40px 40px; margin-bottom: 50px; page-break-after: always; break-after: page; }
 .cover-header { flex-shrink: 0; }
 .cover-header h4 { font-size: 18px; color: #3b82f6; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 5px; }
 .cover-header h1 { font-size: 42px; font-weight: 900; color: #0f172a; margin-top: 15px; letter-spacing: -1px; white-space: nowrap !important; }
@@ -188,28 +154,62 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .cover-table table { width: 100%; border-collapse: collapse; }
 .cover-table th { text-align: left; padding: 11px 0; color: #3b82f6; font-size: 14px; width: 18%; font-weight: bold; }
 .cover-table td { padding: 11px 0; color: #334155; font-size: 14px; width: 32%; }
-.cover-footer {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    border-top: 2px solid #3b82f6;
-    padding-top: 18px;
-    margin-top: 20px;
-    color: #475569;
-    font-size: 14px;
-    font-weight: bold;
-}
+.cover-footer { flex-shrink: 0; display: flex; justify-content: space-between; border-top: 2px solid #3b82f6; padding-top: 18px; margin-top: 20px; color: #475569; font-size: 14px; font-weight: bold; }
 
 .overview-company-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; margin-top: 5px; border-top: 2px solid #1e3a8a; }
 .overview-company-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 14px; text-align: left; font-size: 13px; color: #1e40af; font-weight: bold; white-space: nowrap; width: 14%; }
 .overview-company-table td { border: 1px solid #e2e8f0; padding: 10px 14px; font-size: 14px; color: #1e293b; }
 
+/* ★ 보고서 섹션 박스 ★ */
 .report-section-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid; }
 .report-section-box h3 { margin-top: 0 !important; margin-bottom: 18px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 20px; font-weight: bold; }
 .report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 16px; text-align: justify; word-break: keep-all; }
 .report-section-box ul { list-style-type: none; margin-left: 0; padding-left: 0; margin-bottom: 0; }
 .report-section-box li { position: relative; padding-left: 18px; margin-bottom: 10px; font-size: 16px; color: #334155; line-height: 1.7; word-break: keep-all; }
 .report-section-box li::before { content: '■'; position: absolute; left: 0; color: #3b82f6; font-size: 11px; top: 3px; }
+
+/* ★ 컨설턴트 피드백 박스 ★ */
+.consultant-feedback-box {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-left: 5px solid #f97316;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-top: 20px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.consultant-feedback-box h4 {
+    font-size: 14px;
+    font-weight: bold;
+    color: #c2410c;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.consultant-feedback-box ul {
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
+}
+.consultant-feedback-box li {
+    position: relative !important;
+    padding-left: 20px !important;
+    margin-bottom: 8px !important;
+    font-size: 14px !important;
+    color: #7c2d12 !important;
+    line-height: 1.65 !important;
+    word-break: keep-all;
+}
+.consultant-feedback-box li::before {
+    content: '▶' !important;
+    position: absolute !important;
+    left: 0 !important;
+    color: #f97316 !important;
+    font-size: 10px !important;
+    top: 4px !important;
+}
 
 .simple-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid #1e293b; }
 .simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; text-align: center; font-size: 15px; color: #475569; font-weight: bold; white-space: nowrap; }
@@ -230,23 +230,12 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 @keyframes scan { 0% { top: -10px; } 50% { top: 100%; } 100% { top: -10px; } }
 .loading-title { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #93c5fd; letter-spacing: 1px; }
 
-/* ★ PDF 인쇄 - 표지 1페이지 완전 고정 ★ */
+/* ★ PDF 인쇄 ★ */
 @media print {
     @page { size: A4; margin: 15mm; }
     body { background: white !important; font-size: 12pt; }
-
-    .auth-overlay, .sidebar, .page-header, .blue-banner, .green-banner,
-    .orange-banner, .purple-banner, .teal-banner, .pink-banner,
-    .info-yellow-box, .fund-split-layout, .report-action-group,
-    .report-view-header, .header-btns, button, nav, aside, #ai-loading-overlay {
-        display: none !important;
-    }
-
-    .container, .main-content {
-        display: block !important; width: 100% !important;
-        height: auto !important; overflow: visible !important;
-        padding: 0 !important; margin: 0 !important; background: white !important;
-    }
+    .auth-overlay, .sidebar, .page-header, .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner, .info-yellow-box, .fund-split-layout, .report-action-group, .report-view-header, .header-btns, button, nav, aside, #ai-loading-overlay { display: none !important; }
+    .container, .main-content { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; background: white !important; }
     .tab-content { display: none !important; }
     #report { display: block !important; }
     #report-input-step { display: none !important; }
@@ -254,46 +243,13 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     .report-view-container { padding: 0 !important; background: white !important; }
     .report-paper { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: auto !important; }
     .paper-inner { max-width: 100% !important; width: 100% !important; }
-
-    /* ★ 표지: 절대 위치로 담당자 정보를 표지 하단에 완전 고정 ★ */
-    .cover-page {
-        height: 267mm !important;
-        min-height: unset !important;
-        display: block !important;          /* flex → block 변경 */
-        position: relative !important;      /* 자식 absolute 기준점 */
-        page-break-after: always !important;
-        break-after: page !important;
-        overflow: hidden !important;
-        -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    /* 제목: 상단 고정 (기본 흐름) */
-    .cover-header { position: relative; }
-
-    /* 기업정보: 하단에서 90px 위 */
-    .cover-middle {
-        position: absolute !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 90px !important;
-        margin: 0 !important;
-    }
+    .cover-page { height: 267mm !important; min-height: unset !important; display: block !important; position: relative !important; page-break-after: always !important; break-after: page !important; overflow: hidden !important; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+    .cover-middle { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 90px !important; margin: 0 !important; }
     .cover-middle h2 { font-size: 24px !important; margin-bottom: 15px !important; }
     .cover-table { margin-bottom: 0 !important; }
-
-    /* 담당자 정보: 표지 맨 하단에 고정 */
-    .cover-footer {
-        position: absolute !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        margin: 0 !important;
-        padding-top: 15px !important;
-        -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-
+    .cover-footer { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; margin: 0 !important; padding-top: 15px !important; }
     .cover-table { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
-    .report-section-box, .alert-box, .chart-container { page-break-inside: avoid; break-inside: avoid; }
+    .report-section-box, .alert-box, .chart-container, .consultant-feedback-box { page-break-inside: avoid; break-inside: avoid; }
     .report-section-box { border: 1px solid #ccc; padding: 20px; }
+    .consultant-feedback-box { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
 }
