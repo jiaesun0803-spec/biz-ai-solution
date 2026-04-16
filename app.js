@@ -3,6 +3,35 @@ const DB_SESSION = 'biz_session';
 const STORAGE_KEY = 'biz_consult_companies';
 const DB_REPORTS  = 'biz_reports';
 
+// ★ 현재 열린 보고서 정보 (파일명 생성용) ★
+let _currentReport = { company: '', type: '' };
+
+/* ===== ★ PDF 출력 함수 ★ =====
+   1. document.title → "기업명 - 보고서종류" 로 변경 (PDF 파일명)
+   2. 사이드바를 JS로 완전히 숨기고 인쇄 후 복구
+   → @media print CSS와 JS 이중 처리로 붉은 아이콘 완전 제거
+============================================ */
+window.printReport = function() {
+    const company = _currentReport.company || '';
+    const type    = _currentReport.type    || 'AI 보고서';
+    const origTitle = document.title;
+
+    // 파일명: "기업명 - 보고서종류"
+    document.title = company ? `${company} - ${type}` : type;
+
+    // 사이드바 JS 레벨에서 완전 숨김
+    const sidebar = document.querySelector('.sidebar');
+    const origSidebarDisplay = sidebar ? sidebar.style.display : '';
+    if (sidebar) sidebar.style.display = 'none';
+
+    // 인쇄
+    window.print();
+
+    // 복구
+    document.title = origTitle;
+    if (sidebar) sidebar.style.display = origSidebarDisplay;
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     const urlParams = new URLSearchParams(window.location.search);
@@ -407,6 +436,8 @@ function renderManagementReport(companyData,cleanHTML,version,rev,dateStr){
     const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
     const months=Math.max((parseInt((companyData.date||dateStr).split('-')[1])||1)-1,1);
     const expectedCur=Math.round((safeRev.cur/months)*12);
+    // ★ 파일명용 메타 저장 ★
+    _currentReport={company:companyData.name,type:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`};
     cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*경영진단[^<]*개요[^<]*<\/h3>)/,`$1\n${buildCompanyOverviewTable(companyData,safeRev)}`);
     const pos1=cleanHTML.indexOf('경영진단');
     if(pos1>-1){const ulClose=cleanHTML.indexOf('</ul>',pos1);if(ulClose>-1)cleanHTML=cleanHTML.slice(0,ulClose+5)+'\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>\n'+cleanHTML.slice(ulClose+5);}
@@ -425,6 +456,8 @@ function renderManagementReport(companyData,cleanHTML,version,rev,dateStr){
 function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,dateStr){
     const contentArea=document.getElementById(contentAreaId);if(!contentArea)return;
     const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
+    // ★ 파일명용 메타 저장 ★
+    _currentReport={company:companyData.name,type:config.title};
     const vLabel=config.version==='client'?'기업의 현황 분석 및 맞춤형 전략 제안':'내부 리스크 진단 및 보완 액션 플랜';
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
 }
