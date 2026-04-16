@@ -190,8 +190,8 @@ function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
     const num = parseInt(amountInManwon, 10);
     if (isNaN(num)) return '0원';
-    const uk = Math.floor(num / 10000);    // 억 단위
-    const man = num % 10000;               // 만원 단위 나머지
+    const uk = Math.floor(num / 10000);
+    const man = num % 10000;
     let result = '';
     if (uk > 0) {
         result += uk.toLocaleString('ko-KR') + '억';
@@ -222,9 +222,7 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const consultantName = session ? session.name : "담당자";
     const consultantDept = session ? session.dept : "솔루션빌더스";
 
-    // ★ revenueData 안전 처리 ★
     const safeRev = rev || { cur: 0, y25: 0, y24: 0, y23: 0 };
-
     const regDate = companyData.date || dateStr;
     const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
     let passedMonths = regMonth - 1; 
@@ -277,29 +275,16 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
         if (lineEl) {
             new Chart(lineEl.getContext('2d'), { 
                 type: 'line', 
-                data: { 
-                    labels: ['23년도', '24년도', '25년도', '금년(예상)'], 
-                    datasets: [{ label: '매출 추이 (만원)', data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, fill: true, tension: 0.1 }] 
-                }, 
-                options: { 
-                    maintainAspectRatio: false,
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } }
-                } 
+                data: { labels: ['23년도', '24년도', '25년도', '금년(예상)'], datasets: [{ label: '매출 추이 (만원)', data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, fill: true, tension: 0.1 }] }, 
+                options: { maintainAspectRatio: false, scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } } } 
             });
         }
         const coverBarEl = document.getElementById('cover-bar-chart');
         if (coverBarEl) {
             new Chart(coverBarEl.getContext('2d'), { 
                 type: 'bar', 
-                data: { 
-                    labels: ['23년도', '24년도', '금년(예상)'], 
-                    datasets: [{ label: '매출 현황', data: [safeRev.y23, safeRev.y24, expectedCurRev], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 }] 
-                }, 
-                options: { 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } }
-                } 
+                data: { labels: ['23년도', '24년도', '금년(예상)'], datasets: [{ label: '매출 현황', data: [safeRev.y23, safeRev.y24, expectedCurRev], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 }] }, 
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } } } 
             });
         }
     }, 100);
@@ -314,7 +299,7 @@ window.generateReport = async function(reportType, version, event) {
     const companyData = companies.find(c => c.name === companyName);
     const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
 
-    // ★ AI에게 전달할 금액을 한글 문자열로 미리 변환 ★
+    // ★ 금액 한글 변환 ★
     const regDate = companyData.date || new Date().toISOString().split('T')[0];
     const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
     let passedMonths = regMonth - 1;
@@ -331,34 +316,47 @@ window.generateReport = async function(reportType, version, event) {
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
+    /* =====================================================
+       ★ AI 프롬프트 - 가중치 실제 반영 버전 ★
+       각 섹션별 가중치에 따라 작성 분량과 깊이를 차등 적용
+    ===================================================== */
     let systemInstruction = `
-    너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
-    제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 작성해. 
-    1. 경영진단 개요
-    2. 재무 현황 분석
-    3. 전략 및 마케팅 분석
-    4. 인사/조직 및 운영/생산 분석
-    5. IT/디지털 및 정부지원 활용
-    6. 핵심 문제점 및 리스크
-    7. 개선 방향 및 로드맵
+너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야.
+제공된 [기업 데이터]를 바탕으로 아래 7개 목차를 작성해.
 
-    [★작성 규칙 - 절대 준수★]
-    - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
-    - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
-    - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-    - 각 <li> 항목은 최소 30자 이상으로 길고 상세하게 작성할 것.
-    - 금액 표기 시 반드시 [매출 데이터]에 제공된 한글 금액 문자열을 그대로 사용할 것. (예: "1억 1,400만원") 절대 숫자 단위로 바꾸지 말 것.
-    - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
-    - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
-    - 표(Table)는 절대 그리지 말 것.
-    `;
+[★ 진단 영역 가중치 - 반드시 준수 ★]
+각 섹션은 아래 가중치에 따라 분석의 깊이와 <li> 항목 수를 다르게 작성해야 해.
+가중치가 높을수록 더 많은 항목을 더 깊고 풍부하게 써야 해.
+
+- 1. 경영진단 개요          → 전체 요약 (별도 가중치 없음, 3~4개 항목으로 간결하게)
+- 2. 재무 현황 분석         → 가중치 15% (낮음) : <li> 항목 3~4개, 간결하게 핵심만 서술
+- 3. 전략 및 마케팅 분석    → 가중치 25% (가장 높음) : <li> 항목 6~8개, 가장 풍부하고 구체적으로 서술
+- 4. 인사/조직 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게 서술
+- 5. 운영/생산 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게 서술
+- 6. IT/디지털 및 정부지원  → 가중치 20% (IT 10% + 정부지원 10%) : <li> 항목 각 2~3개씩, 보통 수준으로 서술
+- 7. 개선 방향 및 로드맵    → 전체 종합 (별도 가중치 없음, 5~6개 항목으로 실행 중심으로 서술)
+
+[★ 작성 규칙 - 절대 준수 ★]
+- 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
+- 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
+- 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
+- 각 <li> 항목은 최소 30자 이상으로 작성할 것.
+- 금액 표기 시 반드시 [매출 데이터]에 제공된 한글 금액 문자열을 그대로 사용할 것. 절대 숫자 단위로 바꾸지 말 것.
+- 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
+- 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
+- 표(Table)는 절대 그리지 말 것.
+`;
 
     const promptData = { ...companyData }; 
     delete promptData.rawData;
-    delete promptData.revenueData; // 숫자 원본 제거
-    promptData.매출데이터 = formattedRevForAI; // ★ 한글 변환값으로 교체
+    delete promptData.revenueData;
+    promptData.매출데이터 = formattedRevForAI;
 
-    const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData, null, 2)}\n\n출력 목적: ${version === 'client' ? '긍정적/객관적 분석' : '리스크/단점 지적 위주'}`;
+    const versionGuide = version === 'client'
+        ? '출력 목적: 기업전달용 — 긍정적이고 객관적인 분석 위주로, 기업이 읽었을 때 신뢰감을 줄 수 있도록 작성'
+        : '출력 목적: 컨설턴트용 — 리스크·단점·개선 필요사항 지적 위주로, 내부 검토에 활용할 수 있도록 냉철하게 작성';
+
+    const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData, null, 2)}\n\n${versionGuide}`;
     const aiResponse = await callGeminiAPI(fullPrompt);
 
     document.getElementById('ai-loading-overlay').style.display = 'none';
@@ -395,11 +393,9 @@ window.viewReport = function(id) {
     if(!r) return;
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const companyData = companies.find(c => c.name === r.company) || { name: r.company };
-
     showTab('report');
     document.getElementById('report-input-step').style.display = 'none';
     document.getElementById('report-result-step').style.display = 'block';
-
     renderReportToScreen(companyData, r.content, r.version, r.revenueData || { cur: 0, y25: 0, y24: 0, y23: 0 }, r.date);
 };
 
