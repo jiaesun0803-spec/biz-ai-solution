@@ -154,63 +154,51 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 16px 18px;
+    padding: 18px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     transition: 0.2s;
-    min-width: 0;   /* grid overflow 방지 */
+    min-width: 0;
 }
 .company-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #cbd5e1; }
-.company-card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-.company-card-icon {
-    width: 36px; height: 36px;
-    background: #eff6ff;
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px;
-    flex-shrink: 0;
-}
+
+/* 카드 상단 */
+.company-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.company-card-icon { width: 38px; height: 38px; background: #eff6ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 .company-card-info { flex: 1; min-width: 0; }
-.company-card-name { font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.company-card-type { font-size: 11px; color: #64748b; }
+.company-card-name { font-size: 15px; font-weight: bold; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.company-card-rep { font-size: 12px; color: #64748b; margin-top: 2px; }
 .company-card-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.btn-card-detail { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; transition: 0.2s; padding: 2px 4px; }
+.btn-card-detail { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 2px 5px; line-height: 1; }
 .btn-card-detail:hover { color: #3b82f6; }
 .btn-card-delete { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; transition: 0.2s; padding: 2px 4px; }
 .btn-card-delete:hover { color: #ef4444; }
 
-.company-card-tags { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.tag-industry {
-    background: #fff7ed; color: #c2410c;
-    padding: 2px 8px; border-radius: 20px;
-    font-size: 11px; font-weight: bold;
-    border: 1px solid #fed7aa;
+/* 카드 본문 - 업종/주소 */
+.company-card-body { display: flex; flex-direction: column; gap: 8px; }
+.company-card-row { display: flex; align-items: baseline; gap: 8px; }
+.company-card-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #94a3b8;
+    width: 30px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
-.tag-grade {
-    background: #eff6ff; color: #1d4ed8;
-    padding: 2px 8px; border-radius: 20px;
-    font-size: 11px; font-weight: bold;
-    border: 1px solid #bfdbfe;
-    display: flex; align-items: center; gap: 3px;
+.company-card-value {
+    font-size: 13px;
+    color: #334155;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-
-/* 매출 현황 */
-.company-revenue { margin-bottom: 10px; }
-.company-revenue-label { font-size: 11px; color: #64748b; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
-.company-revenue-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e2e8f0; border-radius: 7px; overflow: hidden; }
-.revenue-item { background: #f8fafc; padding: 6px 4px; text-align: center; }
-.revenue-item.highlight { background: white; }
-.revenue-year { font-size: 10px; color: #94a3b8; margin-bottom: 2px; }
-.revenue-amount { font-size: 11px; font-weight: bold; color: #1e293b; }
-.revenue-amount.empty { color: #cbd5e1; }
-
-/* 카드 하단 */
-.company-card-bottom { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
-.company-card-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 3px; }
+.company-card-value.addr { font-size: 12px; color: #64748b; }
 
 .company-empty-state {
     text-align: center; padding: 60px 20px; color: #94a3b8;
     background: white; border-radius: 12px; border: 1px solid #e2e8f0;
-    grid-column: span 3;   /* 3열 전체 차지 */
+    grid-column: span 3;
 }
 .company-empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
 .company-empty-state p { font-size: 14px; margin-bottom: 16px; }
