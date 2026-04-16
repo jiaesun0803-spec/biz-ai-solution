@@ -53,7 +53,7 @@ window.showTab = function(tabId, updateUrl = true) {
 }
 window.addEventListener('popstate', function() { const urlParams = new URLSearchParams(window.location.search); showTab(urlParams.get('tab') || 'dashboard', false); });
 
-/* ★ 대시보드 최근 보고서 렌더링 함수 ★ */
+/* ★ 대시보드 최근 보고서 렌더링 ★ */
 function updateDashboardReports() {
     const listEl = document.getElementById('dashboard-report-list');
     if (!listEl) return;
@@ -62,7 +62,6 @@ function updateDashboardReports() {
         listEl.innerHTML = '<li style="display:flex; justify-content:center; padding: 40px 0; color: #94a3b8; font-size: 15px;">최근 생성된 보고서가 없습니다.</li>';
         return;
     }
-    // 최신 5개만 표시
     const recent = [...reports].reverse().slice(0, 5);
     listEl.innerHTML = recent.map(r => `
         <li style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
@@ -96,8 +95,6 @@ window.updateDataLists = function() {
     if(cBody) { cBody.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 기업이 없습니다.</td></tr>'; }
     const rBody = document.getElementById('report-list-body');
     if(rBody) { rBody.innerHTML = reports.length ? reports.map(r => `<tr><td><span style="background:#eff6ff; color:#3b82f6; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>'; }
-    
-    // ★ 대시보드 최근 보고서 업데이트 ★
     updateDashboardReports();
 }
 
@@ -127,7 +124,6 @@ window.saveCompanyData = function() {
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(companies)); alert('기업의 모든 세부 정보가 성공적으로 저장되었습니다!'); updateDataLists(); showTab('reportList');
 }
 
@@ -158,8 +154,8 @@ function initInputHandlers() {
     document.querySelectorAll('.debt-input').forEach(i => { i.addEventListener('input', window.calculateTotalDebt); }); 
 
     const formatInputs = [
-        { id: 'biz_number', len: [4, 6], split: [3, 5, 10] }, { id: 'corp_number', len: [7], split: [6, 13] },
-        { id: 'biz_date', len: [5, 7], split: [4, 6, 8] }, { id: 'rep_birth', len: [5, 7], split: [4, 6, 8] }, { id: 'write_date', len: [5, 7], split: [4, 6, 8] }
+        { id: 'biz_number' }, { id: 'corp_number' },
+        { id: 'biz_date' }, { id: 'rep_birth' }, { id: 'write_date' }
     ];
     formatInputs.forEach(item => {
         const el = document.getElementById(item.id);
@@ -187,22 +183,24 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   한글 금액 변환기 & AI 차트 및 표지 로직
+   ★ 한글 금액 변환기 (만원 단위 입력 기준)
+   예: 10000 → 1억원 / 11400 → 1억 1,400만원
 ========================================= */
-
 function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
-    const uk = Math.floor(amountInManwon / 10000);
-    const man = amountInManwon % 10000;
-    let res = '';
+    const num = parseInt(amountInManwon, 10);
+    if (isNaN(num)) return '0원';
+    const uk = Math.floor(num / 10000);    // 억 단위
+    const man = num % 10000;               // 만원 단위 나머지
+    let result = '';
     if (uk > 0) {
-        res += uk.toLocaleString() + '억';
-        if (man > 0) res += ' ' + man.toLocaleString() + '만원';
-        else res += '원';
+        result += uk.toLocaleString('ko-KR') + '억';
+        if (man > 0) result += ' ' + man.toLocaleString('ko-KR') + '만원';
+        else result += '원';
     } else {
-        res += man.toLocaleString() + '만원';
+        result = man.toLocaleString('ko-KR') + '만원';
     }
-    return res.trim();
+    return result;
 }
 
 async function callGeminiAPI(prompt) {
@@ -224,7 +222,7 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const consultantName = session ? session.name : "담당자";
     const consultantDept = session ? session.dept : "솔루션빌더스";
 
-    // ★ revenueData가 없을 경우 기본값 보호 ★
+    // ★ revenueData 안전 처리 ★
     const safeRev = rev || { cur: 0, y25: 0, y24: 0, y23: 0 };
 
     const regDate = companyData.date || dateStr;
@@ -275,44 +273,32 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
         if (radarEl) {
             new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
         }
-        
         const lineEl = document.getElementById('report-bar-chart'); 
         if (lineEl) {
             new Chart(lineEl.getContext('2d'), { 
                 type: 'line', 
                 data: { 
                     labels: ['23년도', '24년도', '25년도', '금년(예상)'], 
-                    datasets: [{ 
-                        label: '매출 추이', 
-                        data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], 
-                        borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', 
-                        borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, 
-                        fill: true, tension: 0.1 
-                    }] 
+                    datasets: [{ label: '매출 추이 (만원)', data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, fill: true, tension: 0.1 }] 
                 }, 
                 options: { 
                     maintainAspectRatio: false,
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } }
                 } 
             });
         }
-        
         const coverBarEl = document.getElementById('cover-bar-chart');
         if (coverBarEl) {
             new Chart(coverBarEl.getContext('2d'), { 
                 type: 'bar', 
                 data: { 
                     labels: ['23년도', '24년도', '금년(예상)'], 
-                    datasets: [{ 
-                        label: '매출 현황', 
-                        data: [safeRev.y23, safeRev.y24, expectedCurRev], 
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 
-                    }] 
+                    datasets: [{ label: '매출 현황', data: [safeRev.y23, safeRev.y24, expectedCurRev], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 }] 
                 }, 
                 options: { 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } }
                 } 
             });
         }
@@ -327,6 +313,21 @@ window.generateReport = async function(reportType, version, event) {
     const companies = JSON.parse(localStorage.getItem('biz_consult_companies') || '[]');
     const companyData = companies.find(c => c.name === companyName);
     const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
+
+    // ★ AI에게 전달할 금액을 한글 문자열로 미리 변환 ★
+    const regDate = companyData.date || new Date().toISOString().split('T')[0];
+    const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
+    let passedMonths = regMonth - 1;
+    if (passedMonths <= 0) passedMonths = 1;
+    const expectedCurRev = Math.round((rev.cur / passedMonths) * 12);
+
+    const formattedRevForAI = {
+        금년매출_전월말기준: formatKoreanCurrency(rev.cur),
+        금년예상연간매출: formatKoreanCurrency(expectedCurRev) + ` (${passedMonths}개월 기준 연간 환산)`,
+        매출_2025년: formatKoreanCurrency(rev.y25),
+        매출_2024년: formatKoreanCurrency(rev.y24),
+        매출_2023년: formatKoreanCurrency(rev.y23)
+    };
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
@@ -345,14 +346,19 @@ window.generateReport = async function(reportType, version, event) {
     - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
     - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-    - 각 <li> 항목은 분석 내용이 충분히 풍부하게 담기도록 최소 30자 이상으로 길고 상세하게 작성할 것. 절대 빈약하게 쓰지 마.
+    - 각 <li> 항목은 최소 30자 이상으로 길고 상세하게 작성할 것.
+    - 금액 표기 시 반드시 [매출 데이터]에 제공된 한글 금액 문자열을 그대로 사용할 것. (예: "1억 1,400만원") 절대 숫자 단위로 바꾸지 말 것.
     - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
     - 표(Table)는 절대 그리지 말 것.
     `;
 
-    const promptData = { ...companyData }; delete promptData.rawData; 
-    const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData)}\n\n출력 목적: ${version === 'client' ? '긍정적/객관적 분석' : '리스크/단점 지적 위주'}`;
+    const promptData = { ...companyData }; 
+    delete promptData.rawData;
+    delete promptData.revenueData; // 숫자 원본 제거
+    promptData.매출데이터 = formattedRevForAI; // ★ 한글 변환값으로 교체
+
+    const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData, null, 2)}\n\n출력 목적: ${version === 'client' ? '긍정적/객관적 분석' : '리스크/단점 지적 위주'}`;
     const aiResponse = await callGeminiAPI(fullPrompt);
 
     document.getElementById('ai-loading-overlay').style.display = 'none';
@@ -394,7 +400,6 @@ window.viewReport = function(id) {
     document.getElementById('report-input-step').style.display = 'none';
     document.getElementById('report-result-step').style.display = 'block';
 
-    // ★ r.revenueData가 없어도 안전하게 처리 ★
     renderReportToScreen(companyData, r.content, r.version, r.revenueData || { cur: 0, y25: 0, y24: 0, y23: 0 }, r.date);
 };
 
