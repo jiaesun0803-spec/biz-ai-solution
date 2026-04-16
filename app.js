@@ -48,20 +48,19 @@ window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location
 /* ===== 프로필 ===== */
 function loadUserProfile() {
     const user=JSON.parse(localStorage.getItem(DB_SESSION)); if (!user) return;
-    const set = (id,val) => { const el=document.getElementById(id); if(el) el[el.tagName==='INPUT'?'value':'innerText']=val; };
-    set('display-user-name', user.name);
-    set('display-user-dept', user.dept||'솔루션빌더스');
-    if (document.getElementById('set-user-name')) {
+    if(document.getElementById('display-user-name')) document.getElementById('display-user-name').innerText = user.name;
+    if(document.getElementById('display-user-dept')) document.getElementById('display-user-dept').innerText = user.dept||'솔루션빌더스';
+    if(document.getElementById('set-user-name')) {
         document.getElementById('set-user-name').value  = user.name;
         document.getElementById('set-user-email').value = user.email;
         document.getElementById('set-user-dept').value  = user.dept||'';
         document.getElementById('set-api-key').value    = user.apiKey||'';
     }
 }
-function updateUserDB(updatedUser) {
+function updateUserDB(u) {
     let users=JSON.parse(localStorage.getItem(DB_USERS));
-    const idx=users.findIndex(u=>u.email===updatedUser.email);
-    users[idx]=updatedUser; localStorage.setItem(DB_USERS,JSON.stringify(users)); localStorage.setItem(DB_SESSION,JSON.stringify(updatedUser)); loadUserProfile();
+    const idx=users.findIndex(x=>x.email===u.email);
+    users[idx]=u; localStorage.setItem(DB_USERS,JSON.stringify(users)); localStorage.setItem(DB_SESSION,JSON.stringify(u)); loadUserProfile();
 }
 window.saveProfileSettings = function() { let s=JSON.parse(localStorage.getItem(DB_SESSION)); s.name=document.getElementById('set-user-name').value; s.dept=document.getElementById('set-user-dept').value; updateUserDB(s); alert('저장되었습니다.'); };
 window.saveApiSettings     = function() { let s=JSON.parse(localStorage.getItem(DB_SESSION)); s.apiKey=document.getElementById('set-api-key').value; updateUserDB(s); alert('API 키가 저장되었습니다.'); };
@@ -114,8 +113,8 @@ window.updateDataLists = function() {
     updateDashboardReports();
 };
 
-/* ===== 기업 저장/불러오기 ===== */
-window.clearCompanyForm  = function() { if(confirm('초기화하시겠습니까?')){ document.getElementById('companyForm').reset(); calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); } };
+/* ===== 기업 CRUD ===== */
+window.clearCompanyForm    = function() { if(confirm('초기화하시겠습니까?')){ document.getElementById('companyForm').reset(); calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); } };
 window.loadSelectedCompany = function(name) { if(!name) return; editCompany(name); document.getElementById('load-company-select').value=''; };
 window.saveCompanyData = function() {
     const name=document.getElementById('comp_name')?.value; if(!name){ alert('상호명을 입력해주세요.'); return; }
@@ -179,8 +178,8 @@ function initInputHandlers() {
 }
 
 /* ===== 한글 금액 변환 ===== */
-function formatKoreanCurrency(amountInManwon) {
-    const num=parseInt(amountInManwon,10); if(!num||isNaN(num)) return '0원';
+function formatKoreanCurrency(n) {
+    const num=parseInt(n,10); if(!num||isNaN(num)) return '0원';
     const uk=Math.floor(num/10000), man=num%10000;
     if(uk>0) return uk.toLocaleString('ko-KR')+'억'+(man>0?' '+man.toLocaleString('ko-KR')+'만원':'원');
     return man.toLocaleString('ko-KR')+'만원';
@@ -199,7 +198,7 @@ function formatRevenueForAI(companyData, rev) {
     };
 }
 
-/* ===== Gemini API 호출 ===== */
+/* ===== Gemini API ===== */
 async function callGeminiAPI(prompt) {
     const session=JSON.parse(localStorage.getItem('biz_session'));
     const apiKey=session?.apiKey;
@@ -215,19 +214,18 @@ async function callGeminiAPI(prompt) {
     } catch(e) { console.error(e); alert('오류: '+e.message); return null; }
 }
 
-/* ===== 리포트 표지 HTML 생성 ===== */
+/* ===== ★ 표지 HTML 생성 (담당자정보 완전 제거) ===== */
 function buildCoverHTML(companyData, config, rev, dateStr) {
-    const session=JSON.parse(localStorage.getItem(DB_SESSION));
-    const cName=session?.name||'담당자', cDept=session?.dept||'솔루션빌더스';
     const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
     const regMonth=parseInt((companyData.date||dateStr).split('-')[1])||1;
     const months=Math.max(regMonth-1,1);
     const expectedCur=Math.round((safeRev.cur/months)*12);
     const vLabel=config.version==='client'?'기업전달용':'컨설턴트용';
+    const borderColor=config.borderColor||'#3b82f6';
     return `
-    <div class="cover-page cover-theme-blue" style="border-left-color:${config.borderColor||'#3b82f6'};">
+    <div class="cover-page" style="border-left-color:${borderColor};">
         <div class="cover-header">
-            <h4 style="color:${config.borderColor||'#3b82f6'};border-bottom-color:${config.borderColor||'#3b82f6'};">${config.reportKind||'AI 리포트'}</h4>
+            <h4 style="color:${borderColor};border-bottom-color:${borderColor};">${config.reportKind||'AI 리포트'}</h4>
             <h1>${config.title}</h1>
         </div>
         <div class="cover-middle">
@@ -243,11 +241,6 @@ function buildCoverHTML(companyData, config, rev, dateStr) {
                     </tr>
                 </table>
             </div>
-        </div>
-        <div class="cover-footer">
-            <div>📅 작성일: ${dateStr}</div>
-            <div>👤 담당자: ${cName}</div>
-            <div>🏢 소속: ${cDept}</div>
         </div>
     </div>`;
 }
@@ -272,18 +265,18 @@ function renderManagementReport(companyData, cleanHTML, version, rev, dateStr) {
     const months=Math.max((parseInt((companyData.date||dateStr).split('-')[1])||1)-1,1);
     const expectedCur=Math.round((safeRev.cur/months)*12);
 
-    // 경영진단 개요: h3 뒤에 기업현황표 삽입
+    // 경영진단 개요: h3 뒤 기업현황표 삽입
     cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*경영진단[^<]*개요[^<]*<\/h3>)/,
         `$1\n${buildCompanyOverviewTable(companyData,safeRev)}`);
 
-    // 경영진단 개요: 첫 번째 </ul> 뒤에 레이더 차트 삽입
+    // 경영진단 개요: 첫 </ul> 뒤 레이더 차트 삽입
     const pos1=cleanHTML.indexOf('경영진단');
     if(pos1>-1){
         const ulClose=cleanHTML.indexOf('</ul>',pos1);
         if(ulClose>-1) cleanHTML=cleanHTML.slice(0,ulClose+5)+'\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>\n'+cleanHTML.slice(ulClose+5);
     }
 
-    // 재무 현황 분석: h3 뒤에 라인 차트 삽입
+    // 재무 현황 분석: h3 뒤 라인 차트 삽입
     cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*재무[^<]*현황[^<]*<\/h3>)/,
         `$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>`);
 
@@ -301,16 +294,16 @@ function renderManagementReport(companyData, cleanHTML, version, rev, dateStr) {
     },100);
 }
 
-/* ===== 일반 리포트 렌더링 (경영진단 외 6종) ===== */
+/* ===== 일반 리포트 렌더링 ===== */
 function renderGenericReport(contentAreaId, companyData, cleanHTML, config, rev, dateStr) {
     const contentArea=document.getElementById(contentAreaId); if(!contentArea) return;
     const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
     const vLabel=config.version==='client'?'기업의 현황 분석 및 맞춤형 전략 제안':'내부 리스크 진단 및 보완 액션 플랜';
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}
-        <div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
+        <div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다.</div></div>`;
 }
 
-/* ===== 경영진단 보고서 생성 ===== */
+/* ===== 경영진단 생성 ===== */
 window.generateReport = async function(type, version, event) {
     const tab=event.target.closest('.tab-content');
     const companyName=tab.querySelector('.company-dropdown').value;
@@ -319,12 +312,10 @@ window.generateReport = async function(type, version, event) {
     const companyData=companies.find(c=>c.name===companyName);
     const rev=companyData.revenueData||{y23:0,y24:0,y25:0,cur:0};
     const fRev=formatRevenueForAI(companyData,rev);
-
-    document.getElementById('ai-loading-overlay').style.display='flex';
-
     const promptData={...companyData}; delete promptData.rawData; delete promptData.revenueData;
     promptData.매출데이터=fRev;
 
+    document.getElementById('ai-loading-overlay').style.display='flex';
     const prompt=`
 너의 역할은 20년 경력의 경영 컨설턴트야. 대상 기업: '${companyData.name}'
 
@@ -341,7 +332,7 @@ window.generateReport = async function(type, version, event) {
 - 각 목차는 <div class="report-section-box">로 감쌀 것
 - 제목은 <h3>, 내용은 <ul><li>로 작성
 - li 항목은 최소 30자 이상 상세히
-- 금액은 제공된 한글 금액 그대로 사용 (숫자 단위 금지)
+- 금액은 제공된 한글 금액 그대로 사용
 - 개조식 문체 (~함, ~임, ~필요함)
 - 마크다운(**) 및 표(Table) 사용 금지
 
@@ -352,7 +343,6 @@ ${JSON.stringify(promptData,null,2)}`;
 
     const aiResponse=await callGeminiAPI(prompt);
     document.getElementById('ai-loading-overlay').style.display='none';
-
     if (aiResponse) {
         let cleanHTML=aiResponse.replace(/```html|```/g,'').replace(/\*\*/g,'');
         const todayStr=new Date().toISOString().split('T')[0];
@@ -365,7 +355,7 @@ ${JSON.stringify(promptData,null,2)}`;
     }
 };
 
-/* ===== AI 리포트 생성 설정 (6종) ===== */
+/* ===== 6종 리포트 설정 (시뮬레이터 제거) ===== */
 const REPORT_CONFIGS = {
     finance: {
         typeLabel:'재무진단', title:'AI 상세 재무진단', reportKind:'AI 상세 재무진단 리포트', borderColor:'#2563eb',
@@ -407,36 +397,22 @@ const REPORT_CONFIGS = {
 아래 5개 섹션으로 정책자금 매칭 리포트를 작성해.
 1. 기업 자격 요건 분석 - 정책자금 신청 가능 여부 진단 (4~5항목)
 2. 자금 필요성 및 활용 전략 (3~4항목)
-3. 추천 정책자금 TOP 5 - 기관명, 자금명, 한도, 금리, 특징 포함하여 각각 상세히 (각 항목당 3~4줄)
+3. 추천 정책자금 TOP 5 - 기관명, 자금명, 한도, 금리, 특징 포함하여 각각 상세히 (각 3~4줄)
 4. 기관별 신청 전략 - 중진공/소진공/신보/기보/재단 각각 (5~6항목)
 5. 신청 준비 체크리스트 (6~8항목)
 [작성 규칙] 각 목차는 <div class="report-section-box">, 제목은 <h3>, 내용은 <ul><li>, li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
 출력 목적: ${version==='client'?'기업전달용':'컨설턴트 분석용 (리스크 포함)'}
 [기업 데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`
     },
-    simulator: {
-        typeLabel:'매칭시뮬레이터', title:'정책자금 매칭 시뮬레이터', reportKind:'AI 정책자금 매칭 시뮬레이션', borderColor:'#7c3aed',
-        contentAreaId:'simulator-content-area',
-        buildPrompt:(cData,fRev,version)=>`
-너는 중소기업 정책자금 매칭 전문가야. 대상 기업: '${cData.name}'
-아래 4개 섹션으로 매칭 시뮬레이션 결과를 작성해.
-1. 기업 종합 진단 요약 (3~4항목) - 자금 신청 적합성 점수(100점 만점)와 근거 포함
-2. 기관별 매칭 점수 및 예상 한도 시뮬레이션 (6~8항목) - 중진공/소진공/신보/기보/재단/은행 각각의 매칭점수(%), 예상한도, 예상금리, 추천여부를 구체적 수치로 작성
-3. 신청 우선순위 TOP 5 추천 (5항목) - 순위별 자금명, 신청 이유, 예상 승인율
-4. 단계별 자금조달 로드맵 (4~5항목) - 1단계~4단계로 구체적 실행 계획
-[작성 규칙] 각 목차는 <div class="report-section-box">, 제목은 <h3>, 내용은 <ul><li>, li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
-출력 목적: ${version==='client'?'기업전달용':'컨설턴트 분석용'}
-[기업 데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`
-    },
     aiTrade: {
         typeLabel:'상권분석', title:'AI 상권분석 리포트', reportKind:'AI 빅데이터 상권분석', borderColor:'#0d9488',
         contentAreaId:'aiTrade-content-area',
         buildPrompt:(cData,fRev,version)=>`
-너는 상권분석 전문 컨설턴트야. 대상 기업: '${cData.name}' (업종: ${cData.industry||'미입력'}, 소재지: ${cData.bizDate||'미입력'})
+너는 상권분석 전문 컨설턴트야. 대상 기업: '${cData.name}' (업종: ${cData.industry||'미입력'})
 아래 5개 섹션으로 상권분석 리포트를 작성해.
-1. 상권 개요 및 입지 분석 (4~5항목) - 해당 업종과 지역 특성 기반 분석
-2. 유동인구 및 타겟 고객 분석 (5~6항목) - 연령대, 소득, 소비패턴
-3. 경쟁 현황 및 포지셔닝 전략 (5~6항목) - 경쟁 강도, 차별화 방향
+1. 상권 개요 및 입지 분석 (4~5항목)
+2. 유동인구 및 타겟 고객 분석 (5~6항목)
+3. 경쟁 현황 및 포지셔닝 전략 (5~6항목)
 4. 상권 성장성 및 리스크 평가 (4~5항목)
 5. 매출 예측 및 운영 전략 제안 (5~6항목)
 [작성 규칙] 각 목차는 <div class="report-section-box">, 제목은 <h3>, 내용은 <ul><li>, li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
@@ -449,11 +425,11 @@ const REPORT_CONFIGS = {
         buildPrompt:(cData,fRev,version)=>`
 너는 디지털 마케팅 전문 컨설턴트야. 대상 기업: '${cData.name}'
 아래 6개 섹션으로 맞춤형 마케팅 제안서를 작성해.
-1. 마케팅 현황 진단 (4~5항목) - 현재 상태와 개선 필요 포인트
-2. 타겟 고객 설정 및 페르소나 (5~6항목) - 구체적 타겟 프로파일 포함
-3. 채널별 마케팅 전략 (6~8항목) - SNS/검색광고/오프라인/이메일 각각 구체적 전술
-4. 콘텐츠 및 브랜딩 전략 (5~6항목) - 핵심 메시지, 콘텐츠 방향
-5. 마케팅 예산 계획 (4~5항목) - 월 예산 배분 기준, 채널별 비중
+1. 마케팅 현황 진단 (4~5항목)
+2. 타겟 고객 설정 및 페르소나 (5~6항목)
+3. 채널별 마케팅 전략 (6~8항목) - SNS/검색광고/오프라인 각각 구체적 전술
+4. 콘텐츠 및 브랜딩 전략 (5~6항목)
+5. 마케팅 예산 계획 (4~5항목)
 6. 월별 실행 로드맵 (6항목) - 1~6월 단계별 실행 계획
 [작성 규칙] 각 목차는 <div class="report-section-box">, 제목은 <h3>, 내용은 <ul><li>, li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
 출력 목적: ${version==='client'?'기업전달용':'컨설턴트 분석용'}
@@ -461,12 +437,11 @@ const REPORT_CONFIGS = {
     }
 };
 
-/* ===== 통합 AI 리포트 생성 함수 (6종) ===== */
+/* ===== 통합 AI 리포트 생성 ===== */
 window.generateAnyReport = async function(type, version, event) {
     const tab=event.target.closest('.tab-content');
     const companyName=tab.querySelector('.company-dropdown').value;
     if (!companyName) { alert('기업을 선택해주세요.'); return; }
-
     const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
     const companyData=companies.find(c=>c.name===companyName);
     const rev=companyData.revenueData||{y23:0,y24:0,y25:0,cur:0};
