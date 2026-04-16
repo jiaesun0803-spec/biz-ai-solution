@@ -181,7 +181,30 @@ async function callGeminiAPI(prompt){
     }catch(e){console.error(e);alert('오류: '+e.message);return null;}
 }
 
-/* ===== 표지 HTML 생성 ===== */
+/* =========================================
+   ★ AI 응답 정리 함수
+   - 마크다운/코드블록 제거
+   - 인사말·소개문 등 섹션박스 앞 텍스트 완전 제거
+========================================= */
+function cleanAIResponse(raw) {
+    // 1. 마크다운 코드블록 및 볼드 제거
+    let html = raw.replace(/```html|```/g, '').replace(/\*\*/g, '');
+
+    // 2. ★ 첫 번째 <div class="report-section-box"> 이전의 모든 텍스트 제거
+    //    (AI가 생성하는 인사말, 소개문, <p>태그 등 모두 제거)
+    const firstSectionIdx = html.indexOf('<div class="report-section-box">');
+    if (firstSectionIdx > 0) {
+        html = html.slice(firstSectionIdx);
+    }
+
+    // 3. 섹션박스 사이에 혹시 남은 단독 <p> 인사문 제거
+    //    (섹션박스 닫힘 태그 이후, 다음 섹션박스 열림 태그 이전의 <p>태그 제거)
+    html = html.replace(/<\/div>\s*<p[^>]*>[\s\S]*?<\/p>\s*(?=<div[^>]*report-section-box)/g, '</div>');
+
+    return html;
+}
+
+/* ===== 표지 HTML ===== */
 function buildCoverHTML(companyData,config,rev,dateStr){
     const session=JSON.parse(localStorage.getItem(DB_SESSION));
     const cName=session?.name||'담당자',cDept=session?.dept||'솔루션빌더스';
@@ -257,6 +280,20 @@ function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,date
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
 }
 
+/* ===== 공통 프롬프트 규칙 (인사말 금지 포함) ===== */
+const COMMON_RULES = `
+[★ 출력 형식 규칙 - 절대 준수 ★]
+- 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
+- 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
+- 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
+- 각 <li> 항목은 최소 30자 이상 상세히 작성할 것.
+- 금액 표기 시 반드시 제공된 한글 금액 문자열을 그대로 사용할 것.
+- 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 개조식으로 맺을 것.
+- 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
+- 표(Table)는 절대 그리지 말 것.
+- ★ 첫 번째 목차(<div class="report-section-box">) 앞에 인사말, 소개 문구, 서론, <p> 태그 등 어떠한 텍스트도 절대 출력하지 말 것. 바로 첫 번째 목차부터 시작할 것.
+`;
+
 /* ===== 경영진단 생성 ===== */
 window.generateReport=async function(type,version,event){
     const tab=event.target.closest('.tab-content');
@@ -268,16 +305,25 @@ window.generateReport=async function(type,version,event){
     const fRev=formatRevenueForAI(companyData,rev);
     document.getElementById('ai-loading-overlay').style.display='flex';
     const promptData={...companyData};delete promptData.rawData;delete promptData.revenueData;promptData.매출데이터=fRev;
+
     const prompt=`너의 역할은 20년 경력의 경영 컨설턴트야. 대상 기업: '${companyData.name}'
 [진단 가중치]
-1. 경영진단 개요: 3~4항목 | 2. 재무 현황 분석: 가중치 15% → li 3~4개 | 3. 전략 및 마케팅 분석: 가중치 25% → li 6~8개 | 4. 인사/조직: 가중치 20% → li 5~6개 | 5. 운영/생산: 가중치 20% → li 5~6개 | 6. IT/디지털 및 정부지원: 가중치 20% → li 각 2~3개 | 7. 개선 방향 및 로드맵: 5~6항목
-[작성 규칙] 각 목차는 <div class="report-section-box">, 제목 <h3>, 내용 <ul><li>, li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
+1. 경영진단 개요: 3~4항목
+2. 재무 현황 분석: 가중치 15% → li 3~4개
+3. 전략 및 마케팅 분석: 가중치 25% → li 6~8개 (가장 풍부하게)
+4. 인사/조직: 가중치 20% → li 5~6개
+5. 운영/생산: 가중치 20% → li 5~6개
+6. IT/디지털 및 정부지원: 가중치 20% → li 각 2~3개
+7. 개선 방향 및 로드맵: 5~6항목
+${COMMON_RULES}
 출력 목적: ${version==='client'?'긍정적/객관적 (기업전달용)':'리스크/단점 위주 (컨설턴트용)'}
 [기업 데이터] ${JSON.stringify(promptData,null,2)}`;
+
     const aiResponse=await callGeminiAPI(prompt);
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
-        let cleanHTML=aiResponse.replace(/```html|```/g,'').replace(/\*\*/g,'');
+        // ★ 인사말·소개문 제거 후 저장 ★
+        let cleanHTML = cleanAIResponse(aiResponse);
         const todayStr=new Date().toISOString().split('T')[0];
         const reportObj={id:'rep_'+Date.now(),type:'경영진단',company:companyData.name,title:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:'management'};
         const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');reports.push(reportObj);localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
@@ -288,18 +334,42 @@ window.generateReport=async function(type,version,event){
     }
 };
 
-/* ===== AI 리포트 설정 (5종 - 시뮬레이터 삭제) ===== */
+/* ===== AI 리포트 설정 (5종) ===== */
 const REPORT_CONFIGS={
     finance:{typeLabel:'재무진단',title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',borderColor:'#2563eb',contentAreaId:'finance-content-area',
-        buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상: '${cData.name}'\n5개 섹션: 1.재무개요(3~4) 2.수익성분석(5~6) 3.안정성분석(5~6) 4.성장성분석(4~5) 5.재무개선방향(5~6)\n[규칙] <div class="report-section-box">, <h3>, <ul><li>, li 최소 30자, 금액 한글, 개조식, 표/마크다운 금지\n출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+        buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상 기업: '${cData.name}'
+5개 섹션: 1.재무개요(3~4항목) 2.수익성분석(5~6항목) 3.안정성분석(5~6항목) 4.성장성분석(4~5항목) 5.재무개선방향(5~6항목)
+${COMMON_RULES}
+출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+
     aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',
-        buildPrompt:(cData,fRev,version)=>`너는 20년 경력의 창업·사업기획 전문 컨설턴트야. 대상: '${cData.name}'\n7개 섹션: 1.사업개요(3~4) 2.시장분석(5~6) 3.제품/서비스(5~6) 4.마케팅전략(6~7) 5.운영계획(4~5) 6.재무계획(4~5) 7.실행로드맵(4~5)\n[규칙] <div class="report-section-box">, <h3>, <ul><li>, li 최소 40자, 금액 한글, 개조식, 표/마크다운 금지\n출력목적: ${version==='client'?'정식 제출용':'초안/검토본'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+        buildPrompt:(cData,fRev,version)=>`너는 20년 경력의 창업·사업기획 전문 컨설턴트야. 대상 기업: '${cData.name}'
+7개 섹션: 1.사업개요(3~4항목) 2.시장분석(5~6항목) 3.제품/서비스(5~6항목) 4.마케팅전략(6~7항목) 5.운영계획(4~5항목) 6.재무계획(4~5항목) 7.실행로드맵(4~5항목)
+${COMMON_RULES}
+출력목적: ${version==='client'?'정식 제출용':'초안/검토본'}
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+
     aiFund:{typeLabel:'정책자금매칭',title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',borderColor:'#ea580c',contentAreaId:'aiFund-content-area',
-        buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상: '${cData.name}'\n5개 섹션: 1.기업자격요건분석(4~5) 2.자금필요성및활용전략(3~4) 3.추천정책자금TOP5(각 3~4줄) 4.기관별신청전략(5~6) 5.신청준비체크리스트(6~8)\n[규칙] <div class="report-section-box">, <h3>, <ul><li>, li 최소 30자, 금액 한글, 개조식, 표/마크다운 금지\n출력목적: ${version==='client'?'기업전달용':'컨설턴트용(리스크포함)'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+        buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상 기업: '${cData.name}'
+5개 섹션: 1.기업자격요건분석(4~5항목) 2.자금필요성및활용전략(3~4항목) 3.추천정책자금TOP5(각 3~4줄) 4.기관별신청전략(5~6항목) 5.신청준비체크리스트(6~8항목)
+${COMMON_RULES}
+출력목적: ${version==='client'?'기업전달용':'컨설턴트용(리스크포함)'}
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+
     aiTrade:{typeLabel:'상권분석',title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',borderColor:'#0d9488',contentAreaId:'aiTrade-content-area',
-        buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'미입력'})\n5개 섹션: 1.상권개요및입지분석(4~5) 2.유동인구및타겟고객분석(5~6) 3.경쟁현황및포지셔닝전략(5~6) 4.상권성장성및리스크평가(4~5) 5.매출예측및운영전략(5~6)\n[규칙] <div class="report-section-box">, <h3>, <ul><li>, li 최소 30자, 금액 한글, 개조식, 표/마크다운 금지\n출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+        buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상 기업: '${cData.name}' (업종:${cData.industry||'미입력'})
+5개 섹션: 1.상권개요및입지분석(4~5항목) 2.유동인구및타겟고객분석(5~6항목) 3.경쟁현황및포지셔닝전략(5~6항목) 4.상권성장성및리스크평가(4~5항목) 5.매출예측및운영전략(5~6항목)
+${COMMON_RULES}
+출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+
     aiMarketing:{typeLabel:'마케팅제안',title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',borderColor:'#db2777',contentAreaId:'aiMarketing-content-area',
-        buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상: '${cData.name}'\n6개 섹션: 1.마케팅현황진단(4~5) 2.타겟고객설정및페르소나(5~6) 3.채널별마케팅전략(6~8) 4.콘텐츠및브랜딩전략(5~6) 5.마케팅예산계획(4~5) 6.월별실행로드맵(6항목)\n[규칙] <div class="report-section-box">, <h3>, <ul><li>, li 최소 30자, 금액 한글, 개조식, 표/마크다운 금지\n출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`}
+        buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상 기업: '${cData.name}'
+6개 섹션: 1.마케팅현황진단(4~5항목) 2.타겟고객설정및페르소나(5~6항목) 3.채널별마케팅전략(6~8항목) 4.콘텐츠및브랜딩전략(5~6항목) 5.마케팅예산계획(4~5항목) 6.월별실행로드맵(6항목)
+${COMMON_RULES}
+출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`}
 };
 
 /* ===== 통합 AI 리포트 생성 ===== */
@@ -316,7 +386,8 @@ window.generateAnyReport=async function(type,version,event){
     const aiResponse=await callGeminiAPI(cfg.buildPrompt(companyData,fRev,version));
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
-        let cleanHTML=aiResponse.replace(/```html|```/g,'').replace(/\*\*/g,'');
+        // ★ 인사말·소개문 제거 후 저장 ★
+        let cleanHTML = cleanAIResponse(aiResponse);
         const todayStr=new Date().toISOString().split('T')[0];
         const vLabel=version==='client'?'기업전달용':'컨설턴트용';
         const reportObj={id:'rep_'+Date.now(),type:cfg.typeLabel,company:companyData.name,title:`${cfg.title} (${vLabel})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
