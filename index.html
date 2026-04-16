@@ -56,12 +56,14 @@
         </aside>
 
         <main class="main-content">
+            <!-- 대시보드 -->
             <section id="dashboard" class="tab-content">
                 <div class="max-width-wrapper">
                     <h2 class="page-title" style="margin-bottom: 30px;">대시보드</h2>
                     <div class="middle-section">
                         <div class="quick-actions-box">
                             <h3 class="section-title-dash">빠른 실행</h3>
+                            <!-- ★ 3열 x 2행 그리드 ★ -->
                             <div class="quick-grid">
                                 <div class="quick-item" onclick="showTab('company')">🏢<br>기업 등록<br><span>새 관리기업을 등록합니다</span></div>
                                 <div class="quick-item" onclick="showTab('report')">📈<br>경영진단보고서<br><span>AI로 경영진단보고서 작성</span></div>
@@ -73,12 +75,15 @@
                         </div>
                         <div class="recent-reports-box">
                             <div class="section-header"><h3 class="section-title-dash">최근 보고서</h3><a href="#" class="view-all" onclick="showTab('reportList')">전체 보기 →</a></div>
-                            <ul class="report-list" id="dashboard-report-list"><li style="justify-content: center; padding: 40px 0; color: #94a3b8; font-size: 15px;">최근 생성된 보고서가 없습니다.</li></ul>
+                            <ul class="report-list" id="dashboard-report-list">
+                                <li style="display:flex; justify-content:center; padding: 40px 0; color: #94a3b8; font-size: 15px;">최근 생성된 보고서가 없습니다.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- 기업 정보 등록 -->
             <section id="company" class="tab-content">
                 <div class="max-width-wrapper">
                     <div class="page-header">
@@ -226,23 +231,24 @@
                 </div>
             </section>
 
+            <!-- 기업 및 보고서 목록 -->
             <section id="reportList" class="tab-content">
                 <div class="max-width-wrapper">
                     <div class="page-header"><h2 class="page-title">기업 및 보고서 목록</h2></div>
                     <h3 class="list-sub-title">🏢 등록된 기업 목록</h3>
                     <div class="list-card" style="margin-bottom: 40px;"><table class="report-table"><thead id="company-list-head"><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table></div>
-                    
                     <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
                     <div class="list-card"><table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"></tbody></table></div>
                 </div>
             </section>
 
+            <!-- 경영진단보고서 -->
             <section id="report" class="tab-content">
                 <div class="max-width-wrapper">
                     <div id="report-input-step">
                         <div class="page-header"><h2 class="page-title">AI 경영진단보고서 생성</h2></div>
                         <div class="blue-banner"><h3>◎ AI 경영진단보고서</h3><p>기업의 현재 상황을 다각적으로 분석하여 실질적인 개선 전략을 제안합니다.</p></div>
-                        
+
                         <div class="info-yellow-box" style="min-width: 100%; overflow: hidden;">
                             <h4 style="font-weight: bold; margin-bottom: 15px;">🏆 경영진단보고서 구성 (7개 섹션 + 표지 + 2개 차트)</h4>
                             <div class="info-grid" style="display: flex; flex-wrap: nowrap; gap: 30px;">
@@ -250,16 +256,42 @@
                                 <ul class="info-list" style="flex: 1;"><li>2. 기업 현황 분석 (+역량차트)</li><li>4. 전략 및 마케팅 분석</li><li>6. 개선 방향 및 로드맵</li></ul>
                             </div>
                         </div>
-                        <div class="fund-split-layout" style="display: flex; flex-wrap: nowrap; gap: 40px;">
-                            <div class="fund-left" style="flex: 1;">
+
+                        <div class="fund-split-layout">
+                            <div class="fund-left">
                                 <div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="fund-select company-dropdown" id="report-company-select"><option value="">기업을 선택하세요</option></select></div>
                             </div>
-                            <div class="fund-right fund-card" style="flex: 1;">
-                                <h4>진단 영역 가중치</h4>
-                                <div class="criteria-item"><div class="dot blue"></div><div><strong>재무 건전성 (15%)</strong><p>매출 성장세, 부채 비율, 현금 흐름</p></div></div>
-                                <div class="criteria-item"><div class="dot green"></div><div><strong>전략/마케팅 (40%)</strong><p>제품 경쟁력, 시장 포지셔닝, 유통 채널</p></div></div>
+                            <!-- ★ 진단 영역 가중치 6개 항목 합계 100% ★ -->
+                            <div class="fund-right fund-card">
+                                <h4 style="margin-bottom: 15px; font-size: 15px; color: #1e293b;">진단 영역 가중치</h4>
+                                <div class="criteria-item">
+                                    <div class="dot blue"></div>
+                                    <div><strong>재무 건전성 (15%)</strong><div class="criteria-desc">매출 성장세, 부채 비율, 현금 흐름</div></div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="dot green"></div>
+                                    <div><strong>전략/마케팅 (25%)</strong><div class="criteria-desc">제품 경쟁력, 시장 포지셔닝, 유통 채널</div></div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="dot orange"></div>
+                                    <div><strong>인사/조직 (20%)</strong><div class="criteria-desc">인력 구성, 조직 역량, 대표자 역량</div></div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="dot purple"></div>
+                                    <div><strong>운영/생산 (20%)</strong><div class="criteria-desc">생산 효율, 품질 관리, 납기 대응력</div></div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="dot teal"></div>
+                                    <div><strong>IT/디지털 (10%)</strong><div class="criteria-desc">디지털 전환, 시스템 활용도</div></div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="dot pink"></div>
+                                    <div><strong>정부지원 활용 (10%)</strong><div class="criteria-desc">정책자금, 인증, 지원사업 활용도</div></div>
+                                </div>
+                                <div class="criteria-total">합계 100%</div>
                             </div>
                         </div>
+
                         <div class="report-action-group" style="display: flex; gap: 20px; margin-top: 30px;">
                             <button class="btn-report-blue" style="flex: 1;" onclick="generateReport('management', 'client', event)">◎ AI 경영진단보고서 (기업전달용)</button>
                             <button class="btn-report-blue" style="flex: 1; background: #1e293b; color: white;" onclick="generateReport('management', 'consultant', event)">◎ AI 경영진단보고서 (컨설턴트용)</button>
@@ -281,6 +313,7 @@
             <section id="aiTrade" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 상권분석 리포트 생성</h2><div class="teal-banner"><h3>◎ AI 빅데이터 상권분석</h3></div></div></section>
             <section id="aiMarketing" class="tab-content"><div class="max-width-wrapper"><h2 class="page-title">AI 마케팅 제안서 생성</h2><div class="pink-banner"><h3>◎ AI 맞춤형 마케팅 제안</h3></div></div></section>
 
+            <!-- 설정 -->
             <section id="settings" class="tab-content">
                 <div class="max-width-wrapper">
                     <div class="page-header"><h2 class="page-title">플랫폼 설정</h2></div>
