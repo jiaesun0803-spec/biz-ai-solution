@@ -1,428 +1,527 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizConsult - 경영컨설팅 플랫폼</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+const DB_USERS   = 'biz_users';
+const DB_SESSION = 'biz_session';
+const STORAGE_KEY = 'biz_consult_companies';
+const DB_REPORTS  = 'biz_reports';
 
-<div id="auth-container" class="auth-overlay">
-    <div class="auth-box">
-        <div class="auth-logo">🏢 BizConsult</div>
-        <div id="login-form-area">
-            <h2>로그인</h2>
-            <div class="form-group"><label>이메일</label><input type="email" id="login-email" placeholder="email@example.com"></div>
-            <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="••••••••"></div>
-            <button class="btn-primary auth-btn" onclick="handleLogin()">로그인</button>
-            <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top:10px;font-size:13px;">🛠️ 테스트 계정으로 바로 접속</button>
-            <p class="auth-footer">계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입</span></p>
-        </div>
-        <div id="signup-form-area" style="display:none;">
-            <h2>회원가입</h2>
-            <div class="form-group"><label>이메일</label><input type="email" id="signup-email" placeholder="email@example.com"></div>
-            <div class="form-group"><label>비밀번호</label><input type="password" id="signup-pw" placeholder="••••••••"></div>
-            <div class="form-group"><label>이름</label><input type="text" id="signup-name" placeholder="실명을 입력하세요"></div>
-            <button class="btn-primary auth-btn" onclick="handleSignup()">가입하기</button>
-            <p class="auth-footer">이미 계정이 있으신가요? <span onclick="toggleAuthMode('login')">로그인</span></p>
-        </div>
-    </div>
-</div>
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuth();
+    const urlParams = new URLSearchParams(window.location.search);
+    showTab(urlParams.get('tab') || 'dashboard', false);
+    window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
+});
 
-<div class="container" id="main-app" style="display:none;">
-    <aside class="sidebar">
-        <div class="logo">
-            <div class="logo-title">
-                <div class="logo-icon">📋</div>
-                <div>
-                    <div class="logo-text">BizConsult</div>
-                    <div class="logo-sub">경영컨설팅 플랫폼</div>
+/* ===== 인증 ===== */
+window.devBypassLogin = function() {
+    const testUser = { email:'test@biz.com', pw:'1234', name:'선지영', dept:'솔루션빌더스', apiKey:'' };
+    let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
+    if (!users.find(u => u.email === testUser.email)) { users.push(testUser); localStorage.setItem(DB_USERS, JSON.stringify(users)); }
+    localStorage.setItem(DB_SESSION, JSON.stringify(testUser));
+    checkAuth();
+};
+function checkAuth() {
+    const session = JSON.parse(localStorage.getItem(DB_SESSION));
+    const authEl = document.getElementById('auth-container');
+    const appEl  = document.getElementById('main-app');
+    if (session) { authEl.style.display='none'; appEl.style.display='flex'; loadUserProfile(); updateDataLists(); initInputHandlers(); }
+    else          { authEl.style.display='flex'; appEl.style.display='none'; }
+}
+window.toggleAuthMode = function(mode) {
+    document.getElementById('login-form-area').style.display  = mode==='login'  ? 'block' : 'none';
+    document.getElementById('signup-form-area').style.display = mode==='signup' ? 'block' : 'none';
+};
+window.handleSignup = function() {
+    const email=document.getElementById('signup-email').value, pw=document.getElementById('signup-pw').value, name=document.getElementById('signup-name').value;
+    if (!email||!pw||!name) { alert('모든 정보를 입력해주세요.'); return; }
+    let users=JSON.parse(localStorage.getItem(DB_USERS)||'[]');
+    if (users.find(u=>u.email===email)) { alert('이미 가입된 이메일입니다.'); return; }
+    users.push({email,pw,name,dept:'솔루션빌더스',apiKey:''}); localStorage.setItem(DB_USERS,JSON.stringify(users));
+    alert('회원가입 완료!'); toggleAuthMode('login');
+};
+window.handleLogin = function() {
+    const email=document.getElementById('login-email').value, pw=document.getElementById('login-pw').value;
+    const user=JSON.parse(localStorage.getItem(DB_USERS)||'[]').find(u=>u.email===email&&u.pw===pw);
+    if (user) { localStorage.setItem(DB_SESSION,JSON.stringify(user)); checkAuth(); }
+    else alert('이메일 또는 비밀번호가 일치하지 않습니다.');
+};
+window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location.reload(); };
+
+/* ===== 프로필 ===== */
+function loadUserProfile() {
+    const user=JSON.parse(localStorage.getItem(DB_SESSION)); if (!user) return;
+    const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
+    setEl('display-user-name',user.name); setEl('display-user-dept',user.dept||'솔루션빌더스');
+    if(document.getElementById('set-user-name')){
+        document.getElementById('set-user-name').value=user.name;
+        document.getElementById('set-user-email').value=user.email;
+        document.getElementById('set-user-dept').value=user.dept||'';
+        document.getElementById('set-api-key').value=user.apiKey||'';
+    }
+}
+function updateUserDB(u){let users=JSON.parse(localStorage.getItem(DB_USERS));const i=users.findIndex(x=>x.email===u.email);users[i]=u;localStorage.setItem(DB_USERS,JSON.stringify(users));localStorage.setItem(DB_SESSION,JSON.stringify(u));loadUserProfile();}
+window.saveProfileSettings=function(){let s=JSON.parse(localStorage.getItem(DB_SESSION));s.name=document.getElementById('set-user-name').value;s.dept=document.getElementById('set-user-dept').value;updateUserDB(s);alert('저장되었습니다.');};
+window.saveApiSettings=function(){let s=JSON.parse(localStorage.getItem(DB_SESSION));s.apiKey=document.getElementById('set-api-key').value;updateUserDB(s);alert('API 키가 저장되었습니다.');};
+
+/* ===== 탭 이동 ===== */
+window.showTab = function(tabId, updateUrl=true) {
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.menu li, .bottom-menu li').forEach(i=>i.classList.remove('active'));
+    const target=document.getElementById(tabId); if(target) target.classList.add('active');
+    const menu=document.getElementById('menu-'+tabId); if(menu) menu.classList.add('active');
+    if(tabId==='settings') loadUserProfile();
+    // 업체 관리 탭은 항상 목록 화면으로
+    if(tabId==='company') showCompanyList();
+    updateDataLists();
+    if(updateUrl) history.pushState(null,'',`?tab=${tabId}`);
+};
+window.addEventListener('popstate',()=>{const p=new URLSearchParams(window.location.search);showTab(p.get('tab')||'dashboard',false);});
+
+/* ===== ★ 업체 관리 - 목록/폼 전환 ===== */
+window.showCompanyList = function() {
+    document.getElementById('company-list-step').style.display = 'block';
+    document.getElementById('company-form-step').style.display = 'none';
+    renderCompanyCards();
+    // 탭이 company가 아니면 전환
+    const companyTab = document.getElementById('company');
+    if (!companyTab.classList.contains('active')) showTab('company');
+};
+
+window.showCompanyForm = function(editName=null) {
+    document.getElementById('company-list-step').style.display = 'none';
+    document.getElementById('company-form-step').style.display = 'block';
+    const titleEl = document.getElementById('company-form-title');
+    if (editName) {
+        if(titleEl) titleEl.textContent = `기업 정보 수정 - ${editName}`;
+        // 폼 데이터 불러오기
+        const comp = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]').find(c=>c.name===editName);
+        if (comp?.rawData) {
+            const els = document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea');
+            comp.rawData.forEach((d,i) => {
+                if (els[i]) {
+                    if (els[i].type==='checkbox'||els[i].type==='radio') els[i].checked=d.checked;
+                    else els[i].value=d.value;
+                }
+            });
+            calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
+        }
+    } else {
+        if(titleEl) titleEl.textContent = '기업 정보 등록';
+    }
+    // 탭이 company가 아니면 전환
+    const companyTab = document.getElementById('company');
+    if (!companyTab.classList.contains('active')) {
+        document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.menu li, .bottom-menu li').forEach(i=>i.classList.remove('active'));
+        companyTab.classList.add('active');
+        const menu = document.getElementById('menu-company');
+        if(menu) menu.classList.add('active');
+    }
+};
+
+/* ===== ★ 업체 카드 렌더링 ===== */
+function formatSmallCurrency(n) {
+    if (!n || n === 0) return '-';
+    const num = parseInt(n, 10); if (isNaN(num) || num === 0) return '-';
+    const uk = Math.floor(num / 10000), man = num % 10000;
+    if (uk > 0) return uk + '억' + (man > 0 ? ' ' + man.toLocaleString() + '만원' : '원');
+    return man.toLocaleString() + '만원';
+}
+function getGradeFromKCB(score) {
+    const s = parseInt(score, 10);
+    if (isNaN(s) || s === 0) return null;
+    if (s >= 900) return '1등급'; if (s >= 850) return '2등급';
+    if (s >= 800) return '3등급'; if (s >= 750) return '4등급';
+    if (s >= 700) return '5등급'; return '6등급+';
+}
+
+window.renderCompanyCards = function() {
+    const container = document.getElementById('company-cards-container'); if (!container) return;
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)  || '[]');
+    const keyword   = (document.getElementById('company-search-input')?.value || '').toLowerCase();
+
+    const filtered = companies.filter(c =>
+        c.name.toLowerCase().includes(keyword) || (c.industry||'').toLowerCase().includes(keyword)
+    );
+
+    if (!filtered.length) {
+        container.innerHTML = `
+            <div class="company-empty-state">
+                <div class="empty-icon">🏢</div>
+                <p>${keyword ? '검색 결과가 없습니다.' : '등록된 업체가 없습니다.'}</p>
+                <button class="btn-add-company" onclick="showCompanyForm()">＋ 업체 등록하기</button>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(c => {
+        // 주소 추출 (rawData에서 사업장 주소 텍스트)
+        let address = '주소 미입력';
+        if (c.rawData) {
+            const addrEl = c.rawData.find(d =>
+                d.type === 'text' && d.value && d.value.length > 3 &&
+                d.value !== c.name && d.value !== c.rep && d.value !== c.bizNum &&
+                d.value !== c.industry && d.value !== c.bizDate && d.value !== c.empCount &&
+                d.value !== c.coreItem && !d.value.match(/^\d{2,3}-/) &&
+                (d.value.includes('시') || d.value.includes('구') || d.value.includes('동') || d.value.includes('로') || d.value.includes('길'))
+            );
+            if (addrEl) address = addrEl.value;
+        }
+
+        return `
+        <div class="company-card">
+            <div class="company-card-top">
+                <div class="company-card-icon">🏢</div>
+                <div class="company-card-info">
+                    <div class="company-card-name">${c.name}</div>
+                    <div class="company-card-rep">${c.rep && c.rep !== '-' ? c.rep + ' 대표' : '대표자 미입력'}</div>
+                </div>
+                <div class="company-card-actions">
+                    <button class="btn-card-detail" title="수정/상세보기" onclick="showCompanyForm('${c.name}')">›</button>
+                    <button class="btn-card-delete" title="삭제" onclick="deleteCompany('${c.name}')">🗑</button>
                 </div>
             </div>
-        </div>
-        <div class="user-profile">
-            <div class="profile-icon">👤</div>
+            <div class="company-card-body">
+                <div class="company-card-row">
+                    <span class="company-card-label">업종</span>
+                    <span class="company-card-value">${c.industry && c.industry !== '-' ? c.industry : '미입력'}</span>
+                </div>
+                <div class="company-card-row">
+                    <span class="company-card-label">주소</span>
+                    <span class="company-card-value addr">${address}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+/* ===== 업체 삭제 ===== */
+window.deleteCompany = function(name) {
+    if (!confirm(`[${name}]을 삭제하시겠습니까?\n관련 보고서는 삭제되지 않습니다.`)) return;
+    let companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    companies = companies.filter(c => c.name !== name);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
+    updateDataLists();
+    renderCompanyCards();
+};
+
+/* ===== 대시보드 최근 보고서 ===== */
+function updateDashboardReports() {
+    const listEl = document.getElementById('dashboard-report-list'); if (!listEl) return;
+    const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)  || '[]');
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const setNum = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+    setNum('stat-companies', companies.length);
+    setNum('stat-mgmt',  reports.filter(r=>r.type==='경영진단').length);
+    setNum('stat-biz',   reports.filter(r=>r.type==='사업계획서').length);
+    setNum('stat-total', reports.length);
+    if (!reports.length) { listEl.innerHTML='<div class="empty-state">최근 생성된 보고서가 없습니다.</div>'; return; }
+    const typeIcon = t => ({'경영진단':'📈','재무진단':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
+    listEl.innerHTML = [...reports].reverse().slice(0,5).map(r=>`
+        <div class="recent-report-item">
+            <div class="report-type-icon">${typeIcon(r.type)}</div>
             <div>
-                <p class="user-name" id="display-user-name">관리자</p>
-                <p class="user-role" id="display-user-dept">경영컨설턴트</p>
+                <div class="report-item-title">${r.title}</div>
+                <div class="report-item-company">${r.company}</div>
             </div>
+            <div class="report-item-right">
+                <span class="report-badge">${r.type}</span>
+                <span class="report-date">🕐 ${r.date}</span>
+                <button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button>
+            </div>
+        </div>`).join('');
+}
+
+/* ===== 데이터 목록 갱신 ===== */
+window.updateDataLists = function() {
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    document.querySelectorAll('.company-dropdown').forEach(sel=>{
+        sel.innerHTML='<option value="">기업을 선택하세요</option>';
+        companies.forEach(c=>sel.innerHTML+=`<option value="${c.name}">${c.name}</option>`);
+    });
+    const cBody=document.getElementById('company-list-body');
+    if(cBody) cBody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';
+    const rBody=document.getElementById('report-list-body');
+    if(rBody) rBody.innerHTML=reports.length?reports.map(r=>`
+        <tr>
+            <td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td>
+            <td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+                <button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button>
+            </td>
+        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
+    updateDashboardReports();
+    renderCompanyCards();
+};
+
+window.deleteReport = function(id) {
+    if (!confirm('이 보고서를 삭제하시겠습니까?')) return;
+    let reports = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    reports = reports.filter(r=>r.id!==id);
+    localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
+    updateDataLists();
+};
+
+/* ===== 기업 저장 ===== */
+window.clearCompanyForm = function() { if(confirm('초기화하시겠습니까?')){ document.getElementById('companyForm').reset(); calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); } };
+window.saveCompanyData = function() {
+    const name=document.getElementById('comp_name')?.value; if(!name){ alert('상호명을 입력해주세요.'); return; }
+    const rev={
+        cur:parseInt(document.getElementById('rev_cur')?.value?.replace(/,/g,'')||0),
+        y25:parseInt(document.getElementById('rev_25')?.value?.replace(/,/g,'')||0),
+        y24:parseInt(document.getElementById('rev_24')?.value?.replace(/,/g,'')||0),
+        y23:parseInt(document.getElementById('rev_23')?.value?.replace(/,/g,'')||0)
+    };
+    const newC={
+        name, rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',
+        bizNum:document.getElementById('biz_number')?.value||'-', industry:document.getElementById('comp_industry')?.value||'-',
+        bizDate:document.getElementById('biz_date')?.value||'-', empCount:document.getElementById('emp_count')?.value||'-',
+        coreItem:document.getElementById('core_item')?.value||'-', date:new Date().toISOString().split('T')[0],
+        revenueData:rev,
+        rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))
+    };
+    let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const idx=companies.findIndex(c=>c.name===name);
+    if(idx>-1) companies[idx]=newC; else companies.push(newC);
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(companies));
+    alert('기업 정보가 저장되었습니다!');
+    updateDataLists();
+    showCompanyList(); // ★ 저장 후 목록으로 이동 ★
+};
+
+/* ===== 입력 토글/계산 ===== */
+window.toggleExportInputs=function(){const isExp=[...document.getElementsByName('export')].some(r=>r.checked&&r.value==='수출중');document.querySelectorAll('.export-money').forEach(i=>{i.disabled=!isExp;if(!isExp)i.value='';});};
+window.toggleCorpNumber=function(){const isC=[...document.getElementsByName('biz_type')].some(r=>r.checked&&r.value==='법인');const el=document.getElementById('corp_number');if(el){el.disabled=!isC;if(!isC)el.value='';}};
+window.toggleRentInputs=function(){const isR=[...document.getElementsByName('rent_type')].some(r=>r.checked&&r.value==='임대');['rent_deposit','rent_monthly'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=!isR;if(!isR)el.value='';}});};
+window.calculateTotalDebt=function(){let tot=0;document.querySelectorAll('.debt-input').forEach(i=>{let v=i.value.replace(/[^0-9]/g,'');if(v)tot+=parseInt(v);});const el=document.getElementById('total-debt');if(el)el.innerText=tot.toLocaleString('ko-KR');};
+
+/* ===== 입력 포매터 ===== */
+function initInputHandlers(){
+    document.querySelectorAll('.number-only').forEach(i=>i.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'');}));
+    document.querySelectorAll('.money-format').forEach(i=>i.addEventListener('input',function(){let v=this.value.replace(/[^0-9\-]/g,'');this.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,',');}));
+    document.querySelectorAll('.debt-input').forEach(i=>i.addEventListener('input',calculateTotalDebt));
+    [['biz_number','biz'],['corp_number','corp'],['biz_date','date'],['rep_birth','date'],['write_date','date']].forEach(([id,fmt])=>{
+        const el=document.getElementById(id);if(!el)return;
+        el.addEventListener('input',function(){let v=this.value.replace(/[^0-9]/g,'');
+            if(fmt==='corp'){this.value=v.length<7?v:v.slice(0,6)+'-'+v.slice(6,13);}
+            else if(fmt==='biz'){if(v.length<4)this.value=v;else if(v.length<6)this.value=v.slice(0,3)+'-'+v.slice(3);else this.value=v.slice(0,3)+'-'+v.slice(3,5)+'-'+v.slice(5,10);}
+            else{if(v.length<5)this.value=v;else if(v.length<7)this.value=v.slice(0,4)+'-'+v.slice(4);else this.value=v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);}
+        });
+    });
+    ['biz_phone','rep_phone'].forEach(id=>{
+        const el=document.getElementById(id);if(!el)return;
+        el.addEventListener('input',function(){let v=this.value.replace(/[^0-9]/g,'');
+            if(v.startsWith('02')){if(v.length<3)this.value=v;else if(v.length<6)this.value=v.slice(0,2)+'-'+v.slice(2);else if(v.length<10)this.value=v.slice(0,2)+'-'+v.slice(2,5)+'-'+v.slice(5);else this.value=v.slice(0,2)+'-'+v.slice(2,6)+'-'+v.slice(6,10);}
+            else{if(v.length<4)this.value=v;else if(v.length<7)this.value=v.slice(0,3)+'-'+v.slice(3);else if(v.length<11)this.value=v.slice(0,3)+'-'+v.slice(3,6)+'-'+v.slice(6);else this.value=v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);}
+        });
+    });
+}
+
+/* ===== 한글 금액 변환 ===== */
+function formatKoreanCurrency(n){
+    const num=parseInt(n,10);if(!num||isNaN(num))return'0원';
+    const uk=Math.floor(num/10000),man=num%10000;
+    if(uk>0)return uk.toLocaleString('ko-KR')+'억'+(man>0?' '+man.toLocaleString('ko-KR')+'만원':'원');
+    return man.toLocaleString('ko-KR')+'만원';
+}
+function formatRevenueForAI(companyData,rev){
+    const regMonth=parseInt((companyData.date||'').split('-')[1])||1;
+    const months=Math.max(regMonth-1,1);
+    const expectedCur=Math.round(((rev.cur||0)/months)*12);
+    return{금년매출_전월말기준:formatKoreanCurrency(rev.cur),금년예상연간매출:formatKoreanCurrency(expectedCur)+` (${months}개월 기준 연간 환산)`,매출_2025년:formatKoreanCurrency(rev.y25),매출_2024년:formatKoreanCurrency(rev.y24),매출_2023년:formatKoreanCurrency(rev.y23),_raw:rev,_expected:expectedCur,_months:months};
+}
+
+/* ===== Gemini API ===== */
+async function callGeminiAPI(prompt){
+    const session=JSON.parse(localStorage.getItem('biz_session'));
+    const apiKey=session?.apiKey;
+    if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
+    try{
+        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,topK:40,topP:0.95,maxOutputTokens:8192}})});
+        const data=await res.json();
+        if(!res.ok||data.error)throw new Error(data.error?.message||'API 에러');
+        return data.candidates[0].content.parts[0].text;
+    }catch(e){console.error(e);alert('오류: '+e.message);return null;}
+}
+
+function cleanAIResponse(raw){
+    let html=raw.replace(/```html|```/g,'').replace(/\*\*/g,'');
+    const firstSectionIdx=html.indexOf('<div class="report-section-box">');
+    if(firstSectionIdx>0) html=html.slice(firstSectionIdx);
+    return html;
+}
+
+const COMMON_RULES=`
+[★ 출력 형식 규칙 ★]
+- 각 목차는 <div class="report-section-box">로 감쌀 것
+- 제목은 <h3>, 내용은 <ul><li>
+- li 최소 30자, 금액은 한글로, 개조식 문체, 표/마크다운 금지
+- 첫 번째 목차 앞에 인사말 등 어떠한 텍스트도 출력하지 말 것
+`;
+
+/* ===== 표지 HTML ===== */
+function buildCoverHTML(companyData,config,rev,dateStr){
+    const session=JSON.parse(localStorage.getItem(DB_SESSION));
+    const cName=session?.name||'담당자', cDept=session?.dept||'솔루션빌더스';
+    const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
+    const regMonth=parseInt((companyData.date||dateStr).split('-')[1])||1;
+    const months=Math.max(regMonth-1,1);
+    const expectedCur=Math.round((safeRev.cur/months)*12);
+    const vLabel=config.version==='client'?'기업전달용':'컨설턴트용';
+    return`<div class="cover-page" style="border-left-color:${config.borderColor||'#3b82f6'};">
+        <div class="cover-header">
+            <h4 style="color:${config.borderColor||'#3b82f6'};border-bottom-color:${config.borderColor||'#3b82f6'};">${config.reportKind||'AI 리포트'}</h4>
+            <h1>${config.title}</h1>
         </div>
-        <nav class="menu">
-            <ul>
-                <li onclick="showTab('dashboard')" id="menu-dashboard"><span>📊</span> 대시보드</li>
-                <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
-                <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 보고서 목록</li>
-                <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
-                <li onclick="showTab('finance')" id="menu-finance"><span>💰</span> 상세 재무진단</li>
-                <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
-                <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> AI 정책자금매칭</li>
-                <li onclick="showTab('aiTrade')" id="menu-aiTrade"><span>🏪</span> AI 상권분석</li>
-                <li onclick="showTab('aiMarketing')" id="menu-aiMarketing"><span>📢</span> 마케팅제안</li>
-            </ul>
-        </nav>
-        <div class="bottom-menu"><ul>
-            <li onclick="showTab('settings')" id="menu-settings"><span>⚙️</span> 설정</li>
-            <li onclick="handleLogout()"><span>🚪</span> 로그아웃</li>
-        </ul></div>
-        <div class="version-info">BizConsult v1.0</div>
-    </aside>
+        <div class="cover-middle">
+            <h2>${companyData.name} <span style="font-size:18px;color:#94a3b8;">(${vLabel})</span></h2>
+            <div class="cover-table"><table>
+                <tr><th>사업자번호</th><td>${companyData.bizNum||'-'}</td><th>업종</th><td>${companyData.industry||'-'}</td></tr>
+                <tr><th>대표자명</th><td>${companyData.rep||'-'}</td><th>핵심아이템</th><td>${companyData.coreItem||'-'}</td></tr>
+                <tr><th>설립일</th><td>${companyData.bizDate||'-'}</td><th>상시근로자</th><td>${companyData.empCount||'-'}명</td></tr>
+                <tr><th>전년도 매출</th><td>${formatKoreanCurrency(safeRev.y25)}</td><th>금년 예상 매출</th><td>${formatKoreanCurrency(expectedCur)}</td></tr>
+            </table></div>
+        </div>
+        <div class="cover-footer">
+            <div>📅 작성일: ${dateStr}</div><div>👤 담당자: ${cName}</div><div>🏢 소속: ${cDept}</div>
+        </div>
+    </div>`;
+}
 
-    <main class="main-content">
+function buildCompanyOverviewTable(companyData,rev){
+    const safeRev=rev||{};
+    const months=Math.max((parseInt((companyData.date||'').split('-')[1])||1)-1,1);
+    const exp=Math.round(((safeRev.cur||0)/months)*12);
+    return`<table class="overview-company-table">
+        <tr><th>기업명</th><td>${companyData.name}</td><th>업종</th><td>${companyData.industry||'-'}</td></tr>
+        <tr><th>대표자</th><td>${companyData.rep||'-'}</td><th>설립일</th><td>${companyData.bizDate||'-'}</td></tr>
+        <tr><th>사업자번호</th><td>${companyData.bizNum||'-'}</td><th>상시근로자</th><td>${companyData.empCount||'-'}명</td></tr>
+        <tr><th>전년도 매출 (25년)</th><td>${formatKoreanCurrency(safeRev.y25)}</td><th>금년 예상 매출</th><td>${formatKoreanCurrency(exp)}</td></tr>
+    </table>`;
+}
 
-        <!-- 대시보드 -->
-        <section id="dashboard" class="tab-content">
-            <div class="max-width-wrapper">
-                <h2 class="page-title">대시보드</h2>
-                <div class="welcome-banner">
-                    <div class="welcome-greeting">안녕하세요 👋</div>
-                    <div class="welcome-title">BizConsult에 오신 것을 환영합니다</div>
-                    <div class="welcome-sub">경영컨설팅 보고서 관리 플랫폼</div>
-                </div>
-                <div class="stat-cards">
-                    <div class="stat-card"><div class="stat-icon blue">🏢</div><div><div class="stat-num" id="stat-companies">0</div><div class="stat-label">관리 업체</div></div></div>
-                    <div class="stat-card"><div class="stat-icon green">📈</div><div><div class="stat-num" id="stat-mgmt">0</div><div class="stat-label">경영진단보고서</div></div></div>
-                    <div class="stat-card"><div class="stat-icon yellow">💡</div><div><div class="stat-num" id="stat-biz">0</div><div class="stat-label">AI 사업계획서</div></div></div>
-                    <div class="stat-card"><div class="stat-icon orange">📄</div><div><div class="stat-num" id="stat-total">0</div><div class="stat-label">전체 보고서</div></div></div>
-                </div>
-                <div class="dashboard-mid">
-                    <div class="dash-card">
-                        <div class="dash-card-title">빠른 실행</div>
-                        <div class="quick-grid-2x2">
-                            <div class="quick-item-sm" onclick="showCompanyForm()"><div class="qi-icon">🏢</div><div>업체 등록</div><div class="qi-desc">새 관리업체를 등록합니다</div></div>
-                            <div class="quick-item-sm" onclick="showTab('report')"><div class="qi-icon">📈</div><div>경영진단보고서</div><div class="qi-desc">AI로 경영진단보고서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiBiz')"><div class="qi-icon">💡</div><div>AI 사업계획서</div><div class="qi-desc">AI 사업계획서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiFund')"><div class="qi-icon">🎯</div><div>AI 정책자금매칭</div><div class="qi-desc">AI 정책자금 매칭 리포트 작성</div></div>
-                        </div>
-                    </div>
-                    <div class="dash-card">
-                        <div class="recent-report-header">
-                            <div class="dash-card-title" style="margin-bottom:0;">최근 보고서</div>
-                            <a href="#" class="view-all" onclick="showTab('reportList')">전체 보기 →</a>
-                        </div>
-                        <div id="dashboard-report-list"><div class="empty-state">최근 생성된 보고서가 없습니다.</div></div>
-                    </div>
-                </div>
-                <div class="dashboard-bottom">
-                    <div class="bottom-card">
-                        <div class="bottom-card-header">
-                            <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count">0건</span></div>
-                            <button class="btn-add-small" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
-                        </div>
-                        <div class="bottom-empty">등록된 공문이 없습니다.</div>
-                    </div>
-                    <div class="bottom-card">
-                        <div class="bottom-card-header">
-                            <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count">0건</span></div>
-                            <button class="btn-add-small orange" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
-                        </div>
-                        <div class="bottom-empty">등록된 공지사항이 없습니다.</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+/* ===== 경영진단 렌더링 ===== */
+function renderManagementReport(companyData,cleanHTML,version,rev,dateStr){
+    const contentArea=document.getElementById('report-content-area');
+    const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
+    const months=Math.max((parseInt((companyData.date||dateStr).split('-')[1])||1)-1,1);
+    const expectedCur=Math.round((safeRev.cur/months)*12);
+    cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*경영진단[^<]*개요[^<]*<\/h3>)/,`$1\n${buildCompanyOverviewTable(companyData,safeRev)}`);
+    const pos1=cleanHTML.indexOf('경영진단');
+    if(pos1>-1){const ulClose=cleanHTML.indexOf('</ul>',pos1);if(ulClose>-1)cleanHTML=cleanHTML.slice(0,ulClose+5)+'\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>\n'+cleanHTML.slice(ulClose+5);}
+    cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*재무[^<]*현황[^<]*<\/h3>)/,`$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>`);
+    const vLabel=version==='client'?'기업의 현재 역량 분석 및 맞춤형 성장 전략 제안':'내부 리스크 진단 및 컨설턴트 피드백 포함 자료';
+    const coverCfg={title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서 리포트',version,borderColor:'#3b82f6'};
+    contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,coverCfg,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${vLabel} 자료입니다.</div></div>`;
+    setTimeout(()=>{
+        const radarEl=document.getElementById('report-radar-chart');
+        if(radarEl)new Chart(radarEl.getContext('2d'),{type:'radar',data:{labels:['재무건전성','전략/마케팅','인사/조직','운영/생산','IT/디지털'],datasets:[{label:'기업 역량 진단',data:[65,80,72,68,55],backgroundColor:'rgba(59,130,246,0.2)',borderColor:'#3b82f6',pointBackgroundColor:'#1e3a8a',pointRadius:4}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+        const lineEl=document.getElementById('report-bar-chart');
+        if(lineEl)new Chart(lineEl.getContext('2d'),{type:'line',data:{labels:['23년도','24년도','25년도','금년(예상)'],datasets:[{label:'매출 추이',data:[safeRev.y23,safeRev.y24,safeRev.y25,expectedCur],borderColor:'rgba(22,163,74,1)',backgroundColor:'rgba(22,163,74,0.15)',borderWidth:2,pointRadius:4,fill:true,tension:0.1}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v>=10000?Math.floor(v/10000)+'억':v.toLocaleString('ko-KR')+'만'}}}}});
+    },100);
+}
 
-        <!-- ★ 업체 관리 - 카드 목록 뷰 ★ -->
-        <section id="company" class="tab-content">
-            <div class="max-width-wrapper">
+function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,dateStr){
+    const contentArea=document.getElementById(contentAreaId);if(!contentArea)return;
+    const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
+    const vLabel=config.version==='client'?'기업의 현황 분석 및 맞춤형 전략 제안':'내부 리스크 진단 및 보완 액션 플랜';
+    contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
+}
 
-                <!-- 목록 화면 -->
-                <div id="company-list-step">
-                    <h2 class="page-title">업체 관리</h2>
-                    <div class="company-list-header">
-                        <div class="company-search-wrap">
-                            <span class="search-icon">🔍</span>
-                            <input type="text" id="company-search-input" placeholder="업체명 또는 업종 검색..." oninput="renderCompanyCards()">
-                        </div>
-                        <button class="btn-add-company" onclick="showCompanyForm()">＋ 업체 등록</button>
-                    </div>
-                    <div class="company-cards-grid" id="company-cards-container"></div>
-                </div>
+/* ===== 경영진단 생성 ===== */
+window.generateReport=async function(type,version,event){
+    const tab=event.target.closest('.tab-content');
+    const companyName=tab.querySelector('.company-dropdown').value;
+    if(!companyName){alert('기업을 선택해주세요.');return;}
+    const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const companyData=companies.find(c=>c.name===companyName);
+    const rev=companyData.revenueData||{y23:0,y24:0,y25:0,cur:0};
+    const fRev=formatRevenueForAI(companyData,rev);
+    document.getElementById('ai-loading-overlay').style.display='flex';
+    const promptData={...companyData};delete promptData.rawData;delete promptData.revenueData;promptData.매출데이터=fRev;
+    const consultantFeedbackRule=version==='consultant'?`
+[★ 컨설턴트용 추가 규칙 ★]
+각 섹션의 <ul> 작성 후 반드시 아래 피드백 박스를 추가:
+<div class="consultant-feedback-box"><h4>🔍 컨설턴트 피드백</h4><ul>
+<li>[문제점/리스크] 50자 이상 서술</li>
+<li>[해결방안] 50자 이상 서술</li>
+<li>[향후 방향] 50자 이상 서술</li>
+</ul></div>`:'';
+    const prompt=`너의 역할은 20년 경력의 경영 컨설턴트야. 대상: '${companyData.name}'
+[진단 가중치] 1.경영진단개요(3~4) 2.재무현황(15%,3~4개) 3.전략마케팅(25%,6~8개) 4.인사조직(20%,5~6개) 5.운영생산(20%,5~6개) 6.IT/정부지원(20%,각2~3개) 7.개선방향(5~6개)
+${COMMON_RULES}${consultantFeedbackRule}
+출력목적: ${version==='client'?'긍정적/객관적(기업전달용)':'컨설턴트용-피드백포함'}
+[기업데이터] ${JSON.stringify(promptData,null,2)}`;
+    const aiResponse=await callGeminiAPI(prompt);
+    document.getElementById('ai-loading-overlay').style.display='none';
+    if(aiResponse){
+        let cleanHTML=cleanAIResponse(aiResponse);
+        const todayStr=new Date().toISOString().split('T')[0];
+        const reportObj={id:'rep_'+Date.now(),type:'경영진단',company:companyData.name,title:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:'management'};
+        const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');reports.push(reportObj);localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
+        updateDataLists();
+        tab.querySelector('[id$="-input-step"]').style.display='none';
+        tab.querySelector('[id$="-result-step"]').style.display='block';
+        renderManagementReport(companyData,cleanHTML,version,rev,todayStr);
+    }
+};
 
-                <!-- 등록/수정 폼 -->
-                <div id="company-form-step" style="display:none;">
-                    <button class="back-to-list-btn" onclick="showCompanyList()">← 업체 목록으로</button>
-                    <div class="page-header">
-                        <h2 class="page-title-lg" id="company-form-title">기업 정보 등록</h2>
-                        <div class="header-btns">
-                            <button class="btn-outline" onclick="clearCompanyForm()" style="color:#ea580c;border-color:#ea580c;">초기화</button>
-                            <button class="btn-outline" onclick="window.print()">프린트하기</button>
-                            <button class="btn-primary" onclick="saveCompanyData()">저장하기</button>
-                        </div>
-                    </div>
-                    <form id="companyForm">
-                        <div class="form-section">
-                            <div class="section-title"><h3>기업 기본 정보</h3><span>※ 사업자등록증 참고</span></div>
-                            <div class="grid-4">
-                                <div class="form-group"><label>상호명</label><input type="text" id="comp_name" placeholder="상호명을 입력하세요"></div>
-                                <div class="form-group"><label>사업자유형</label><div class="radio-group"><label><input type="radio" name="biz_type" value="법인" onchange="toggleCorpNumber()"> 법인사업자</label><label><input type="radio" name="biz_type" value="개인" onchange="toggleCorpNumber()"> 개인사업자</label></div></div>
-                                <div class="form-group"><label>사업자등록번호</label><input type="text" id="biz_number" placeholder="숫자만 입력" maxlength="12"></div>
-                                <div class="form-group"><label>법인등록번호</label><input type="text" id="corp_number" placeholder="법인일 경우만 입력" maxlength="14"></div>
-                                <div class="form-group"><label>업종</label><select id="comp_industry"><option value="">선택하세요</option><option>제조업</option><option>IT 및 정보통신업</option><option>도매 및 소매업</option><option>음식점업</option><option>숙박업</option><option>교육업</option><option>건설업</option><option>서비스업</option><option>기타</option></select></div>
-                                <div class="form-group"><label>설립(개시)일</label><input type="text" id="biz_date" placeholder="YYYY-MM-DD" maxlength="10"></div>
-                                <div class="form-group"><label>사업장 전화번호</label><input type="text" id="biz_phone" placeholder="숫자만 입력" maxlength="13"></div>
-                                <div class="form-group"><label>상시근로자 수</label><input type="text" id="emp_count" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
-                                <div class="form-group col-span-2"><label>사업장 주소</label><div class="input-row"><div class="radio-group"><label><input type="radio" name="rent_type" value="자가" onchange="toggleRentInputs()"> 자가</label><label><input type="radio" name="rent_type" value="임대" onchange="toggleRentInputs()"> 임대</label></div><input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;"></div></div>
-                                <div class="form-group"><label>보증금 (만원)</label><input type="text" id="rent_deposit" class="money-format" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>월임대료 (만원)</label><input type="text" id="rent_monthly" class="money-format" placeholder="1억=10000"></div>
-                            </div>
-                        </div>
-                        <div class="split-layout">
-                            <div class="split-half form-section" style="display:flex;flex-direction:column;">
-                                <div>
-                                    <div class="section-title"><h3>대표자 정보</h3></div>
-                                    <div class="grid-2">
-                                        <div class="form-group"><label>대표자명</label><input type="text" placeholder="대표자명을 입력하세요"></div>
-                                        <div class="form-group"><label>생년월일</label><input type="text" id="rep_birth" placeholder="YYYY-MM-DD" maxlength="10"></div>
-                                        <div class="form-group col-span-2"><label>거주지 주소</label><div class="input-row"><div class="radio-group"><label><input type="radio" name="home_rent" value="자가"> 자가</label><label><input type="radio" name="home_rent" value="임대"> 임대</label></div><input type="text" placeholder="상세 주소" style="flex:1;"></div></div>
-                                    </div>
-                                </div>
-                                <div style="margin-top:auto;">
-                                    <div class="grid-2">
-                                        <div class="form-group"><label>연락처</label><input type="text" id="rep_phone" placeholder="숫자만 입력" maxlength="13"></div>
-                                        <div class="form-group"><label>통신사</label><div class="radio-group"><label><input type="radio" name="telecom" value="SKT"> SKT</label><label><input type="radio" name="telecom" value="KT"> KT</label><label><input type="radio" name="telecom" value="LGU+"> LGU+</label><label><input type="radio" name="telecom" value="알뜰폰"> 알뜰폰</label></div></div>
-                                        <div class="form-group"><label>최종학력</label><select><option>선택하세요</option><option>고졸</option><option>전문대졸</option><option>대졸</option><option>대학원졸</option></select></div>
-                                        <div class="form-group"><label>전공</label><input type="text" placeholder="전공분야"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="split-half form-section" style="display:flex;flex-direction:column;">
-                                <div>
-                                    <div class="section-title"><h3>신용정보</h3></div>
-                                    <div class="grid-2">
-                                        <div class="form-group"><label>금융연체여부</label><div class="radio-group"><label><input type="radio" name="fin_over" value="없음"> 없음</label><label><input type="radio" name="fin_over" value="있음"> 있음</label></div></div>
-                                        <div class="form-group"><label>KCB 신용점수</label><input type="text" class="number-only" id="kcb_score" placeholder="점"></div>
-                                        <div class="form-group"><label>세금체납여부</label><div class="radio-group"><label><input type="radio" name="tax_over" value="없음"> 없음</label><label><input type="radio" name="tax_over" value="있음"> 있음</label></div></div>
-                                        <div class="form-group"><label>NICE 신용점수</label><input type="text" class="number-only" placeholder="점"></div>
-                                    </div>
-                                </div>
-                                <div style="margin-top:auto;">
-                                    <div class="section-title" style="margin-top:30px;"><h3>경력사항</h3></div>
-                                    <div class="grid-1">
-                                        <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
-                                        <div class="form-group"><div class="input-row"><input type="text" placeholder="00.00.00~00.00.00" style="width:40%;"><input type="text" placeholder="경력 상세 기술" style="flex:1;"></div></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <div class="section-title"><h3>매출현황 (만원)</h3></div>
-                            <div class="grid-4">
-                                <div class="form-group"><label>금년매출 (전월말 기준)</label><input type="text" id="rev_cur" class="money-format" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>25년도 매출</label><input type="text" id="rev_25" class="money-format" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>24년도 매출</label><input type="text" id="rev_24" class="money-format" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>23년도 매출</label><input type="text" id="rev_23" class="money-format" placeholder="1억=10000"></div>
-                                <div class="form-group col-span-4"><label>수출여부</label><div class="radio-group"><label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()"> 수출중</label><label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label><label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label></div></div>
-                                <div class="form-group"><label>금년수출매출</label><input type="text" class="money-format export-money" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" placeholder="1억=10000"></div>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <div class="section-title"><h3>부채현황 (만원)</h3><span>※ 실시간 자동 합계</span></div>
-                            <div class="grid-4">
-                                <div class="form-group"><label>중진공</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>소진공</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>신보</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>기보</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>재단</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>회사담보</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>대표신용</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="form-group"><label>대표담보</label><input type="text" class="money-format debt-input" placeholder="1억=10000"></div>
-                                <div class="total-box">총 부채 합계: <span id="total-debt">0</span> 만원</div>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <div class="section-title"><h3>보유 인증</h3></div>
-                            <div class="checkbox-grid" style="gap:15px;">
-                                <label class="small-label"><input type="checkbox"> 중소기업 확인서</label><label class="small-label"><input type="checkbox"> 창업확인서</label>
-                                <label class="small-label"><input type="checkbox"> 여성기업확인서</label><label class="small-label"><input type="checkbox"> 소부장확인서</label>
-                                <label class="small-label"><input type="checkbox"> 뿌리기업확인서</label><label class="small-label"><input type="checkbox"> 벤처인증</label>
-                                <label class="small-label"><input type="checkbox"> 메인비즈</label><label class="small-label"><input type="checkbox"> 이노비즈</label>
-                                <label class="small-label"><input type="checkbox"> ISO인증</label><label class="small-label"><input type="checkbox"> HACCP 인증</label>
-                                <label class="small-label"><input type="checkbox"> 연구소 보유</label><label class="small-label"><input type="checkbox"> 연구전담부서 보유</label>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <div class="section-title"><h3>비즈니스 상세 정보</h3></div>
-                            <div class="grid-2">
-                                <div class="form-group"><label>핵심 아이템</label><textarea id="core_item" rows="3" placeholder="비즈니스 핵심 설명"></textarea></div>
-                                <div class="form-group"><label>시장 현황</label><textarea rows="3" placeholder="해당 업계 동향"></textarea></div>
-                                <div class="form-group"><label>판매 루트(유통망)</label><textarea rows="3" placeholder="주요 거래처, 판매 채널 등"></textarea></div>
-                                <div class="form-group"><label>수익 모델</label><textarea rows="3" placeholder="수익 창출 구조"></textarea></div>
-                                <div class="form-group"><label>경쟁력 및 차별성</label><textarea rows="3" placeholder="타사 대비 강점"></textarea></div>
-                                <div class="form-group"><label>앞으로의 계획</label><textarea rows="3" placeholder="단기 및 중기 계획"></textarea></div>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <div class="section-title"><h3>자금계획</h3></div>
-                            <div class="grid-1">
-                                <div class="grid-2"><div class="form-group"><label>필요자금 (만원)</label><input type="text" class="money-format" placeholder="1억=10000"></div></div>
-                                <div class="form-group"><label>자금사용계획</label><textarea rows="3" placeholder="자금 사용의 구체적인 계획"></textarea></div>
-                                <div class="form-group" style="padding-bottom:15px;border-bottom:1px dashed #e2e8f0;"><label style="margin-bottom:10px;">자금용도</label><div class="checkbox-grid" style="gap:15px;"><label class="small-label"><input type="checkbox"> 운전자금</label><label class="small-label"><input type="checkbox"> 시설자금</label><label class="small-label"><input type="checkbox"> 수출자금</label><label class="small-label"><input type="checkbox"> 기타</label></div></div>
-                                <div class="form-group"><label style="margin-bottom:10px;">희망조달방법</label><div class="checkbox-grid" style="gap:15px;"><label class="small-label"><input type="checkbox"> 정부정책자금</label><label class="small-label"><input type="checkbox"> 정부지원금</label><label class="small-label"><input type="checkbox"> 은행조달(대출)</label><label class="small-label"><input type="checkbox"> 기타</label></div></div>
-                            </div>
-                        </div>
-                        <div class="form-section" style="border-bottom:none;">
-                            <div class="section-title"><h3>컨설턴트 메모 및 서명</h3></div>
-                            <textarea rows="5" placeholder="기타 메모 및 특이사항" style="width:100%;margin-bottom:20px;"></textarea>
-                            <div class="grid-2">
-                                <div class="form-group"><div class="input-row"><div class="label-box">담당 컨설턴트</div><input type="text" value="선지영" style="flex:1;"><div class="label-box" style="width:80px;">서명</div><div class="sign-box">인</div></div></div>
-                                <div class="form-group"><div class="input-row"><div class="label-box">작성일</div><input type="text" id="write_date" placeholder="YYYY-MM-DD" style="flex:1;" maxlength="10"></div></div>
-                            </div>
-                        </div>
-                        <div style="margin-top:30px;margin-bottom:50px;"><button type="button" class="btn-primary" style="width:100%;padding:15px;font-size:16px;" onclick="saveCompanyData()">위 정보를 바탕으로 기업 등록 완료</button></div>
-                    </form>
-                </div>
-            </div>
-        </section>
+const REPORT_CONFIGS={
+    finance:{typeLabel:'재무진단',title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',borderColor:'#2563eb',contentAreaId:'finance-content-area',buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.재무개요(3~4) 2.수익성분석(5~6) 3.안정성분석(5~6) 4.성장성분석(4~5) 5.재무개선방향(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+    aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',buildPrompt:(cData,fRev,version)=>`너는 창업·사업기획 전문 컨설턴트야. 대상: '${cData.name}'\n7개섹션: 1.사업개요(3~4) 2.시장분석(5~6) 3.제품/서비스(5~6) 4.마케팅전략(6~7) 5.운영계획(4~5) 6.재무계획(4~5) 7.실행로드맵(4~5)\n${COMMON_RULES}출력목적: ${version==='client'?'정식제출용':'초안/검토본'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+    aiFund:{typeLabel:'정책자금매칭',title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',borderColor:'#ea580c',contentAreaId:'aiFund-content-area',buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.기업자격요건분석(4~5) 2.자금필요성(3~4) 3.추천정책자금TOP5(각3~4줄) 4.기관별신청전략(5~6) 5.신청준비체크리스트(6~8)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+    aiTrade:{typeLabel:'상권분석',title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',borderColor:'#0d9488',contentAreaId:'aiTrade-content-area',buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'미입력'})\n5개섹션: 1.상권개요및입지분석(4~5) 2.유동인구및타겟(5~6) 3.경쟁현황및포지셔닝(5~6) 4.상권성장성및리스크(4~5) 5.매출예측및운영전략(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+    aiMarketing:{typeLabel:'마케팅제안',title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',borderColor:'#db2777',contentAreaId:'aiMarketing-content-area',buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상: '${cData.name}'\n6개섹션: 1.마케팅현황진단(4~5) 2.타겟고객설정(5~6) 3.채널별마케팅전략(6~8) 4.콘텐츠및브랜딩전략(5~6) 5.마케팅예산계획(4~5) 6.월별실행로드맵(6항목)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`}
+};
 
-        <!-- 보고서 목록 -->
-        <section id="reportList" class="tab-content">
-            <div class="max-width-wrapper">
-                <div class="page-header"><h2 class="page-title-lg">기업 및 보고서 목록</h2></div>
-                <h3 class="list-sub-title">🏢 등록된 기업 목록</h3>
-                <div class="list-card" style="margin-bottom:40px;"><table class="report-table"><thead><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table></div>
-                <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
-                <div class="list-card"><table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"></tbody></table></div>
-            </div>
-        </section>
+window.generateAnyReport=async function(type,version,event){
+    const tab=event.target.closest('.tab-content');
+    const companyName=tab.querySelector('.company-dropdown').value;
+    if(!companyName){alert('기업을 선택해주세요.');return;}
+    const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const companyData=companies.find(c=>c.name===companyName);
+    const rev=companyData.revenueData||{y23:0,y24:0,y25:0,cur:0};
+    const fRev=formatRevenueForAI(companyData,rev);
+    const cfg=REPORT_CONFIGS[type];if(!cfg)return;
+    document.getElementById('ai-loading-overlay').style.display='flex';
+    const aiResponse=await callGeminiAPI(cfg.buildPrompt(companyData,fRev,version));
+    document.getElementById('ai-loading-overlay').style.display='none';
+    if(aiResponse){
+        let cleanHTML=cleanAIResponse(aiResponse);
+        const todayStr=new Date().toISOString().split('T')[0];
+        const vLabel=version==='client'?'기업전달용':'컨설턴트용';
+        const reportObj={id:'rep_'+Date.now(),type:cfg.typeLabel,company:companyData.name,title:`${cfg.title} (${vLabel})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
+        const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');reports.push(reportObj);localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
+        updateDataLists();
+        tab.querySelector('[id$="-input-step"]').style.display='none';
+        tab.querySelector('[id$="-result-step"]').style.display='block';
+        renderGenericReport(cfg.contentAreaId,companyData,cleanHTML,{...cfg,version},rev,todayStr);
+    }
+};
 
-        <!-- 경영진단보고서 -->
-        <section id="report" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="report-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 경영진단보고서 생성</h2></div>
-                    <div class="blue-banner"><h3>◎ AI 경영진단보고서</h3><p>기업의 현재 상황을 다각적으로 분석하여 실질적인 개선 전략을 제안합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">🏆 경영진단보고서 구성 (7개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 경영진단 개요</li><li>3. 재무 현황 분석</li><li>5. 운영/생산 분석</li></ul><ul class="info-list"><li>2. 기업 현황 분석</li><li>4. 전략 및 마케팅 분석</li><li>6. 개선 방향 및 로드맵</li></ul></div></div>
-                    <div class="fund-split-layout">
-                        <div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="report-company-select"><option value="">기업을 선택하세요</option></select></div></div>
-                        <div class="fund-right fund-card">
-                            <h4 style="margin-bottom:15px;font-size:15px;color:#1e293b;">진단 영역 가중치</h4>
-                            <div class="criteria-grid">
-                                <div class="criteria-col">
-                                    <div class="criteria-item"><div class="dot blue"></div><div><strong>재무 건전성 (15%)</strong><div class="criteria-desc">매출 성장세, 부채 비율, 현금 흐름</div></div></div>
-                                    <div class="criteria-item"><div class="dot green"></div><div><strong>전략/마케팅 (25%)</strong><div class="criteria-desc">제품 경쟁력, 시장 포지셔닝, 유통 채널</div></div></div>
-                                    <div class="criteria-item"><div class="dot teal"></div><div><strong>IT/디지털 (10%)</strong><div class="criteria-desc">디지털 전환, 시스템 활용도</div></div></div>
-                                </div>
-                                <div class="criteria-divider"></div>
-                                <div class="criteria-col">
-                                    <div class="criteria-item"><div class="dot orange"></div><div><strong>인사/조직 (20%)</strong><div class="criteria-desc">인력 구성, 조직 역량, 대표자 역량</div></div></div>
-                                    <div class="criteria-item"><div class="dot purple"></div><div><strong>운영/생산 (20%)</strong><div class="criteria-desc">생산 효율, 품질 관리, 납기 대응력</div></div></div>
-                                    <div class="criteria-item"><div class="dot pink"></div><div><strong>정부지원 활용 (10%)</strong><div class="criteria-desc">정책자금, 인증, 지원사업 활용도</div></div></div>
-                                </div>
-                            </div>
-                            <div class="criteria-total">합계 100%</div>
-                        </div>
-                    </div>
-                    <div class="report-action-group" style="display:flex;gap:20px;margin-top:30px;">
-                        <button class="btn-report-blue" style="flex:1;" onclick="generateReport('management','client',event)">◎ AI 경영진단보고서 (기업전달용)</button>
-                        <button class="btn-report-blue" style="flex:1;background:#1e293b;color:white;" onclick="generateReport('management','consultant',event)">◎ AI 경영진단보고서 (컨설턴트용)</button>
-                    </div>
-                </div>
-                <div id="report-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('report')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="report-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
+window.viewReport=function(id){
+    const r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]').find(x=>x.id===id);if(!r)return;
+    const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const companyData=companies.find(c=>c.name===r.company)||{name:r.company};
+    const rev=r.revenueData||{cur:0,y25:0,y24:0,y23:0};
+    const type=r.reportType||'management';
+    if(type==='management'){
+        showTab('report');
+        document.getElementById('report-input-step').style.display='none';
+        document.getElementById('report-result-step').style.display='block';
+        renderManagementReport(companyData,r.content,r.version,rev,r.date);
+    }else{
+        const cfg=REPORT_CONFIGS[type];if(!cfg)return;
+        const tabId=cfg.contentAreaId.replace('-content-area','');
+        showTab(tabId);
+        document.getElementById(tabId+'-input-step').style.display='none';
+        document.getElementById(tabId+'-result-step').style.display='block';
+        renderGenericReport(cfg.contentAreaId,companyData,r.content,{...cfg,version:r.version},rev,r.date);
+    }
+};
 
-        <!-- 상세 재무진단 -->
-        <section id="finance" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="finance-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 상세 재무진단</h2></div>
-                    <div class="blue-banner"><h3>◎ AI 상세 재무진단 리포트</h3><p>재무제표 데이터를 기반으로 수익성·안정성·성장성을 심층 분석합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">📊 재무진단 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 재무 개요 및 요약</li><li>3. 안정성 분석</li><li>5. 재무 개선 방향</li></ul><ul class="info-list"><li>2. 수익성 분석</li><li>4. 성장성 분석</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="finance-company-select"><option value="">기업을 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">분석 중점 항목</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>매출 성장률 및 수익성</strong><div class="criteria-desc">연도별 매출 추이, 성장률</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>현금 흐름 및 유동성</strong><div class="criteria-desc">운전자금 충분성 평가</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot green"></div><div><strong>부채 구조 및 안정성</strong><div class="criteria-desc">기관별 분류, 상환 리스크</div></div></div><div class="criteria-item"><div class="dot purple"></div><div><strong>재무 개선 전략</strong><div class="criteria-desc">단기·중기 재무 액션 플랜</div></div></div></div></div></div></div>
-                    <div style="margin-top:30px;"><button class="btn-report-blue" style="width:100%;" onclick="generateAnyReport('finance','client',event)">◎ AI 상세 재무진단 리포트 생성</button></div>
-                </div>
-                <div id="finance-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('finance')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="finance-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
-
-        <!-- AI 사업계획서 -->
-        <section id="aiBiz" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="aiBiz-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 사업계획서 생성</h2></div>
-                    <div class="green-banner"><h3>◎ AI 맞춤형 사업계획서</h3><p>기업 정보를 바탕으로 정부지원사업 및 투자유치에 적합한 사업계획서를 자동 작성합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">📝 사업계획서 구성 (7개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 사업 개요</li><li>3. 제품/서비스 소개</li><li>5. 운영 및 생산 계획</li><li>7. 실행 로드맵</li></ul><ul class="info-list"><li>2. 시장 분석</li><li>4. 마케팅 전략</li><li>6. 재무 계획</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiBiz-company-select"><option value="">기업을 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">작성 목적</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot green"></div><div><strong>정부지원사업 신청용</strong><div class="criteria-desc">중소기업 지원사업, 창업 지원</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>금융기관 제출용</strong><div class="criteria-desc">정책자금, 은행 대출 신청</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>투자유치용</strong><div class="criteria-desc">엔젤투자, VC 투자 유치</div></div></div></div></div></div></div>
-                    <div style="margin-top:30px;"><button class="btn-report-blue" style="width:100%;background:#16a34a;color:white;" onclick="generateAnyReport('aiBiz','client',event)">◎ AI 사업계획서 생성</button></div>
-                </div>
-                <div id="aiBiz-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiBiz')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="aiBiz-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
-
-        <!-- AI 정책자금매칭 -->
-        <section id="aiFund" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="aiFund-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 정책자금매칭 리포트</h2></div>
-                    <div class="orange-banner"><h3>◎ AI 정책자금 매칭 리포트</h3><p>기업 현황을 분석하여 신청 가능한 정책자금을 매칭하고 상세 신청 전략을 제안합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">🎯 정책자금매칭 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 기업 자격 요건 분석</li><li>3. 추천 정책자금 TOP 5</li><li>5. 신청 준비 체크리스트</li></ul><ul class="info-list"><li>2. 자금 필요성 및 활용 전략</li><li>4. 기관별 신청 전략</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiFund-company-select"><option value="">기업을 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">매칭 대상 기관</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot orange"></div><div><strong>중소벤처기업부 (중진공·소진공)</strong><div class="criteria-desc">정책자금 대출, 신용/담보 보증</div></div></div><div class="criteria-item"><div class="dot green"></div><div><strong>지역신용보증재단</strong><div class="criteria-desc">지역 맞춤형 소액 보증</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>신용보증기금·기술보증기금</strong><div class="criteria-desc">보증서 발급, 특례보증</div></div></div><div class="criteria-item"><div class="dot purple"></div><div><strong>정부 지원사업 (R&D 등)</strong><div class="criteria-desc">창업지원, 기술개발, 수출지원</div></div></div></div></div></div></div>
-                    <div style="margin-top:30px;"><button class="btn-report-blue" style="width:100%;background:#ea580c;color:white;" onclick="generateAnyReport('aiFund','client',event)">◎ AI 정책자금매칭 리포트 생성</button></div>
-                </div>
-                <div id="aiFund-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiFund')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="aiFund-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
-
-        <!-- AI 상권분석 -->
-        <section id="aiTrade" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="aiTrade-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 상권분석 리포트</h2></div>
-                    <div class="teal-banner"><h3>◎ AI 빅데이터 상권분석</h3><p>업종·지역·경쟁 환경을 분석하여 최적의 입지 전략과 매출 예측을 제공합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">🏪 상권분석 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 상권 개요 및 입지 분석</li><li>3. 경쟁 현황 및 포지셔닝</li><li>5. 매출 예측 및 운영 전략</li></ul><ul class="info-list"><li>2. 유동인구 및 타겟 고객 분석</li><li>4. 상권 성장성 및 리스크 평가</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiTrade-company-select"><option value="">기업을 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">분석 포인트</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot teal"></div><div><strong>입지 경쟁력 평가</strong><div class="criteria-desc">접근성, 가시성, 주변 환경 분석</div></div></div><div class="criteria-item"><div class="dot green"></div><div><strong>경쟁 업체 현황</strong><div class="criteria-desc">반경 내 경쟁사 수, 차별화 전략</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>타겟 고객 프로파일링</strong><div class="criteria-desc">연령·소득·소비 패턴 분석</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>매출 잠재력 시뮬레이션</strong><div class="criteria-desc">업종별 평균 대비 예상 매출</div></div></div></div></div></div></div>
-                    <div style="margin-top:30px;"><button class="btn-report-blue" style="width:100%;background:#0d9488;color:white;" onclick="generateAnyReport('aiTrade','client',event)">◎ AI 상권분석 리포트 생성</button></div>
-                </div>
-                <div id="aiTrade-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiTrade')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="aiTrade-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
-
-        <!-- AI 마케팅제안 -->
-        <section id="aiMarketing" class="tab-content">
-            <div class="max-width-wrapper">
-                <div id="aiMarketing-input-step">
-                    <div class="page-header"><h2 class="page-title-lg">AI 마케팅 제안서 생성</h2></div>
-                    <div class="pink-banner"><h3>◎ AI 맞춤형 마케팅 제안</h3><p>업종·타겟·예산에 맞는 온·오프라인 마케팅 전략을 AI가 맞춤 제안합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">📢 마케팅 제안서 구성 (6개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 마케팅 현황 진단</li><li>3. 채널별 마케팅 전략</li><li>5. 마케팅 예산 계획</li></ul><ul class="info-list"><li>2. 타겟 고객 설정</li><li>4. 콘텐츠 및 브랜딩 전략</li><li>6. 실행 로드맵 (월별)</li></ul></div></div>
-                    <div class="fund-split-layout"><div class="fund-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiMarketing-company-select"><option value="">기업을 선택하세요</option></select></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">마케팅 채널 분석 대상</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot pink"></div><div><strong>SNS 마케팅</strong><div class="criteria-desc">인스타그램, 유튜브, 블로그 전략</div></div></div><div class="criteria-item"><div class="dot green"></div><div><strong>오프라인 마케팅</strong><div class="criteria-desc">전단지, 지역 홍보, 이벤트 기획</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>디지털 광고</strong><div class="criteria-desc">네이버·구글 검색광고, 배너 광고</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>고객 관계 관리(CRM)</strong><div class="criteria-desc">재구매 유도, 리뷰 관리, 충성고객</div></div></div></div></div></div></div>
-                    <div style="margin-top:30px;"><button class="btn-report-blue" style="width:100%;background:#db2777;color:white;" onclick="generateAnyReport('aiMarketing','client',event)">◎ AI 마케팅 제안서 생성</button></div>
-                </div>
-                <div id="aiMarketing-result-step" style="display:none;"><div class="report-view-container"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiMarketing')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="window.print()">PDF 다운로드</button></div></div><div id="aiMarketing-content-area" class="report-paper"></div></div></div>
-            </div>
-        </section>
-
-        <!-- 설정 -->
-        <section id="settings" class="tab-content">
-            <div class="max-width-wrapper">
-                <div class="page-header"><h2 class="page-title-lg">플랫폼 설정</h2></div>
-                <div class="fund-card" style="margin-bottom:30px;">
-                    <h3 style="margin-bottom:20px;font-size:16px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">👤 사용자 프로필</h3>
-                    <div class="grid-2"><div class="form-group"><label>사용자 성명</label><input type="text" id="set-user-name"></div><div class="form-group"><label>이메일 주소</label><input type="email" id="set-user-email" readonly style="background:#f1f5f9;"></div><div class="form-group"><label>소속명</label><input type="text" id="set-user-dept"></div></div>
-                    <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;" onclick="saveProfileSettings()">프로필 저장</button></div>
-                </div>
-                <div class="fund-card" style="border-top:4px solid #ea580c;">
-                    <h3 style="margin-bottom:10px;font-size:16px;">🔑 AI 서비스 설정 (Google Gemini)</h3>
-                    <div class="form-group"><label>Gemini API Key</label><input type="password" id="set-api-key" placeholder="AIzaSy..."></div>
-                    <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;background:#ea580c;" onclick="saveApiSettings()">API 키 저장</button></div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-</div>
-
-<div id="ai-loading-overlay">
-    <div class="scan-container">
-        <div class="document-icon"><div class="scan-line"></div></div>
-        <h3 class="loading-title">AI 분석 중...</h3>
-        <p class="loading-desc">기업 데이터를 스캔하여 맞춤형 리포트를 작성하고 있습니다.<br>최대 60초가 소요될 수 있습니다.</p>
-    </div>
-</div>
-<script src="app.js"></script>
-</body>
-</html>
+window.backToInput=function(tab){
+    document.getElementById(tab+'-input-step').style.display='block';
+    document.getElementById(tab+'-result-step').style.display='none';
+};
