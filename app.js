@@ -154,11 +154,18 @@ window.renderCompanyCards = function() {
     }
 
     container.innerHTML = filtered.map(c => {
-        const rev = c.revenueData || {};
-        const reportCount = reports.filter(r => r.company === c.name).length;
-        const bizType = c.rawData ? (c.rawData.find(d => d.type==='radio' && d.checked && (d.value==='법인'||d.value==='개인'))?.value||'') : '';
-        const kcbScore = c.rawData ? (c.rawData[document.querySelectorAll('#companyForm input.number-only').length > 0 ? 0 : 0]?.value || '') : '';
-        const grade = getGradeFromKCB(kcbScore);
+        // 주소 추출 (rawData에서 사업장 주소 텍스트)
+        let address = '주소 미입력';
+        if (c.rawData) {
+            const addrEl = c.rawData.find(d =>
+                d.type === 'text' && d.value && d.value.length > 3 &&
+                d.value !== c.name && d.value !== c.rep && d.value !== c.bizNum &&
+                d.value !== c.industry && d.value !== c.bizDate && d.value !== c.empCount &&
+                d.value !== c.coreItem && !d.value.match(/^\d{2,3}-/) &&
+                (d.value.includes('시') || d.value.includes('구') || d.value.includes('동') || d.value.includes('로') || d.value.includes('길'))
+            );
+            if (addrEl) address = addrEl.value;
+        }
 
         return `
         <div class="company-card">
@@ -166,42 +173,22 @@ window.renderCompanyCards = function() {
                 <div class="company-card-icon">🏢</div>
                 <div class="company-card-info">
                     <div class="company-card-name">${c.name}</div>
-                    <div class="company-card-type">${bizType || '사업자'}</div>
+                    <div class="company-card-rep">${c.rep && c.rep !== '-' ? c.rep + ' 대표' : '대표자 미입력'}</div>
                 </div>
                 <div class="company-card-actions">
                     <button class="btn-card-detail" title="수정/상세보기" onclick="showCompanyForm('${c.name}')">›</button>
                     <button class="btn-card-delete" title="삭제" onclick="deleteCompany('${c.name}')">🗑</button>
                 </div>
             </div>
-            <div class="company-card-tags">
-                ${c.industry ? `<span class="tag-industry">${c.industry}</span>` : ''}
-                ${grade ? `<span class="tag-grade">◎ ${grade}</span>` : ''}
-            </div>
-            <div class="company-revenue">
-                <div class="company-revenue-label">📈 매출 현황</div>
-                <div class="company-revenue-grid">
-                    <div class="revenue-item highlight">
-                        <div class="revenue-year">금년</div>
-                        <div class="revenue-amount${!rev.cur ? ' empty' : ''}">${formatSmallCurrency(rev.cur)}</div>
-                    </div>
-                    <div class="revenue-item">
-                        <div class="revenue-year">'25</div>
-                        <div class="revenue-amount${!rev.y25 ? ' empty' : ''}">${formatSmallCurrency(rev.y25)}</div>
-                    </div>
-                    <div class="revenue-item">
-                        <div class="revenue-year">'24</div>
-                        <div class="revenue-amount${!rev.y24 ? ' empty' : ''}">${formatSmallCurrency(rev.y24)}</div>
-                    </div>
-                    <div class="revenue-item">
-                        <div class="revenue-year">'23</div>
-                        <div class="revenue-amount${!rev.y23 ? ' empty' : ''}">${formatSmallCurrency(rev.y23)}</div>
-                    </div>
+            <div class="company-card-body">
+                <div class="company-card-row">
+                    <span class="company-card-label">업종</span>
+                    <span class="company-card-value">${c.industry && c.industry !== '-' ? c.industry : '미입력'}</span>
                 </div>
-            </div>
-            <div class="company-card-bottom">
-                <span class="company-card-meta">📄 보고서 ${reportCount}건</span>
-                ${c.empCount && c.empCount !== '-' ? `<span class="company-card-meta">👥 직원 ${c.empCount}명</span>` : ''}
-                <span class="company-card-meta" style="margin-left:auto;">📅 ${c.date} 등록</span>
+                <div class="company-card-row">
+                    <span class="company-card-label">주소</span>
+                    <span class="company-card-value addr">${address}</span>
+                </div>
             </div>
         </div>`;
     }).join('');
