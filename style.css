@@ -35,7 +35,7 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 .bottom-menu li:hover { background-color: #1c2841; color: #e2e8f0; }
 .version-info { padding: 8px 18px 14px; font-size: 11px; color: #475569; text-align: center; }
 
-/* ===== 메인 콘텐츠 ===== */
+/* ===== 메인 ===== */
 .main-content { flex: 1; padding: 28px 32px; overflow-y: auto; background-color: #f1f5f9; }
 .page-title { font-size: 20px; font-weight: bold; color: #0f172a; margin-bottom: 24px; }
 .tab-content { display: none; }
@@ -43,149 +43,42 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .max-width-wrapper { max-width: 1100px; margin: 0 auto; }
 
-/* ===== 대시보드 전용 스타일 ===== */
-/* 환영 배너 */
-.welcome-banner {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
-    border-radius: 14px;
-    padding: 28px 32px;
-    color: white;
-    margin-bottom: 22px;
-    position: relative;
-    overflow: hidden;
-}
-.welcome-banner::after {
-    content: '';
-    position: absolute;
-    right: -30px; top: -30px;
-    width: 200px; height: 200px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 50%;
-}
-.welcome-banner::before {
-    content: '';
-    position: absolute;
-    right: 60px; bottom: -50px;
-    width: 150px; height: 150px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
-}
+/* ===== 대시보드 ===== */
+.welcome-banner { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%); border-radius: 14px; padding: 28px 32px; color: white; margin-bottom: 22px; position: relative; overflow: hidden; }
+.welcome-banner::after { content: ''; position: absolute; right: -30px; top: -30px; width: 200px; height: 200px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+.welcome-banner::before { content: ''; position: absolute; right: 60px; bottom: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.04); border-radius: 50%; }
 .welcome-greeting { font-size: 14px; color: #bfdbfe; margin-bottom: 6px; }
 .welcome-title { font-size: 26px; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.5px; }
-.welcome-sub { font-size: 13px; color: #93c5fd; margin-bottom: 20px; }
-.welcome-btns { display: flex; gap: 12px; }
-.btn-welcome-white {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 9px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: 0.2s;
-    backdrop-filter: blur(4px);
-}
-.btn-welcome-white:hover { background: rgba(255,255,255,0.25); }
-.btn-welcome-solid {
-    background: white;
-    color: #1e40af;
-    padding: 9px 18px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: 0.2s;
-}
-.btn-welcome-solid:hover { background: #eff6ff; }
+.welcome-sub { font-size: 13px; color: #93c5fd; }
 
-/* 통계 카드 */
 .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 18px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    border: 1px solid #e2e8f0;
-}
-.stat-icon {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-}
-.stat-icon.blue   { background: #eff6ff; }
-.stat-icon.green  { background: #f0fdf4; }
-.stat-icon.yellow { background: #fefce8; }
-.stat-icon.orange { background: #fff7ed; }
+.stat-card { background: white; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+.stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.stat-icon.blue { background: #eff6ff; } .stat-icon.green { background: #f0fdf4; }
+.stat-icon.yellow { background: #fefce8; } .stat-icon.orange { background: #fff7ed; }
 .stat-num { font-size: 26px; font-weight: 900; color: #0f172a; line-height: 1; }
 .stat-label { font-size: 12px; color: #64748b; margin-top: 3px; }
 
-/* 중간 행 (빠른실행 + 최근보고서) */
 .dashboard-mid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; margin-bottom: 16px; }
 .dash-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .dash-card-title { font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 14px; }
-
-/* 빠른 실행 2x2 */
 .quick-grid-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.quick-item-sm {
-    border: 1px solid #e2e8f0;
-    padding: 16px 12px;
-    border-radius: 10px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-    background: #f8fafc;
-    color: #334155;
-}
+.quick-item-sm { border: 1px solid #e2e8f0; padding: 16px 12px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #f8fafc; color: #334155; }
 .quick-item-sm .qi-icon { font-size: 22px; margin-bottom: 6px; }
 .quick-item-sm .qi-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; font-weight: normal; }
 .quick-item-sm:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(59,130,246,0.12); }
-.quick-item-sm:nth-child(3) { border-color: #bbf7d0; }
 .quick-item-sm:nth-child(3):hover { border-color: #16a34a; background: #f0fdf4; color: #166534; }
-.quick-item-sm:nth-child(4) { border-color: #fed7aa; }
 .quick-item-sm:nth-child(4):hover { border-color: #ea580c; background: #fff7ed; color: #9a3412; }
-
-/* 최근 보고서 */
 .recent-report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.recent-report-header .view-all { font-size: 12px; color: #3b82f6; cursor: pointer; font-weight: bold; text-decoration: none; }
-.recent-report-item {
-    display: flex;
-    align-items: center;
-    padding: 11px 0;
-    border-bottom: 1px solid #f1f5f9;
-    gap: 12px;
-}
+.recent-report-item { display: flex; align-items: center; padding: 11px 0; border-bottom: 1px solid #f1f5f9; gap: 12px; }
 .recent-report-item:last-child { border-bottom: none; }
-.report-type-icon {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    background: #eff6ff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px;
-    flex-shrink: 0;
-}
+.report-type-icon { width: 36px; height: 36px; border-radius: 9px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
 .report-item-title { font-size: 14px; font-weight: bold; color: #1e293b; }
 .report-item-company { font-size: 12px; color: #64748b; margin-top: 2px; }
 .report-item-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .report-badge { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; background: #eff6ff; color: #3b82f6; }
 .report-date { font-size: 11px; color: #94a3b8; }
 .empty-state { text-align: center; padding: 30px 0; color: #94a3b8; font-size: 13px; }
-
-/* 하단 행 (지원사업 + 공지사항) */
 .dashboard-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .bottom-card { background: white; border-radius: 12px; padding: 18px 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .bottom-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -196,11 +89,136 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 .btn-add-small.orange:hover { border-color: #f97316; color: #f97316; }
 .bottom-empty { text-align: center; padding: 20px 0; color: #94a3b8; font-size: 13px; }
 
-/* ===== 기타 공통 스타일 (기업관리, 보고서 등) ===== */
-.section-title-dash { font-size: 17px; margin-bottom: 15px; font-weight: bold; color: #1e293b; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.view-all { font-size: 13px; color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
+/* ====================================================
+   ★ 업체 관리 - 카드 목록 뷰
+==================================================== */
+.company-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 16px;
+}
+.company-search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 420px;
+}
+.company-search-wrap input {
+    padding: 10px 16px 10px 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    width: 100%;
+    outline: none;
+    transition: 0.2s;
+    color: #333;
+}
+.company-search-wrap input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.company-search-wrap .search-icon {
+    position: absolute;
+    left: 13px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+.btn-add-company {
+    background: #1e293b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-add-company:hover { background: #0f172a; }
 
+/* 업체 카드 */
+.company-cards-grid { display: flex; flex-direction: column; gap: 12px; }
+.company-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: 0.2s;
+    max-width: 680px;
+}
+.company-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+.company-card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.company-card-icon {
+    width: 42px; height: 42px;
+    background: #eff6ff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.company-card-info { flex: 1; min-width: 0; }
+.company-card-name { font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 2px; }
+.company-card-type { font-size: 12px; color: #64748b; }
+.company-card-actions { display: flex; align-items: center; gap: 8px; }
+.btn-card-detail { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 4px; }
+.btn-card-detail:hover { color: #3b82f6; }
+.btn-card-delete { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; transition: 0.2s; padding: 4px; }
+.btn-card-delete:hover { color: #ef4444; }
+
+.company-card-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.tag-industry {
+    background: #fff7ed; color: #c2410c;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: bold;
+    border: 1px solid #fed7aa;
+}
+.tag-grade {
+    background: #eff6ff; color: #1d4ed8;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: bold;
+    border: 1px solid #bfdbfe;
+    display: flex; align-items: center; gap: 4px;
+}
+
+/* 매출 현황 */
+.company-revenue { margin-bottom: 14px; }
+.company-revenue-label { font-size: 12px; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.company-revenue-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
+.revenue-item { background: #f8fafc; padding: 8px 10px; text-align: center; }
+.revenue-item.highlight { background: white; }
+.revenue-year { font-size: 11px; color: #94a3b8; margin-bottom: 3px; }
+.revenue-amount { font-size: 13px; font-weight: bold; color: #1e293b; }
+.revenue-amount.empty { color: #cbd5e1; }
+
+/* 카드 하단 */
+.company-card-bottom { display: flex; align-items: center; gap: 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.company-card-meta { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+
+.company-empty-state {
+    text-align: center; padding: 60px 20px; color: #94a3b8;
+    background: white; border-radius: 12px; border: 1px solid #e2e8f0;
+}
+.company-empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+.company-empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+/* ====================================================
+   ★ 기업 등록 폼 뷰
+==================================================== */
+.back-to-list-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: #64748b;
+    font-size: 14px; cursor: pointer; padding: 0;
+    margin-bottom: 16px; transition: 0.2s;
+}
+.back-to-list-btn:hover { color: #1e293b; }
+
+/* ===== 공통 폼 스타일 ===== */
 .fund-card, .list-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
 .form-section { background: transparent; padding: 0 0 50px 0; margin-bottom: 50px; border-bottom: 1px solid #e2e8f0; }
 .section-title { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-left: 4px solid #1e3a8a; padding-left: 10px; }
@@ -235,7 +253,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .total-box { background: #eff6ff; padding: 15px 20px; border-radius: 6px; text-align: right; color: #1e3a8a; font-weight: bold; border: 1px solid #bfdbfe; grid-column: span 4; font-size: 17px; margin-top: 10px; }
 
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.page-title-lg { font-size: 24px; font-weight: bold; color: #0f172a; }
+.page-title-lg { font-size: 22px; font-weight: bold; color: #0f172a; }
 .header-btns { display: flex; gap: 10px; }
 .btn-primary { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; }
 .btn-primary:hover { background: #2563eb; }
@@ -251,6 +269,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-table th { background: #f8fafc; color: #64748b; font-size: 14px; padding: 15px; border-bottom: 2px solid #e2e8f0; }
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; vertical-align: middle; }
 .list-sub-title { font-size: 17px; margin: 25px 0 12px 0; color: #1e293b; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px; }
+.view-all { font-size: 13px; color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
 
 .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner { color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
 .blue-banner   { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
@@ -264,7 +283,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .label-box { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #475569; white-space: nowrap; }
 .sign-box { width: 60px; height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; background: #f8fafc; flex-shrink: 0; }
 
-/* 진단 가중치 2열 */
+/* 진단 가중치 */
 .criteria-grid { display: grid !important; grid-template-columns: 1fr 1px 1fr !important; gap: 0 !important; align-items: start; width: 100% !important; margin-bottom: 12px; }
 .criteria-col { display: block !important; min-width: 0 !important; }
 .criteria-col:first-child { padding-right: 20px !important; }
@@ -309,20 +328,16 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 
 .report-section-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid; }
 .report-section-box h3 { margin-top: 0 !important; margin-bottom: 18px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 20px; font-weight: bold; }
-.report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 16px; text-align: justify; word-break: keep-all; }
+.report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 16px; word-break: keep-all; }
 .report-section-box ul { list-style-type: none; margin-left: 0; padding-left: 0; margin-bottom: 0; }
 .report-section-box li { position: relative; padding-left: 18px; margin-bottom: 10px; font-size: 16px; color: #334155; line-height: 1.7; word-break: keep-all; }
 .report-section-box li::before { content: '■'; position: absolute; left: 0; color: #3b82f6; font-size: 11px; top: 3px; }
 
-.consultant-feedback-box { background: #fff7ed; border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; padding: 18px 20px; margin-top: 20px; break-inside: avoid; page-break-inside: avoid; }
+.consultant-feedback-box { background: #fff7ed; border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; padding: 18px 20px; margin-top: 20px; break-inside: avoid; }
 .consultant-feedback-box h4 { font-size: 14px; font-weight: bold; color: #c2410c; margin-bottom: 12px; }
 .consultant-feedback-box ul { list-style: none !important; padding-left: 0 !important; margin: 0 !important; }
 .consultant-feedback-box li { position: relative !important; padding-left: 20px !important; margin-bottom: 8px !important; font-size: 14px !important; color: #7c2d12 !important; line-height: 1.65 !important; word-break: keep-all; }
 .consultant-feedback-box li::before { content: '▶' !important; position: absolute !important; left: 0 !important; color: #f97316 !important; font-size: 10px !important; top: 4px !important; }
-
-.simple-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border-top: 2px solid #1e293b; }
-.simple-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; text-align: center; font-size: 15px; color: #475569; font-weight: bold; white-space: nowrap; }
-.simple-table td { border: 1px solid #e2e8f0; padding: 15px; font-size: 16px; color: #1e293b; }
 
 .alert-box { padding: 20px; border-radius: 8px; font-weight: bold; margin: 30px 0; font-size: 16px; line-height: 1.6; break-inside: avoid; }
 .alert-box.blue  { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; }
@@ -343,8 +358,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 @media print {
     @page { size: A4; margin: 15mm; }
     body { background: white !important; font-size: 12pt; }
-    .auth-overlay, .sidebar, .sidebar *, .logo, .logo img,
-    .user-profile, .menu, .bottom-menu, .version-info,
+    .auth-overlay, .sidebar, .sidebar *, .logo, .user-profile, .menu, .bottom-menu, .version-info,
     .page-header, .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner,
     .info-yellow-box, .fund-split-layout, .report-action-group,
     .report-view-header, .header-btns, button, nav, aside, #ai-loading-overlay {
