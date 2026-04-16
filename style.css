@@ -109,26 +109,29 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-/* ★ 프리미엄 표지 CSS 수정 (중앙 여백 및 폰트 사이즈 조정) ★ */
+/* ★ 프리미엄 표지 완벽 복구 (한 줄 고정 + 중앙 여백 추가) ★ */
 .cover-page { 
-    height: 1000px; 
-    display: flex; flex-direction: column; justify-content: space-between; 
+    min-height: 1050px; /* A4 한 장 높이 확보 */
+    display: flex; flex-direction: column; 
     position: relative; border-left: 30px solid #3b82f6; 
     padding: 60px 40px; margin-bottom: 50px; 
     page-break-after: always; break-after: page; 
 }
 .cover-theme-blue { border-left-color: #3b82f6; }
+/* 제목 부분 (상단) */
+.cover-header { margin-bottom: auto; /* 하단 콘텐츠를 맨 밑으로 밀어내기 위해 여백 자동 확보 */ }
 .cover-header h4 { font-size: 18px; color: #3b82f6; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 5px;}
-/* ★ H1 사이즈를 40px로 줄이고, 줄바꿈 완전 차단 ★ */
-.cover-header h1 { font-size: 40px; font-weight: 900; color: #0f172a; margin-top: 20px; letter-spacing: -1px; white-space: nowrap !important; line-height: 1.2;}
-/* ★ 상단 헤더와 하단 기업정보 사이에 시원한 텅 빈 여백(Margin) 확보 ★ */
-.cover-middle { margin-top: auto; margin-bottom: 50px; }
-.cover-middle h2 { font-size: 32px; color: #1e3a8a; margin-bottom: 30px; }
+.cover-header h1 { font-size: 42px; font-weight: 900; color: #0f172a; margin-top: 15px; letter-spacing: -1px; white-space: nowrap !important; }
+
+/* 기업정보 및 차트 부분 (하단) */
+.cover-middle { margin-top: 100px; margin-bottom: 40px; }
+.cover-middle h2 { font-size: 32px; color: #1e3a8a; margin-bottom: 25px; font-weight: bold; }
 .cover-table { width: 100%; background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 40px;}
 .cover-table table { width: 100%; border-collapse: collapse; }
 .cover-table th { text-align: left; padding: 12px 0; color: #3b82f6; font-size: 15px; width: 20%; font-weight: bold;}
-.cover-table td { padding: 12px 0; color: #334155; font-size: 15px; width: 30%; }
-.cover-chart-area { background: #f1f5f9; padding: 30px; border-radius: 8px; height: 250px; display: flex; align-items: center; justify-content: center;}
+/* td에 white-space: normal을 주어 괄호 내용이 부드럽게 줄바꿈 되도록 설정 */
+.cover-table td { padding: 12px 0; color: #334155; font-size: 15px; width: 30%; white-space: normal !important; }
+.cover-chart-area { background: #f1f5f9; padding: 30px; border-radius: 8px; height: 260px; display: flex; align-items: center; justify-content: center;}
 .cover-footer { display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 20px; color: #64748b; font-size: 14px; }
 
 /* 본문 내용 스타일 */
