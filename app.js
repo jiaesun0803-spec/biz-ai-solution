@@ -78,12 +78,15 @@ window.loadSelectedCompany = function(name) { if(!name) return; window.editCompa
 window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
+    
+    // ★ 콤마를 안전하게 제거하고 숫자로 변환 ★
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
         y24: parseInt((document.getElementById('rev_24') || {}).value?.replace(/,/g, '')) || 0,
         y23: parseInt((document.getElementById('rev_23') || {}).value?.replace(/,/g, '')) || 0
     };
+    
     const newCompany = { 
         name: name, rep: document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0]?.value || '-', 
         bizNum: document.getElementById('biz_number')?.value || '-', industry: document.getElementById('comp_industry')?.value || '-', 
@@ -92,9 +95,11 @@ window.saveCompanyData = function() {
         revenueData: realRevenue,
         rawData: Array.from(document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea')).map(el => ({ type: el.type, value: el.value, checked: el.checked }))
     };
+
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(companies)); alert('기업의 모든 세부 정보가 성공적으로 저장되었습니다!'); updateDataLists(); showTab('reportList');
 }
 
@@ -119,7 +124,6 @@ window.toggleCorpNumber = function() { const radios = document.getElementsByName
 window.toggleRentInputs = function() { const radios = document.getElementsByName('rent_type'); const dInput = document.getElementById('rent_deposit'); const mInput = document.getElementById('rent_monthly'); let isR = false; for(let r of radios) { if(r.checked && r.value === '임대') { isR = true; break; } } if(dInput) { dInput.disabled = !isR; if(!isR) dInput.value = ''; } if(mInput) { mInput.disabled = !isR; if(!isR) mInput.value = ''; } };
 window.calculateTotalDebt = function() { let tot = 0; document.querySelectorAll('.debt-input').forEach(i => { let v = i.value.replace(/[^0-9]/g, ''); if (v) tot += parseInt(v, 10); }); const tEl = document.getElementById('total-debt'); if(tEl) tEl.innerText = tot.toLocaleString('ko-KR'); };
 
-// ★ 자동 하이픈 로직 (절대 지워지지 않는 락) ★
 function initInputHandlers() { 
     document.querySelectorAll('.number-only').forEach(i => { i.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); }); }); 
     document.querySelectorAll('.money-format').forEach(i => { i.addEventListener('input', function() { let v = this.value.replace(/[^0-9\-]/g, ''); this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }); }); 
@@ -155,9 +159,10 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   5. ★ 스마트 포매터 & AI 차트 연동 로직 ★
+   5. ★ 스마트 금액 포매터 & AI 차트 연동 로직 ★
 ========================================= */
-// 금액을 "X억 X만원" 형태로 깔끔하게 변환해 주는 똑똑한 포매터
+
+// ★ 11400만원 -> 1억 1,400만원 등 완벽한 한글 금액 변환기 ★
 function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
     const uk = Math.floor(amountInManwon / 10000);
@@ -199,8 +204,9 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const expectedCurRev = Math.round((rev.cur / passedMonths) * 12); 
 
     let titleAdd = version === 'client' ? "기업전달용" : "컨설턴트용";
+    let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
     
-    // ★ 괄호 부분은 span display:block으로 내려주고, 금액은 스마트 포맷 적용 ★
+    // ★ 표지에 스마트 금액 포매터 반영 및 괄호 부분 하단으로 줄바꿈 처리 ★
     contentArea.innerHTML = `
         <div class="paper-inner">
             <div class="cover-page cover-theme-blue">
@@ -214,8 +220,10 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                         <table>
                             <tr><th>사업자번호</th><td>${companyData.bizNum || '-'}</td><th>업종</th><td>${companyData.industry || '-'}</td></tr>
                             <tr><th>대표자명</th><td>${companyData.rep || '-'}</td><th>핵심아이템</th><td>${companyData.coreItem || '-'}</td></tr>
-                            <tr><th>전년도매출</th><td>${formatKoreanCurrency(rev.y24)}</td>
-                                <th>금년예상매출</th><td>${formatKoreanCurrency(expectedCurRev)} <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">(${passedMonths}개월 기준 연간 환산)</span></td></tr>
+                            <tr>
+                                <th>전년도매출</th><td>${formatKoreanCurrency(rev.y24)}</td>
+                                <th>금년예상매출</th><td>${formatKoreanCurrency(expectedCurRev)} <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">(${passedMonths}개월 기준 연간 환산)</span></td>
+                            </tr>
                         </table>
                     </div>
                     <div class="cover-chart-area"><canvas id="cover-bar-chart"></canvas></div>
@@ -227,6 +235,9 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 </div>
             </div>
             ${cleanHTML}
+            <div class="alert-box ${version === 'client' ? 'blue' : 'green'}">
+                ★ 본 리포트는 입력된 경영 데이터를 바탕으로 AI 컨설턴트가 분석한 ${subAdd} 자료입니다.
+            </div>
         </div>
     `;
 
@@ -237,10 +248,10 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
             new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
         }
         
-        // 2. 본문 차트 (라인 차트로 우아하게 변경)
-        const barEl = document.getElementById('report-bar-chart');
-        if (barEl) {
-            new Chart(barEl.getContext('2d'), { 
+        // 2. ★ 본문 차트: 막대에서 -> 우아한 라인(Line) 차트로 변경 & Y축 억단위 포맷 ★
+        const lineEl = document.getElementById('report-bar-chart'); // id는 그대로 유지하되 type을 line으로 그림
+        if (lineEl) {
+            new Chart(lineEl.getContext('2d'), { 
                 type: 'line', 
                 data: { 
                     labels: ['23년도', '24년도', '25년도', '금년(예상)'], 
@@ -254,14 +265,12 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 }, 
                 options: { 
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { ticks: { callback: function(value) { return value >= 10000 ? (value / 10000) + '억' : value.toLocaleString(); } } }
-                    }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? (val / 10000) + '억' : val.toLocaleString(); } } } }
                 } 
             });
         }
         
-        // 3. 표지 차트 (X축 심플하게, Y축 억단위 적용)
+        // 3. ★ 표지 차트: X축 텍스트 심플화, Y축 억단위 포맷 ★
         const coverBarEl = document.getElementById('cover-bar-chart');
         if (coverBarEl) {
             new Chart(coverBarEl.getContext('2d'), { 
@@ -277,9 +286,7 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 options: { 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } },
-                    scales: {
-                        y: { ticks: { callback: function(value) { return value >= 10000 ? (value / 10000) + '억' : value.toLocaleString(); } } }
-                    }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? (val / 10000) + '억' : val.toLocaleString(); } } } }
                 } 
             });
         }
@@ -297,6 +304,7 @@ window.generateReport = async function(reportType, version, event) {
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
+    // ★ 프롬프트 강화: 내용 풍부하게(30자 이상), 개조식 강제, 마크다운 완전 금지 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
     제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 작성해. 
@@ -312,8 +320,10 @@ window.generateReport = async function(reportType, version, event) {
     - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
     - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
+    - 각 <li> 항목은 분석 내용이 충분히 풍부하게 담기도록 최소 30자 이상으로 길게 작성할 것. 내용이 빈약하면 안 됨.
     - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
+    - 표(Table)는 시스템이 그릴 것이므로 절대 그리지 말 것.
     `;
 
     const promptData = { ...companyData }; delete promptData.rawData; 
