@@ -53,6 +53,32 @@ window.showTab = function(tabId, updateUrl = true) {
 }
 window.addEventListener('popstate', function() { const urlParams = new URLSearchParams(window.location.search); showTab(urlParams.get('tab') || 'dashboard', false); });
 
+/* ★ 대시보드 최근 보고서 렌더링 함수 ★ */
+function updateDashboardReports() {
+    const listEl = document.getElementById('dashboard-report-list');
+    if (!listEl) return;
+    const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+    if (reports.length === 0) {
+        listEl.innerHTML = '<li style="display:flex; justify-content:center; padding: 40px 0; color: #94a3b8; font-size: 15px;">최근 생성된 보고서가 없습니다.</li>';
+        return;
+    }
+    // 최신 5개만 표시
+    const recent = [...reports].reverse().slice(0, 5);
+    listEl.innerHTML = recent.map(r => `
+        <li style="display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="background:#eff6ff; color:#3b82f6; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${r.type}</span>
+                <span style="font-size:15px; color:#1e293b; font-weight:bold;">${r.company}</span>
+                <span style="font-size:13px; color:#64748b;">${r.title}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:13px; color:#94a3b8;">${r.date}</span>
+                <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+            </div>
+        </li>
+    `).join('');
+}
+
 window.updateDataLists = function() {
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
@@ -70,6 +96,9 @@ window.updateDataLists = function() {
     if(cBody) { cBody.innerHTML = companies.length ? companies.map(c => `<tr><td><strong>${c.name}</strong></td><td>${c.rep || '-'}</td><td>${c.bizNum || '-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">등록된 기업이 없습니다.</td></tr>'; }
     const rBody = document.getElementById('report-list-body');
     if(rBody) { rBody.innerHTML = reports.length ? reports.map(r => `<tr><td><span style="background:#eff6ff; color:#3b82f6; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>'; }
+    
+    // ★ 대시보드 최근 보고서 업데이트 ★
+    updateDashboardReports();
 }
 
 window.clearCompanyForm = function() { if(confirm('작성 중인 내용을 모두 초기화하시겠습니까?')) { document.getElementById('companyForm').reset(); window.calculateTotalDebt(); window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs(); } }
@@ -79,7 +108,6 @@ window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
     
-    // ★ 콤마 완전 제거 후 정수 변환 (데이터 오류 원천 차단) ★
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
@@ -159,10 +187,9 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   5. ★ 스마트 금액 포매터 & AI 차트 연동 로직 ★
+   한글 금액 변환기 & AI 차트 및 표지 로직
 ========================================= */
 
-// ★ 완벽한 한글 금액 변환기 (11400 -> 1억 1,400만원) ★
 function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
     const uk = Math.floor(amountInManwon / 10000);
@@ -171,7 +198,7 @@ function formatKoreanCurrency(amountInManwon) {
     if (uk > 0) {
         res += uk.toLocaleString() + '억';
         if (man > 0) res += ' ' + man.toLocaleString() + '만원';
-        else res += '원'; 
+        else res += '원';
     } else {
         res += man.toLocaleString() + '만원';
     }
@@ -197,16 +224,18 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const consultantName = session ? session.name : "담당자";
     const consultantDept = session ? session.dept : "솔루션빌더스";
 
+    // ★ revenueData가 없을 경우 기본값 보호 ★
+    const safeRev = rev || { cur: 0, y25: 0, y24: 0, y23: 0 };
+
     const regDate = companyData.date || dateStr;
     const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
     let passedMonths = regMonth - 1; 
     if (passedMonths <= 0) passedMonths = 1; 
-    const expectedCurRev = Math.round((rev.cur / passedMonths) * 12); 
+    const expectedCurRev = Math.round((safeRev.cur / passedMonths) * 12); 
 
     let titleAdd = version === 'client' ? "기업전달용" : "컨설턴트용";
     let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
     
-    // ★ 표지에서 그래프 영역 완전히 제거 & 전년도 매출 매칭 오류(25년도) 완벽 수정 ★
     contentArea.innerHTML = `
         <div class="paper-inner">
             <div class="cover-page cover-theme-blue">
@@ -221,11 +250,12 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                             <tr><th>사업자번호</th><td>${companyData.bizNum || '-'}</td><th>업종</th><td>${companyData.industry || '-'}</td></tr>
                             <tr><th>대표자명</th><td>${companyData.rep || '-'}</td><th>핵심아이템</th><td>${companyData.coreItem || '-'}</td></tr>
                             <tr>
-                                <th>전년도매출(25년)</th><td>${formatKoreanCurrency(rev.y25)}</td>
-                                <th>금년예상매출</th><td>${formatKoreanCurrency(expectedCurRev)} <br><span style="font-size:12px; color:#64748b;">(${passedMonths}개월 기준 연간 환산)</span></td>
+                                <th>전년도매출</th><td>${formatKoreanCurrency(safeRev.y24)}</td>
+                                <th>금년예상매출</th><td>${formatKoreanCurrency(expectedCurRev)} <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">(${passedMonths}개월 기준 연간 환산)</span></td>
                             </tr>
                         </table>
                     </div>
+                    <div class="cover-chart-area"><canvas id="cover-bar-chart"></canvas></div>
                 </div>
                 <div class="cover-footer">
                     <div>작성일: ${dateStr}</div>
@@ -241,13 +271,11 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     `;
 
     setTimeout(() => {
-        // 1. 레이더 차트
         const radarEl = document.getElementById('report-radar-chart');
         if (radarEl) {
             new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
         }
         
-        // 2. ★ 본문 차트: 막대에서 -> 우아한 라인(Line) 차트로 변경 & Y축 억단위 포맷 적용 ★
         const lineEl = document.getElementById('report-bar-chart'); 
         if (lineEl) {
             new Chart(lineEl.getContext('2d'), { 
@@ -255,8 +283,8 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 data: { 
                     labels: ['23년도', '24년도', '25년도', '금년(예상)'], 
                     datasets: [{ 
-                        label: '매출 추이 (단위: 만원)', 
-                        data: [rev.y23, rev.y24, rev.y25, expectedCurRev], 
+                        label: '매출 추이', 
+                        data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], 
                         borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', 
                         borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, 
                         fill: true, tension: 0.1 
@@ -264,6 +292,26 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 }, 
                 options: { 
                     maintainAspectRatio: false,
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
+                } 
+            });
+        }
+        
+        const coverBarEl = document.getElementById('cover-bar-chart');
+        if (coverBarEl) {
+            new Chart(coverBarEl.getContext('2d'), { 
+                type: 'bar', 
+                data: { 
+                    labels: ['23년도', '24년도', '금년(예상)'], 
+                    datasets: [{ 
+                        label: '매출 현황', 
+                        data: [safeRev.y23, safeRev.y24, expectedCurRev], 
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 
+                    }] 
+                }, 
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
                     scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
                 } 
             });
@@ -282,7 +330,6 @@ window.generateReport = async function(reportType, version, event) {
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
-    // ★ 프롬프트 강화: 항목별 30자 이상 길고 구체적으로 작성 지시 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
     제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 작성해. 
@@ -298,7 +345,7 @@ window.generateReport = async function(reportType, version, event) {
     - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
     - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-    - 각 <li> 항목은 컨설턴트의 깊은 통찰이 담기도록 최소 30자 이상으로 아주 길고 상세하게 작성할 것. 내용이 빈약하면 안 됨.
+    - 각 <li> 항목은 분석 내용이 충분히 풍부하게 담기도록 최소 30자 이상으로 길고 상세하게 작성할 것. 절대 빈약하게 쓰지 마.
     - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
     - 표(Table)는 절대 그리지 말 것.
@@ -347,7 +394,8 @@ window.viewReport = function(id) {
     document.getElementById('report-input-step').style.display = 'none';
     document.getElementById('report-result-step').style.display = 'block';
 
-    renderReportToScreen(companyData, r.content, r.version, r.revenueData, r.date);
+    // ★ r.revenueData가 없어도 안전하게 처리 ★
+    renderReportToScreen(companyData, r.content, r.version, r.revenueData || { cur: 0, y25: 0, y24: 0, y23: 0 }, r.date);
 };
 
 window.backToInput = function(tab) {
