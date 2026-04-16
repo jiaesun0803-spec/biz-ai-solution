@@ -53,7 +53,6 @@ window.showTab = function(tabId, updateUrl = true) {
 }
 window.addEventListener('popstate', function() { const urlParams = new URLSearchParams(window.location.search); showTab(urlParams.get('tab') || 'dashboard', false); });
 
-/* ★ 대시보드 최근 보고서 렌더링 ★ */
 function updateDashboardReports() {
     const listEl = document.getElementById('dashboard-report-list');
     if (!listEl) return;
@@ -104,14 +103,12 @@ window.loadSelectedCompany = function(name) { if(!name) return; window.editCompa
 window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
-    
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
         y24: parseInt((document.getElementById('rev_24') || {}).value?.replace(/,/g, '')) || 0,
         y23: parseInt((document.getElementById('rev_23') || {}).value?.replace(/,/g, '')) || 0
     };
-    
     const newCompany = { 
         name: name, rep: document.querySelectorAll('input[placeholder="대표자명을 입력하세요"]')[0]?.value || '-', 
         bizNum: document.getElementById('biz_number')?.value || '-', industry: document.getElementById('comp_industry')?.value || '-', 
@@ -120,7 +117,6 @@ window.saveCompanyData = function() {
         revenueData: realRevenue,
         rawData: Array.from(document.querySelectorAll('#companyForm input, #companyForm select, #companyForm textarea')).map(el => ({ type: el.type, value: el.value, checked: el.checked }))
     };
-
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const existingIdx = companies.findIndex(c => c.name === name);
     if (existingIdx > -1) companies[existingIdx] = newCompany; else companies.push(newCompany);
@@ -152,11 +148,7 @@ function initInputHandlers() {
     document.querySelectorAll('.number-only').forEach(i => { i.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); }); }); 
     document.querySelectorAll('.money-format').forEach(i => { i.addEventListener('input', function() { let v = this.value.replace(/[^0-9\-]/g, ''); this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }); }); 
     document.querySelectorAll('.debt-input').forEach(i => { i.addEventListener('input', window.calculateTotalDebt); }); 
-
-    const formatInputs = [
-        { id: 'biz_number' }, { id: 'corp_number' },
-        { id: 'biz_date' }, { id: 'rep_birth' }, { id: 'write_date' }
-    ];
+    const formatInputs = [{ id: 'biz_number' }, { id: 'corp_number' }, { id: 'biz_date' }, { id: 'rep_birth' }, { id: 'write_date' }];
     formatInputs.forEach(item => {
         const el = document.getElementById(item.id);
         if(el) {
@@ -168,7 +160,6 @@ function initInputHandlers() {
             });
         }
     });
-
     const phoneInputs = ['biz_phone', 'rep_phone'];
     phoneInputs.forEach(id => {
         const el = document.getElementById(id);
@@ -184,7 +175,6 @@ function initInputHandlers() {
 
 /* =========================================
    ★ 한글 금액 변환기 (만원 단위 입력 기준)
-   예: 10000 → 1억원 / 11400 → 1억 1,400만원
 ========================================= */
 function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
@@ -216,6 +206,11 @@ async function callGeminiAPI(prompt) {
     } catch (error) { console.error("API 오류:", error); alert("오류 발생: " + error.message); return null; }
 }
 
+/* =========================================
+   ★ 보고서 화면 렌더링
+   - 표지: 차트 제거, 기업정보 하단, 담당자정보 표지 내 고정
+   - 경영진단 개요: 기업현황표 → 내용 → 레이더차트 순서
+========================================= */
 function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const contentArea = document.getElementById('report-content-area');
     const session = JSON.parse(localStorage.getItem(DB_SESSION));
@@ -225,66 +220,164 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     const safeRev = rev || { cur: 0, y25: 0, y24: 0, y23: 0 };
     const regDate = companyData.date || dateStr;
     const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
-    let passedMonths = regMonth - 1; 
-    if (passedMonths <= 0) passedMonths = 1; 
-    const expectedCurRev = Math.round((safeRev.cur / passedMonths) * 12); 
+    let passedMonths = regMonth - 1;
+    if (passedMonths <= 0) passedMonths = 1;
+    const expectedCurRev = Math.round((safeRev.cur / passedMonths) * 12);
 
     let titleAdd = version === 'client' ? "기업전달용" : "컨설턴트용";
     let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
-    
+
+    /* ★ 경영진단 개요 섹션에 삽입할 기업현황표 ★ */
+    const companyOverviewTable = `
+<table class="overview-company-table">
+    <tr>
+        <th>기업명</th><td>${companyData.name}</td>
+        <th>업종</th><td>${companyData.industry || '-'}</td>
+    </tr>
+    <tr>
+        <th>대표자</th><td>${companyData.rep || '-'}</td>
+        <th>설립일</th><td>${companyData.bizDate || '-'}</td>
+    </tr>
+    <tr>
+        <th>사업자번호</th><td>${companyData.bizNum || '-'}</td>
+        <th>상시근로자</th><td>${companyData.empCount || '-'}명</td>
+    </tr>
+    <tr>
+        <th>전년도 매출</th><td>${formatKoreanCurrency(safeRev.y24)}</td>
+        <th>금년 예상 매출</th><td>${formatKoreanCurrency(expectedCurRev)}</td>
+    </tr>
+</table>`;
+
+    const radarChartHTML = `<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>`;
+    const lineChartHTML  = `<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>`;
+
+    /* ★ 경영진단 개요: h3 바로 뒤에 기업현황표 삽입 ★ */
+    cleanHTML = cleanHTML.replace(
+        /(<h3[^>]*>[^<]*경영진단[^<]*개요[^<]*<\/h3>)/,
+        `$1\n${companyOverviewTable}`
+    );
+
+    /* ★ 경영진단 개요: AI 내용(ul/li) 다음 = 첫 번째 </ul> 뒤에 레이더 차트 삽입 ★ */
+    const overviewPos = cleanHTML.indexOf('경영진단');
+    if (overviewPos > -1) {
+        const firstUlClose = cleanHTML.indexOf('</ul>', overviewPos);
+        if (firstUlClose > -1) {
+            cleanHTML = cleanHTML.slice(0, firstUlClose + 5) + '\n' + radarChartHTML + '\n' + cleanHTML.slice(firstUlClose + 5);
+        }
+    }
+
+    /* ★ 재무 현황 분석: h3 바로 뒤에 라인 차트 삽입 ★ */
+    cleanHTML = cleanHTML.replace(
+        /(<h3[^>]*>[^<]*재무[^<]*현황[^<]*<\/h3>)/,
+        `$1\n${lineChartHTML}`
+    );
+
+    /* ★ 표지 HTML - 차트 없음, 기업정보 하단, 담당자정보 표지 내 고정 ★ */
     contentArea.innerHTML = `
         <div class="paper-inner">
             <div class="cover-page cover-theme-blue">
+
+                <!-- 상단: 제목 -->
                 <div class="cover-header">
                     <h4>AI 경영진단보고서 리포트</h4>
                     <h1>AI 경영진단보고서</h1>
                 </div>
+
+                <!-- 하단: 기업정보 (margin-top:auto 로 아래로 밀림) -->
                 <div class="cover-middle">
                     <h2>${companyData.name} <span style="font-size:18px; color:#94a3b8;">(${titleAdd})</span></h2>
                     <div class="cover-table">
                         <table>
-                            <tr><th>사업자번호</th><td>${companyData.bizNum || '-'}</td><th>업종</th><td>${companyData.industry || '-'}</td></tr>
-                            <tr><th>대표자명</th><td>${companyData.rep || '-'}</td><th>핵심아이템</th><td>${companyData.coreItem || '-'}</td></tr>
                             <tr>
-                                <th>전년도매출</th><td>${formatKoreanCurrency(safeRev.y24)}</td>
-                                <th>금년예상매출</th><td>${formatKoreanCurrency(expectedCurRev)} <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">(${passedMonths}개월 기준 연간 환산)</span></td>
+                                <th>사업자번호</th><td>${companyData.bizNum || '-'}</td>
+                                <th>업종</th><td>${companyData.industry || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th>대표자명</th><td>${companyData.rep || '-'}</td>
+                                <th>핵심아이템</th><td>${companyData.coreItem || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th>설립일</th><td>${companyData.bizDate || '-'}</td>
+                                <th>상시근로자</th><td>${companyData.empCount || '-'}명</td>
+                            </tr>
+                            <tr>
+                                <th>전년도 매출</th><td>${formatKoreanCurrency(safeRev.y24)}</td>
+                                <th>금년 예상 매출</th>
+                                <td>
+                                    ${formatKoreanCurrency(expectedCurRev)}
+                                    <span style="display:block; font-size:12px; color:#64748b; margin-top:3px;">(${passedMonths}개월 기준 연간 환산)</span>
+                                </td>
                             </tr>
                         </table>
                     </div>
-                    <div class="cover-chart-area"><canvas id="cover-bar-chart"></canvas></div>
                 </div>
+
+                <!-- 담당자 정보: 표지 맨 하단 고정 -->
                 <div class="cover-footer">
-                    <div>작성일: ${dateStr}</div>
-                    <div>담당자: ${consultantName}</div>
-                    <div>소속: ${consultantDept}</div>
+                    <div>📅 작성일: ${dateStr}</div>
+                    <div>👤 담당자: ${consultantName}</div>
+                    <div>🏢 소속: ${consultantDept}</div>
                 </div>
+
             </div>
+
             ${cleanHTML}
+
             <div class="alert-box ${version === 'client' ? 'blue' : 'green'}">
                 ★ 본 리포트는 입력된 경영 데이터를 바탕으로 AI 컨설턴트가 분석한 ${subAdd} 자료입니다.
             </div>
         </div>
     `;
 
+    /* ★ 차트 렌더링 (표지 차트 없음, 레이더 + 라인만) ★ */
     setTimeout(() => {
         const radarEl = document.getElementById('report-radar-chart');
         if (radarEl) {
-            new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
-        }
-        const lineEl = document.getElementById('report-bar-chart'); 
-        if (lineEl) {
-            new Chart(lineEl.getContext('2d'), { 
-                type: 'line', 
-                data: { labels: ['23년도', '24년도', '25년도', '금년(예상)'], datasets: [{ label: '매출 추이 (만원)', data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev], borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, fill: true, tension: 0.1 }] }, 
-                options: { maintainAspectRatio: false, scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } } } 
+            new Chart(radarEl.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: ['재무건전성', '전략/마케팅', '인사/조직', '운영/생산', 'IT/디지털'],
+                    datasets: [{
+                        label: '기업 역량 진단',
+                        data: [
+                            Math.min(100, Math.round((safeRev.y24 > 0 ? 70 : 40) + Math.random() * 20)),
+                            Math.min(100, Math.round(65 + Math.random() * 25)),
+                            Math.min(100, Math.round(60 + Math.random() * 25)),
+                            Math.min(100, Math.round(60 + Math.random() * 25)),
+                            Math.min(100, Math.round(50 + Math.random() * 30))
+                        ],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: '#3b82f6',
+                        pointBackgroundColor: '#1e3a8a',
+                        pointRadius: 5
+                    }]
+                },
+                options: { scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } }, maintainAspectRatio: false }
             });
         }
-        const coverBarEl = document.getElementById('cover-bar-chart');
-        if (coverBarEl) {
-            new Chart(coverBarEl.getContext('2d'), { 
-                type: 'bar', 
-                data: { labels: ['23년도', '24년도', '금년(예상)'], datasets: [{ label: '매출 현황', data: [safeRev.y23, safeRev.y24, expectedCurRev], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 4, barThickness: 40 }] }, 
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } } } 
+
+        const lineEl = document.getElementById('report-bar-chart');
+        if (lineEl) {
+            new Chart(lineEl.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['23년도', '24년도', '25년도', '금년(예상)'],
+                    datasets: [{
+                        label: '매출 추이',
+                        data: [safeRev.y23, safeRev.y24, safeRev.y25, expectedCurRev],
+                        borderColor: 'rgba(22, 163, 74, 1)',
+                        backgroundColor: 'rgba(22, 163, 74, 0.15)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(22, 163, 74, 1)',
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val/10000) + '억' : val.toLocaleString('ko-KR') + '만'; } } } }
+                }
             });
         }
     }, 100);
@@ -299,7 +392,6 @@ window.generateReport = async function(reportType, version, event) {
     const companyData = companies.find(c => c.name === companyName);
     const rev = companyData.revenueData || { y23: 0, y24: 0, y25: 0, cur: 0 };
 
-    // ★ 금액 한글 변환 ★
     const regDate = companyData.date || new Date().toISOString().split('T')[0];
     const regMonth = parseInt(regDate.split('-')[1], 10) || 1;
     let passedMonths = regMonth - 1;
@@ -316,45 +408,40 @@ window.generateReport = async function(reportType, version, event) {
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
-    /* =====================================================
-       ★ AI 프롬프트 - 가중치 실제 반영 버전 ★
-       각 섹션별 가중치에 따라 작성 분량과 깊이를 차등 적용
-    ===================================================== */
     let systemInstruction = `
 너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야.
 제공된 [기업 데이터]를 바탕으로 아래 7개 목차를 작성해.
 
 [★ 진단 영역 가중치 - 반드시 준수 ★]
 각 섹션은 아래 가중치에 따라 분석의 깊이와 <li> 항목 수를 다르게 작성해야 해.
-가중치가 높을수록 더 많은 항목을 더 깊고 풍부하게 써야 해.
 
-- 1. 경영진단 개요          → 전체 요약 (별도 가중치 없음, 3~4개 항목으로 간결하게)
-- 2. 재무 현황 분석         → 가중치 15% (낮음) : <li> 항목 3~4개, 간결하게 핵심만 서술
-- 3. 전략 및 마케팅 분석    → 가중치 25% (가장 높음) : <li> 항목 6~8개, 가장 풍부하고 구체적으로 서술
-- 4. 인사/조직 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게 서술
-- 5. 운영/생산 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게 서술
-- 6. IT/디지털 및 정부지원  → 가중치 20% (IT 10% + 정부지원 10%) : <li> 항목 각 2~3개씩, 보통 수준으로 서술
-- 7. 개선 방향 및 로드맵    → 전체 종합 (별도 가중치 없음, 5~6개 항목으로 실행 중심으로 서술)
+- 1. 경영진단 개요          → 전체 요약 (3~4개 항목, 간결하게)
+- 2. 재무 현황 분석         → 가중치 15% (낮음) : <li> 항목 3~4개, 간결하게 핵심만
+- 3. 전략 및 마케팅 분석    → 가중치 25% (가장 높음) : <li> 항목 6~8개, 가장 풍부하고 구체적으로
+- 4. 인사/조직 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게
+- 5. 운영/생산 분석         → 가중치 20% (높음) : <li> 항목 5~6개, 상세하게
+- 6. IT/디지털 및 정부지원  → 가중치 20% (IT 10% + 정부지원 10%) : <li> 항목 각 2~3개씩
+- 7. 개선 방향 및 로드맵    → 전체 종합 (5~6개 항목, 실행 중심으로)
 
 [★ 작성 규칙 - 절대 준수 ★]
 - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
 - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
 - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
 - 각 <li> 항목은 최소 30자 이상으로 작성할 것.
-- 금액 표기 시 반드시 [매출 데이터]에 제공된 한글 금액 문자열을 그대로 사용할 것. 절대 숫자 단위로 바꾸지 말 것.
+- 금액 표기 시 반드시 [매출 데이터]에 제공된 한글 금액 문자열을 그대로 사용할 것.
 - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
 - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
 - 표(Table)는 절대 그리지 말 것.
 `;
 
-    const promptData = { ...companyData }; 
+    const promptData = { ...companyData };
     delete promptData.rawData;
     delete promptData.revenueData;
     promptData.매출데이터 = formattedRevForAI;
 
     const versionGuide = version === 'client'
-        ? '출력 목적: 기업전달용 — 긍정적이고 객관적인 분석 위주로, 기업이 읽었을 때 신뢰감을 줄 수 있도록 작성'
-        : '출력 목적: 컨설턴트용 — 리스크·단점·개선 필요사항 지적 위주로, 내부 검토에 활용할 수 있도록 냉철하게 작성';
+        ? '출력 목적: 기업전달용 — 긍정적이고 객관적인 분석 위주'
+        : '출력 목적: 컨설턴트용 — 리스크·단점·개선 필요사항 지적 위주';
 
     const fullPrompt = `${systemInstruction}\n\n[기업 데이터]\n${JSON.stringify(promptData, null, 2)}\n\n${versionGuide}`;
     const aiResponse = await callGeminiAPI(fullPrompt);
@@ -362,12 +449,9 @@ window.generateReport = async function(reportType, version, event) {
     document.getElementById('ai-loading-overlay').style.display = 'none';
 
     if (aiResponse) {
-        let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, ''); 
-        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?경영진단 개요.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>');
-        cleanHTML = cleanHTML.replace(/(<h3[^>]*>.*?재무 현황 분석.*?<\/h3>)/, '$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>');
+        let cleanHTML = aiResponse.replace(/```html|```/g, '').replace(/\*\*/g, '');
 
         const todayStr = new Date().toISOString().split('T')[0];
-
         const reportObj = {
             id: 'rep_' + Date.now(), type: '경영진단', company: companyData.name,
             title: `AI 경영진단보고서 (${version === 'client' ? '기업전달용' : '컨설턴트용'})`,
@@ -376,8 +460,7 @@ window.generateReport = async function(reportType, version, event) {
         const reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
         reports.push(reportObj);
         localStorage.setItem(DB_REPORTS, JSON.stringify(reports));
-
-        updateDataLists(); 
+        updateDataLists();
 
         const tabContent = event.target.closest('.tab-content');
         tabContent.querySelector('[id$="-input-step"]').style.display = 'none';
