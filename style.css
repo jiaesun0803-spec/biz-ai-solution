@@ -59,7 +59,6 @@ body { background-color: #f8fafc; color: #333; font-size: 15px; }
 .split-layout { display: flex; gap: 40px; margin-bottom: 30px; }
 .split-half { flex: 1; }
 
-/* 레이아웃 락 (노란 박스 등) */
 .info-yellow-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-sizing: border-box !important; }
 .info-grid { display: flex !important; flex-wrap: nowrap !important; gap: 30px !important; margin-top:15px; width: 100% !important; }
 .info-list { flex: 1 !important; list-style: none; padding-left: 10px;}
@@ -105,13 +104,12 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .criteria-item .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; margin-right: 12px; flex-shrink: 0; }
 .dot.blue { background: #3b82f6; } .dot.green { background: #10b981; }
 
-/* 리포트 뷰어 베이스 */
 .report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-/* ★ 프리미엄 표지 CSS (한 줄 고정 및 중앙 여백 강화) ★ */
+/* ★ 프리미엄 표지 CSS 수정 (중앙 여백 및 폰트 사이즈 조정) ★ */
 .cover-page { 
     height: 1000px; 
     display: flex; flex-direction: column; justify-content: space-between; 
@@ -121,10 +119,10 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 }
 .cover-theme-blue { border-left-color: #3b82f6; }
 .cover-header h4 { font-size: 18px; color: #3b82f6; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 5px;}
-/* 한 줄 고정 white-space: nowrap 추가 */
-.cover-header h1 { font-size: 45px; font-weight: 900; color: #0f172a; margin-top: 20px; letter-spacing: -1px; white-space: nowrap !important;}
-/* 기업명을 아래로 밀어내기 위해 margin-top을 넉넉히 줌 */
-.cover-middle { margin-top: auto; margin-bottom: 40px; }
+/* ★ H1 사이즈를 40px로 줄이고, 줄바꿈 완전 차단 ★ */
+.cover-header h1 { font-size: 40px; font-weight: 900; color: #0f172a; margin-top: 20px; letter-spacing: -1px; white-space: nowrap !important; line-height: 1.2;}
+/* ★ 상단 헤더와 하단 기업정보 사이에 시원한 텅 빈 여백(Margin) 확보 ★ */
+.cover-middle { margin-top: auto; margin-bottom: 50px; }
 .cover-middle h2 { font-size: 32px; color: #1e3a8a; margin-bottom: 30px; }
 .cover-table { width: 100%; background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 40px;}
 .cover-table table { width: 100%; border-collapse: collapse; }
