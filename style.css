@@ -41,8 +41,6 @@ body { background-color: #f8fafc; color: #333; font-size: 15px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .view-all { font-size: 13px; color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
 .quick-actions-box, .recent-reports-box { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-
-/* ★ 빠른 실행: 3열 x 2행 ★ */
 .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
 .quick-item { border: 1px solid #e2e8f0; padding: 25px 10px; border-radius: 8px; text-align: center; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #f8fafc; color: #334155; }
 .quick-item:hover { border-color: #3b82f6; background: #eff6ff; color: #1e40af; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(59,130,246,0.1); }
@@ -100,7 +98,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; vertical-align: middle; }
 .list-sub-title { font-size: 17px; margin: 25px 0 12px 0; color: #1e293b; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px; }
 
-/* ★ 배너 ★ */
 .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner { color: white; padding: 25px 30px; border-radius: 12px; margin-bottom: 20px; }
 .blue-banner   { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
 .green-banner  { background: linear-gradient(135deg, #14532d 0%, #16a34a 100%); }
@@ -111,12 +108,35 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .blue-banner h3, .green-banner h3, .orange-banner h3,
 .purple-banner h3, .teal-banner h3, .pink-banner h3 { font-size: 20px; margin-bottom: 8px; font-weight: bold; }
 
-/* ★ 서명 ★ */
 .label-box { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #475569; white-space: nowrap; }
 .sign-box { width: 60px; height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; background: #f8fafc; flex-shrink: 0; }
 
-/* ★ 진단 영역 가중치 ★ */
-.criteria-item { display: flex; margin-bottom: 10px; align-items: flex-start; }
+/* ★ 진단 영역 가중치 - 2열 레이아웃 + 세로 구분선 ★ */
+.criteria-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 12px;
+}
+.criteria-col {
+    flex: 1;
+    min-width: 0;
+}
+.criteria-col:first-child {
+    padding-right: 18px;
+}
+.criteria-col:last-child {
+    padding-left: 18px;
+}
+/* 가운데 세로 구분선 */
+.criteria-divider {
+    width: 1px;
+    flex-shrink: 0;
+    background: linear-gradient(to bottom, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%);
+    margin: 4px 0;
+    align-self: stretch;
+}
+.criteria-item { display: flex; margin-bottom: 12px; align-items: flex-start; }
 .criteria-item .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; margin-right: 10px; flex-shrink: 0; }
 .criteria-item .criteria-desc { font-size: 12px; color: #64748b; margin-top: 3px; }
 .dot.blue   { background: #3b82f6; }
@@ -130,14 +150,23 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-report-blue { background: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 .btn-report-blue:hover { opacity: 0.85; }
 
-/* ★ 보고서 뷰 ★ */
 .report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-/* ★ 표지 ★ */
-.cover-page { min-height: 1050px; display: flex; flex-direction: column; position: relative; border-left: 30px solid #3b82f6; padding: 60px 40px 40px 40px; margin-bottom: 50px; page-break-after: always; break-after: page; }
+/* ★ 표지 레이아웃 ★ */
+.cover-page {
+    min-height: 1050px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-left: 30px solid #3b82f6;
+    padding: 60px 40px 40px 40px;
+    margin-bottom: 50px;
+    page-break-after: always;
+    break-after: page;
+}
 .cover-header { flex-shrink: 0; }
 .cover-header h4 { font-size: 18px; color: #3b82f6; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 5px; }
 .cover-header h1 { font-size: 42px; font-weight: 900; color: #0f172a; margin-top: 15px; letter-spacing: -1px; white-space: nowrap !important; }
@@ -147,14 +176,22 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .cover-table table { width: 100%; border-collapse: collapse; }
 .cover-table th { text-align: left; padding: 11px 0; color: #3b82f6; font-size: 14px; width: 18%; font-weight: bold; }
 .cover-table td { padding: 11px 0; color: #334155; font-size: 14px; width: 32%; }
-.cover-footer { flex-shrink: 0; display: flex; justify-content: space-between; border-top: 2px solid #3b82f6; padding-top: 18px; margin-top: 20px; color: #475569; font-size: 14px; font-weight: bold; }
+.cover-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    border-top: 2px solid #3b82f6;
+    padding-top: 18px;
+    margin-top: 20px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: bold;
+}
 
-/* ★ 기업현황표 (경영진단 개요) ★ */
 .overview-company-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; margin-top: 5px; border-top: 2px solid #1e3a8a; }
 .overview-company-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 14px; text-align: left; font-size: 13px; color: #1e40af; font-weight: bold; white-space: nowrap; width: 14%; }
 .overview-company-table td { border: 1px solid #e2e8f0; padding: 10px 14px; font-size: 14px; color: #1e293b; }
 
-/* ★ 본문 섹션 ★ */
 .report-section-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid; }
 .report-section-box h3 { margin-top: 0 !important; margin-bottom: 18px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 12px; font-size: 20px; font-weight: bold; }
 .report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 20px; font-size: 16px; text-align: justify; word-break: keep-all; }
@@ -173,7 +210,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .chart-container { margin: 25px 0 10px 0; display: flex; justify-content: center; }
 .chart-box { width: 90%; max-width: 600px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; height: 320px; }
 
-/* ★ AI 로딩 ★ */
 #ai-loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(5px); }
 .scan-container { text-align: center; color: white; }
 .document-icon { width: 80px; height: 100px; border: 4px solid #3b82f6; border-radius: 8px; position: relative; margin: 0 auto 30px auto; background: rgba(255,255,255,0.05); overflow: hidden; }
@@ -182,20 +218,63 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 @keyframes scan { 0% { top: -10px; } 50% { top: 100%; } 100% { top: -10px; } }
 .loading-title { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #93c5fd; letter-spacing: 1px; }
 
-/* ★ 인쇄 ★ */
+/* ★ 인쇄/PDF ★ */
 @media print {
     @page { size: A4; margin: 15mm; }
     body { background: white !important; font-size: 12pt; }
-    .auth-overlay, .sidebar, .page-header, .blue-banner, .green-banner, .orange-banner, .purple-banner, .teal-banner, .pink-banner, .info-yellow-box, .fund-split-layout, .report-action-group, .report-view-header, .header-btns, button, nav, aside, #ai-loading-overlay { display: none !important; }
-    .container, .main-content { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; background: white !important; }
+
+    .auth-overlay, .sidebar, .page-header, .blue-banner, .green-banner,
+    .orange-banner, .purple-banner, .teal-banner, .pink-banner,
+    .info-yellow-box, .fund-split-layout, .report-action-group,
+    .report-view-header, .header-btns, button, nav, aside, #ai-loading-overlay {
+        display: none !important;
+    }
+
+    .container, .main-content {
+        display: block !important; width: 100% !important;
+        height: auto !important; overflow: visible !important;
+        padding: 0 !important; margin: 0 !important; background: white !important;
+    }
+
     .tab-content { display: none !important; }
     #report { display: block !important; }
     #report-input-step { display: none !important; }
     #report-result-step { display: block !important; }
+
     .report-view-container { padding: 0 !important; background: white !important; }
     .report-paper { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: auto !important; }
     .paper-inner { max-width: 100% !important; width: 100% !important; }
+
+    /* ★ 표지 1페이지 고정 - 담당자 정보가 반드시 표지 안에 포함 ★ */
+    .cover-page {
+        min-height: unset !important;
+        height: 257mm !important;      /* A4(297mm) - 상하 여백(15mm x 2) = 267mm, 여유 -10mm */
+        display: flex !important;
+        flex-direction: column !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        overflow: hidden !important;
+    }
+
+    /* 표지 내 기업정보와 footer를 하단으로 고정 */
+    .cover-middle {
+        margin-top: auto !important;
+        flex-shrink: 0 !important;
+    }
+    .cover-footer {
+        flex-shrink: 0 !important;
+        margin-top: 15px !important;
+        padding-top: 15px !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    .cover-table {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
     .report-section-box, .alert-box, .chart-container { page-break-inside: avoid; break-inside: avoid; }
     .report-section-box { border: 1px solid #ccc; padding: 20px; }
-    .cover-page, .cover-table { -webkit-print-color-adjust: exact; color-adjust: exact; }
 }
