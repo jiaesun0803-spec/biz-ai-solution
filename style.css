@@ -68,8 +68,24 @@ body { background-color: #f8fafc; color: #333; font-size: 15px; }
 .info-list { flex: 1 !important; list-style: none; padding-left: 10px; }
 .info-list li { font-size: 14px; color: #854d0e; margin-bottom: 8px; }
 
-.fund-split-layout { display: flex !important; flex-wrap: nowrap !important; gap: 40px !important; margin-bottom: 30px; width: 100% !important; box-sizing: border-box !important; }
-.fund-left, .fund-right { flex: 1 !important; min-width: 0 !important; }
+/* ★ fund-split-layout: 왼쪽(드롭다운) 고정폭, 오른쪽(가중치박스) 넓게 ★ */
+.fund-split-layout {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 20px !important;
+    margin-bottom: 30px;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: stretch;
+}
+.fund-left {
+    flex: 0 0 220px !important;   /* 고정 폭 */
+    min-width: 0 !important;
+}
+.fund-right {
+    flex: 1 1 0 !important;       /* 나머지 공간 모두 사용 */
+    min-width: 0 !important;
+}
 
 .form-group { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 15px; }
 .form-group label, .fund-label { font-size: 13px; font-weight: bold; color: #475569; display: block; margin-bottom: 2px; }
@@ -111,10 +127,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .label-box { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #475569; white-space: nowrap; }
 .sign-box { width: 60px; height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; background: #f8fafc; flex-shrink: 0; }
 
-/* ==================================================
-   ★ 진단 영역 가중치 - CSS Grid 2열 x 3행 레이아웃 ★
-   grid-template-columns: 왼쪽열 | 구분선(1px) | 오른쪽열
-================================================== */
+/* ★ 진단 영역 가중치 - CSS Grid 2열 레이아웃 ★ */
 .criteria-grid {
     display: grid !important;
     grid-template-columns: 1fr 1px 1fr !important;
@@ -122,74 +135,29 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     align-items: start;
     width: 100% !important;
     margin-bottom: 12px;
-    box-sizing: border-box !important;
 }
-.criteria-col {
-    display: block !important;
-    min-width: 0 !important;
-    overflow: visible !important;
-}
-/* 왼쪽 열: 오른쪽 패딩 */
-.criteria-col:first-child {
-    padding-right: 18px !important;
-    padding-left: 0 !important;
-}
-/* 오른쪽 열: 왼쪽 패딩 */
-.criteria-col:last-child {
-    padding-left: 18px !important;
-    padding-right: 0 !important;
-}
-/* 가운데 세로 구분선 */
+.criteria-col { display: block !important; min-width: 0 !important; }
+.criteria-col:first-child { padding-right: 20px !important; padding-left: 0 !important; }
+.criteria-col:last-child  { padding-left: 20px !important;  padding-right: 0 !important; }
 .criteria-divider {
     display: block !important;
     width: 1px !important;
-    background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        #cbd5e1 15%,
-        #cbd5e1 85%,
-        transparent 100%
-    ) !important;
     align-self: stretch;
     min-height: 80px;
+    background: linear-gradient(to bottom, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%) !important;
 }
-
-/* 개별 항목 */
-.criteria-item {
-    display: flex !important;
-    margin-bottom: 13px !important;
-    align-items: flex-start !important;
-}
+.criteria-item { display: flex !important; margin-bottom: 13px !important; align-items: flex-start !important; }
 .criteria-item:last-child { margin-bottom: 0 !important; }
-.criteria-item .dot {
-    width: 10px !important;
-    height: 10px !important;
-    border-radius: 50% !important;
-    margin-top: 5px !important;
-    margin-right: 10px !important;
-    flex-shrink: 0 !important;
-}
+.criteria-item .dot { width: 10px !important; height: 10px !important; border-radius: 50% !important; margin-top: 5px !important; margin-right: 10px !important; flex-shrink: 0 !important; }
 .criteria-item strong { font-size: 14px; color: #1e293b; }
 .criteria-item .criteria-desc { font-size: 12px; color: #64748b; margin-top: 3px; }
-
 .dot.blue   { background: #3b82f6 !important; }
 .dot.green  { background: #10b981 !important; }
 .dot.orange { background: #f97316 !important; }
 .dot.purple { background: #8b5cf6 !important; }
 .dot.teal   { background: #14b8a6 !important; }
 .dot.pink   { background: #ec4899 !important; }
-
-.criteria-total {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-    padding: 8px 14px;
-    margin-top: 12px;
-    text-align: right;
-    font-size: 13px;
-    font-weight: bold;
-    color: #166534;
-}
+.criteria-total { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 14px; margin-top: 12px; text-align: right; font-size: 13px; font-weight: bold; color: #166534; }
 
 .btn-report-blue { background: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 .btn-report-blue:hover { opacity: 0.85; }
@@ -199,7 +167,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
 .paper-inner { max-width: 800px; margin: 0 auto; }
 
-/* ★ 표지 레이아웃 ★ */
+/* ★ 표지 스크린 레이아웃 ★ */
 .cover-page {
     min-height: 1050px;
     display: flex;
@@ -262,7 +230,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 @keyframes scan { 0% { top: -10px; } 50% { top: 100%; } 100% { top: -10px; } }
 .loading-title { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #93c5fd; letter-spacing: 1px; }
 
-/* ★ 인쇄/PDF - 표지 1페이지 고정 ★ */
+/* ★ PDF 인쇄 - 표지 1페이지 완전 고정 ★ */
 @media print {
     @page { size: A4; margin: 15mm; }
     body { background: white !important; font-size: 12pt; }
@@ -279,32 +247,53 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
         height: auto !important; overflow: visible !important;
         padding: 0 !important; margin: 0 !important; background: white !important;
     }
-
     .tab-content { display: none !important; }
     #report { display: block !important; }
     #report-input-step { display: none !important; }
     #report-result-step { display: block !important; }
-
     .report-view-container { padding: 0 !important; background: white !important; }
     .report-paper { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: auto !important; }
     .paper-inner { max-width: 100% !important; width: 100% !important; }
 
-    /* 표지 A4 1페이지 완전 고정 */
+    /* ★ 표지: 절대 위치로 담당자 정보를 표지 하단에 완전 고정 ★ */
     .cover-page {
+        height: 267mm !important;
         min-height: unset !important;
-        height: 257mm !important;
-        display: flex !important;
-        flex-direction: column !important;
+        display: block !important;          /* flex → block 변경 */
+        position: relative !important;      /* 자식 absolute 기준점 */
         page-break-after: always !important;
         break-after: page !important;
+        overflow: hidden !important;
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;
-        overflow: hidden !important;
     }
-    .cover-middle { margin-top: auto !important; flex-shrink: 0 !important; }
-    .cover-footer { flex-shrink: 0 !important; margin-top: 15px !important; padding-top: 15px !important; }
-    .cover-table { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+    /* 제목: 상단 고정 (기본 흐름) */
+    .cover-header { position: relative; }
 
+    /* 기업정보: 하단에서 90px 위 */
+    .cover-middle {
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 90px !important;
+        margin: 0 !important;
+    }
+    .cover-middle h2 { font-size: 24px !important; margin-bottom: 15px !important; }
+    .cover-table { margin-bottom: 0 !important; }
+
+    /* 담당자 정보: 표지 맨 하단에 고정 */
+    .cover-footer {
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        margin: 0 !important;
+        padding-top: 15px !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .cover-table { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
     .report-section-box, .alert-box, .chart-container { page-break-inside: avoid; break-inside: avoid; }
     .report-section-box { border: 1px solid #ccc; padding: 20px; }
 }
