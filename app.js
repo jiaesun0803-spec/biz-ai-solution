@@ -12,11 +12,11 @@ let _currentReport = { company: '', type: '' };
    → @media print CSS와 JS 이중 처리로 붉은 아이콘 완전 제거
 ============================================ */
 window.printReport = function() {
-    const company = _currentReport.company || '';
-    const type    = _currentReport.type    || 'AI 보고서';
-    const title   = company ? `${company} - ${type}` : type;
+    const company   = _currentReport.company   || '';
+    const type      = _currentReport.type      || 'AI 보고서';
+    const landscape = _currentReport.landscape || false;
+    const title     = company ? `${company} - ${type}` : type;
 
-    // ★ 현재 활성 보고서 컨텐츠 영역에서 HTML 추출 ★
     const contentAreas = [
         'report-content-area','finance-content-area','aiBiz-content-area',
         'aiFund-content-area','aiTrade-content-area','aiMarketing-content-area'
@@ -28,8 +28,67 @@ window.printReport = function() {
     }
     if (!reportHTML) { alert('출력할 보고서가 없습니다.'); return; }
 
-    // ★ 새 창에서 보고서만 인쇄 - 파비콘/사이드바 완전 배제 ★
-    const printWin = window.open('', '_blank', 'width=900,height=800');
+    const pageCSS = landscape
+        ? `@page { size: A4 landscape; margin: 10mm; }`
+        : `@page { size: A4 portrait; margin: 15mm; }`;
+
+    // ★ 사업계획서 전용 추가 CSS ★
+    const bizCSS = landscape ? `
+/* SWOT 2x2 */
+.swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.swot-item { border-radius: 8px; padding: 14px; page-break-inside: avoid; }
+.swot-s { background: #f0fdf4; border: 1px solid #86efac; }
+.swot-w { background: #fef2f2; border: 1px solid #fca5a5; }
+.swot-o { background: #eff6ff; border: 1px solid #93c5fd; }
+.swot-t { background: #fff7ed; border: 1px solid #fdba74; }
+.swot-label { font-weight: bold; font-size: 13px; margin-bottom: 8px; }
+.swot-s .swot-label { color: #16a34a; }
+.swot-w .swot-label { color: #dc2626; }
+.swot-o .swot-label { color: #2563eb; }
+.swot-t .swot-label { color: #ea580c; }
+.swot-item ul { list-style: none; padding: 0; margin: 0; }
+.swot-item li { font-size: 12px; padding-left: 12px; position: relative; margin-bottom: 5px; line-height: 1.5; }
+.swot-s li::before { content: '•'; position: absolute; left: 0; color: #16a34a; font-weight: bold; }
+.swot-w li::before { content: '•'; position: absolute; left: 0; color: #dc2626; font-weight: bold; }
+.swot-o li::before { content: '•'; position: absolute; left: 0; color: #2563eb; font-weight: bold; }
+.swot-t li::before { content: '•'; position: absolute; left: 0; color: #ea580c; font-weight: bold; }
+/* 경쟁사 비교표 */
+.competitor-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+.competitor-table th { background: #1e3a8a; color: white; padding: 9px 10px; text-align: center; border: 1px solid #1e40af; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.competitor-table td { padding: 8px 10px; text-align: center; border: 1px solid #e2e8f0; color: #334155; }
+.competitor-table tr:nth-child(even) td { background: #f8fafc; }
+.competitor-table td:first-child { font-weight: bold; color: #1e293b; text-align: left; }
+.competitor-table td:nth-child(2) { background: #eff6ff !important; color: #1e40af; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; }
+/* 자금계획표 */
+.fund-plan-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.fund-plan-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 10px; color: #475569; font-weight: bold; text-align: center; }
+.fund-plan-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #334155; text-align: center; }
+.fund-plan-table td:first-child { text-align: left; font-weight: bold; }
+.fund-plan-table tfoot td { background: #eff6ff; font-weight: bold; color: #1e3a8a; -webkit-print-color-adjust: exact; color-adjust: exact; }
+/* 기업현황표 */
+.biz-info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; font-size: 12px; }
+.biz-info-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 10px; color: #1e40af; font-weight: bold; width: 14%; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.biz-info-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #1e293b; }
+/* 성장 3단계 */
+.growth-phases { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+.growth-phase { border-radius: 8px; padding: 12px; page-break-inside: avoid; }
+.phase-short { background: #eff6ff; border: 1px solid #93c5fd; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.phase-mid   { background: #f0fdf4; border: 1px solid #86efac; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.phase-long  { background: #fdf4ff; border: 1px solid #d8b4fe; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.phase-header { font-weight: bold; font-size: 12px; margin-bottom: 8px; }
+.phase-short .phase-header { color: #1d4ed8; }
+.phase-mid .phase-header   { color: #15803d; }
+.phase-long .phase-header  { color: #7c3aed; }
+.growth-phase ul { list-style: none; padding: 0; margin: 0; }
+.growth-phase li { font-size: 11px; padding-left: 10px; position: relative; margin-bottom: 5px; line-height: 1.5; color: #334155; word-break: keep-all; }
+.growth-phase li::before { content: '•'; position: absolute; left: 0; }
+/* 월별차트 */
+#biz-monthly-chart-wrap { width: 100%; height: 200px; margin-bottom: 12px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; padding: 10px; }
+/* 마무리 */
+.biz-closing p { font-size: 14px; line-height: 1.9; color: #1e293b; font-weight: 500; }
+` : '';
+
+    const printWin = window.open('', '_blank', 'width=1200,height=900');
     printWin.document.write(`<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -37,74 +96,33 @@ window.printReport = function() {
 <title>${title}</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
-@page { size: A4; margin: 15mm; }
-body { background: white; color: #333; font-size: 14px; }
-
-/* 표지 */
-.cover-page {
-    height: 267mm;
-    display: block;
-    position: relative;
-    padding-left: 50px;
-    padding-right: 30px;
-    padding-top: 50px;
-    page-break-after: always;
-    break-after: page;
-    overflow: hidden;
-    -webkit-print-color-adjust: exact;
-    color-adjust: exact;
-}
-.cover-page::before {
-    content: '';
-    display: block;
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 30px;
-    background: #3b82f6;
-    -webkit-print-color-adjust: exact;
-    color-adjust: exact;
-}
-.cover-header { margin-bottom: 20px; }
-.cover-header h4 { font-size: 16px; color: #3b82f6; margin-bottom: 8px; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 4px; }
-.cover-header h1 { font-size: 36px; font-weight: 900; color: #0f172a; margin-top: 12px; letter-spacing: -1px; }
-.cover-middle { position: absolute; left: 50px; right: 30px; bottom: 80px; }
-.cover-middle h2 { font-size: 22px; color: #1e3a8a; margin-bottom: 18px; font-weight: bold; }
-.cover-table { width: 100%; background: #f8fafc; padding: 20px 24px; border-radius: 6px; }
+${pageCSS}
+body { background: white; color: #333; font-size: 13px; }
+.cover-page { height: ${landscape ? '185mm' : '267mm'}; display: block; position: relative; padding-left: 50px; padding-right: 30px; padding-top: 40px; page-break-after: always; break-after: page; overflow: hidden; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.cover-page::before { content: ''; display: block; position: absolute; left: 0; top: 0; bottom: 0; width: 28px; background: ${landscape ? '#16a34a' : '#3b82f6'}; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.cover-header h4 { font-size: 15px; color: ${landscape ? '#16a34a' : '#3b82f6'}; margin-bottom: 8px; border-bottom: 2px solid ${landscape ? '#16a34a' : '#3b82f6'}; display: inline-block; padding-bottom: 3px; }
+.cover-header h1 { font-size: ${landscape ? '32px' : '36px'}; font-weight: 900; color: #0f172a; margin-top: 10px; letter-spacing: -1px; }
+.cover-middle { position: absolute; left: 50px; right: 30px; bottom: 70px; }
+.cover-middle h2 { font-size: ${landscape ? '20px' : '22px'}; color: #1e3a8a; margin-bottom: 14px; font-weight: bold; }
+.cover-table { width: 100%; background: #f8fafc; padding: 16px 20px; border-radius: 6px; }
 .cover-table table { width: 100%; border-collapse: collapse; }
-.cover-table th { text-align: center; padding: 10px 8px; color: #3b82f6; font-size: 13px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 18%; }
-.cover-table td { text-align: center; padding: 10px 8px; color: #334155; font-size: 13px; font-weight: 500; border-bottom: 1px solid #e2e8f0; width: 32%; }
+.cover-table th { text-align: center; padding: 9px 6px; color: ${landscape ? '#16a34a' : '#3b82f6'}; font-size: 12px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 16%; }
+.cover-table td { text-align: center; padding: 9px 6px; color: #334155; font-size: 12px; font-weight: 500; border-bottom: 1px solid #e2e8f0; width: 34%; }
 .cover-table tr:last-child th, .cover-table tr:last-child td { border-bottom: none; }
-.cover-footer { position: absolute; left: 50px; right: 30px; bottom: 0; display: flex; justify-content: space-between; border-top: 2px solid #3b82f6; padding-top: 14px; color: #475569; font-size: 13px; font-weight: bold; }
-
-/* 기업현황 테이블 */
-.overview-company-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; margin-top: 5px; border-top: 2px solid #1e3a8a; }
-.overview-company-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 12px; text-align: left; font-size: 12px; color: #1e40af; font-weight: bold; white-space: nowrap; width: 14%; }
-.overview-company-table td { border: 1px solid #e2e8f0; padding: 8px 12px; font-size: 13px; color: #1e293b; }
-
-/* 보고서 섹션 */
+.cover-footer { position: absolute; left: 50px; right: 30px; bottom: 0; display: flex; justify-content: space-between; border-top: 2px solid ${landscape ? '#16a34a' : '#3b82f6'}; padding-top: 12px; color: #475569; font-size: 12px; font-weight: bold; }
 .paper-inner { max-width: 100%; }
-.report-section-box { background: #f8fafc; border: 1px solid #ccc; border-radius: 8px; padding: 20px; margin-bottom: 24px; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.report-section-box h3 { margin-top: 0 !important; margin-bottom: 14px; color: #1e293b; border-left: 5px solid #3b82f6; padding-left: 10px; font-size: 17px; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.report-section-box { background: #f8fafc; border: 1px solid #ccc; border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.report-section-box h3 { margin-top: 0 !important; margin-bottom: 12px; color: #1e293b; border-left: 4px solid #16a34a; padding-left: 10px; font-size: 15px; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; }
 .report-section-box ul { list-style: none; padding-left: 0; margin: 0; }
-.report-section-box li { position: relative; padding-left: 16px; margin-bottom: 8px; font-size: 14px; color: #334155; line-height: 1.7; word-break: keep-all; }
-.report-section-box li::before { content: '■'; position: absolute; left: 0; color: #3b82f6; font-size: 10px; top: 3px; }
-.report-section-box p { line-height: 1.8; color: #334155; margin-bottom: 16px; font-size: 14px; word-break: keep-all; }
-
-/* 컨설턴트 피드백 */
-.consultant-feedback-box { background: #fff7ed; border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 6px; padding: 14px 16px; margin-top: 16px; page-break-inside: avoid; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.consultant-feedback-box h4 { font-size: 13px; font-weight: bold; color: #c2410c; margin-bottom: 10px; }
-.consultant-feedback-box ul { list-style: none; padding-left: 0; margin: 0; }
-.consultant-feedback-box li { position: relative; padding-left: 18px; margin-bottom: 6px; font-size: 13px; color: #7c2d12; line-height: 1.6; word-break: keep-all; }
-.consultant-feedback-box li::before { content: '▶'; position: absolute; left: 0; color: #f97316; font-size: 9px; top: 3px; }
-
-/* 차트 */
-.chart-container { margin: 16px 0 8px; display: flex; justify-content: center; page-break-inside: avoid; }
-.chart-box { width: 80%; max-width: 460px; background: white; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; height: 180px; }
-
-/* alert */
-.alert-box { padding: 16px; border-radius: 6px; font-weight: bold; margin: 20px 0; font-size: 14px; line-height: 1.6; page-break-inside: avoid; }
-.alert-box.blue  { background: #eff6ff; color: #1e40af; border-left: 5px solid #3b82f6; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.alert-box.green { background: #f0fdf4; color: #166534; border-left: 5px solid #22c55e; -webkit-print-color-adjust: exact; color-adjust: exact; }
+.report-section-box li { position: relative; padding-left: 15px; margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.6; word-break: keep-all; }
+.report-section-box li::before { content: '■'; position: absolute; left: 0; color: #16a34a; font-size: 9px; top: 3px; }
+.overview-company-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; }
+.overview-company-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 7px 10px; text-align: left; font-size: 11px; color: #1e40af; font-weight: bold; width: 13%; }
+.overview-company-table td { border: 1px solid #e2e8f0; padding: 7px 10px; font-size: 12px; color: #1e293b; }
+.alert-box { padding: 14px; border-radius: 6px; font-weight: bold; margin: 16px 0; font-size: 13px; page-break-inside: avoid; }
+.alert-box.blue  { background: #eff6ff; color: #1e40af; border-left: 4px solid #3b82f6; }
+.alert-box.green { background: #f0fdf4; color: #166534; border-left: 4px solid #22c55e; }
+${bizCSS}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -112,25 +130,26 @@ body { background: white; color: #333; font-size: 14px; }
 <div class="paper-inner">${reportHTML}</div>
 <script>
 window.onload = function() {
-    // 차트 재렌더링
-    const radarEl = document.getElementById('report-radar-chart');
-    if (radarEl) {
-        new Chart(radarEl.getContext('2d'), {
-            type: 'radar',
-            data: { labels: ['재무건전성','전략/마케팅','인사/조직','운영/생산','IT/디지털'], datasets: [{ label: '기업 역량', data: [65,80,72,68,55], backgroundColor: 'rgba(59,130,246,0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a', pointRadius: 4 }] },
-            options: { scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } }, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    const bizChart = document.getElementById('biz-monthly-chart');
+    if (bizChart) {
+        const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+        const curM = ${new Date().getMonth()};
+        const avg  = ${function() { try { const r=JSON.parse(localStorage?.getItem?.('biz_consult_companies')||'[]'); return 3000; } catch(e){ return 3000; } }()};
+        const actual=[], forecast=[];
+        for(let i=0;i<12;i++){
+            if(i<curM){ actual.push(Math.round(${(function(){try{return 3000;}catch(e){return 3000;}})()} * (0.88+i*0.025))); forecast.push(null); }
+            else { actual.push(null); forecast.push(Math.round(${(function(){try{return 3000;}catch(e){return 3000;}})()} * Math.pow(1.05,i-curM+1))); }
+        }
+        new Chart(bizChart.getContext('2d'),{
+            type:'bar',
+            data:{ labels:months, datasets:[
+                {label:'실적',data:actual,backgroundColor:'rgba(22,163,74,0.7)',borderColor:'#16a34a',borderWidth:1,borderRadius:4},
+                {label:'예측',data:forecast,backgroundColor:'rgba(59,130,246,0.45)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}
+            ]},
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{font:{size:10}}}}, scales:{y:{ticks:{callback:v=>v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천만'}}} }
         });
     }
-    const lineEl = document.getElementById('report-bar-chart');
-    if (lineEl) {
-        const raw = lineEl.dataset;
-        new Chart(lineEl.getContext('2d'), {
-            type: 'line',
-            data: { labels: ['23년도','24년도','25년도','금년(예상)'], datasets: [{ label: '매출 추이', data: [parseInt(raw.y23)||0, parseInt(raw.y24)||0, parseInt(raw.y25)||0, parseInt(raw.exp)||0], borderColor: 'rgba(22,163,74,1)', backgroundColor: 'rgba(22,163,74,0.15)', borderWidth: 2, pointRadius: 4, fill: true, tension: 0.1 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => v >= 10000 ? Math.floor(v/10000) + '억' : v.toLocaleString('ko-KR') + '만' } } } }
-        });
-    }
-    setTimeout(() => { window.print(); window.close(); }, 800);
+    setTimeout(() => { window.print(); window.close(); }, 900);
 };
 </script>
 </body>
@@ -608,11 +627,118 @@ ${COMMON_RULES}${consultantFeedbackRule}
 
 const REPORT_CONFIGS={
     finance:{typeLabel:'재무진단',title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',borderColor:'#2563eb',contentAreaId:'finance-content-area',buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.재무개요(3~4) 2.수익성분석(5~6) 3.안정성분석(5~6) 4.성장성분석(4~5) 5.재무개선방향(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
-    aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',buildPrompt:(cData,fRev,version)=>`너는 창업·사업기획 전문 컨설턴트야. 대상: '${cData.name}'\n7개섹션: 1.사업개요(3~4) 2.시장분석(5~6) 3.제품/서비스(5~6) 4.마케팅전략(6~7) 5.운영계획(4~5) 6.재무계획(4~5) 7.실행로드맵(4~5)\n${COMMON_RULES}출력목적: ${version==='client'?'정식제출용':'초안/검토본'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+    aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',
+        buildPrompt:(cData,fRev)=>`너는 20년 경력의 경영컨설턴트이자 사업계획서 전문가야. 대상 기업: '${cData.name}'
+
+아래 10개 목차를 반드시 순서대로 모두 작성하고, 각 섹션은 지정된 HTML 형식을 정확히 따를 것.
+
+[★ 공통 규칙 ★]
+- 각 목차는 <div class="report-section-box">로 감쌀 것
+- 제목은 <h3>, 본문 리스트는 <ul><li>, li는 최소 35자 이상
+- 표(table)는 지정된 class를 반드시 사용할 것
+- 금액은 한글로(예: 1억 3,800만원), 개조식 문체(~함, ~임)
+- 인사말, 도입문 등 섹션 앞 텍스트 절대 출력 금지
+- 마크다운(**) 특수기호 사용 금지
+
+[목차별 형식]
+
+섹션1: <div class="report-section-box"><h3>1. 기업현황분석</h3>
+<table class="biz-info-table"><tr><th>기업명</th><td>${cData.name}</td><th>대표자</th><td>${cData.rep||'-'}</td></tr><tr><th>업종</th><td>${cData.industry||'-'}</td><th>설립일</th><td>${cData.bizDate||'-'}</td></tr><tr><th>상시근로자</th><td>${cData.empCount||'-'}명</td><th>핵심아이템</th><td>${cData.coreItem||'-'}</td></tr></table>
+<ul>[기업현황 분석 li 5개 이상, 매출성장 트렌드·시장 내 포지션·주요 성과 포함]</ul></div>
+
+섹션2: <div class="report-section-box"><h3>2. SWOT 분석</h3>
+<div class="swot-grid">
+<div class="swot-item swot-s"><div class="swot-label">💪 S 강점 (Strength)</div><ul><li>강점1</li><li>강점2</li><li>강점3</li><li>강점4</li></ul></div>
+<div class="swot-item swot-w"><div class="swot-label">⚠️ W 약점 (Weakness)</div><ul><li>약점1</li><li>약점2</li><li>약점3</li></ul></div>
+<div class="swot-item swot-o"><div class="swot-label">🚀 O 기회 (Opportunity)</div><ul><li>기회1</li><li>기회2</li><li>기회3</li><li>기회4</li></ul></div>
+<div class="swot-item swot-t"><div class="swot-label">🛡️ T 위협 (Threat)</div><ul><li>위협1</li><li>위협2</li><li>위협3</li></ul></div>
+</div></div>
+
+섹션3: <div class="report-section-box"><h3>3. 시장현황</h3><ul>[시장규모·트렌드·성장성 li 5~6개]</ul></div>
+
+섹션4: <div class="report-section-box"><h3>4. 경쟁력분석</h3>
+<ul>[경쟁력 분석 li 4~5개]</ul>
+<table class="competitor-table"><thead><tr><th>비교 항목</th><th>${cData.name}</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead>
+<tbody>
+[제품경쟁력·가격경쟁력·기술력·브랜드인지도·유통망·고객서비스·성장성 등 7개 행. 자사는 ★★★★★~★★★★, 경쟁사는 ★★★~★★★★ 형식으로 평가]
+</tbody></table></div>
+
+섹션5: <div class="report-section-box"><h3>5. 차별점 및 핵심경쟁력</h3><ul>[차별점·핵심경쟁력 li 5~6개, 구체적 근거 포함]</ul></div>
+
+섹션6: <div class="report-section-box"><h3>6. 가점추천: 한도 확대를 위한 추천 인증 및 교육</h3>
+<ul>[추천 인증/교육 li 5개 이상. 각 항목마다 "인증명: 취득시 [기관명] 정책자금 최대 [금액]원 추가 한도 가능" 형식으로 작성. 벤처인증·이노비즈·메인비즈·ISO·연구소 등 포함]</ul></div>
+
+섹션7: <div class="report-section-box"><h3>7. 자금사용계획</h3>
+<table class="fund-plan-table"><thead><tr><th>항목</th><th>금액(만원)</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
+<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비 등 6~8개 항목. 금액은 ${fRev.금년예상연간매출} 기준으로 현실적으로 산정]</tbody>
+<tfoot><tr><td colspan="1">합계</td><td>[총액만원]</td><td>100%</td><td>-</td></tr></tfoot></table>
+<ul>[자금 집행 전략 및 우선순위 li 3~4개]</ul></div>
+
+섹션8: <div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
+<div id="biz-monthly-chart-wrap"><canvas id="biz-monthly-chart"></canvas></div>
+<div class="growth-phases">
+<div class="growth-phase phase-short"><div class="phase-header">⚡ 단기 (1년 이내)</div><ul><li>단기목표1</li><li>단기목표2</li><li>단기목표3</li><li>단기목표4</li></ul></div>
+<div class="growth-phase phase-mid"><div class="phase-header">📈 중기 (3년 이내)</div><ul><li>중기목표1</li><li>중기목표2</li><li>중기목표3</li><li>중기목표4</li></ul></div>
+<div class="growth-phase phase-long"><div class="phase-header">🌟 장기 (5년 이후)</div><ul><li>장기목표1</li><li>장기목표2</li><li>장기목표3</li><li>장기목표4</li></ul></div>
+</div></div>
+
+섹션9: <div class="report-section-box"><h3>9. 성장비전</h3><ul>[앞으로의계획·발전가능성·비전 li 5~6개, 업체 입력 데이터 기반으로 구체적으로]</ul></div>
+
+섹션10: <div class="report-section-box biz-closing"><h3>10. 마무리</h3>
+<p>[마무리 문장. '~있음' 형식으로 간결하게 4~5문장. 핵심 강점과 기대효과 요약]</p></div>
+
+[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiFund:{typeLabel:'정책자금매칭',title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',borderColor:'#ea580c',contentAreaId:'aiFund-content-area',buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.기업자격요건분석(4~5) 2.자금필요성(3~4) 3.추천정책자금TOP5(각3~4줄) 4.기관별신청전략(5~6) 5.신청준비체크리스트(6~8)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiTrade:{typeLabel:'상권분석',title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',borderColor:'#0d9488',contentAreaId:'aiTrade-content-area',buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'미입력'})\n5개섹션: 1.상권개요및입지분석(4~5) 2.유동인구및타겟(5~6) 3.경쟁현황및포지셔닝(5~6) 4.상권성장성및리스크(4~5) 5.매출예측및운영전략(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiMarketing:{typeLabel:'마케팅제안',title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',borderColor:'#db2777',contentAreaId:'aiMarketing-content-area',buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상: '${cData.name}'\n6개섹션: 1.마케팅현황진단(4~5) 2.타겟고객설정(5~6) 3.채널별마케팅전략(6~8) 4.콘텐츠및브랜딩전략(5~6) 5.마케팅예산계획(4~5) 6.월별실행로드맵(6항목)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`}
 };
+
+/* =========================================================
+   ★ 사업계획서 전용 렌더링 (가로형 + 월별 차트)
+========================================================= */
+function setupMonthlyChart(el, rev) {
+    if (!el) return;
+    const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    const curMonth = new Date().getMonth(); // 0-indexed (현재월 index)
+    const avgMonthly = rev.cur && curMonth > 0
+        ? Math.round(rev.cur / curMonth)
+        : rev.y25 ? Math.round(rev.y25 / 12) : 3000;
+
+    const actual = [], forecast = [];
+    for (let i = 0; i < 12; i++) {
+        if (i < curMonth) {
+            actual.push(Math.round(avgMonthly * (0.88 + i * 0.025)));
+            forecast.push(null);
+        } else {
+            actual.push(null);
+            forecast.push(Math.round(avgMonthly * Math.pow(1.05, i - curMonth + 1)));
+        }
+    }
+    new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [
+                { label: '실적', data: actual, backgroundColor: 'rgba(22,163,74,0.7)', borderColor: '#16a34a', borderWidth: 1, borderRadius: 4 },
+                { label: '예측', data: forecast, backgroundColor: 'rgba(59,130,246,0.45)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'top', labels: { font: { size: 11 } } } },
+            scales: { y: { ticks: { callback: v => v >= 10000 ? Math.floor(v/10000) + '억' : Math.round(v/1000) + '천만' } } }
+        }
+    });
+}
+
+function renderBizReport(companyData, cleanHTML, rev, dateStr) {
+    _currentReport = { company: companyData.name, type: 'AI 사업계획서', landscape: true };
+    const safeRev = rev || {};
+    const coverCfg = { title: 'AI 사업계획서', reportKind: 'AI 맞춤형 사업계획서', version: 'client', borderColor: '#16a34a' };
+    const contentArea = document.getElementById('aiBiz-content-area');
+    contentArea.innerHTML = `<div class="paper-inner">${buildCoverHTML(companyData, coverCfg, safeRev, dateStr)}${cleanHTML}</div>`;
+    setTimeout(() => setupMonthlyChart(document.getElementById('biz-monthly-chart'), safeRev), 150);
+}
 
 window.generateAnyReport=async function(type,version,event){
     const tab=event.target.closest('.tab-content');
@@ -635,7 +761,11 @@ window.generateAnyReport=async function(type,version,event){
         updateDataLists();
         tab.querySelector('[id$="-input-step"]').style.display='none';
         tab.querySelector('[id$="-result-step"]').style.display='block';
-        renderGenericReport(cfg.contentAreaId,companyData,cleanHTML,{...cfg,version},rev,todayStr);
+        if (type === 'aiBiz') {
+            renderBizReport(companyData, cleanHTML, rev, todayStr);
+        } else {
+            renderGenericReport(cfg.contentAreaId,companyData,cleanHTML,{...cfg,version},rev,todayStr);
+        }
     }
 };
 
@@ -650,6 +780,11 @@ window.viewReport=function(id){
         document.getElementById('report-input-step').style.display='none';
         document.getElementById('report-result-step').style.display='block';
         renderManagementReport(companyData,r.content,r.version,rev,r.date);
+    }else if(type==='aiBiz'){
+        showTab('aiBiz');
+        document.getElementById('aiBiz-input-step').style.display='none';
+        document.getElementById('aiBiz-result-step').style.display='block';
+        renderBizReport(companyData,r.content,rev,r.date);
     }else{
         const cfg=REPORT_CONFIGS[type];if(!cfg)return;
         const tabId=cfg.contentAreaId.replace('-content-area','');
