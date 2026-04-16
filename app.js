@@ -85,9 +85,10 @@ function updateDashboardReports() {
                 <span style="font-size:15px;color:#1e293b;font-weight:bold;">${r.company}</span>
                 <span style="font-size:13px;color:#64748b;">${r.title}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:13px;color:#94a3b8;">${r.date}</span>
                 <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+                <button class="btn-delete" onclick="deleteReport('${r.id}')">삭제</button>
             </div>
         </li>`).join('');
 }
@@ -105,8 +106,27 @@ window.updateDataLists = function() {
     const cBody=document.getElementById('company-list-body');
     if(cBody) cBody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="editCompany('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';
     const rBody=document.getElementById('report-list-body');
-    if(rBody) rBody.innerHTML=reports.length?reports.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
+    if(rBody) rBody.innerHTML=reports.length?reports.map(r=>`
+        <tr>
+            <td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td>
+            <td><strong>${r.company}</strong></td>
+            <td>${r.title}</td>
+            <td>${r.date}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+                <button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button>
+            </td>
+        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
     updateDashboardReports();
+};
+
+/* ★ 보고서 삭제 ★ */
+window.deleteReport = function(id) {
+    if (!confirm('이 보고서를 삭제하시겠습니까?\n삭제된 보고서는 복구할 수 없습니다.')) return;
+    let reports = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+    reports = reports.filter(r => r.id !== id);
+    localStorage.setItem(DB_REPORTS, JSON.stringify(reports));
+    updateDataLists();
 };
 
 /* ===== 기업 저장/불러오기 ===== */
@@ -181,28 +201,28 @@ async function callGeminiAPI(prompt){
     }catch(e){console.error(e);alert('오류: '+e.message);return null;}
 }
 
-/* =========================================
-   ★ AI 응답 정리 함수
-   - 마크다운/코드블록 제거
-   - 인사말·소개문 등 섹션박스 앞 텍스트 완전 제거
-========================================= */
-function cleanAIResponse(raw) {
-    // 1. 마크다운 코드블록 및 볼드 제거
-    let html = raw.replace(/```html|```/g, '').replace(/\*\*/g, '');
-
-    // 2. ★ 첫 번째 <div class="report-section-box"> 이전의 모든 텍스트 제거
-    //    (AI가 생성하는 인사말, 소개문, <p>태그 등 모두 제거)
-    const firstSectionIdx = html.indexOf('<div class="report-section-box">');
-    if (firstSectionIdx > 0) {
-        html = html.slice(firstSectionIdx);
-    }
-
-    // 3. 섹션박스 사이에 혹시 남은 단독 <p> 인사문 제거
-    //    (섹션박스 닫힘 태그 이후, 다음 섹션박스 열림 태그 이전의 <p>태그 제거)
-    html = html.replace(/<\/div>\s*<p[^>]*>[\s\S]*?<\/p>\s*(?=<div[^>]*report-section-box)/g, '</div>');
-
+/* ===== AI 응답 정리 (인사말 제거) ===== */
+function cleanAIResponse(raw){
+    let html=raw.replace(/```html|```/g,'').replace(/\*\*/g,'');
+    const firstSectionIdx=html.indexOf('<div class="report-section-box">');
+    if(firstSectionIdx>0) html=html.slice(firstSectionIdx);
+    html=html.replace(/<\/div>\s*<p[^>]*>[\s\S]*?<\/p>\s*(?=<div[^>]*report-section-box)/g,'</div>');
     return html;
 }
+
+/* ===== 공통 프롬프트 규칙 ===== */
+const COMMON_RULES = `
+[★ 출력 형식 규칙 - 절대 준수 ★]
+- 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
+- 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
+- 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
+- 각 <li> 항목은 최소 30자 이상 상세히 작성할 것.
+- 금액 표기 시 반드시 제공된 한글 금액 문자열을 그대로 사용할 것.
+- 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 개조식으로 맺을 것.
+- 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
+- 표(Table)는 절대 그리지 말 것.
+- ★ 첫 번째 목차 앞에 인사말, 소개 문구 등 어떠한 텍스트도 절대 출력하지 말 것.
+`;
 
 /* ===== 표지 HTML ===== */
 function buildCoverHTML(companyData,config,rev,dateStr){
@@ -260,7 +280,7 @@ function renderManagementReport(companyData,cleanHTML,version,rev,dateStr){
     if(pos1>-1){const ulClose=cleanHTML.indexOf('</ul>',pos1);if(ulClose>-1)cleanHTML=cleanHTML.slice(0,ulClose+5)+'\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>\n'+cleanHTML.slice(ulClose+5);}
     cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*재무[^<]*현황[^<]*<\/h3>)/,`$1\n<div class="chart-container"><div class="chart-box"><canvas id="report-bar-chart"></canvas></div></div>`);
 
-    const vLabel=version==='client'?'기업의 현재 역량 분석 및 맞춤형 성장 전략 제안':'내부 리스크 진단 및 보완 액션 플랜';
+    const vLabel=version==='client'?'기업의 현재 역량 분석 및 맞춤형 성장 전략 제안':'내부 리스크 진단 및 컨설턴트 피드백 포함 자료';
     const coverCfg={title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서 리포트',version,borderColor:'#3b82f6'};
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,coverCfg,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${vLabel} 자료입니다.</div></div>`;
 
@@ -280,20 +300,6 @@ function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,date
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
 }
 
-/* ===== 공통 프롬프트 규칙 (인사말 금지 포함) ===== */
-const COMMON_RULES = `
-[★ 출력 형식 규칙 - 절대 준수 ★]
-- 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
-- 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
-- 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-- 각 <li> 항목은 최소 30자 이상 상세히 작성할 것.
-- 금액 표기 시 반드시 제공된 한글 금액 문자열을 그대로 사용할 것.
-- 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 개조식으로 맺을 것.
-- 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
-- 표(Table)는 절대 그리지 말 것.
-- ★ 첫 번째 목차(<div class="report-section-box">) 앞에 인사말, 소개 문구, 서론, <p> 태그 등 어떠한 텍스트도 절대 출력하지 말 것. 바로 첫 번째 목차부터 시작할 것.
-`;
-
 /* ===== 경영진단 생성 ===== */
 window.generateReport=async function(type,version,event){
     const tab=event.target.closest('.tab-content');
@@ -306,24 +312,46 @@ window.generateReport=async function(type,version,event){
     document.getElementById('ai-loading-overlay').style.display='flex';
     const promptData={...companyData};delete promptData.rawData;delete promptData.revenueData;promptData.매출데이터=fRev;
 
+    /* =========================================================
+       ★ 컨설턴트용: 기업전달용 내용 동일 + 각 섹션에 피드백 박스
+    ========================================================= */
+    const consultantFeedbackRule = version === 'consultant' ? `
+[★ 컨설턴트용 추가 규칙 ★]
+- 각 섹션의 본문 <ul>...</ul> 작성 후, 해당 <div class="report-section-box"> 닫기 전에 반드시 아래 형식의 피드백 박스를 추가할 것:
+
+<div class="consultant-feedback-box">
+<h4>🔍 컨설턴트 피드백</h4>
+<ul>
+<li>[문제점/리스크] 해당 섹션에서 발견된 구체적인 문제점이나 개선 필요 사항을 50자 이상 서술할 것</li>
+<li>[해결방안] 문제 해결을 위한 실행 가능한 구체적 액션 플랜을 50자 이상 서술할 것</li>
+<li>[향후 방향] 중장기 관점의 전략적 방향 및 성장 가능성을 50자 이상 서술할 것</li>
+</ul>
+</div>
+
+- 피드백 박스의 내용은 본문과 다른 관점(리스크, 개선점, 전략 방향)에서 작성할 것.
+- 피드백은 컨설턴트가 대표에게 직접 전달하는 어조로 작성할 것.
+` : '';
+
     const prompt=`너의 역할은 20년 경력의 경영 컨설턴트야. 대상 기업: '${companyData.name}'
+
 [진단 가중치]
 1. 경영진단 개요: 3~4항목
 2. 재무 현황 분석: 가중치 15% → li 3~4개
 3. 전략 및 마케팅 분석: 가중치 25% → li 6~8개 (가장 풍부하게)
-4. 인사/조직: 가중치 20% → li 5~6개
-5. 운영/생산: 가중치 20% → li 5~6개
+4. 인사/조직 분석: 가중치 20% → li 5~6개
+5. 운영/생산 분석: 가중치 20% → li 5~6개
 6. IT/디지털 및 정부지원: 가중치 20% → li 각 2~3개
 7. 개선 방향 및 로드맵: 5~6항목
+
 ${COMMON_RULES}
-출력 목적: ${version==='client'?'긍정적/객관적 (기업전달용)':'리스크/단점 위주 (컨설턴트용)'}
+${consultantFeedbackRule}
+출력 목적: 긍정적이고 객관적인 분석 (${version==='client'?'기업전달용':'컨설턴트용 - 각 섹션에 피드백 박스 포함'})
 [기업 데이터] ${JSON.stringify(promptData,null,2)}`;
 
     const aiResponse=await callGeminiAPI(prompt);
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
-        // ★ 인사말·소개문 제거 후 저장 ★
-        let cleanHTML = cleanAIResponse(aiResponse);
+        let cleanHTML=cleanAIResponse(aiResponse);
         const todayStr=new Date().toISOString().split('T')[0];
         const reportObj={id:'rep_'+Date.now(),type:'경영진단',company:companyData.name,title:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:'management'};
         const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');reports.push(reportObj);localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
@@ -342,28 +370,24 @@ const REPORT_CONFIGS={
 ${COMMON_RULES}
 출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}
 [기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
-
     aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',
         buildPrompt:(cData,fRev,version)=>`너는 20년 경력의 창업·사업기획 전문 컨설턴트야. 대상 기업: '${cData.name}'
 7개 섹션: 1.사업개요(3~4항목) 2.시장분석(5~6항목) 3.제품/서비스(5~6항목) 4.마케팅전략(6~7항목) 5.운영계획(4~5항목) 6.재무계획(4~5항목) 7.실행로드맵(4~5항목)
 ${COMMON_RULES}
 출력목적: ${version==='client'?'정식 제출용':'초안/검토본'}
 [기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
-
     aiFund:{typeLabel:'정책자금매칭',title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',borderColor:'#ea580c',contentAreaId:'aiFund-content-area',
         buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상 기업: '${cData.name}'
 5개 섹션: 1.기업자격요건분석(4~5항목) 2.자금필요성및활용전략(3~4항목) 3.추천정책자금TOP5(각 3~4줄) 4.기관별신청전략(5~6항목) 5.신청준비체크리스트(6~8항목)
 ${COMMON_RULES}
 출력목적: ${version==='client'?'기업전달용':'컨설턴트용(리스크포함)'}
 [기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
-
     aiTrade:{typeLabel:'상권분석',title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',borderColor:'#0d9488',contentAreaId:'aiTrade-content-area',
         buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상 기업: '${cData.name}' (업종:${cData.industry||'미입력'})
 5개 섹션: 1.상권개요및입지분석(4~5항목) 2.유동인구및타겟고객분석(5~6항목) 3.경쟁현황및포지셔닝전략(5~6항목) 4.상권성장성및리스크평가(4~5항목) 5.매출예측및운영전략(5~6항목)
 ${COMMON_RULES}
 출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}
 [기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
-
     aiMarketing:{typeLabel:'마케팅제안',title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',borderColor:'#db2777',contentAreaId:'aiMarketing-content-area',
         buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상 기업: '${cData.name}'
 6개 섹션: 1.마케팅현황진단(4~5항목) 2.타겟고객설정및페르소나(5~6항목) 3.채널별마케팅전략(6~8항목) 4.콘텐츠및브랜딩전략(5~6항목) 5.마케팅예산계획(4~5항목) 6.월별실행로드맵(6항목)
@@ -386,8 +410,7 @@ window.generateAnyReport=async function(type,version,event){
     const aiResponse=await callGeminiAPI(cfg.buildPrompt(companyData,fRev,version));
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
-        // ★ 인사말·소개문 제거 후 저장 ★
-        let cleanHTML = cleanAIResponse(aiResponse);
+        let cleanHTML=cleanAIResponse(aiResponse);
         const todayStr=new Date().toISOString().split('T')[0];
         const vLabel=version==='client'?'기업전달용':'컨설턴트용';
         const reportObj={id:'rep_'+Date.now(),type:cfg.typeLabel,company:companyData.name,title:`${cfg.title} (${vLabel})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
