@@ -33,7 +33,6 @@
 
 <div class="container" id="main-app" style="display:none;">
     <aside class="sidebar">
-        <!-- 로고 -->
         <div class="logo">
             <div class="logo-title">
                 <div class="logo-icon">📋</div>
@@ -43,7 +42,6 @@
                 </div>
             </div>
         </div>
-        <!-- 사용자 -->
         <div class="user-profile">
             <div class="profile-icon">👤</div>
             <div>
@@ -51,7 +49,6 @@
                 <p class="user-role" id="display-user-dept">경영컨설턴트</p>
             </div>
         </div>
-        <!-- 메뉴 -->
         <nav class="menu">
             <ul>
                 <li onclick="showTab('dashboard')" id="menu-dashboard"><span>📊</span> 대시보드</li>
@@ -74,23 +71,19 @@
 
     <main class="main-content">
 
-        <!-- ★ 새 대시보드 ★ -->
+        <!-- ★ 대시보드 ★ -->
         <section id="dashboard" class="tab-content">
             <div class="max-width-wrapper">
                 <h2 class="page-title">대시보드</h2>
 
-                <!-- 환영 배너 -->
+                <!-- 환영 배너 (버튼 없음) -->
                 <div class="welcome-banner">
                     <div class="welcome-greeting">안녕하세요 👋</div>
                     <div class="welcome-title">BizConsult에 오신 것을 환영합니다</div>
                     <div class="welcome-sub">경영컨설팅 보고서 관리 플랫폼</div>
-                    <div class="welcome-btns">
-                        <button class="btn-welcome-white" onclick="showTab('company')">📷 카메라로 서류 등록</button>
-                        <button class="btn-welcome-solid" onclick="showTab('company')">＋ 업체 직접 등록</button>
-                    </div>
                 </div>
 
-                <!-- 통계 카드 -->
+                <!-- 통계 카드 4개 -->
                 <div class="stat-cards">
                     <div class="stat-card">
                         <div class="stat-icon blue">🏢</div>
@@ -122,9 +115,8 @@
                     </div>
                 </div>
 
-                <!-- 빠른실행 + 최근보고서 -->
+                <!-- 빠른 실행 + 최근 보고서 -->
                 <div class="dashboard-mid">
-                    <!-- 빠른 실행 2x2 -->
                     <div class="dash-card">
                         <div class="dash-card-title">빠른 실행</div>
                         <div class="quick-grid-2x2">
@@ -151,7 +143,6 @@
                         </div>
                     </div>
 
-                    <!-- 최근 보고서 -->
                     <div class="dash-card">
                         <div class="recent-report-header">
                             <div class="dash-card-title" style="margin-bottom:0;">최근 보고서</div>
@@ -167,20 +158,14 @@
                 <div class="dashboard-bottom">
                     <div class="bottom-card">
                         <div class="bottom-card-header">
-                            <div class="bottom-card-title">
-                                📄 지원사업 공문
-                                <span class="bottom-card-count" id="notice-count">0건</span>
-                            </div>
+                            <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count">0건</span></div>
                             <button class="btn-add-small" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
                         </div>
                         <div class="bottom-empty">등록된 공문이 없습니다.</div>
                     </div>
                     <div class="bottom-card">
                         <div class="bottom-card-header">
-                            <div class="bottom-card-title">
-                                📢 공지사항
-                                <span class="bottom-card-count" id="announce-count">0건</span>
-                            </div>
+                            <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count">0건</span></div>
                             <button class="btn-add-small orange" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
                         </div>
                         <div class="bottom-empty">등록된 공지사항이 없습니다.</div>
@@ -479,7 +464,6 @@
     </main>
 </div>
 
-<!-- AI 로딩 -->
 <div id="ai-loading-overlay">
     <div class="scan-container">
         <div class="document-icon"><div class="scan-line"></div></div>
