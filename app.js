@@ -79,7 +79,7 @@ window.saveCompanyData = function() {
     const name = document.getElementById('comp_name') ? document.getElementById('comp_name').value : "";
     if (!name) { alert('상호명을 반드시 입력해주세요.'); return; }
     
-    // ★ 콤마를 안전하게 제거하고 숫자로 변환 ★
+    // ★ 콤마(,) 완벽 제거 후 숫자로 변환 (11400 에러 해결) ★
     let realRevenue = {
         cur: parseInt((document.getElementById('rev_cur') || {}).value?.replace(/,/g, '')) || 0,
         y25: parseInt((document.getElementById('rev_25') || {}).value?.replace(/,/g, '')) || 0,
@@ -159,10 +159,10 @@ function initInputHandlers() {
 }
 
 /* =========================================
-   5. ★ 스마트 금액 포매터 & AI 차트 연동 로직 ★
+   5. ★ 스마트 금액 포매터 & AI 차트 및 표지 로직 ★
 ========================================= */
 
-// ★ 11400만원 -> 1억 1,400만원 등 완벽한 한글 금액 변환기 ★
+// ★ 완벽한 한글 금액 변환기 (11400 -> 1억 1,400만원) ★
 function formatKoreanCurrency(amountInManwon) {
     if (!amountInManwon || amountInManwon === 0) return '0원';
     const uk = Math.floor(amountInManwon / 10000);
@@ -206,13 +206,13 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     let titleAdd = version === 'client' ? "기업전달용" : "컨설턴트용";
     let subAdd = version === 'client' ? "기업의 현재 역량 분석 및 맞춤형 성장 전략 제안" : "내부 리스크 진단 및 보완 액션 플랜";
     
-    // ★ 표지에 스마트 금액 포매터 반영 및 괄호 부분 하단으로 줄바꿈 처리 ★
+    // ★ H1 제목의 <br>을 완전히 제거하고 한 줄로 유지 ★
     contentArea.innerHTML = `
         <div class="paper-inner">
             <div class="cover-page cover-theme-blue">
                 <div class="cover-header">
                     <h4>AI 경영진단보고서 리포트</h4>
-                    <h1>AI 경영진단<br>보고서</h1>
+                    <h1>AI 경영진단보고서</h1>
                 </div>
                 <div class="cover-middle">
                     <h2>${companyData.name} <span style="font-size:18px; color:#94a3b8;">(${titleAdd})</span></h2>
@@ -242,21 +242,20 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
     `;
 
     setTimeout(() => {
-        // 1. 레이더 차트
         const radarEl = document.getElementById('report-radar-chart');
         if (radarEl) {
             new Chart(radarEl.getContext('2d'), { type: 'radar', data: { labels: ['재무건전성', '성장성', '기술력', '운영효율', '시장성'], datasets: [{ label: '기업 역량 진단 스코어', data: [75, 90, 85, 65, 80], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#1e3a8a' }] }, options: { scales: { r: { min: 0, max: 100 } }, maintainAspectRatio: false } });
         }
         
-        // 2. ★ 본문 차트: 막대에서 -> 우아한 라인(Line) 차트로 변경 & Y축 억단위 포맷 ★
-        const lineEl = document.getElementById('report-bar-chart'); // id는 그대로 유지하되 type을 line으로 그림
+        // ★ 본문 차트: 라인 차트로 변경 & Y축 억단위 포맷 강제 적용 ★
+        const lineEl = document.getElementById('report-bar-chart'); 
         if (lineEl) {
             new Chart(lineEl.getContext('2d'), { 
                 type: 'line', 
                 data: { 
                     labels: ['23년도', '24년도', '25년도', '금년(예상)'], 
                     datasets: [{ 
-                        label: '매출 현황 (단위: 만원)', 
+                        label: '매출 추이', 
                         data: [rev.y23, rev.y24, rev.y25, expectedCurRev], 
                         borderColor: 'rgba(22, 163, 74, 1)', backgroundColor: 'rgba(22, 163, 74, 0.2)', 
                         borderWidth: 2, pointBackgroundColor: 'rgba(22, 163, 74, 1)', pointRadius: 4, 
@@ -265,12 +264,12 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 }, 
                 options: { 
                     maintainAspectRatio: false,
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? (val / 10000) + '억' : val.toLocaleString(); } } } }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
                 } 
             });
         }
         
-        // 3. ★ 표지 차트: X축 텍스트 심플화, Y축 억단위 포맷 ★
+        // ★ 표지 차트: X축 텍스트 심플화, Y축 억단위 포맷 강제 적용 ★
         const coverBarEl = document.getElementById('cover-bar-chart');
         if (coverBarEl) {
             new Chart(coverBarEl.getContext('2d'), { 
@@ -286,7 +285,7 @@ function renderReportToScreen(companyData, cleanHTML, version, rev, dateStr) {
                 options: { 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? (val / 10000) + '억' : val.toLocaleString(); } } } }
+                    scales: { y: { ticks: { callback: function(val) { return val >= 10000 ? Math.floor(val / 10000) + '억' : val.toLocaleString(); } } } }
                 } 
             });
         }
@@ -304,7 +303,7 @@ window.generateReport = async function(reportType, version, event) {
 
     document.getElementById('ai-loading-overlay').style.display = 'flex';
 
-    // ★ 프롬프트 강화: 내용 풍부하게(30자 이상), 개조식 강제, 마크다운 완전 금지 ★
+    // ★ 프롬프트 강화: 30자 이상 길게 작성 요구 추가 ★
     let systemInstruction = `
     너의 역할은 20년 경력의 '경영 컨설턴트'야. 대상 기업명은 '${companyData.name}'이야. 
     제공된 [기업 데이터]를 바탕으로 다음 7개 목차를 작성해. 
@@ -320,10 +319,10 @@ window.generateReport = async function(reportType, version, event) {
     - 각 목차 전체를 반드시 <div class="report-section-box"> 태그로 감싸서 출력할 것.
     - 각 목차의 제목은 반드시 <h3> 태그를 사용할 것.
     - 줄글(<p>) 대신 <ul>과 <li> 태그를 사용하여 불릿 기호로 정리할 것.
-    - 각 <li> 항목은 분석 내용이 충분히 풍부하게 담기도록 최소 30자 이상으로 길게 작성할 것. 내용이 빈약하면 안 됨.
+    - 각 <li> 항목은 분석 내용이 충분히 풍부하게 담기도록 최소 30자 이상으로 길고 상세하게 작성할 것. 절대 빈약하게 쓰지 마.
     - 모든 문장은 '~함', '~임', '~수준임', '~필요함' 등의 간결한 개조식으로 맺을 것.
     - 강조를 위한 별표(**) 등 마크다운 특수기호는 절대 사용하지 말 것.
-    - 표(Table)는 시스템이 그릴 것이므로 절대 그리지 말 것.
+    - 표(Table)는 절대 그리지 말 것.
     `;
 
     const promptData = { ...companyData }; delete promptData.rawData; 
