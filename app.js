@@ -18,15 +18,23 @@ window.printReport = function() {
     const title     = company ? `${company} - ${type}` : type;
     const accentColor = landscape ? '#16a34a' : '#3b82f6';
 
-    // 현재 표시 중인 보고서 HTML 추출
-    const contentAreas = [
-        'report-content-area','finance-content-area','aiBiz-content-area',
-        'aiFund-content-area','aiTrade-content-area','aiMarketing-content-area'
-    ];
+    // ★ contentAreaId를 직접 사용해서 정확한 보고서만 추출 ★
     let reportHTML = '';
-    for (const id of contentAreas) {
-        const el = document.getElementById(id);
-        if (el && el.innerHTML.trim()) { reportHTML = el.innerHTML; break; }
+    const targetAreaId = _currentReport.contentAreaId;
+    if (targetAreaId) {
+        const el = document.getElementById(targetAreaId);
+        if (el && el.innerHTML.trim()) reportHTML = el.innerHTML;
+    }
+    // fallback: contentAreaId가 없으면 순서대로 탐색
+    if (!reportHTML) {
+        const contentAreas = [
+            'aiBiz-content-area','report-content-area','finance-content-area',
+            'aiFund-content-area','aiTrade-content-area','aiMarketing-content-area'
+        ];
+        for (const id of contentAreas) {
+            const el = document.getElementById(id);
+            if (el && el.innerHTML.trim()) { reportHTML = el.innerHTML; break; }
+        }
     }
     if (!reportHTML) { alert('출력할 보고서가 없습니다.'); return; }
 
@@ -55,7 +63,6 @@ window.printReport = function() {
 @page { size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: ${landscape ? '10mm' : '13mm'}; }
 body { background: white; color: #333; font-size: 13px; }
 
-/* ========== 표지 ========== */
 .cover-page {
     height: ${landscape ? '182mm' : '265mm'};
     display: block; position: relative;
@@ -74,15 +81,17 @@ body { background: white; color: #333; font-size: 13px; }
     border-bottom: 2px solid ${accentColor};
     display: inline-block; padding-bottom: 3px; margin-bottom: 8px;
 }
-.cover-header h1 { font-size: ${landscape?'30px':'34px'}; font-weight: 900; color: #0f172a; margin-top: 10px; letter-spacing: -1px; }
-.cover-middle { position: absolute; left: 48px; right: 28px; bottom: 68px; }
-.cover-middle h2 { font-size: ${landscape?'19px':'21px'}; color: #1e3a8a; margin-bottom: 14px; font-weight: bold; }
-.cover-table { width: 100%; background: #f8fafc !important; padding: 14px 18px; border-radius: 6px; }
+.cover-header h1 { font-size: ${landscape?'28px':'32px'}; font-weight: 900; color: #0f172a; margin-top: 10px; letter-spacing: -1px; }
+/* ★ 회사명 이하 콘텐츠 - 더 아래로 ★ */
+.cover-middle { position: absolute; left: 48px; right: 28px; bottom: ${landscape ? '20px' : '30px'}; }
+.cover-middle h2 { font-size: ${landscape?'17px':'19px'}; color: #1e3a8a; margin-bottom: 10px; font-weight: bold; }
+/* ★ 기업개요표 - 더 작게 ★ */
+.cover-table { width: 100%; background: #f8fafc !important; padding: 8px 14px; border-radius: 5px; }
 .cover-table table { width: 100%; border-collapse: collapse; }
-.cover-table th { text-align: center; padding: 9px 6px; color: ${accentColor}; font-size: 12px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 16%; }
-.cover-table td { text-align: center; padding: 9px 6px; color: #334155; font-size: 12px; font-weight: 500; border-bottom: 1px solid #e2e8f0; width: 34%; }
+.cover-table th { text-align: center; padding: 6px 5px; color: ${accentColor}; font-size: 11px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 16%; }
+.cover-table td { text-align: center; padding: 6px 5px; color: #334155; font-size: 11px; font-weight: 500; border-bottom: 1px solid #e2e8f0; width: 34%; }
 .cover-table tr:last-child th, .cover-table tr:last-child td { border-bottom: none; }
-.cover-footer { position: absolute; left: 48px; right: 28px; bottom: 0; display: flex; justify-content: space-between; border-top: 2px solid ${accentColor}; padding-top: 12px; color: #475569; font-size: 12px; font-weight: bold; }
+.cover-footer { position: absolute; left: 48px; right: 28px; bottom: 0; display: flex; justify-content: space-between; border-top: 1px solid ${accentColor}; padding-top: 8px; color: #475569; font-size: 11px; font-weight: bold; }
 
 /* ========== 보고서 섹션 박스 ========== */
 .paper-inner { max-width: 100%; }
@@ -771,7 +780,7 @@ function renderManagementReport(companyData,cleanHTML,version,rev,dateStr){
     const months=Math.max((parseInt((companyData.date||dateStr).split('-')[1])||1)-1,1);
     const expectedCur=Math.round((safeRev.cur/months)*12);
     // ★ 파일명용 메타 저장 ★
-    _currentReport={company:companyData.name,type:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`};
+    _currentReport={company:companyData.name,type:`AI 경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`,contentAreaId:'report-content-area',landscape:false};
     cleanHTML=cleanHTML.replace(/(<h3[^>]*>[^<]*경영진단[^<]*개요[^<]*<\/h3>)/,`$1\n${buildCompanyOverviewTable(companyData,safeRev)}`);
     const pos1=cleanHTML.indexOf('경영진단');
     if(pos1>-1){const ulClose=cleanHTML.indexOf('</ul>',pos1);if(ulClose>-1)cleanHTML=cleanHTML.slice(0,ulClose+5)+'\n<div class="chart-container"><div class="chart-box"><canvas id="report-radar-chart"></canvas></div></div>\n'+cleanHTML.slice(ulClose+5);}
@@ -791,7 +800,7 @@ function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,date
     const contentArea=document.getElementById(contentAreaId);if(!contentArea)return;
     const safeRev=rev||{cur:0,y25:0,y24:0,y23:0};
     // ★ 파일명용 메타 저장 ★
-    _currentReport={company:companyData.name,type:config.title};
+    _currentReport={company:companyData.name,type:config.title,contentAreaId,landscape:false};
     const vLabel=config.version==='client'?'기업의 현황 분석 및 맞춤형 전략 제안':'내부 리스크 진단 및 보완 액션 플랜';
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
 }
@@ -951,7 +960,7 @@ function setupMonthlyChart(el, rev) {
 }
 
 function renderBizReport(companyData, cleanHTML, rev, dateStr) {
-    _currentReport = { company: companyData.name, type: 'AI 사업계획서', landscape: true };
+    _currentReport = { company: companyData.name, type: 'AI 사업계획서', contentAreaId: 'aiBiz-content-area', landscape: true };
     const safeRev = rev || {};
     const coverCfg = { title: 'AI 사업계획서', reportKind: 'AI 맞춤형 사업계획서', version: 'client', borderColor: '#16a34a' };
     const contentArea = document.getElementById('aiBiz-content-area');
