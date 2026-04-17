@@ -228,8 +228,15 @@ window.showTab = function(tabId, updateUrl=true) {
     const target=document.getElementById(tabId); if(target) target.classList.add('active');
     const menu=document.getElementById('menu-'+tabId); if(menu) menu.classList.add('active');
     if(tabId==='settings') loadUserProfile();
-    // 업체 관리 탭은 항상 목록 화면으로
     if(tabId==='company') showCompanyList();
+    // ★ 보고서 탭 클릭 시 항상 입력 화면으로 리셋 ★
+    const reportTabs = ['report','finance','aiBiz','aiFund','aiTrade','aiMarketing'];
+    if (reportTabs.includes(tabId)) {
+        const inp = document.getElementById(tabId+'-input-step');
+        const res = document.getElementById(tabId+'-result-step');
+        if (inp) inp.style.display = 'block';
+        if (res) res.style.display = 'none';
+    }
     updateDataLists();
     if(updateUrl) history.pushState(null,'',`?tab=${tabId}`);
 };
@@ -425,20 +432,23 @@ window.deleteReport = function(id) {
 
 /* ===== 기업 저장 ===== */
 window.clearCompanyForm = function() { if(confirm('초기화하시겠습니까?')){ document.getElementById('companyForm').reset(); calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); } };
-window.saveCompanyData = function() {
-    const name=document.getElementById('comp_name')?.value; if(!name){ alert('상호명을 입력해주세요.'); return; }
+window.saveCompanyData=function(){
+    const name=document.getElementById('comp_name')?.value; if(!name){alert('상호명을 입력해주세요.');return;}
     const rev={
         cur:parseInt(document.getElementById('rev_cur')?.value?.replace(/,/g,'')||0),
         y25:parseInt(document.getElementById('rev_25')?.value?.replace(/,/g,'')||0),
         y24:parseInt(document.getElementById('rev_24')?.value?.replace(/,/g,'')||0),
         y23:parseInt(document.getElementById('rev_23')?.value?.replace(/,/g,'')||0)
     };
+    // ★ 필요자금 별도 저장 ★
+    const needFundRaw = document.getElementById('need_fund')?.value?.replace(/,/g,'') || '0';
+    const needFund = parseInt(needFundRaw) || 0;
     const newC={
         name, rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',
         bizNum:document.getElementById('biz_number')?.value||'-', industry:document.getElementById('comp_industry')?.value||'-',
         bizDate:document.getElementById('biz_date')?.value||'-', empCount:document.getElementById('emp_count')?.value||'-',
         coreItem:document.getElementById('core_item')?.value||'-', date:new Date().toISOString().split('T')[0],
-        revenueData:rev,
+        revenueData:rev, needFund,
         rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))
     };
     let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
@@ -676,11 +686,10 @@ const REPORT_CONFIGS={
 
 섹션7: <div class="report-section-box"><h3>7. 자금사용계획</h3>
 <table class="fund-plan-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
-<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비 등 6~8개 항목.
-★ 중요: 기업데이터의 '필요자금' 항목 금액을 기준으로 배분할 것. 
-★ 금액 표기는 반드시 한국식으로 작성: 만원단위값÷10000=억, 나머지는 만원. 예) 60000만원→6억원, 14000만원→1억 4,000만원, 3000만원→3,000만원
-★ 금액 컬럼에는 절대 숫자만 쓰지 말고 반드시 "X억 Y,000만원" 또는 "X,000만원" 형식으로 작성]</tbody>
-<tfoot><tr><td colspan="1">합계</td><td>[필요자금 총액을 한국식으로 표기]</td><td>100%</td><td>-</td></tr></tfoot></table>
+<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비·기타운영비 등 6~8개 항목.
+★ 반드시: 총 합계 금액 = ${cData.needFund && cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '기업 입력 필요자금 기준'} (이 금액을 기준으로 각 항목에 적절히 배분할 것)
+★ 금액 표기: 만원 단위 숫자를 반드시 한국식으로 변환. 예) 60000→6억원, 14000→1억 4,000만원, 3000→3,000만원 (절대 숫자만 쓰지 말 것)]</tbody>
+<tfoot><tr><td colspan="1">합계</td><td>${cData.needFund && cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '[필요자금 총액]'}</td><td>100%</td><td>-</td></tr></tfoot></table>
 <ul>[자금 집행 전략 및 우선순위 li 3~4개]</ul></div>
 
 섹션8: <div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
