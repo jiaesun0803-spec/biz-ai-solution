@@ -264,6 +264,87 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-table { width: 100%; border-collapse: collapse; text-align: left; }
 .report-table th { background: #f8fafc; color: #64748b; font-size: 14px; padding: 15px; border-bottom: 2px solid #e2e8f0; }
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; vertical-align: middle; }
+/* ====================================================
+   ★ 기업/보고서 목록 서브뷰
+==================================================== */
+.rl-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    margin-top: 8px;
+}
+.btn-more {
+    background: white;
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-more:hover { background: #eff6ff; }
+.btn-back-list {
+    background: white;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.btn-back-list:hover { background: #f8fafc; border-color: #94a3b8; }
+
+/* 보고서 필터 바 */
+.report-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.filter-group label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #475569;
+    white-space: nowrap;
+}
+.filter-group select {
+    padding: 7px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #f8fafc;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    width: auto;
+    min-width: 140px;
+}
+.filter-group select:focus { border-color: #3b82f6; background: white; }
+.filter-count {
+    margin-left: auto;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: bold;
+}
+
 .list-sub-title { font-size: 17px; margin: 25px 0 12px 0; color: #1e293b; font-weight: bold; border-left: 4px solid #3b82f6; padding-left: 10px; }
 .view-all { font-size: 13px; color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: bold; }
 
