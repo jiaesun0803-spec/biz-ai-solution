@@ -402,24 +402,122 @@ function updateDashboardReports() {
 window.updateDataLists = function() {
     const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
     const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+
+    // 드롭다운 갱신
     document.querySelectorAll('.company-dropdown').forEach(sel=>{
         sel.innerHTML='<option value="">기업을 선택하세요</option>';
         companies.forEach(c=>sel.innerHTML+=`<option value="${c.name}">${c.name}</option>`);
     });
+
+    // 요약: 기업 최대 5개
     const cBody=document.getElementById('company-list-body');
-    if(cBody) cBody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';
+    if(cBody){
+        const shown = companies.slice(0,5);
+        cBody.innerHTML = shown.length
+            ? shown.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join('')
+            : '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';
+    }
+
+    // 요약: 보고서 최대 5개
     const rBody=document.getElementById('report-list-body');
-    if(rBody) rBody.innerHTML=reports.length?reports.map(r=>`
-        <tr>
-            <td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td>
-            <td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td>
-            <td style="white-space:nowrap;">
-                <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
-                <button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button>
-            </td>
-        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
+    if(rBody){
+        const shown=[...reports].reverse().slice(0,5);
+        rBody.innerHTML = shown.length
+            ? shown.map(r=>`<tr>
+                <td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td>
+                <td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+                    <button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button>
+                </td></tr>`).join('')
+            : '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>';
+    }
+
+    // 보고서 전체 필터 드롭다운 갱신
+    const filterComp = document.getElementById('filter-company');
+    if(filterComp){
+        filterComp.innerHTML = '<option value="">전체 업체</option>';
+        companies.forEach(c => filterComp.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+    }
+
     updateDashboardReports();
     renderCompanyCards();
+};
+
+/* ===== 보고서 목록 서브뷰 전환 ===== */
+window.showReportListSummary = function() {
+    document.getElementById('rl-summary').style.display = 'block';
+    document.getElementById('rl-companies').style.display = 'none';
+    document.getElementById('rl-reports').style.display = 'none';
+    updateDataLists();
+};
+
+window.showFullCompanies = function() {
+    document.getElementById('rl-summary').style.display = 'none';
+    document.getElementById('rl-companies').style.display = 'block';
+    document.getElementById('rl-reports').style.display = 'none';
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const tbody = document.getElementById('company-full-body');
+    if(tbody){
+        tbody.innerHTML = companies.length
+            ? companies.map(c=>`<tr>
+                <td><strong>${c.name}</strong></td>
+                <td>${c.rep||'-'}</td>
+                <td>${c.bizNum||'-'}</td>
+                <td>${c.industry||'-'}</td>
+                <td>${c.date}</td>
+                <td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td>
+            </tr>`).join('')
+            : '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';
+    }
+};
+
+window.showFullReports = function() {
+    document.getElementById('rl-summary').style.display = 'none';
+    document.getElementById('rl-companies').style.display = 'none';
+    document.getElementById('rl-reports').style.display = 'block';
+    // 업체 필터 드롭다운 갱신
+    const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    const filterComp = document.getElementById('filter-company');
+    if(filterComp){
+        filterComp.innerHTML = '<option value="">전체 업체</option>';
+        companies.forEach(c => filterComp.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+    }
+    renderFullReports();
+};
+
+window.renderFullReports = function() {
+    const typeFilter    = document.getElementById('filter-type')?.value    || '';
+    const companyFilter = document.getElementById('filter-company')?.value || '';
+    const reports = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    const filtered = [...reports].reverse().filter(r =>
+        (!typeFilter    || r.type    === typeFilter) &&
+        (!companyFilter || r.company === companyFilter)
+    );
+    const countEl = document.getElementById('filter-result-count');
+    if(countEl) countEl.textContent = `총 ${filtered.length}건`;
+    const tbody = document.getElementById('report-full-body');
+    if(!tbody) return;
+    tbody.innerHTML = filtered.length
+        ? filtered.map(r=>`<tr>
+            <td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td>
+            <td><strong>${r.company}</strong></td>
+            <td>${r.title}</td>
+            <td>${r.date}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+                <button class="btn-delete" style="margin-left:6px;" onclick="deleteReportFull('${r.id}')">삭제</button>
+            </td></tr>`).join('')
+        : '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">조건에 맞는 보고서가 없습니다.</td></tr>';
+};
+
+window.deleteReportFull = function(id) {
+    if(!confirm('이 보고서를 삭제하시겠습니까?')) return;
+    let reports = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    reports = reports.filter(r=>r.id!==id);
+    localStorage.setItem(DB_REPORTS, JSON.stringify(reports));
+    renderFullReports();
+    updateDashboardReports();
 };
 
 window.deleteReport = function(id) {
@@ -440,15 +538,15 @@ window.saveCompanyData=function(){
         y24:parseInt(document.getElementById('rev_24')?.value?.replace(/,/g,'')||0),
         y23:parseInt(document.getElementById('rev_23')?.value?.replace(/,/g,'')||0)
     };
-    // ★ 필요자금 별도 저장 ★
     const needFundRaw = document.getElementById('need_fund')?.value?.replace(/,/g,'') || '0';
     const needFund = parseInt(needFundRaw) || 0;
+    const fundPlan = document.getElementById('fund_plan')?.value || '';
     const newC={
         name, rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',
         bizNum:document.getElementById('biz_number')?.value||'-', industry:document.getElementById('comp_industry')?.value||'-',
         bizDate:document.getElementById('biz_date')?.value||'-', empCount:document.getElementById('emp_count')?.value||'-',
         coreItem:document.getElementById('core_item')?.value||'-', date:new Date().toISOString().split('T')[0],
-        revenueData:rev, needFund,
+        revenueData:rev, needFund, fundPlan,
         rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))
     };
     let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
@@ -686,11 +784,16 @@ const REPORT_CONFIGS={
 
 섹션7: <div class="report-section-box"><h3>7. 자금사용계획</h3>
 <table class="fund-plan-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
-<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비·기타운영비 등 6~8개 항목.
-★ 반드시: 총 합계 금액 = ${cData.needFund && cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '기업 입력 필요자금 기준'} (이 금액을 기준으로 각 항목에 적절히 배분할 것)
-★ 금액 표기: 만원 단위 숫자를 반드시 한국식으로 변환. 예) 60000→6억원, 14000→1억 4,000만원, 3000→3,000만원 (절대 숫자만 쓰지 말 것)]</tbody>
-<tfoot><tr><td colspan="1">합계</td><td>${cData.needFund && cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '[필요자금 총액]'}</td><td>100%</td><td>-</td></tr></tfoot></table>
-<ul>[자금 집행 전략 및 우선순위 li 3~4개]</ul></div>
+<tbody>
+★★★ 필수: 아래 업체 입력 데이터를 반드시 사용할 것 ★★★
+- 총 필요자금: ${cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '업체 입력값 확인 필요'}
+- 업체 자금사용계획 메모: "${cData.fundPlan || '별도 입력 없음'}"
+- 위 데이터를 기반으로 6~8개 항목에 비율에 맞게 배분하여 작성
+- 금액 표기: 반드시 한국식으로 변환 (60000만원→6억원, 14000만원→1억 4,000만원)
+- 임의로 금액을 설정하지 말 것. 위 총 필요자금 안에서만 배분할 것
+</tbody>
+<tfoot><tr><td colspan="1">합계</td><td>${cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '[필요자금 총액]'}</td><td>100%</td><td>-</td></tr></tfoot></table>
+<ul>[자금 집행 전략 및 우선순위 li 3~4개. 반드시 위 자금사용계획 메모 내용 기반으로 작성]</ul></div>
 
 섹션8: <div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
 <div class="biz-chart-section">
