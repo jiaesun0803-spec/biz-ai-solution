@@ -69,21 +69,27 @@ window.printReport = function() {
 .biz-info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; font-size: 12px; }
 .biz-info-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 10px; color: #1e40af; font-weight: bold; width: 14%; -webkit-print-color-adjust: exact; color-adjust: exact; }
 .biz-info-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #1e293b; }
-/* 성장 3단계 */
-.growth-phases { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
-.growth-phase { border-radius: 8px; padding: 12px; page-break-inside: avoid; }
+/* 성장 3단계 세로형 */
+.growth-phases { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.growth-phase { border-radius: 8px; padding: 10px 14px; page-break-inside: avoid; display: flex; gap: 14px; align-items: flex-start; }
 .phase-short { background: #eff6ff; border: 1px solid #93c5fd; -webkit-print-color-adjust: exact; color-adjust: exact; }
 .phase-mid   { background: #f0fdf4; border: 1px solid #86efac; -webkit-print-color-adjust: exact; color-adjust: exact; }
 .phase-long  { background: #fdf4ff; border: 1px solid #d8b4fe; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.phase-header { font-weight: bold; font-size: 12px; margin-bottom: 8px; }
+.phase-header { font-weight: bold; font-size: 12px; white-space: nowrap; min-width: 90px; padding-top: 2px; }
 .phase-short .phase-header { color: #1d4ed8; }
 .phase-mid .phase-header   { color: #15803d; }
 .phase-long .phase-header  { color: #7c3aed; }
-.growth-phase ul { list-style: none; padding: 0; margin: 0; }
-.growth-phase li { font-size: 11px; padding-left: 10px; position: relative; margin-bottom: 5px; line-height: 1.5; color: #334155; word-break: keep-all; }
+.growth-phase ul { list-style: none; padding: 0; margin: 0; flex: 1; display: flex; flex-wrap: wrap; gap: 2px 16px; }
+.growth-phase li { font-size: 11px; padding-left: 10px; position: relative; line-height: 1.5; color: #334155; word-break: keep-all; width: calc(50% - 8px); }
 .growth-phase li::before { content: '•'; position: absolute; left: 0; }
+.phase-short li::before { color: #1d4ed8; }
+.phase-mid li::before   { color: #15803d; }
+.phase-long li::before  { color: #7c3aed; }
+/* 차트 제목 */
+.biz-chart-section { margin-bottom: 10px; }
+.biz-chart-title { font-size: 12px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
 /* 월별차트 */
-#biz-monthly-chart-wrap { width: 100%; height: 200px; margin-bottom: 12px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; padding: 10px; }
+#biz-monthly-chart-wrap { width: 100%; height: 190px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; padding: 10px; }
 /* 마무리 */
 .biz-closing p { font-size: 14px; line-height: 1.9; color: #1e293b; font-weight: 500; }
 ` : '';
@@ -669,15 +675,21 @@ const REPORT_CONFIGS={
 <ul>[추천 인증/교육 li 5개 이상. 각 항목마다 "인증명: 취득시 [기관명] 정책자금 최대 [금액]원 추가 한도 가능" 형식으로 작성. 벤처인증·이노비즈·메인비즈·ISO·연구소 등 포함]</ul></div>
 
 섹션7: <div class="report-section-box"><h3>7. 자금사용계획</h3>
-<table class="fund-plan-table"><thead><tr><th>항목</th><th>금액(만원)</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
-<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비 등 6~8개 항목. 금액은 ${fRev.금년예상연간매출} 기준으로 현실적으로 산정]</tbody>
-<tfoot><tr><td colspan="1">합계</td><td>[총액만원]</td><td>100%</td><td>-</td></tr></tfoot></table>
+<table class="fund-plan-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
+<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비 등 6~8개 항목.
+★ 중요: 기업데이터의 '필요자금' 항목 금액을 기준으로 배분할 것. 
+★ 금액 표기는 반드시 한국식으로 작성: 만원단위값÷10000=억, 나머지는 만원. 예) 60000만원→6억원, 14000만원→1억 4,000만원, 3000만원→3,000만원
+★ 금액 컬럼에는 절대 숫자만 쓰지 말고 반드시 "X억 Y,000만원" 또는 "X,000만원" 형식으로 작성]</tbody>
+<tfoot><tr><td colspan="1">합계</td><td>[필요자금 총액을 한국식으로 표기]</td><td>100%</td><td>-</td></tr></tfoot></table>
 <ul>[자금 집행 전략 및 우선순위 li 3~4개]</ul></div>
 
 섹션8: <div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
+<div class="biz-chart-section">
+<div class="biz-chart-title">「1년 전망」</div>
 <div id="biz-monthly-chart-wrap"><canvas id="biz-monthly-chart"></canvas></div>
+</div>
 <div class="growth-phases">
-<div class="growth-phase phase-short"><div class="phase-header">⚡ 단기 (1년 이내)</div><ul><li>단기목표1</li><li>단기목표2</li><li>단기목표3</li><li>단기목표4</li></ul></div>
+<div class="growth-phase phase-short"><div class="phase-header">⚡ 단기 (1년 이내)</div><ul><li>단기목표1 - 업체 입력 앞으로의계획 기반으로 구체적으로 작성</li><li>단기목표2</li><li>단기목표3</li><li>단기목표4</li></ul></div>
 <div class="growth-phase phase-mid"><div class="phase-header">📈 중기 (3년 이내)</div><ul><li>중기목표1</li><li>중기목표2</li><li>중기목표3</li><li>중기목표4</li></ul></div>
 <div class="growth-phase phase-long"><div class="phase-header">🌟 장기 (5년 이후)</div><ul><li>장기목표1</li><li>장기목표2</li><li>장기목표3</li><li>장기목표4</li></ul></div>
 </div></div>
