@@ -704,7 +704,18 @@ function formatRevenueForAI(companyData,rev){
     return{금년매출_전월말기준:formatKoreanCurrency(rev.cur),금년예상연간매출:formatKoreanCurrency(expectedCur)+` (${months}개월 기준 연간 환산)`,매출_2025년:formatKoreanCurrency(rev.y25),매출_2024년:formatKoreanCurrency(rev.y24),매출_2023년:formatKoreanCurrency(rev.y23),_raw:rev,_expected:expectedCur,_months:months};
 }
 
-/* ===== Gemini API ===== */
+/* ===== Gemini API (사업계획서 전용 - 고토큰) ===== */
+async function callGeminiAPIBiz(prompt){
+    const session=JSON.parse(localStorage.getItem('biz_session'));
+    const apiKey=session?.apiKey;
+    if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
+    try{
+        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,topK:40,topP:0.95,maxOutputTokens:65536}})});
+        const data=await res.json();
+        if(!res.ok||data.error)throw new Error(data.error?.message||'API 에러');
+        return data.candidates[0].content.parts[0].text;
+    }catch(e){console.error(e);alert('오류: '+e.message);return null;}
+}
 async function callGeminiAPI(prompt){
     const session=JSON.parse(localStorage.getItem('biz_session'));
     const apiKey=session?.apiKey;
@@ -846,76 +857,82 @@ ${COMMON_RULES}${consultantFeedbackRule}
 const REPORT_CONFIGS={
     finance:{typeLabel:'재무진단',title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',borderColor:'#2563eb',contentAreaId:'finance-content-area',buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.재무개요(3~4) 2.수익성분석(5~6) 3.안정성분석(5~6) 4.성장성분석(4~5) 5.재무개선방향(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',
-        buildPrompt:(cData,fRev)=>`너는 20년 경력의 경영컨설턴트이자 사업계획서 전문가야. 대상 기업: '${cData.name}'
+        buildPrompt:(cData,fRev)=>{
+const needFundStr = cData.needFund>0 ? formatKoreanCurrency(cData.needFund) : '미입력';
+const fundPlanStr = cData.fundPlan || '별도 입력 없음';
+return `너는 20년 경력의 경영컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'-'}, 대표:${cData.rep||'-'}, 핵심아이템:${cData.coreItem||'-'})
 
-아래 10개 목차를 반드시 순서대로 모두 작성하고, 각 섹션은 지정된 HTML 형식을 정확히 따를 것.
+★ 반드시 아래 10개 섹션을 모두 빠짐없이 작성할 것. 섹션을 건너뛰거나 생략하지 말 것. ★
 
-[★ 공통 규칙 ★]
-- 각 목차는 <div class="report-section-box">로 감쌀 것
-- 제목은 <h3>, 본문 리스트는 <ul><li>, li는 최소 35자 이상
-- 표(table)는 지정된 class를 반드시 사용할 것
-- 금액은 한글로(예: 1억 3,800만원), 개조식 문체(~함, ~임)
-- 인사말, 도입문 등 섹션 앞 텍스트 절대 출력 금지
-- 마크다운(**) 특수기호 사용 금지
+[출력 규칙]
+- 각 섹션은 반드시 <div class="report-section-box"> 로 시작하고 </div>로 닫을 것
+- 섹션 제목은 <h3>번호. 제목</h3>
+- 리스트는 <ul><li>내용(최소 40자)</li></ul>, 표는 지정 class 사용
+- 금액은 한국식(억원/만원), 개조식 문체(~함, ~임), 인사말 금지, ** 금지
 
-[목차별 형식]
-
-섹션1: <div class="report-section-box"><h3>1. 기업현황분석</h3>
+=== 섹션 1: 기업현황분석 ===
+<div class="report-section-box"><h3>1. 기업현황분석</h3>
 <table class="biz-info-table"><tr><th>기업명</th><td>${cData.name}</td><th>대표자</th><td>${cData.rep||'-'}</td></tr><tr><th>업종</th><td>${cData.industry||'-'}</td><th>설립일</th><td>${cData.bizDate||'-'}</td></tr><tr><th>상시근로자</th><td>${cData.empCount||'-'}명</td><th>핵심아이템</th><td>${cData.coreItem||'-'}</td></tr></table>
-<ul>[기업현황 분석 li 5개 이상, 매출성장 트렌드·시장 내 포지션·주요 성과 포함]</ul></div>
+<ul><li>기업현황 분석 내용 li 5개, 매출트렌드·성과·시장포지션 포함</li></ul></div>
 
-섹션2: <div class="report-section-box"><h3>2. SWOT 분석</h3>
+=== 섹션 2: SWOT 분석 ===
+<div class="report-section-box"><h3>2. SWOT 분석</h3>
 <div class="swot-grid">
-<div class="swot-item swot-s"><div class="swot-label">💪 S 강점 (Strength)</div><ul><li>강점1</li><li>강점2</li><li>강점3</li><li>강점4</li></ul></div>
-<div class="swot-item swot-w"><div class="swot-label">⚠️ W 약점 (Weakness)</div><ul><li>약점1</li><li>약점2</li><li>약점3</li></ul></div>
-<div class="swot-item swot-o"><div class="swot-label">🚀 O 기회 (Opportunity)</div><ul><li>기회1</li><li>기회2</li><li>기회3</li><li>기회4</li></ul></div>
-<div class="swot-item swot-t"><div class="swot-label">🛡️ T 위협 (Threat)</div><ul><li>위협1</li><li>위협2</li><li>위협3</li></ul></div>
+<div class="swot-item swot-s"><div class="swot-label">💪 S 강점 (Strength)</div><ul><li>강점 li 4개</li></ul></div>
+<div class="swot-item swot-w"><div class="swot-label">⚠️ W 약점 (Weakness)</div><ul><li>약점 li 3개</li></ul></div>
+<div class="swot-item swot-o"><div class="swot-label">🚀 O 기회 (Opportunity)</div><ul><li>기회 li 4개</li></ul></div>
+<div class="swot-item swot-t"><div class="swot-label">🛡️ T 위협 (Threat)</div><ul><li>위협 li 3개</li></ul></div>
 </div></div>
 
-섹션3: <div class="report-section-box"><h3>3. 시장현황</h3><ul>[시장규모·트렌드·성장성 li 5~6개]</ul></div>
+=== 섹션 3: 시장현황 ===
+<div class="report-section-box"><h3>3. 시장현황</h3>
+<ul><li>시장규모·트렌드·성장성 li 5개</li></ul></div>
 
-섹션4: <div class="report-section-box"><h3>4. 경쟁력분석</h3>
-<ul>[경쟁력 분석 li 4~5개]</ul>
+=== 섹션 4: 경쟁력분석 ===
+<div class="report-section-box"><h3>4. 경쟁력분석</h3>
+<ul><li>경쟁력 분석 li 4개</li></ul>
 <table class="competitor-table"><thead><tr><th>비교 항목</th><th>${cData.name}</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead>
-<tbody>
-[제품경쟁력·가격경쟁력·기술력·브랜드인지도·유통망·고객서비스·성장성 등 7개 행. 자사는 ★★★★★~★★★★, 경쟁사는 ★★★~★★★★ 형식으로 평가]
+<tbody><tr><td>제품 경쟁력</td><td>★★★★★</td><td>★★★★</td><td>★★★</td></tr>
+[가격경쟁력·기술력·브랜드인지도·유통망·고객서비스·성장성 추가로 6행 더]
 </tbody></table></div>
 
-섹션5: <div class="report-section-box"><h3>5. 차별점 및 핵심경쟁력</h3><ul>[차별점·핵심경쟁력 li 5~6개, 구체적 근거 포함]</ul></div>
+=== 섹션 5: 차별점 및 핵심경쟁력 ===
+<div class="report-section-box"><h3>5. 차별점 및 핵심경쟁력</h3>
+<ul><li>차별점·핵심경쟁력 li 5개, 구체적 근거 포함</li></ul></div>
 
-섹션6: <div class="report-section-box"><h3>6. 가점추천: 한도 확대를 위한 추천 인증 및 교육</h3>
-<ul>[추천 인증/교육 li 5개 이상. 각 항목마다 "인증명: 취득시 [기관명] 정책자금 최대 [금액]원 추가 한도 가능" 형식으로 작성. 벤처인증·이노비즈·메인비즈·ISO·연구소 등 포함]</ul></div>
+=== 섹션 6: 가점추천 ===
+<div class="report-section-box"><h3>6. 가점추천: 한도 확대를 위한 추천 인증 및 교육</h3>
+<ul><li>[인증명]: 취득시 [기관] 정책자금 최대 [금액] 추가한도 가능 - 형식으로 5개 이상. 벤처인증·이노비즈·메인비즈·ISO·연구소·경영혁신형 포함</li></ul></div>
 
-섹션7: <div class="report-section-box"><h3>7. 자금사용계획</h3>
-<table class="fund-plan-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th><th>구체적 사용 목적</th></tr></thead>
-<tbody>
-★★★ 필수: 아래 업체 입력 데이터를 반드시 사용할 것 ★★★
-- 총 필요자금: ${cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '업체 입력값 확인 필요'}
-- 업체 자금사용계획 메모: "${cData.fundPlan || '별도 입력 없음'}"
-- 위 데이터를 기반으로 6~8개 항목에 비율에 맞게 배분하여 작성
-- 금액 표기: 반드시 한국식으로 변환 (60000만원→6억원, 14000만원→1억 4,000만원)
-- 임의로 금액을 설정하지 말 것. 위 총 필요자금 안에서만 배분할 것
-</tbody>
-<tfoot><tr><td colspan="1">합계</td><td>${cData.needFund > 0 ? formatKoreanCurrency(cData.needFund) : '[필요자금 총액]'}</td><td>100%</td><td>-</td></tr></tfoot></table>
-<ul>[자금 집행 전략 및 우선순위 li 3~4개. 반드시 위 자금사용계획 메모 내용 기반으로 작성]</ul></div>
+=== 섹션 7: 자금사용계획 ===
+[주의] 총 필요자금=${needFundStr}, 업체자금계획="${fundPlanStr}"
+이 금액 안에서 항목별 배분. 금액은 한국식(억원/만원)으로 표기.
+<div class="report-section-box"><h3>7. 자금사용계획</h3>
+<table class="fund-plan-table"><thead><tr><th>항목</th><th>금액</th><th>비율</th><th>사용 목적</th></tr></thead>
+<tbody>[운전자금·시설자금·인건비·마케팅비·연구개발비·기타 6~8행]</tbody>
+<tfoot><tr><td>합계</td><td>${needFundStr}</td><td>100%</td><td>-</td></tr></tfoot></table>
+<ul><li>자금 집행 전략 li 3개</li></ul></div>
 
-섹션8: <div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
-<div class="biz-chart-section">
-<div class="biz-chart-title">「1년 전망」</div>
-<div id="biz-monthly-chart-wrap"><canvas id="biz-monthly-chart"></canvas></div>
-</div>
+=== 섹션 8: 매출 추이 및 1년 전망 ===
+<div class="report-section-box"><h3>8. 매출 추이 및 1년 전망</h3>
+<div class="biz-chart-section"><div class="biz-chart-title">「1년 전망」</div><div id="biz-monthly-chart-wrap"><canvas id="biz-monthly-chart"></canvas></div></div>
 <div class="growth-phases">
-<div class="growth-phase phase-short"><div class="phase-header">⚡ 단기 (1년 이내)</div><ul><li>단기목표1 - 업체 입력 앞으로의계획 기반으로 구체적으로 작성</li><li>단기목표2</li><li>단기목표3</li><li>단기목표4</li></ul></div>
-<div class="growth-phase phase-mid"><div class="phase-header">📈 중기 (3년 이내)</div><ul><li>중기목표1</li><li>중기목표2</li><li>중기목표3</li><li>중기목표4</li></ul></div>
-<div class="growth-phase phase-long"><div class="phase-header">🌟 장기 (5년 이후)</div><ul><li>장기목표1</li><li>장기목표2</li><li>장기목표3</li><li>장기목표4</li></ul></div>
+<div class="growth-phase phase-short"><div class="phase-header">⚡ 단기 (1년 이내)</div><ul><li>단기 목표 li 4개, 업체 입력 계획 기반</li></ul></div>
+<div class="growth-phase phase-mid"><div class="phase-header">📈 중기 (3년 이내)</div><ul><li>중기 목표 li 4개</li></ul></div>
+<div class="growth-phase phase-long"><div class="phase-header">🌟 장기 (5년 이후)</div><ul><li>장기 목표 li 4개</li></ul></div>
 </div></div>
 
-섹션9: <div class="report-section-box"><h3>9. 성장비전</h3><ul>[앞으로의계획·발전가능성·비전 li 5~6개, 업체 입력 데이터 기반으로 구체적으로]</ul></div>
+=== 섹션 9: 성장비전 ===
+<div class="report-section-box"><h3>9. 성장비전</h3>
+<ul><li>발전가능성·비전·향후계획 li 5개, 업체 입력 내용 기반 구체적으로</li></ul></div>
 
-섹션10: <div class="report-section-box biz-closing"><h3>10. 마무리</h3>
-<p>[마무리 문장. '~있음' 형식으로 간결하게 4~5문장. 핵심 강점과 기대효과 요약]</p></div>
+=== 섹션 10: 마무리 ===
+<div class="report-section-box biz-closing"><h3>10. 마무리</h3>
+<p>마무리 문장 4~5문장. 반드시 '~있음' 형식으로 간결하게 마무리.</p></div>
 
-[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
+[기업 데이터]
+${JSON.stringify({name:cData.name,rep:cData.rep,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,bizNum:cData.bizNum,필요자금:needFundStr,자금사용계획:fundPlanStr,매출데이터:fRev},null,2)}`;
+        }},
     aiFund:{typeLabel:'정책자금매칭',title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',borderColor:'#ea580c',contentAreaId:'aiFund-content-area',buildPrompt:(cData,fRev,version)=>`너는 중소기업 정책자금 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.기업자격요건분석(4~5) 2.자금필요성(3~4) 3.추천정책자금TOP5(각3~4줄) 4.기관별신청전략(5~6) 5.신청준비체크리스트(6~8)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiTrade:{typeLabel:'상권분석',title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',borderColor:'#0d9488',contentAreaId:'aiTrade-content-area',buildPrompt:(cData,fRev,version)=>`너는 상권분석 전문 컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'미입력'})\n5개섹션: 1.상권개요및입지분석(4~5) 2.유동인구및타겟(5~6) 3.경쟁현황및포지셔닝(5~6) 4.상권성장성및리스크(4~5) 5.매출예측및운영전략(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiMarketing:{typeLabel:'마케팅제안',title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',borderColor:'#db2777',contentAreaId:'aiMarketing-content-area',buildPrompt:(cData,fRev,version)=>`너는 디지털 마케팅 전문 컨설턴트야. 대상: '${cData.name}'\n6개섹션: 1.마케팅현황진단(4~5) 2.타겟고객설정(5~6) 3.채널별마케팅전략(6~8) 4.콘텐츠및브랜딩전략(5~6) 5.마케팅예산계획(4~5) 6.월별실행로드맵(6항목)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`}
@@ -978,7 +995,9 @@ window.generateAnyReport=async function(type,version,event){
     const fRev=formatRevenueForAI(companyData,rev);
     const cfg=REPORT_CONFIGS[type];if(!cfg)return;
     document.getElementById('ai-loading-overlay').style.display='flex';
-    const aiResponse=await callGeminiAPI(cfg.buildPrompt(companyData,fRev,version));
+    // ★ 사업계획서는 고토큰(65536) API 사용 ★
+    const apiCall = type === 'aiBiz' ? callGeminiAPIBiz : callGeminiAPI;
+    const aiResponse=await apiCall(cfg.buildPrompt(companyData,fRev,version));
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
         let cleanHTML=cleanAIResponse(aiResponse);
