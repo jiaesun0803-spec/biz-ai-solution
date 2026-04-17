@@ -16,7 +16,9 @@ window.printReport = function() {
     const type      = _currentReport.type      || 'AI 보고서';
     const landscape = _currentReport.landscape || false;
     const title     = company ? `${company} - ${type}` : type;
+    const accentColor = landscape ? '#16a34a' : '#3b82f6';
 
+    // 현재 표시 중인 보고서 HTML 추출
     const contentAreas = [
         'report-content-area','finance-content-area','aiBiz-content-area',
         'aiFund-content-area','aiTrade-content-area','aiMarketing-content-area'
@@ -28,107 +30,169 @@ window.printReport = function() {
     }
     if (!reportHTML) { alert('출력할 보고서가 없습니다.'); return; }
 
-    const pageCSS = landscape
-        ? `@page { size: A4 landscape; margin: 10mm; }`
-        : `@page { size: A4 portrait; margin: 15mm; }`;
+    // 월별 차트 데이터 (사업계획서용)
+    const curMonth = new Date().getMonth();
+    const bizRevData = (() => {
+        try {
+            const companies = JSON.parse(localStorage.getItem('biz_consult_companies')||'[]');
+            const cur = companies.find(c=>c.name===company);
+            return cur?.revenueData || {};
+        } catch(e){ return {}; }
+    })();
+    const avgMonthly = bizRevData.cur && curMonth > 0
+        ? Math.round(bizRevData.cur / curMonth)
+        : bizRevData.y25 ? Math.round(bizRevData.y25 / 12) : 3000;
 
-    // ★ 사업계획서 전용 추가 CSS ★
-    const bizCSS = landscape ? `
-/* SWOT 2x2 */
-.swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.swot-item { border-radius: 8px; padding: 14px; page-break-inside: avoid; }
-.swot-s { background: #f0fdf4; border: 1px solid #86efac; }
-.swot-w { background: #fef2f2; border: 1px solid #fca5a5; }
-.swot-o { background: #eff6ff; border: 1px solid #93c5fd; }
-.swot-t { background: #fff7ed; border: 1px solid #fdba74; }
-.swot-label { font-weight: bold; font-size: 13px; margin-bottom: 8px; }
-.swot-s .swot-label { color: #16a34a; }
-.swot-w .swot-label { color: #dc2626; }
-.swot-o .swot-label { color: #2563eb; }
-.swot-t .swot-label { color: #ea580c; }
-.swot-item ul { list-style: none; padding: 0; margin: 0; }
-.swot-item li { font-size: 12px; padding-left: 12px; position: relative; margin-bottom: 5px; line-height: 1.5; }
-.swot-s li::before { content: '•'; position: absolute; left: 0; color: #16a34a; font-weight: bold; }
-.swot-w li::before { content: '•'; position: absolute; left: 0; color: #dc2626; font-weight: bold; }
-.swot-o li::before { content: '•'; position: absolute; left: 0; color: #2563eb; font-weight: bold; }
-.swot-t li::before { content: '•'; position: absolute; left: 0; color: #ea580c; font-weight: bold; }
-/* 경쟁사 비교표 */
-.competitor-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
-.competitor-table th { background: #1e3a8a; color: white; padding: 9px 10px; text-align: center; border: 1px solid #1e40af; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.competitor-table td { padding: 8px 10px; text-align: center; border: 1px solid #e2e8f0; color: #334155; }
-.competitor-table tr:nth-child(even) td { background: #f8fafc; }
-.competitor-table td:first-child { font-weight: bold; color: #1e293b; text-align: left; }
-.competitor-table td:nth-child(2) { background: #eff6ff !important; color: #1e40af; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; }
-/* 자금계획표 */
-.fund-plan-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
-.fund-plan-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 10px; color: #475569; font-weight: bold; text-align: center; }
-.fund-plan-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #334155; text-align: center; }
-.fund-plan-table td:first-child { text-align: left; font-weight: bold; }
-.fund-plan-table tfoot td { background: #eff6ff; font-weight: bold; color: #1e3a8a; -webkit-print-color-adjust: exact; color-adjust: exact; }
-/* 기업현황표 */
-.biz-info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; font-size: 12px; }
-.biz-info-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 10px; color: #1e40af; font-weight: bold; width: 14%; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.biz-info-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #1e293b; }
-/* 성장 3단계 세로형 */
-.growth-phases { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.growth-phase { border-radius: 8px; padding: 10px 14px; page-break-inside: avoid; display: flex; gap: 14px; align-items: flex-start; }
-.phase-short { background: #eff6ff; border: 1px solid #93c5fd; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.phase-mid   { background: #f0fdf4; border: 1px solid #86efac; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.phase-long  { background: #fdf4ff; border: 1px solid #d8b4fe; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.phase-header { font-weight: bold; font-size: 12px; white-space: nowrap; min-width: 90px; padding-top: 2px; }
-.phase-short .phase-header { color: #1d4ed8; }
-.phase-mid .phase-header   { color: #15803d; }
-.phase-long .phase-header  { color: #7c3aed; }
-.growth-phase ul { list-style: none; padding: 0; margin: 0; flex: 1; display: flex; flex-wrap: wrap; gap: 2px 16px; }
-.growth-phase li { font-size: 11px; padding-left: 10px; position: relative; line-height: 1.5; color: #334155; word-break: keep-all; width: calc(50% - 8px); }
-.growth-phase li::before { content: '•'; position: absolute; left: 0; }
-.phase-short li::before { color: #1d4ed8; }
-.phase-mid li::before   { color: #15803d; }
-.phase-long li::before  { color: #7c3aed; }
-/* 차트 제목 */
-.biz-chart-section { margin-bottom: 10px; }
-.biz-chart-title { font-size: 12px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
-/* 월별차트 */
-#biz-monthly-chart-wrap { width: 100%; height: 190px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; padding: 10px; }
-/* 마무리 */
-.biz-closing p { font-size: 14px; line-height: 1.9; color: #1e293b; font-weight: 500; }
-` : '';
-
-    const printWin = window.open('', '_blank', 'width=1200,height=900');
+    const printWin = window.open('', '_blank', 'width=1300,height=900');
     printWin.document.write(`<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <title>${title}</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
-${pageCSS}
+/* ========== 기본 리셋 ========== */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; }
+@page { size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: ${landscape ? '10mm' : '13mm'}; }
 body { background: white; color: #333; font-size: 13px; }
-.cover-page { height: ${landscape ? '185mm' : '267mm'}; display: block; position: relative; padding-left: 50px; padding-right: 30px; padding-top: 40px; page-break-after: always; break-after: page; overflow: hidden; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.cover-page::before { content: ''; display: block; position: absolute; left: 0; top: 0; bottom: 0; width: 28px; background: ${landscape ? '#16a34a' : '#3b82f6'}; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.cover-header h4 { font-size: 15px; color: ${landscape ? '#16a34a' : '#3b82f6'}; margin-bottom: 8px; border-bottom: 2px solid ${landscape ? '#16a34a' : '#3b82f6'}; display: inline-block; padding-bottom: 3px; }
-.cover-header h1 { font-size: ${landscape ? '32px' : '36px'}; font-weight: 900; color: #0f172a; margin-top: 10px; letter-spacing: -1px; }
-.cover-middle { position: absolute; left: 50px; right: 30px; bottom: 70px; }
-.cover-middle h2 { font-size: ${landscape ? '20px' : '22px'}; color: #1e3a8a; margin-bottom: 14px; font-weight: bold; }
-.cover-table { width: 100%; background: #f8fafc; padding: 16px 20px; border-radius: 6px; }
+
+/* ========== 표지 ========== */
+.cover-page {
+    height: ${landscape ? '182mm' : '265mm'};
+    display: block; position: relative;
+    border-left: none !important;
+    padding-left: 48px; padding-right: 28px; padding-top: 40px;
+    page-break-after: always; break-after: page;
+    overflow: hidden;
+}
+.cover-page::before {
+    content: ''; display: block; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 28px;
+    background: ${accentColor} !important;
+}
+.cover-header h4 {
+    font-size: 14px; color: ${accentColor};
+    border-bottom: 2px solid ${accentColor};
+    display: inline-block; padding-bottom: 3px; margin-bottom: 8px;
+}
+.cover-header h1 { font-size: ${landscape?'30px':'34px'}; font-weight: 900; color: #0f172a; margin-top: 10px; letter-spacing: -1px; }
+.cover-middle { position: absolute; left: 48px; right: 28px; bottom: 68px; }
+.cover-middle h2 { font-size: ${landscape?'19px':'21px'}; color: #1e3a8a; margin-bottom: 14px; font-weight: bold; }
+.cover-table { width: 100%; background: #f8fafc !important; padding: 14px 18px; border-radius: 6px; }
 .cover-table table { width: 100%; border-collapse: collapse; }
-.cover-table th { text-align: center; padding: 9px 6px; color: ${landscape ? '#16a34a' : '#3b82f6'}; font-size: 12px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 16%; }
+.cover-table th { text-align: center; padding: 9px 6px; color: ${accentColor}; font-size: 12px; font-weight: bold; border-bottom: 1px solid #e2e8f0; width: 16%; }
 .cover-table td { text-align: center; padding: 9px 6px; color: #334155; font-size: 12px; font-weight: 500; border-bottom: 1px solid #e2e8f0; width: 34%; }
 .cover-table tr:last-child th, .cover-table tr:last-child td { border-bottom: none; }
-.cover-footer { position: absolute; left: 50px; right: 30px; bottom: 0; display: flex; justify-content: space-between; border-top: 2px solid ${landscape ? '#16a34a' : '#3b82f6'}; padding-top: 12px; color: #475569; font-size: 12px; font-weight: bold; }
+.cover-footer { position: absolute; left: 48px; right: 28px; bottom: 0; display: flex; justify-content: space-between; border-top: 2px solid ${accentColor}; padding-top: 12px; color: #475569; font-size: 12px; font-weight: bold; }
+
+/* ========== 보고서 섹션 박스 ========== */
 .paper-inner { max-width: 100%; }
-.report-section-box { background: #f8fafc; border: 1px solid #ccc; border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.report-section-box h3 { margin-top: 0 !important; margin-bottom: 12px; color: #1e293b; border-left: 4px solid #16a34a; padding-left: 10px; font-size: 15px; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; }
-.report-section-box ul { list-style: none; padding-left: 0; margin: 0; }
-.report-section-box li { position: relative; padding-left: 15px; margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.6; word-break: keep-all; }
-.report-section-box li::before { content: '■'; position: absolute; left: 0; color: #16a34a; font-size: 9px; top: 3px; }
+.report-section-box {
+    background: #f8fafc !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    page-break-inside: avoid; break-inside: avoid;
+}
+.report-section-box h3 {
+    margin-top: 0 !important; margin-bottom: 14px;
+    color: #1e293b !important;
+    border-left: 5px solid ${accentColor} !important;
+    padding-left: 12px;
+    font-size: 15px; font-weight: bold;
+}
+.report-section-box p { line-height: 1.75; color: #334155; margin-bottom: 12px; font-size: 13px; word-break: keep-all; }
+.report-section-box ul { list-style: none; padding: 0; margin: 0; }
+.report-section-box li { position: relative; padding-left: 16px; margin-bottom: 7px; font-size: 13px; color: #334155; line-height: 1.65; word-break: keep-all; }
+.report-section-box li::before { content: '■'; position: absolute; left: 0; color: ${accentColor} !important; font-size: 9px; top: 3px; }
+
+/* ========== 컨설턴트 피드백 박스 ========== */
+.consultant-feedback-box {
+    background: #fff7ed !important;
+    border: 1px solid #fed7aa !important;
+    border-left: 5px solid #f97316 !important;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 16px;
+    page-break-inside: avoid; break-inside: avoid;
+}
+.consultant-feedback-box h4 { font-size: 13px; font-weight: bold; color: #c2410c !important; margin-bottom: 10px; }
+.consultant-feedback-box ul { list-style: none; padding: 0; margin: 0; }
+.consultant-feedback-box li { position: relative; padding-left: 18px; margin-bottom: 8px; font-size: 12px; color: #7c2d12 !important; line-height: 1.6; word-break: keep-all; }
+.consultant-feedback-box li::before { content: '▶'; position: absolute; left: 0; color: #f97316 !important; font-size: 9px; top: 4px; }
+
+/* ========== 기업현황 테이블 ========== */
 .overview-company-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; }
-.overview-company-table th { background: #eff6ff; border: 1px solid #bfdbfe; padding: 7px 10px; text-align: left; font-size: 11px; color: #1e40af; font-weight: bold; width: 13%; }
-.overview-company-table td { border: 1px solid #e2e8f0; padding: 7px 10px; font-size: 12px; color: #1e293b; }
-.alert-box { padding: 14px; border-radius: 6px; font-weight: bold; margin: 16px 0; font-size: 13px; page-break-inside: avoid; }
-.alert-box.blue  { background: #eff6ff; color: #1e40af; border-left: 4px solid #3b82f6; }
-.alert-box.green { background: #f0fdf4; color: #166534; border-left: 4px solid #22c55e; }
-${bizCSS}
+.overview-company-table th { background: #eff6ff !important; border: 1px solid #bfdbfe; padding: 8px 10px; text-align: left; font-size: 11px; color: #1e40af !important; font-weight: bold; white-space: nowrap; width: 14%; }
+.overview-company-table td { border: 1px solid #e2e8f0; padding: 8px 10px; font-size: 12px; color: #1e293b; }
+
+/* ========== Alert 박스 ========== */
+.alert-box { padding: 14px; border-radius: 6px; font-weight: bold; margin: 14px 0; font-size: 13px; page-break-inside: avoid; line-height: 1.6; }
+.alert-box.blue  { background: #eff6ff !important; color: #1e40af !important; border-left: 5px solid #3b82f6 !important; }
+.alert-box.green { background: #f0fdf4 !important; color: #166534 !important; border-left: 5px solid #22c55e !important; }
+
+/* ========== 차트 ========== */
+.chart-container { margin: 16px 0 8px; display: flex; justify-content: center; page-break-inside: avoid; }
+.chart-box { width: 85%; max-width: 480px; background: white !important; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; display: flex; align-items: center; justify-content: center; height: 180px; }
+
+/* ========== 사업계획서 전용 ========== */
+/* SWOT */
+.swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.swot-item { border-radius: 8px; padding: 14px; page-break-inside: avoid; }
+.swot-s { background: #f0fdf4 !important; border: 1px solid #86efac; }
+.swot-w { background: #fef2f2 !important; border: 1px solid #fca5a5; }
+.swot-o { background: #eff6ff !important; border: 1px solid #93c5fd; }
+.swot-t { background: #fff7ed !important; border: 1px solid #fdba74; }
+.swot-label { font-weight: bold; font-size: 13px; margin-bottom: 8px; }
+.swot-s .swot-label { color: #16a34a !important; }
+.swot-w .swot-label { color: #dc2626 !important; }
+.swot-o .swot-label { color: #2563eb !important; }
+.swot-t .swot-label { color: #ea580c !important; }
+.swot-item ul { list-style: none; padding: 0; margin: 0; }
+.swot-item li { font-size: 12px; padding-left: 12px; position: relative; margin-bottom: 5px; line-height: 1.5; color: #334155; }
+.swot-s li::before { content: '•'; position: absolute; left: 0; color: #16a34a !important; font-weight: bold; }
+.swot-w li::before { content: '•'; position: absolute; left: 0; color: #dc2626 !important; font-weight: bold; }
+.swot-o li::before { content: '•'; position: absolute; left: 0; color: #2563eb !important; font-weight: bold; }
+.swot-t li::before { content: '•'; position: absolute; left: 0; color: #ea580c !important; font-weight: bold; }
+/* 경쟁사 비교표 */
+.competitor-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+.competitor-table th { background: #1e3a8a !important; color: white !important; padding: 9px 10px; text-align: center; border: 1px solid #1e40af; }
+.competitor-table td { padding: 8px 10px; text-align: center; border: 1px solid #e2e8f0; color: #334155; }
+.competitor-table tr:nth-child(even) td { background: #f8fafc !important; }
+.competitor-table td:first-child { font-weight: bold; color: #1e293b; text-align: left; }
+.competitor-table td:nth-child(2) { background: #eff6ff !important; color: #1e40af !important; font-weight: bold; }
+/* 자금계획표 */
+.fund-plan-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.fund-plan-table th { background: #f8fafc !important; border: 1px solid #e2e8f0; padding: 8px 10px; color: #475569; font-weight: bold; text-align: center; }
+.fund-plan-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #334155; text-align: center; }
+.fund-plan-table td:first-child { text-align: left; font-weight: bold; }
+.fund-plan-table tfoot td { background: #eff6ff !important; font-weight: bold; color: #1e3a8a !important; }
+/* 기업현황표 */
+.biz-info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; border-top: 2px solid #1e3a8a; font-size: 12px; }
+.biz-info-table th { background: #eff6ff !important; border: 1px solid #bfdbfe; padding: 8px 10px; color: #1e40af !important; font-weight: bold; width: 14%; }
+.biz-info-table td { border: 1px solid #e2e8f0; padding: 8px 10px; color: #1e293b; }
+/* 성장 3단계 */
+.growth-phases { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.growth-phase { border-radius: 8px; padding: 10px 14px; page-break-inside: avoid; display: flex; gap: 14px; align-items: flex-start; }
+.phase-short { background: #eff6ff !important; border: 1px solid #93c5fd; }
+.phase-mid   { background: #f0fdf4 !important; border: 1px solid #86efac; }
+.phase-long  { background: #fdf4ff !important; border: 1px solid #d8b4fe; }
+.phase-header { font-weight: bold; font-size: 12px; white-space: nowrap; min-width: 90px; padding-top: 2px; }
+.phase-short .phase-header { color: #1d4ed8 !important; }
+.phase-mid .phase-header   { color: #15803d !important; }
+.phase-long .phase-header  { color: #7c3aed !important; }
+.growth-phase ul { list-style: none; padding: 0; margin: 0; flex: 1; display: flex; flex-wrap: wrap; gap: 2px 16px; }
+.growth-phase li { font-size: 11px; padding-left: 10px; position: relative; line-height: 1.5; color: #334155; word-break: keep-all; width: calc(50% - 8px); }
+.growth-phase li::before { content: '•'; position: absolute; left: 0; }
+.phase-short li::before { color: #1d4ed8 !important; }
+.phase-mid li::before   { color: #15803d !important; }
+.phase-long li::before  { color: #7c3aed !important; }
+/* 차트 제목 & 월별차트 */
+.biz-chart-section { margin-bottom: 10px; }
+.biz-chart-title { font-size: 12px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
+#biz-monthly-chart-wrap { width: 100%; height: 200px; background: white !important; border-radius: 6px; border: 1px solid #d1d5db; padding: 10px; }
+/* 마무리 */
+.biz-closing p { font-size: 14px; line-height: 1.9; color: #1e293b; font-weight: 500; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -136,15 +200,44 @@ ${bizCSS}
 <div class="paper-inner">${reportHTML}</div>
 <script>
 window.onload = function() {
+    // 경영진단 레이더 차트
+    const radarEl = document.getElementById('report-radar-chart');
+    if (radarEl) {
+        new Chart(radarEl.getContext('2d'), {
+            type: 'radar',
+            data: { labels: ['재무건전성','전략/마케팅','인사/조직','운영/생산','IT/디지털'],
+                datasets: [{ label: '기업 역량', data: [65,80,72,68,55],
+                    backgroundColor: 'rgba(59,130,246,0.2)', borderColor: '#3b82f6',
+                    pointBackgroundColor: '#1e3a8a', pointRadius: 4 }] },
+            options: { scales: { r: { min:0, max:100, ticks:{ stepSize:20 } } },
+                maintainAspectRatio: false, plugins: { legend: { display:false } } }
+        });
+    }
+    // 경영진단 매출 라인 차트
+    const lineEl = document.getElementById('report-bar-chart');
+    if (lineEl) {
+        const d = lineEl.dataset;
+        new Chart(lineEl.getContext('2d'), {
+            type: 'line',
+            data: { labels: ['23년도','24년도','25년도','금년(예상)'],
+                datasets: [{ label:'매출 추이',
+                    data: [parseInt(d.y23)||0,parseInt(d.y24)||0,parseInt(d.y25)||0,parseInt(d.exp)||0],
+                    borderColor:'rgba(22,163,74,1)', backgroundColor:'rgba(22,163,74,0.15)',
+                    borderWidth:2, pointRadius:4, fill:true, tension:0.1 }] },
+            options: { maintainAspectRatio:false, plugins:{legend:{display:false}},
+                scales:{ y:{ ticks:{ callback: v => v>=10000 ? Math.floor(v/10000)+'억' : v.toLocaleString('ko-KR')+'만' } } } }
+        });
+    }
+    // 사업계획서 월별 차트
     const bizChart = document.getElementById('biz-monthly-chart');
     if (bizChart) {
-        const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-        const curM = ${new Date().getMonth()};
-        const avg  = ${function() { try { const r=JSON.parse(localStorage?.getItem?.('biz_consult_companies')||'[]'); return 3000; } catch(e){ return 3000; } }()};
+        const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+        const curM=${curMonth};
+        const avg=${avgMonthly};
         const actual=[], forecast=[];
         for(let i=0;i<12;i++){
-            if(i<curM){ actual.push(Math.round(${(function(){try{return 3000;}catch(e){return 3000;}})()} * (0.88+i*0.025))); forecast.push(null); }
-            else { actual.push(null); forecast.push(Math.round(${(function(){try{return 3000;}catch(e){return 3000;}})()} * Math.pow(1.05,i-curM+1))); }
+            if(i<curM){ actual.push(Math.round(avg*(0.88+i*0.025))); forecast.push(null); }
+            else { actual.push(null); forecast.push(Math.round(avg*Math.pow(1.05,i-curM+1))); }
         }
         new Chart(bizChart.getContext('2d'),{
             type:'bar',
@@ -152,10 +245,12 @@ window.onload = function() {
                 {label:'실적',data:actual,backgroundColor:'rgba(22,163,74,0.7)',borderColor:'#16a34a',borderWidth:1,borderRadius:4},
                 {label:'예측',data:forecast,backgroundColor:'rgba(59,130,246,0.45)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}
             ]},
-            options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{font:{size:10}}}}, scales:{y:{ticks:{callback:v=>v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천만'}}} }
+            options:{ responsive:true, maintainAspectRatio:false,
+                plugins:{legend:{display:true,position:'top',labels:{font:{size:10}}}},
+                scales:{y:{ticks:{callback:v=>v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천만'}}} }
         });
     }
-    setTimeout(() => { window.print(); window.close(); }, 900);
+    setTimeout(() => { window.print(); window.close(); }, 1000);
 };
 </script>
 </body>
