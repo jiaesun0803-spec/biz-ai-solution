@@ -299,6 +299,12 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-report-blue:hover { opacity: 0.85; }
 
 /* 보고서 뷰 */
+/* ★ 사업계획서 가로형 미리보기 ★ */
+.report-view-landscape { padding: 20px; background: #e2e8f0; border-radius: 12px; }
+.report-paper-landscape { background: white; width: 100%; min-height: 600px; padding: 40px 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; max-width: 100%; box-sizing: border-box; }
+.report-paper-landscape .paper-inner { max-width: 100%; width: 100%; }
+.report-paper-landscape .cover-page { min-height: 480px; }
+
 .report-view-container { padding: 20px; background: #e2e8f0; border-radius: 12px; }
 .report-view-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
 .report-paper { background: white; width: 100%; min-height: 800px; padding: 60px 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 0 auto; border-radius: 4px; }
