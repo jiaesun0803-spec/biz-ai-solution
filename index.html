@@ -261,7 +261,7 @@
                             <div class="section-title"><h3>자금계획</h3></div>
                             <div class="grid-1">
                                 <div class="grid-2"><div class="form-group"><label>필요자금 (만원)</label><input type="text" id="need_fund" class="money-format" placeholder="1억=10000"></div></div>
-                                <div class="form-group"><label>자금사용계획</label><textarea rows="3" placeholder="자금 사용의 구체적인 계획"></textarea></div>
+                                <div class="form-group"><label>자금사용계획</label><textarea id="fund_plan" rows="3" placeholder="자금 사용의 구체적인 계획"></textarea></div>
                                 <div class="form-group" style="padding-bottom:15px;border-bottom:1px dashed #e2e8f0;"><label style="margin-bottom:10px;">자금용도</label><div class="checkbox-grid" style="gap:15px;"><label class="small-label"><input type="checkbox"> 운전자금</label><label class="small-label"><input type="checkbox"> 시설자금</label><label class="small-label"><input type="checkbox"> 수출자금</label><label class="small-label"><input type="checkbox"> 기타</label></div></div>
                                 <div class="form-group"><label style="margin-bottom:10px;">희망조달방법</label><div class="checkbox-grid" style="gap:15px;"><label class="small-label"><input type="checkbox"> 정부정책자금</label><label class="small-label"><input type="checkbox"> 정부지원금</label><label class="small-label"><input type="checkbox"> 은행조달(대출)</label><label class="small-label"><input type="checkbox"> 기타</label></div></div>
                             </div>
@@ -280,14 +280,85 @@
             </div>
         </section>
 
-        <!-- 보고서 목록 -->
+        <!-- 기업 및 보고서 목록 -->
         <section id="reportList" class="tab-content">
             <div class="max-width-wrapper">
-                <div class="page-header"><h2 class="page-title-lg">기업 및 보고서 목록</h2></div>
-                <h3 class="list-sub-title">🏢 등록된 기업 목록</h3>
-                <div class="list-card" style="margin-bottom:40px;"><table class="report-table"><thead><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead><tbody id="company-list-body"></tbody></table></div>
-                <h3 class="list-sub-title">📄 생성된 보고서 목록</h3>
-                <div class="list-card"><table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead><tbody id="report-list-body"></tbody></table></div>
+
+                <!-- ① 요약 뷰 (기본) -->
+                <div id="rl-summary">
+                    <div class="page-header"><h2 class="page-title-lg">기업 및 보고서 목록</h2></div>
+
+                    <!-- 기업 목록 (5개) -->
+                    <div class="rl-section-header">
+                        <h3 class="list-sub-title" style="margin:0;">🏢 등록된 기업 목록</h3>
+                        <button class="btn-more" onclick="showFullCompanies()">더보기 →</button>
+                    </div>
+                    <div class="list-card" style="margin-bottom:30px;">
+                        <table class="report-table"><thead><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>등록일</th><th>관리</th></tr></thead>
+                        <tbody id="company-list-body"></tbody></table>
+                    </div>
+
+                    <!-- 보고서 목록 (5개) -->
+                    <div class="rl-section-header">
+                        <h3 class="list-sub-title" style="margin:0;">📄 생성된 보고서 목록</h3>
+                        <button class="btn-more" onclick="showFullReports()">더보기 →</button>
+                    </div>
+                    <div class="list-card">
+                        <table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead>
+                        <tbody id="report-list-body"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- ② 기업 전체 목록 -->
+                <div id="rl-companies" style="display:none;">
+                    <div class="page-header">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <button class="btn-back-list" onclick="showReportListSummary()">← 목록으로</button>
+                            <h2 class="page-title-lg">기업 전체 목록</h2>
+                        </div>
+                    </div>
+                    <div class="list-card">
+                        <table class="report-table"><thead><tr><th>기업명</th><th>대표자</th><th>사업자등록번호</th><th>업종</th><th>등록일</th><th>관리</th></tr></thead>
+                        <tbody id="company-full-body"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- ③ 보고서 전체 목록 (필터) -->
+                <div id="rl-reports" style="display:none;">
+                    <div class="page-header">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <button class="btn-back-list" onclick="showReportListSummary()">← 목록으로</button>
+                            <h2 class="page-title-lg">보고서 전체 목록</h2>
+                        </div>
+                    </div>
+                    <!-- 필터 바 -->
+                    <div class="report-filter-bar">
+                        <div class="filter-group">
+                            <label>카테고리</label>
+                            <select id="filter-type" onchange="renderFullReports()">
+                                <option value="">전체</option>
+                                <option value="경영진단">경영진단</option>
+                                <option value="재무진단">재무진단</option>
+                                <option value="사업계획서">사업계획서</option>
+                                <option value="정책자금매칭">정책자금매칭</option>
+                                <option value="상권분석">상권분석</option>
+                                <option value="마케팅제안">마케팅제안</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>업체명</label>
+                            <select id="filter-company" onchange="renderFullReports()">
+                                <option value="">전체 업체</option>
+                            </select>
+                        </div>
+                        <div class="filter-count" id="filter-result-count"></div>
+                    </div>
+                    <div class="list-card">
+                        <table class="report-table"><thead><tr><th>구분</th><th>대상 기업</th><th>보고서 명칭</th><th>발행일</th><th>관리</th></tr></thead>
+                        <tbody id="report-full-body"></tbody></table>
+                    </div>
+                </div>
+
             </div>
         </section>
 
