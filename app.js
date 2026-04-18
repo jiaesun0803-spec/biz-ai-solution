@@ -100,8 +100,14 @@ body { background: white; color: #333; font-size: 13px; }
     border: 1px solid #d1d5db !important;
     border-radius: 10px;
     padding: 18px 20px;
-    margin-bottom: 16px;
+    margin-bottom: 0;
+    page-break-before: always; break-before: page;
     page-break-inside: avoid; break-inside: avoid;
+}
+/* 첫 섹션은 페이지 분리 안 함 (cover 다음) */
+.cover-page + .report-section-box,
+.paper-inner > .report-section-box:first-of-type {
+    page-break-before: auto; break-before: auto;
 }
 .report-section-box h3 {
     margin-top: 0 !important; margin-bottom: 14px;
@@ -114,6 +120,29 @@ body { background: white; color: #333; font-size: 13px; }
 .report-section-box ul { list-style: none; padding: 0; margin: 0; }
 .report-section-box li { position: relative; padding-left: 16px; margin-bottom: 7px; font-size: 13px; color: #334155; line-height: 1.65; word-break: keep-all; }
 .report-section-box li::before { content: '■'; position: absolute; left: 0; color: ${accentColor} !important; font-size: 9px; top: 3px; }
+
+/* ========== 컨설턴트 전용 섹션 ========== */
+.consultant-only-section {
+    background: #fffbeb !important;
+    border: 2px solid #f59e0b !important;
+    border-left: 6px solid #d97706 !important;
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 0;
+    page-break-before: always; break-before: page;
+    page-break-inside: avoid; break-inside: avoid;
+    position: relative;
+}
+.consultant-only-section h3 {
+    margin-top: 0 !important; margin-bottom: 14px;
+    color: #92400e !important;
+    border-left: 5px solid #d97706 !important;
+    padding-left: 12px; font-size: 15px; font-weight: bold;
+}
+.consultant-only-section ul { list-style: none; padding: 0; margin: 0; }
+.consultant-only-section li { position: relative; padding-left: 16px; margin-bottom: 7px; font-size: 13px; color: #78350f !important; line-height: 1.65; word-break: keep-all; }
+.consultant-only-section li::before { content: '▶'; position: absolute; left: 0; color: #d97706 !important; font-size: 9px; top: 4px; }
+.consultant-only-section h4 { font-size: 12px; font-weight: bold; color: #92400e !important; margin-bottom: 8px; }
 
 /* ========== 컨설턴트 피드백 박스 ========== */
 .consultant-feedback-box {
@@ -704,29 +733,47 @@ function formatRevenueForAI(companyData,rev){
     return{금년매출_전월말기준:formatKoreanCurrency(rev.cur),금년예상연간매출:formatKoreanCurrency(expectedCur)+` (${months}개월 기준 연간 환산)`,매출_2025년:formatKoreanCurrency(rev.y25),매출_2024년:formatKoreanCurrency(rev.y24),매출_2023년:formatKoreanCurrency(rev.y23),_raw:rev,_expected:expectedCur,_months:months};
 }
 
-/* ===== Gemini API (사업계획서 전용 - 고토큰) ===== */
-async function callGeminiAPIBiz(prompt){
-    const session=JSON.parse(localStorage.getItem('biz_session'));
-    const apiKey=session?.apiKey;
-    if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
-    try{
-        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,topK:40,topP:0.95,maxOutputTokens:65536}})});
-        const data=await res.json();
-        if(!res.ok||data.error)throw new Error(data.error?.message||'API 에러');
-        return data.candidates[0].content.parts[0].text;
-    }catch(e){console.error(e);alert('오류: '+e.message);return null;}
+/* ===================================================
+   ★★★ Gemini API 호출 (재시도 + 오류 처리 강화) ★★★
+   - 400/429/503 오류 자동 재시도 (최대 3회)
+   - 타임아웃 120초
+   - 구체적 오류 메시지 표시
+=================================================== */
+async function _callGeminiCore(prompt, maxTokens, maxRetries) {
+    const session = JSON.parse(localStorage.getItem('biz_session'));
+    const apiKey = session?.apiKey;
+    if (!apiKey) { alert('설정 탭에서 Gemini API 키를 등록해주세요.'); showTab('settings'); return null; }
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 2000));
+        try {
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), 120000);
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
+                  body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: maxTokens } }) }
+            );
+            clearTimeout(tid);
+            const data = await res.json();
+            if (res.status === 400) { lastError = new Error(`요청 형식 오류(400): ${data.error?.message||''}`); console.warn(`[Gemini] 400 (${attempt}/${maxRetries})`); continue; }
+            if (res.status === 429) { lastError = new Error('API 요청 한도 초과(429). 잠시 후 재시도합니다.'); await new Promise(r => setTimeout(r, 5000 * attempt)); continue; }
+            if (res.status === 503) { lastError = new Error('서버 과부하(503). 잠시 후 재시도합니다.'); continue; }
+            if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('AI 응답이 비어 있습니다.');
+            return text;
+        } catch(e) {
+            if (e.name === 'AbortError') lastError = new Error('AI 응답 시간이 초과되었습니다(120초). 네트워크 상태를 확인하고 다시 시도해주세요.');
+            else lastError = e;
+            console.warn(`[Gemini] 오류 (${attempt}/${maxRetries}):`, e.message);
+        }
+    }
+    alert(`AI 보고서 생성 실패 (${maxRetries}회 시도):\n${lastError?.message||'알 수 없는 오류'}\n\n해결 방법:\n1. 설정에서 API 키 확인\n2. 잠시 후 다시 시도\n3. 네트워크 연결 확인`);
+    return null;
 }
-async function callGeminiAPI(prompt){
-    const session=JSON.parse(localStorage.getItem('biz_session'));
-    const apiKey=session?.apiKey;
-    if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
-    try{
-        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,topK:40,topP:0.95,maxOutputTokens:8192}})});
-        const data=await res.json();
-        if(!res.ok||data.error)throw new Error(data.error?.message||'API 에러');
-        return data.candidates[0].content.parts[0].text;
-    }catch(e){console.error(e);alert('오류: '+e.message);return null;}
-}
+async function callGeminiAPIBiz(prompt) { return _callGeminiCore(prompt, 65536, 3); }
+async function callGeminiAPI(prompt)    { return _callGeminiCore(prompt,  8192, 3); }
 
 function cleanAIResponse(raw){
     let html=raw.replace(/```html|```/g,'').replace(/\*\*/g,'');
@@ -816,6 +863,133 @@ function renderGenericReport(contentAreaId,companyData,cleanHTML,config,rev,date
     contentArea.innerHTML=`<div class="paper-inner">${buildCoverHTML(companyData,config,safeRev,dateStr)}${cleanHTML}<div class="alert-box ${config.version==='client'?'blue':'green'}">★ 본 리포트는 AI 컨설턴트가 분석한 ${config.title} 자료입니다. (${vLabel})</div></div>`;
 }
 
+/* ===================================================
+   ★★★ 경영진단보고서 - 기업전달용 프롬프트 (방안B: 7섹션) ★★★
+=================================================== */
+function buildMgmtClientPrompt(cData, fRev) {
+    const pd = {...cData}; delete pd.rawData; delete pd.revenueData; pd.매출데이터 = fRev;
+    return `너는 20년 경력의 경영 컨설턴트야. 대상 기업: '${cData.name}'
+
+★ 기업전달용 경영진단보고서 - 7개 섹션을 모두 작성할 것 ★
+기업에게 전달하는 보고서이므로 긴정적·객관적 톤으로 작성. 리스크 언급 최소화.
+
+[출력 규칙]
+- 각 섹션은 반드시 <div class="report-section-box"> 로 시작하고 </div>로 닫을 것
+- 제목은 <h3>번호. 제목</h3>
+- 내용은 <ul><li>항목(최소 40자 이상)</li></ul>
+- 금액은 한국식(억원/만원), 개조식 문체(~함, ~임, ~있음)
+- 첫 섹션 앞에 인사말 등 어떠한 텍스트도 출력하지 말 것
+- ** 마크다운 금지
+
+=== 섹션 1: 경영진단 개요 ===
+<div class="report-section-box"><h3>1. 경영진단 개요</h3>
+[기업현황표 자동 삽입됨]
+<ul><li>기업의 전반적 현황 및 진단 목적 li 4개, 각 40자 이상</li></ul></div>
+
+=== 섹션 2: 재무 현황 분석 ===
+<div class="report-section-box"><h3>2. 재무 현황 분석</h3>
+[매출 추이 차트 자동 삽입됨]
+<ul><li>매출 성장세, 수익성, 현금흐름 분석 li 5개, 각 40자 이상. 구체적 수치 포함</li></ul></div>
+
+=== 섹션 3: 전략 및 마케팅 분석 ===
+<div class="report-section-box"><h3>3. 전략 및 마케팅 분석</h3>
+<ul><li>시장 포지셔닝, 경쟁력, 마케팅 채널 분석 li 7개, 각 40자 이상</li></ul></div>
+
+=== 섹션 4: 인사 및 조직 분석 ===
+<div class="report-section-box"><h3>4. 인사 및 조직 분석</h3>
+<ul><li>인력 구성, 조직 역량, 대표자 역량 분석 li 6개, 각 40자 이상</li></ul></div>
+
+=== 섹션 5: 운영 및 생산 분석 ===
+<div class="report-section-box"><h3>5. 운영 및 생산 분석</h3>
+<ul><li>생산 효율, 품질 관리, 납기 대응력 분석 li 6개, 각 40자 이상</li></ul></div>
+
+=== 섹션 6: IT·디지털 및 정부지원 활용 ===
+<div class="report-section-box"><h3>6. IT·디지털 및 정부지원 활용</h3>
+<ul><li>디지털 전환 현황, 정책자금·인증 활용 현황 li 5개, 각 40자 이상</li></ul></div>
+
+=== 섹션 7: 개선 방향 및 성장 로드맵 ===
+<div class="report-section-box"><h3>7. 개선 방향 및 성장 로드맵</h3>
+<ul><li>단기·중기·장기 개선 방향 및 실행 전략 li 7개, 각 40자 이상. 구체적 실행 방안 포함</li></ul></div>
+
+[기업 데이터]
+${JSON.stringify(pd, null, 2)}`;
+}
+
+/* ===================================================
+   ★★★ 경영진단보고서 - 컨설턴트용 프롬프트 (방안B: 7섹션 + 컨설턴트 전용 섹션) ★★★
+=================================================== */
+function buildMgmtConsultantPrompt(cData, fRev) {
+    const pd = {...cData}; delete pd.rawData; delete pd.revenueData; pd.매출데이터 = fRev;
+    return `너는 20년 경력의 경영 컨설턴트야. 대상 기업: '${cData.name}'
+
+★ 컨설턴트용 경영진단보고서 - 8개 섹션을 모두 작성할 것 ★
+컨설턴트 내부용 보고서이므로 리스크·문제점·실질 조언을 솔직하고 구체적으로 작성.
+기업전달용과 달리 부정적 요소도 명확히 기술.
+
+[출력 규칙]
+- 각 섹션은 반드시 <div class="report-section-box"> 로 시작하고 </div>로 닫을 것
+- 컨설턴트 전용 섹션(섹션 8)은 <div class="consultant-only-section"> 사용
+- 제목은 <h3>번호. 제목</h3>
+- 내용은 <ul><li>항목(최소 50자 이상)</li></ul>
+- 금액은 한국식(억원/만원), 개조식 문체(~함, ~임, ~있음)
+- 첫 섹션 앞에 인사말 등 어떠한 텍스트도 출력하지 말 것
+- ** 마크다운 금지
+
+=== 섹션 1~7: 기업전달용과 동일한 구조로 작성 (단, 리스크·문제점 포함) ===
+
+=== 섹션 1: 경영진단 개요 ===
+<div class="report-section-box"><h3>1. 경영진단 개요</h3>
+[기업현황표 자동 삽입됨]
+<ul><li>기업 현황 및 진단 목적 li 4개, 리스크 요소 포함, 각 50자 이상</li></ul></div>
+
+=== 섹션 2: 재무 현황 분석 ===
+<div class="report-section-box"><h3>2. 재무 현황 분석</h3>
+[매출 추이 차트 자동 삽입됨]
+<ul><li>매출 성장세, 수익성, 현금흐름, 부체 리스크 분석 li 6개, 각 50자 이상</li></ul></div>
+
+=== 섹션 3: 전략 및 마케팅 분석 ===
+<div class="report-section-box"><h3>3. 전략 및 마케팅 분석</h3>
+<ul><li>시장 포지셔닝, 경쟁력, 마케팅 취약점 분석 li 7개, 각 50자 이상</li></ul></div>
+
+=== 섹션 4: 인사 및 조직 분석 ===
+<div class="report-section-box"><h3>4. 인사 및 조직 분석</h3>
+<ul><li>인력 구성, 조직 역량, 핵심 인력 리스크 분석 li 6개, 각 50자 이상</li></ul></div>
+
+=== 섹션 5: 운영 및 생산 분석 ===
+<div class="report-section-box"><h3>5. 운영 및 생산 분석</h3>
+<ul><li>생산 효율, 품질 관리, 운영 리스크 분석 li 6개, 각 50자 이상</li></ul></div>
+
+=== 섹션 6: IT·디지털 및 정부지원 활용 ===
+<div class="report-section-box"><h3>6. IT·디지털 및 정부지원 활용</h3>
+<ul><li>디지털 전환 현황, 정책자금 활용 현황, 개선 필요 사항 li 5개, 각 50자 이상</li></ul></div>
+
+=== 섹션 7: 개선 방향 및 성장 로드맵 ===
+<div class="report-section-box"><h3>7. 개선 방향 및 성장 로드맵</h3>
+<ul><li>단기·중기·장기 개선 방향, 우선순위별 실행 전략 li 7개, 각 50자 이상</li></ul></div>
+
+=== 섹션 8: 컨설턴트 실질 조언 및 참고 메모 (내부 전용) ===
+이 섹션은 기업에게 전달하지 않는 컨설턴트 내부 전용 자료임.
+가장 풍부하고 구체적으로 작성할 것.
+
+<div class="consultant-only-section"><h3>8. 컨설턴트 실질 조언 및 참고 메모 🔒 내부 전용</h3>
+<div style="background:#fef3c7;border-radius:6px;padding:12px 14px;margin-bottom:12px;"><h4 style="color:#92400e;font-size:13px;font-weight:bold;margin-bottom:8px;">🚨 시급 해결 이슈 (우선순위 TOP 3)</h4>
+<ul><li>[이슈1] 구체적 문제점과 즉시 실행 가능한 해결 방안 60자 이상</li>
+<li>[이슈2] 구체적 문제점과 즉시 실행 가능한 해결 방안 60자 이상</li>
+<li>[이슈3] 구체적 문제점과 즉시 실행 가능한 해결 방안 60자 이상</li></ul></div>
+<div style="background:#fef3c7;border-radius:6px;padding:12px 14px;margin-bottom:12px;"><h4 style="color:#92400e;font-size:13px;font-weight:bold;margin-bottom:8px;">💰 정책자금 신청 전략 (컨설턴트 판단)</h4>
+<ul><li>신청 가능한 정책자금 기관·상품명과 신청 전략 li 5개, 각 50자 이상. 중진공·소진공·신보·기보·지역신보 포함</li></ul></div>
+<div style="background:#fef3c7;border-radius:6px;padding:12px 14px;margin-bottom:12px;"><h4 style="color:#92400e;font-size:13px;font-weight:bold;margin-bottom:8px;">📜 특허·인증 취득 전략</h4>
+<ul><li>취득 가능한 인증·특허와 취득 시 기대 효과 li 4개, 각 50자 이상. 벤처인증·이노비즈·메인비즈·ISO 포함</li></ul></div>
+<div style="background:#fef3c7;border-radius:6px;padding:12px 14px;margin-bottom:12px;"><h4 style="color:#92400e;font-size:13px;font-weight:bold;margin-bottom:8px;">📈 마케팅 채널 개선 방안</h4>
+<ul><li>즉시 실행 가능한 마케팅 채널별 구체적 전략 li 4개, 각 50자 이상</li></ul></div>
+<div style="background:#fef3c7;border-radius:6px;padding:12px 14px;"><h4 style="color:#92400e;font-size:13px;font-weight:bold;margin-bottom:8px;">💳 신용 개선 로드맵</h4>
+<ul><li>신용등급 개선을 위한 단계별 실행 방안 li 4개, 각 50자 이상</li></ul></div>
+</div>
+
+[기업 데이터]
+${JSON.stringify(pd, null, 2)}`;
+}
+
 /* ===== 경영진단 생성 ===== */
 window.generateReport=async function(type,version,event){
     const tab=event.target.closest('.tab-content');
@@ -826,20 +1000,10 @@ window.generateReport=async function(type,version,event){
     const rev=companyData.revenueData||{y23:0,y24:0,y25:0,cur:0};
     const fRev=formatRevenueForAI(companyData,rev);
     document.getElementById('ai-loading-overlay').style.display='flex';
-    const promptData={...companyData};delete promptData.rawData;delete promptData.revenueData;promptData.매출데이터=fRev;
-    const consultantFeedbackRule=version==='consultant'?`
-[★ 컨설턴트용 추가 규칙 ★]
-각 섹션의 <ul> 작성 후 반드시 아래 피드백 박스를 추가:
-<div class="consultant-feedback-box"><h4>🔍 컨설턴트 피드백</h4><ul>
-<li>[문제점/리스크] 50자 이상 서술</li>
-<li>[해결방안] 50자 이상 서술</li>
-<li>[향후 방향] 50자 이상 서술</li>
-</ul></div>`:'';
-    const prompt=`너의 역할은 20년 경력의 경영 컨설턴트야. 대상: '${companyData.name}'
-[진단 가중치] 1.경영진단개요(3~4) 2.재무현황(15%,3~4개) 3.전략마케팅(25%,6~8개) 4.인사조직(20%,5~6개) 5.운영생산(20%,5~6개) 6.IT/정부지원(20%,각2~3개) 7.개선방향(5~6개)
-${COMMON_RULES}${consultantFeedbackRule}
-출력목적: ${version==='client'?'긍정적/객관적(기업전달용)':'컨설턴트용-피드백포함'}
-[기업데이터] ${JSON.stringify(promptData,null,2)}`;
+    // ★ 방안B: 기업전달용/컨설턴트용 완전히 다른 프롬프트 사용 ★
+    const prompt = version === 'client'
+        ? buildMgmtClientPrompt(companyData, fRev)
+        : buildMgmtConsultantPrompt(companyData, fRev);
     const aiResponse=await callGeminiAPI(prompt);
     document.getElementById('ai-loading-overlay').style.display='none';
     if(aiResponse){
@@ -857,9 +1021,36 @@ ${COMMON_RULES}${consultantFeedbackRule}
 const REPORT_CONFIGS={
     finance:{typeLabel:'재무진단',title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',borderColor:'#2563eb',contentAreaId:'finance-content-area',buildPrompt:(cData,fRev,version)=>`너는 공인회계사급 재무 전문 컨설턴트야. 대상: '${cData.name}'\n5개섹션: 1.재무개요(3~4) 2.수익성분석(5~6) 3.안정성분석(5~6) 4.성장성분석(4~5) 5.재무개선방향(5~6)\n${COMMON_RULES}출력목적: ${version==='client'?'기업전달용':'컨설턴트용'}\n[기업데이터] ${JSON.stringify({...cData,rawData:undefined,revenueData:undefined,매출데이터:fRev},null,2)}`},
     aiBiz:{typeLabel:'사업계획서',title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',borderColor:'#16a34a',contentAreaId:'aiBiz-content-area',
-        buildPrompt:(cData,fRev)=>{
+        buildPrompt:(cData,fRev,version)=>{
 const needFundStr = cData.needFund>0 ? formatKoreanCurrency(cData.needFund) : '미입력';
 const fundPlanStr = cData.fundPlan || '별도 입력 없음';
+/* ★ 초안(draft): 3섹션, 빠른 방향 확인용 ★ */
+if(version==='draft')return `너는 20년 경력의 경영컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'-'}, 대표:${cData.rep||'-'})
+
+★ 사업계획서 초안 - 3개 섹션을 빠르게 작성할 것 ★
+방향 확인용 초안이므로 핵심만 간결하게 작성. 각 섹션 li 4~5개.
+
+[출력 규칙]
+- 각 섹션은 반드시 <div class="report-section-box"> 로 시작하고 </div>로 닫을 것
+- 제목은 <h3>번호. 제목</h3>, 내용은 <ul><li>항목(최소 40자)</li></ul>
+- 금액은 한국식(억원/만원), 개조식 문체, 인사말 금지, ** 금지
+
+=== 섹션 1: 사업 개요 및 핵심 아이디어 ===
+<div class="report-section-box"><h3>1. 사업 개요 및 핵심 아이디어</h3>
+<table class="biz-info-table"><tr><th>기업명</th><td>${cData.name}</td><th>대표자</th><td>${cData.rep||'-'}</td></tr><tr><th>업종</th><td>${cData.industry||'-'}</td><th>핵심아이템</th><td>${cData.coreItem||'-'}</td></tr></table>
+<ul><li>사업의 핵심 아이디어, 차별점, 가치 제안 li 5개, 각 40자 이상</li></ul></div>
+
+=== 섹션 2: 시장 분석 및 사업 방향 ===
+<div class="report-section-box"><h3>2. 시장 분석 및 사업 방향</h3>
+<ul><li>타겟 시장 규모, 경쟁 환경, 진입 전략 li 5개, 각 40자 이상</li></ul></div>
+
+=== 섹션 3: 초기 실행 계획 ===
+<div class="report-section-box"><h3>3. 초기 실행 계획</h3>
+<ul><li>단기 실행 과제, 필요 자원, 예상 성과 li 5개, 각 40자 이상. 필요자금: ${needFundStr}</li></ul></div>
+
+[기업 데이터]
+${JSON.stringify({name:cData.name,rep:cData.rep,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,필요자금:needFundStr,매출데이터:fRev},null,2)}`;
+/* ★ 완성본(final): 10섹션, 실제 제출 가능한 수준 ★ */
 return `너는 20년 경력의 경영컨설턴트야. 대상: '${cData.name}' (업종:${cData.industry||'-'}, 대표:${cData.rep||'-'}, 핵심아이템:${cData.coreItem||'-'})
 
 ★ 반드시 아래 10개 섹션을 모두 빠짐없이 작성할 것. 섹션을 건너뛰거나 생략하지 말 것. ★
@@ -1002,7 +1193,10 @@ window.generateAnyReport=async function(type,version,event){
     if(aiResponse){
         let cleanHTML=cleanAIResponse(aiResponse);
         const todayStr=new Date().toISOString().split('T')[0];
-        const vLabel=version==='client'?'기업전달용':'컨설턴트용';
+        // ★ 사업계획서: draft=초안, final=완성본 / 기타: client=기업전달용, consultant=컨설턴트용
+        let vLabel;
+        if(type==='aiBiz') vLabel = version==='draft' ? '초안' : '완성본';
+        else vLabel = version==='client' ? '기업전달용' : '컨설턴트용';
         const reportObj={id:'rep_'+Date.now(),type:cfg.typeLabel,company:companyData.name,title:`${cfg.title} (${vLabel})`,date:todayStr,content:cleanHTML,version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
         const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');reports.push(reportObj);localStorage.setItem(DB_REPORTS,JSON.stringify(reports));
         updateDataLists();

@@ -417,6 +417,51 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-section-box li::before { content: '■'; position: absolute; left: 0; color: #3b82f6; font-size: 11px; top: 3px; }
 
 .consultant-feedback-box { background: #fff7ed; border: 1px solid #fed7aa; border-left: 5px solid #f97316; border-radius: 8px; padding: 18px 20px; margin-top: 20px; break-inside: avoid; }
+
+/* ★ 컨설턴트 전용 섹션 (내부 전용 자료) ★ */
+.consultant-only-section {
+    background: #fffbeb;
+    border: 2px solid #f59e0b;
+    border-left: 6px solid #d97706;
+    border-radius: 12px;
+    padding: 28px 30px;
+    margin-bottom: 30px;
+    break-inside: avoid;
+    position: relative;
+}
+.consultant-only-section::before {
+    content: '🔒 컨설턴트 내부 전용';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: #d97706;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+.consultant-only-section h3 {
+    margin-top: 8px !important;
+    margin-bottom: 18px;
+    color: #92400e;
+    border-left: 5px solid #d97706;
+    padding-left: 12px;
+    font-size: 20px;
+    font-weight: bold;
+}
+.consultant-only-section ul { list-style-type: none; margin-left: 0; padding-left: 0; }
+.consultant-only-section li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    color: #78350f;
+    line-height: 1.7;
+    word-break: keep-all;
+}
+.consultant-only-section li::before { content: '▶'; position: absolute; left: 0; color: #d97706; font-size: 10px; top: 4px; }
 .consultant-feedback-box h4 { font-size: 14px; font-weight: bold; color: #c2410c; margin-bottom: 12px; }
 .consultant-feedback-box ul { list-style: none !important; padding-left: 0 !important; margin: 0 !important; }
 .consultant-feedback-box li { position: relative !important; padding-left: 20px !important; margin-bottom: 8px !important; font-size: 14px !important; color: #7c2d12 !important; line-height: 1.65 !important; word-break: keep-all; }
@@ -609,13 +654,37 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
         margin: 0 !important; padding-top: 15px !important;
     }
 
-    .report-section-box, .alert-box, .chart-container, .consultant-feedback-box {
-        page-break-inside: avoid; break-inside: avoid;
+    .report-section-box, .alert-box, .chart-container, .consultant-feedback-box, .consultant-only-section {
+        page-break-inside: avoid !important; break-inside: avoid !important;
     }
-    .report-section-box { border: 1px solid #ccc; padding: 20px; }
+    /* ★ 각 섹션은 새 페이지에서 시작 (컨설턴트 전용 섹션 포함) ★ */
+    .report-section-box {
+        border: 1px solid #ccc !important;
+        padding: 20px !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-bottom: 0 !important;
+    }
+    /* 표지 다음 첫 섹션은 페이지 분리 안 함 */
+    .cover-page + .report-section-box,
+    .paper-inner > .report-section-box:first-of-type {
+        page-break-before: auto !important;
+        break-before: auto !important;
+    }
+    .consultant-only-section {
+        page-break-before: always !important;
+        break-before: page !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
     .consultant-feedback-box {
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
     .chart-box { height: 180px !important; }
+    /* 사업계획서 전용 섹션 페이지 분리 */
+    .biz-closing { page-break-before: always !important; break-before: page !important; }
+    /* SWOT, 차트 포함 섹션도 페이지 분리 */
+    .swot-grid { break-inside: avoid !important; page-break-inside: avoid !important; }
+    .growth-phases { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
