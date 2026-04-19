@@ -411,3 +411,24 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     width: 100%;
     overflow: hidden;
 }
+
+/* ============================================
+   ★ rp- 보고서 미리보기 컨테이너
+============================================ */
+.report-paper-landscape,
+.report-paper {
+  background: transparent;
+  width: 100%;
+  overflow-x: hidden;
+}
+.report-paper-landscape .rp-wrap,
+.report-paper .rp-wrap {
+  width: 100%;
+  overflow-x: hidden;
+}
+/* 결과 스텝 배경 */
+[id$="-result-step"] {
+  background: #e8eaed;
+  border-radius: 8px;
+  padding: 8px;
+}
