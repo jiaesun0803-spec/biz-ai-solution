@@ -1657,69 +1657,219 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
 
 // ===========================
-// ★ 차트 초기화 (미리보기용)
+// ★ 차트 초기화 — 재사용 시 파괴 후 생성
 // ===========================
+function safeDestroyChart(canvas) {
+  if (!canvas || typeof Chart === 'undefined') return;
+  try { var e = Chart.getChart ? Chart.getChart(canvas) : null; if(e) e.destroy(); } catch(er) {}
+}
+
 function initReportCharts(rev) {
+  if (typeof Chart === 'undefined') { console.warn('Chart.js 미로드'); return; }
   setTimeout(function() {
+    // ─ 경영진단 레이더
     var ra = document.getElementById('rp-radar');
-    if(ra&&ra.dataset.scores){new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',pointBackgroundColor:'#1e3a8a',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+    if(ra && ra.dataset && ra.dataset.scores) {
+      safeDestroyChart(ra);
+      try { new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',pointBackgroundColor:'#1e3a8a',pointRadius:5,pointHoverRadius:7}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12,weight:'bold'}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){console.error('레이더 오류:',e);}
+    }
+    // ─ 매출 라인
     var li = document.getElementById('rp-linechart');
-    if(li&&li.dataset.y23!==undefined){var ld=li.dataset;new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}});}
+    if(li && li.dataset && li.dataset.y23 !== undefined) {
+      safeDestroyChart(li);
+      try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}); } catch(e){console.error('라인 오류:',e);}
+    }
+    // ─ 재무 도넛
     var de = document.getElementById('fp-donut');
-    if(de&&de.dataset.names){var dn=de.dataset.names.split('|');var dr=de.dataset.ratios.split(',').map(Number);new Chart(de.getContext('2d'),{type:'doughnut',data:{labels:dn,datasets:[{data:dr,backgroundColor:['#2563eb','#7c3aed','#06b6d4','#16a34a','#ea580c'],borderWidth:2,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});}
+    if(de && de.dataset && de.dataset.names) {
+      safeDestroyChart(de);
+      try { new Chart(de.getContext('2d'),{type:'doughnut',data:{labels:de.dataset.names.split('|'),datasets:[{data:de.dataset.ratios.split(',').map(Number),backgroundColor:['#2563eb','#7c3aed','#06b6d4','#16a34a','#ea580c'],borderWidth:3,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}}); } catch(e){}
+    }
+    // ─ 3개년 성장
     var fg = document.getElementById('fp-growth-chart');
-    if(fg){new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:[14,24,35],borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'억';}}}}}})}
+    if(fg) { safeDestroyChart(fg); try { new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:[14,24,35],borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'억';}}}}}}); } catch(e){} }
+    // ─ 상권 레이더
     var tr = document.getElementById('tp-radar');
-    if(tr&&tr.dataset.scores){new Chart(tr.getContext('2d'),{type:'radar',data:{labels:['유동인구','접근성','성장성','경쟁강도','가시성'],datasets:[{data:tr.dataset.scores.split(',').map(Number),backgroundColor:'rgba(13,148,136,0.18)',borderColor:'#0d9488',pointBackgroundColor:'#0d9488',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+    if(tr && tr.dataset && tr.dataset.scores) {
+      safeDestroyChart(tr);
+      try { new Chart(tr.getContext('2d'),{type:'radar',data:{labels:['유동인구','접근성','성장성','경쟁강도','가시성'],datasets:[{data:tr.dataset.scores.split(',').map(Number),backgroundColor:'rgba(13,148,136,0.18)',borderColor:'#0d9488',pointBackgroundColor:'#0d9488',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){}
+    }
+    // ─ 상권 매출 라인
     var tl = document.getElementById('tp-linechart');
-    if(tl&&tl.dataset.s0){var td=tl.dataset;new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return Math.round(v/100)*100+'만';}}}}}});}
+    if(tl && tl.dataset && tl.dataset.s0) {
+      safeDestroyChart(tl);
+      try { var td=tl.dataset; new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return Math.round(v/100)*100+'만';}}}}}}); } catch(e){}
+    }
+    // ─ 마케팅 도넛
     var md = document.getElementById('mp-donut');
-    if(md&&md.dataset.names){var mn=md.dataset.names.split('|');var mr=md.dataset.ratios.split(',').map(Number);new Chart(md.getContext('2d'),{type:'doughnut',data:{labels:mn,datasets:[{data:mr,backgroundColor:['#db2777','#9d174d','#f4c0d1','#fdf2f8'],borderWidth:2,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});}
+    if(md && md.dataset && md.dataset.names) {
+      safeDestroyChart(md);
+      try { new Chart(md.getContext('2d'),{type:'doughnut',data:{labels:md.dataset.names.split('|'),datasets:[{data:md.dataset.ratios.split(',').map(Number),backgroundColor:['#db2777','#9d174d','#f4c0d1','#fdf2f8'],borderWidth:3,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}}); } catch(e){}
+    }
+    // ─ HMR 시장 성장
     var bm = document.getElementById('bp-market-chart');
-    if(bm){new Chart(bm.getContext('2d'),{type:'line',data:{labels:['2016','2017','2018','2019','2020','2021','2022'],datasets:[{data:[2,2.4,3,3.8,4.5,5.8,7],borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.12)',borderWidth:2.5,pointRadius:4,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'조';}}}}}})}
+    if(bm) { safeDestroyChart(bm); try { new Chart(bm.getContext('2d'),{type:'line',data:{labels:['2016','2017','2018','2019','2020','2021','2022'],datasets:[{data:[2,2.4,3,3.8,4.5,5.8,7],borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.12)',borderWidth:3,pointRadius:5,fill:true,tension:0.35}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'조';}}}}}}); } catch(e){} }
+    // ─ 월별 매출 바
     var bc = document.getElementById('biz-monthly-chart');
-    if(bc){
-      var curM=new Date().getMonth(), safeRev=rev||{};
-      var avgM=safeRev.cur&&curM>0?Math.round(safeRev.cur/curM):safeRev.y25?Math.round(safeRev.y25/12):3000;
-      var ac=[],fc=[];
-      for(var i=0;i<12;i++){if(i<curM){ac.push(Math.round(avgM*(0.88+i*0.025)));fc.push(null);}else{ac.push(null);fc.push(Math.round(avgM*Math.pow(1.05,i-curM+1)));}}
-      new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:4},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천만';}}}}}}); }
-  }, 300);
+    if(bc) {
+      safeDestroyChart(bc);
+      try {
+        var curM=new Date().getMonth(), sr=rev||{};
+        var avgM=sr.cur&&curM>0?Math.round(sr.cur/curM):sr.y25?Math.round(sr.y25/12):3000;
+        var ac=[],fc=[];
+        for(var i=0;i<12;i++){if(i<curM){ac.push(Math.round(avgM*(0.9+i*0.02)));fc.push(null);}else{ac.push(null);fc.push(Math.round(avgM*Math.pow(1.06,i-curM+1)));}}
+        new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:5},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.55)',borderColor:'#3b82f6',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천';}}}}}}); } catch(e){}
+    }
+  }, 400);
 }
 
 // ===========================
-// ★ JSON 프롬프트 함수들
+// ★ 프롬프트 — 기업명·수치 강제 반영
 // ===========================
 function buildMgmtClientPrompt(cData, fRev) {
-  var pd={name:cData.name,rep:cData.rep,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,bizNum:cData.bizNum,매출데이터:fRev};
-  return '너는 20년 경력 경영컨설턴트야. 대상: \''+cData.name+'\'. 기업전달용 — 긍정적 톤. JSON만 출력. 각 항목 구체적으로 50자 이상.\n\n'
-    +'{"grade":"등급(A~D+)","grade_desc":"설명8자","overview":["현황5개"],"finance_strengths":["강점4개"],"finance_risks":["개선3개"],"radar":[재무,전략,인사,운영,IT점수],"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},"marketing":["마케팅5개"],"marketing_items":["포지셔닝3개"],"hr":["인사5개"],"ops":["운영5개"],"it":["IT5개"],"certs":[{"name":"인증명","effect":"효과50자이상","amount":"+X억또는채널↑","period":"기간"},4개],"roadmap_short":["단기4개"],"roadmap_mid":["중기4개"],"roadmap_long":["장기4개"],"summary":["종합3개60자이상"]}\n\n[기업] '+JSON.stringify(pd);
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
+  var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
+  return '너는 대한민국 최고의 경영컨설턴트야. 아래 기업 데이터를 기반으로 \''+nm+'\' 기업전달용 AI 경영진단보고서를 작성해.\n\n'
+    +'【핵심 규칙】\n'
+    +'- 반드시 기업명 \''+nm+'\'을 각 항목에 자연스럽게 포함\n'
+    +'- 실제 수치(전년매출 '+r25+', 금년예상 '+rExp+', 핵심아이템: '+itm+')를 반드시 인용\n'
+    +'- 각 항목은 반드시 60자 이상, 구체적이고 실질적인 내용\n'
+    +'- 긍정적이고 전문적인 톤\n'
+    +'- JSON만 출력 (마크다운, 설명 텍스트 없이)\n\n'
+    +'JSON:\n'
+    +'{"grade":"A-","grade_desc":"고성장 유망기업",'
+    +'"overview":["'+nm+'는 '+r25+' 매출을 달성하며 5개항목 각60자이상"],'
+    +'"finance_strengths":["'+nm+'의 '+r25+' 매출은 4개항목 각60자이상"],'
+    +'"finance_risks":["'+nm+'가 주의해야 할 3개항목 각60자이상"],'
+    +'"radar":[재무,전략,인사,운영,IT점수],'
+    +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
+    +'"marketing":["'+nm+'의 '+itm+' 마케팅 5개항목 각60자이상"],'
+    +'"marketing_items":["포지셔닝 전략 3개 각50자이상"],'
+    +'"hr":["'+nm+' 인사조직 5개 각60자이상"],'
+    +'"ops":["'+nm+' 운영생산 5개 각60자이상"],'
+    +'"it":["'+nm+' IT디지털 5개 각60자이상"],'
+    +'"certs":['
+    +'{"name":"벤처기업 인증","effect":"'+nm+'의 '+itm+' 기술력 인정 — 중진공·기보 우대금리 적용으로 추가 자금 한도 2억원 확보 가능","amount":"+2억","period":"6개월 내"},'
+    +'{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용","amount":"+3억","period":"1년 내"},'
+    +'{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지","amount":"+1.5억","period":"세액공제 병행"},'
+    +'{"name":"HACCP 인증","effect":"'+nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결","amount":"채널↑","period":"매출 확대"}],'
+    +'"roadmap_short":["'+nm+' 단기 4개 각35자이상"],'
+    +'"roadmap_mid":["'+nm+' 중기 4개 각35자이상"],'
+    +'"roadmap_long":["'+nm+' 장기 4개 각35자이상"],'
+    +'"summary":["'+nm+' 종합의견 3개 각80자이상"]}\n\n'
+    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp+', 금년현재:'+rCur+', 전전년:'+r24;
 }
+
 function buildMgmtConsultantPrompt(cData, fRev) {
-  var pd={name:cData.name,rep:cData.rep,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,매출데이터:fRev};
-  return '너는 20년 경력 경영컨설턴트. 대상: \''+cData.name+'\'. 컨설턴트 내부용 — 리스크 솔직하게. JSON만.\n\n'
-    +'{"grade":"등급","grade_desc":"설명","overview":["현황5개"],"key_risks":["리스크4개60자이상"],"finance_strengths":["재무4개"],"fb_finance":["재무피드백3개60자이상"],"radar":[재무,전략,인사,운영,IT],"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},"marketing":["마케팅4개"],"fb_marketing":["마케팅피드백3개60자이상"],"hr":["인사5개"],"ops":["운영5개"],"fb_hr_ops":["인사운영피드백3개60자이상"],"it":["IT5개"],"fb_it":["IT피드백3개60자이상"],"roadmap_short":["단기4개"],"roadmap_mid":["중기4개"],"roadmap_long":["장기4개"],"fb_roadmap":["로드맵피드백2개60자이상"],"certs":[{"name":"인증","effect":"효과","amount":"+X억","period":"기간"},3개],"consultant_issues":["시급3개70자이상"],"consultant_funds":["자금4개60자이상"],"consultant_certs":["인증전략3개50자이상"],"consultant_marketing":["마케팅2개"],"consultant_credit":["신용2개"]}\n\n[기업] '+JSON.stringify(pd);
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
+  return '너는 대한민국 최고의 경영컨설턴트야. \''+nm+'\' 컨설턴트 내부용 경영진단보고서를 작성해.\n\n'
+    +'【핵심 규칙】\n'
+    +'- 기업명 \''+nm+'\'을 각 항목에 포함, 실제 수치('+r25+', '+rExp+') 반드시 인용\n'
+    +'- 컨설턴트 내부용: 리스크를 솔직하고 구체적으로 기술\n'
+    +'- 각 항목 60자 이상, JSON만 출력\n\n'
+    +'{"grade":"등급","grade_desc":"8자설명",'
+    +'"overview":["'+nm+' 현황 5개 60자이상"],'
+    +'"key_risks":["'+nm+' 리스크 4개 각70자이상"],'
+    +'"finance_strengths":["'+nm+' 재무강점 4개 60자이상"],'
+    +'"fb_finance":["재무 피드백 3개 70자이상"],'
+    +'"radar":[재무,전략,인사,운영,IT],'
+    +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
+    +'"marketing":["'+nm+' 마케팅 4개 60자이상"],'
+    +'"fb_marketing":["마케팅 피드백 3개 70자이상"],'
+    +'"hr":["'+nm+' 인사 5개 60자이상"],'
+    +'"ops":["'+nm+' 운영 5개 60자이상"],'
+    +'"fb_hr_ops":["인사운영 피드백 3개 70자이상"],'
+    +'"it":["'+nm+' IT 5개 60자이상"],'
+    +'"fb_it":["IT피드백 3개 70자이상"],'
+    +'"roadmap_short":["단기 4개 35자이상"],"roadmap_mid":["중기 4개"],"roadmap_long":["장기 4개"],'
+    +'"fb_roadmap":["로드맵피드백 2개 70자이상"],'
+    +'"certs":[{"name":"인증명","effect":"'+nm+' 관련 효과 50자이상","amount":"+X억","period":"기간"},3개],'
+    +'"consultant_issues":["'+nm+' 시급이슈 3개 80자이상"],'
+    +'"consultant_funds":["'+nm+' 자금전략 4개 70자이상"],'
+    +'"consultant_certs":["인증전략 3개 60자이상"],'
+    +'"consultant_marketing":["마케팅 2개 60자이상"],'
+    +'"consultant_credit":["신용개선 2개 60자이상"]}\n\n'
+    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp;
 }
+
 function buildFinancePrompt(cData, fRev) {
-  return '재무전문 컨설턴트. 대상:\''+cData.name+'\'. JSON만.\n\n'
-    +'{"scores":{"profit":수익성,"stable":안정성,"growth":성장성},"score_descs":{"profit":"10자","stable":"10자","growth":"10자"},"profit_bars":[{"label":"지표","value":0-100,"display":"값"},x4],"debt":[{"name":"기관","ratio":비율},...],"stable_metrics":[{"label":"지표","value":"값","desc":"설명"},x4],"growth_items":["성장5개50자이상"],"action_urgent":"즉시실행2줄","action_short":"단기실행2줄","action_mid":"중기실행2줄"}\n\n[기업] '+JSON.stringify({name:cData.name,industry:cData.industry,empCount:cData.empCount,bizDate:cData.bizDate,매출데이터:fRev});
+  var nm=cData.name, ind=cData.industry||'제조업';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
+  return '재무전문 컨설턴트. \''+nm+'\' 재무진단. 기업명과 실제 수치 반드시 포함. JSON만.\n\n'
+    +'{"scores":{"profit":수익성점수,"stable":안정성점수,"growth":성장성점수},'
+    +'"score_descs":{"profit":"'+nm+' 수익성 10자","stable":"'+nm+' 안정성 10자","growth":"'+nm+' 성장성 10자"},'
+    +'"profit_bars":[{"label":"매출 성장률(YoY)","value":80,"display":"+21%"},{"label":"매출이익률","value":62,"display":"38%"},{"label":"영업이익률","value":45,"display":"23%"},{"label":"현금흐름 안정성","value":70,"display":"양호"}],'
+    +'"debt":[{"name":"중진공","ratio":54},{"name":"기보","ratio":27},{"name":"재단","ratio":19}],'
+    +'"stable_metrics":[{"label":"부채비율","value":"낮음","desc":"정책자금 중심"},{"label":"KCB신용","value":"710점","desc":"3등급"},{"label":"연체이력","value":"없음","desc":"청결"},{"label":"종합등급","value":"A-","desc":"우수"}],'
+    +'"growth_items":["'+nm+'의 '+r25+' 매출은 5개 60자이상"],'
+    +'"action_urgent":"'+nm+' 즉시실행 2문장",'
+    +'"action_short":"'+nm+' 단기실행 2문장",'
+    +'"action_mid":"'+nm+' 중기실행 2문장"}\n\n'
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp;
 }
+
 function buildTradePrompt(cData, fRev) {
-  return '상권분석 전문가. 대상:\''+cData.name+'\'. JSON만.\n\n'
-    +'{"traffic":"X명","competitors":숫자,"grade":"등급","radar":[5개0-100],"features":["특성5개50자이상"],"comp_direct":숫자,"comp_strong":숫자,"diff_potential":"高/中/低","target":{"age":"연령","household":"가구","channel":"채널","cycle":"주기"},"strategy":["전략5개50자이상"],"sim":{"s0":현재만원,"s1":6개월,"s2":1년,"s3":2년}}\n\n[기업] '+JSON.stringify({name:cData.name,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,매출데이터:fRev});
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품';
+  var r25=fRev.매출_2025년||'0원';
+  return '상권분석 전문가. \''+nm+'\' 상권분석. 기업명과 실제 데이터 반드시 반영. JSON만.\n\n'
+    +'{"traffic":"2,400명","competitors":7,"grade":"B+","radar":[82,75,68,72,80],'
+    +'"features":["'+nm+'의 '+itm+' 판매 상권 특성 5개 60자이상"],'
+    +'"comp_direct":7,"comp_strong":3,"diff_potential":"高",'
+    +'"target":{"age":"30~40대","household":"1~2인","channel":"온라인","cycle":"월 2~3회"},'
+    +'"strategy":["'+nm+'의 '+itm+'을 활용한 차별화 전략 5개 60자이상"],'
+    +'"sim":{"s0":9000,"s1":12000,"s2":16000,"s3":24000}}\n\n'
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 전년매출:'+r25;
 }
+
 function buildMarketingPrompt(cData, fRev) {
-  return '디지털 마케팅 전문가. 대상:\''+cData.name+'\'. JSON만.\n\n'
-    +'{"channels":[{"name":"채널","score":점수},x4],"strategies":["전략5개50자이상"],"budget_total":"월예산","budget":[{"name":"항목","ratio":비율},x4],"kpi":[{"label":"지표","value":"목표","period":"기간"},x4],"roadmap":[{"period":"월","task":"과제","highlight":false},x6]}\n\n[기업] '+JSON.stringify({name:cData.name,industry:cData.industry,coreItem:cData.coreItem,empCount:cData.empCount,매출데이터:fRev});
+  var nm=cData.name, itm=cData.coreItem||'주력제품';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
+  return '디지털마케팅 전문가. \''+nm+'\'의 \''+itm+'\' 마케팅 제안서. 기업명과 제품명 반드시 포함. JSON만.\n\n'
+    +'{"channels":[{"name":"SNS (인스타·유튜브쇼츠)","score":88},{"name":"네이버 검색·블로그","score":75},{"name":"인플루언서·리뷰마케팅","score":72},{"name":"쿠팡 광고","score":65}],'
+    +'"strategies":["'+nm+'의 '+itm+' SNS 전략 5개 60자이상"],'
+    +'"budget_total":"700만원/월",'
+    +'"budget":[{"name":"SNS광고","ratio":38},{"name":"검색광고","ratio":25},{"name":"콘텐츠제작","ratio":22},{"name":"기타","ratio":15}],'
+    +'"kpi":[{"label":"SNS 팔로워","value":"+3,000","period":"3개월"},{"label":"월 매출 증가","value":"+30%","period":"6개월"},{"label":"재구매율","value":"40%","period":"목표"},{"label":"리뷰 누적","value":"500건","period":"6개월"}],'
+    +'"roadmap":[{"period":"1월","task":"'+nm+' SNS채널 개설·브랜딩","highlight":false},{"period":"2월","task":"인플루언서 협업","highlight":false},{"period":"3월","task":"'+itm+' 바이럴캠페인","highlight":false},{"period":"4~5월","task":"성과분석·최적화","highlight":true},{"period":"6월","task":"정기구독 론칭","highlight":false},{"period":"7월~","task":"B2B채널 진출","highlight":false}]}\n\n'
+    +'[기업] 기업명:'+nm+', 핵심아이템:'+itm+', 전년매출:'+r25+', 금년예상:'+rExp;
 }
+
 function buildFundPrompt(cData, fRev) {
-  return '정책자금 전문 컨설턴트. 대상:\''+cData.name+'\'. JSON만.\n\n'
-    +'{"checks":[{"text":"자격요건","status":"pass/cond/fail"},x6],"score":0-100,"score_desc":"설명","match_count":숫자,"score_items":["분석3개50자이상"],"funds":[{"rank":1,"name":"자금명","limit":"한도","tags":["태그1","태그2","태그3"]},x5],"comparison":[{"org":"기관","limit":"한도","rate":"금리","period":"기간","diff":"easy/mid/hard"},x4],"checklist_ready":["서류4개"],"checklist_need":["서류2개"]}\n\n[기업] '+JSON.stringify({name:cData.name,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,needFund:cData.needFund,매출데이터:fRev});
-}
-function buildBizPlanPrompt(cData, fRev) {
+  var nm=cData.name, ind=cData.industry||'제조업';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
-  return '사업계획서 전문가. 대상:\''+cData.name+'\'. 기업 데이터 기반 구체적 내용. JSON만.\n\n'
-    +'{"s1_items":["현황5개60자이상"],"s2_swot":{"strength":["강점4개"],"weakness":["약점3개"],"opportunity":["기회4개"],"threat":["위협3개"]},"s3_items":["시장5개60자이상"],"s4_items":["경쟁4개60자이상"],"s4_competitor":[{"item":"항목","self":"★점수","a":"★점수","b":"★점수"},x5-7],"s5_items":[{"title":"제목","text":"설명60자이상","color":"#색상"},x4],"s6_certs":[{"name":"인증","effect":"효과60자이상","amount":"+X억또는채널↑","period":"기간"},x4],"s7_rows":[{"item":"항목","amount":"금액","ratio":"X%","purpose":"목적40자이상"},총합='+nf+'],"s7_strategy":["전략5개40자이상"],"s8_short":["단기4개30자이상"],"s8_mid":["중기4개"],"s8_long":["장기4개"],"s9_items":["동력4개60자이상"],"s9_kpi":{"y1":"1년후","y2":"2년후","ch":"채널","emp":"인원"},"s9_roadmap":[{"year":"2026","tasks":["3개"]},{"year":"2027","tasks":["3개"]},{"year":"2028","tasks":["3개"]},{"year":"2029~","tasks":["3개"]}],"s10_conclusion":"마무리5문장이상(~있음으로끝)"}\n\n[기업] '+JSON.stringify({name:cData.name,rep:cData.rep,industry:cData.industry,bizDate:cData.bizDate,empCount:cData.empCount,coreItem:cData.coreItem,필요자금:nf,자금사용계획:cData.fundPlan||'',매출데이터:fRev});
+  return '정책자금 전문 컨설턴트. \''+nm+'\' 정책자금 매칭. 기업명 반드시 반영. JSON만.\n\n'
+    +'{"checks":[{"text":"중소기업 해당 여부","status":"pass"},{"text":"국세·지방세 체납 없음","status":"pass"},{"text":"금융 연체 이력 없음","status":"pass"},{"text":"사업자 등록 유효","status":"pass"},{"text":"업력 조건 충족","status":"cond"},{"text":"벤처·이노비즈 인증","status":"fail"}],'
+    +'"score":78,"score_desc":"'+nm+' 신청 가능","match_count":5,'
+    +'"score_items":["'+nm+'는 기본요건 4개 충족 3개 60자이상"],'
+    +'"funds":[{"rank":1,"name":"중진공 소공인 특화자금","limit":"1억","tags":["금리 2.5%","즉시신청가능","'+ind+' 우대"]},{"rank":2,"name":"기보 기술보증(특허우대)","limit":"3억","tags":["보증료 0.5%","특허 1건 우대","90% 보증"]},{"rank":3,"name":"소진공 성장촉진자금","limit":"1억","tags":["금리 3.0%","창업3년이내","온라인신청"]},{"rank":4,"name":"지역신보 소액보증","limit":"5천만","tags":["보증료 0.8%","지역맞춤","빠른처리"]},{"rank":5,"name":"신보 창업기업 특례보증","limit":"2억","tags":["보증료 0.5%","벤처인증조건부","95% 보증"]}],'
+    +'"comparison":[{"org":"중진공","limit":"1억","rate":"2.5%","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
+    +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
+    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\n\n'
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp;
+}
+
+function buildBizPlanPrompt(cData, fRev) {
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원', r24=fRev.매출_2024년||'0원';
+  var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
+  return '사업계획서 전문가. \''+nm+'\' 완성형 AI 사업계획서. 기업명·제품명·실제수치를 모든 항목에 반드시 포함. JSON만.\n\n'
+    +'{"s1_items":["'+nm+'는 '+itm+'을 통해 5개 70자이상"],'
+    +'"s2_swot":{"strength":["'+nm+'의 강점 4개 50자이상"],"weakness":["'+nm+'의 약점 3개 50자이상"],"opportunity":["'+nm+'의 기회 4개 50자이상"],"threat":["'+nm+'의 위협 3개 50자이상"]},'
+    +'"s3_items":["'+ind+' 시장 현황 5개 70자이상"],'
+    +'"s4_items":["'+nm+'의 '+itm+' 경쟁력 4개 70자이상"],'
+    +'"s4_competitor":[{"item":"제품경쟁력","self":"★★★★★","a":"★★★★","b":"★★★"},{"item":"기술력(특허)","self":"★★★★★","a":"★★★","b":"★★★"},{"item":"가격경쟁력","self":"★★★★","a":"★★★★★","b":"★★★★"},{"item":"유통망","self":"★★★","a":"★★★★★","b":"★★★★"},{"item":"성장성","self":"★★★★★","a":"★★★","b":"★★★"}],'
+    +'"s5_items":[{"title":"기술 차별화","text":"'+nm+'의 '+itm+' 기술특허 보유로 70자이상","color":"#16a34a"},{"title":"제품 차별화","text":"'+nm+' 제품 독창적 특징 70자이상","color":"#2563eb"},{"title":"시장 포지셔닝","text":"'+nm+'의 '+ind+' 시장 내 포지션 70자이상","color":"#7c3aed"},{"title":"성장 증명력","text":"'+nm+'의 '+r25+' 매출 달성으로 70자이상","color":"#ea580c"}],'
+    +'"s6_certs":[{"name":"벤처기업 인증","effect":"'+nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 한도 2억","amount":"+2억","period":"6개월 내"},{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신기업 인증 — 중진공 기술개발자금 신청 자격","amount":"+3억","period":"1년 내"},{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% + 기보 기술보증 우대","amount":"+1.5억","period":"세액공제 병행"},{"name":"HACCP 인증","effect":"'+nm+' '+itm+'의 대형마트·급식 납품 채널 확대","amount":"채널↑","period":"매출 확대"}],'
+    +'"s7_rows":[{"item":"원재료 구입","amount":"1억5천만원","ratio":"37.5%","purpose":"'+nm+'의 핵심 원재료 선매입 및 안정적 재고 확보"},{"item":"생산 설비 투자","amount":"1억원","ratio":"25%","purpose":"'+nm+'의 생산 자동화로 원가율 20% 절감"},{"item":"마케팅·채널","amount":"7천만원","ratio":"17.5%","purpose":"'+nm+'의 SNS·쿠팡 입점·브랜드 마케팅 집행"},{"item":"운전자금","amount":"8천만원","ratio":"20%","purpose":"'+nm+'의 인건비·고정비 등 운영 비용"}],'
+    +'"s7_strategy":["'+nm+' 자금 집행 전략 5개 50자이상"],'
+    +'"s8_short":["'+nm+' 단기 4개 35자이상"],"s8_mid":["'+nm+' 중기 4개"],"s8_long":["'+nm+' 장기 4개"],'
+    +'"s9_items":["'+nm+'의 핵심 성장 동력 4개 70자이상"],'
+    +'"s9_kpi":{"y1":"18억","y2":"24억","ch":"5개↑","emp":"11명"},'
+    +'"s9_roadmap":[{"year":"2026","tasks":["'+nm+' 3개 계획"]},{"year":"2027","tasks":["'+nm+' 3개 계획"]},{"year":"2028","tasks":["3개 계획"]},{"year":"2029~","tasks":["3개 계획"]}],'
+    +'"s10_conclusion":"'+nm+'는 '+itm+'을 통해 5문장이상 종합의견(~있음으로끝)"}\n\n'
+    +'[기업] 기업명:'+nm+', 대표:'+rep+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 전전년:'+r24+', 금년예상:'+rExp+', 필요자금:'+nf;
 }
 
 // ===========================
@@ -1738,7 +1888,11 @@ function resetContentArea(el) {
   el.style.cssText = 'padding:0!important;background:transparent!important;box-shadow:none!important;min-height:unset!important;border-radius:0!important;';
 }
 
+// ===========================
+// ★ 경영진단 생성 — try/finally 오버레이 보장
+// ===========================
 window.generateReport = async function(type, version, event) {
+  var overlay = document.getElementById('ai-loading-overlay');
   var tab = event.target.closest('.tab-content');
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
@@ -1748,9 +1902,16 @@ window.generateReport = async function(type, version, event) {
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var fRev = fRevAI(cData, rev);
   var prompt = version==='client' ? buildMgmtClientPrompt(cData,fRev) : buildMgmtConsultantPrompt(cData,fRev);
-  document.getElementById('ai-loading-overlay').style.display = 'flex';
-  var data = await callGeminiJSON(prompt, 8192);
-  document.getElementById('ai-loading-overlay').style.display = 'none';
+  if (overlay) overlay.style.display = 'flex';
+  var data = null;
+  try {
+    data = await callGeminiJSON(prompt, 8192);
+  } catch(e) {
+    console.error('보고서 생성 오류:', e);
+    alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
+  } finally {
+    if (overlay) overlay.style.display = 'none';
+  }
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
   var vL = version==='client'?'기업전달용':'컨설턴트용';
@@ -1766,7 +1927,11 @@ window.generateReport = async function(type, version, event) {
   initReportCharts(rev);
 };
 
+// ===========================
+// ★ 기타 보고서 생성 — try/finally 오버레이 보장
+// ===========================
 window.generateAnyReport = async function(type, version, event) {
+  var overlay = document.getElementById('ai-loading-overlay');
   var tab = event.target.closest('.tab-content');
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
@@ -1776,10 +1941,17 @@ window.generateAnyReport = async function(type, version, event) {
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var fRev = fRevAI(cData, rev);
   var cfg  = REPORT_CONFIGS[type]; if (!cfg) return;
-  document.getElementById('ai-loading-overlay').style.display = 'flex';
-  var maxT = type==='aiBiz' ? 65536 : 8192;
-  var data = await callGeminiJSON(cfg.buildPrompt(cData,fRev,version), maxT);
-  document.getElementById('ai-loading-overlay').style.display = 'none';
+  if (overlay) overlay.style.display = 'flex';
+  var data = null;
+  try {
+    var maxT = type==='aiBiz' ? 65536 : 8192;
+    data = await callGeminiJSON(cfg.buildPrompt(cData, fRev, version), maxT);
+  } catch(e) {
+    console.error('보고서 생성 오류:', e);
+    alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
+  } finally {
+    if (overlay) overlay.style.display = 'none';
+  }
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
   var vL = type==='aiBiz'?(version==='draft'?'초안':'완성본'):(version==='client'?'기업전달용':'컨설턴트용');
@@ -1789,11 +1961,15 @@ window.generateAnyReport = async function(type, version, event) {
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
   tab.querySelector('[id$="-result-step"]').style.display = 'block';
   var ca = document.getElementById(cfg.contentAreaId);
-  resetContentArea(ca); ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
+  resetContentArea(ca);
+  ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
   _currentReport = {company:cData.name, type:cfg.title+' ('+vL+')', contentAreaId:cfg.contentAreaId, landscape:true};
   initReportCharts(rev);
 };
 
+// ===========================
+// ★ 보고서 보기 (showTab 리셋 후 setTimeout으로 복원)
+// ===========================
 window.viewReport = function(id) {
   var r = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]').find(function(x){return x.id===id;}); if(!r) return;
   var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
@@ -1803,23 +1979,28 @@ window.viewReport = function(id) {
   var type = r.reportType||'management';
   if (type==='management') {
     showTab('report');
-    document.getElementById('report-input-step').style.display='none';
-    document.getElementById('report-result-step').style.display='block';
-    var ca = document.getElementById('report-content-area');
-    resetContentArea(ca);
-    ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
-    _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:true};
-    initReportCharts(rev);
+    setTimeout(function(){
+      document.getElementById('report-input-step').style.display='none';
+      document.getElementById('report-result-step').style.display='block';
+      var ca = document.getElementById('report-content-area');
+      resetContentArea(ca);
+      ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
+      _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:true};
+      initReportCharts(rev);
+    }, 50);
   } else {
     var cfg = REPORT_CONFIGS[type]; if(!cfg) return;
     var tabId = cfg.contentAreaId.replace('-content-area','');
     showTab(tabId);
-    document.getElementById(tabId+'-input-step').style.display='none';
-    document.getElementById(tabId+'-result-step').style.display='block';
-    var ca2 = document.getElementById(cfg.contentAreaId);
-    resetContentArea(ca2); ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
-    _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:true};
-    initReportCharts(rev);
+    setTimeout(function(){
+      document.getElementById(tabId+'-input-step').style.display='none';
+      document.getElementById(tabId+'-result-step').style.display='block';
+      var ca2 = document.getElementById(cfg.contentAreaId);
+      resetContentArea(ca2);
+      ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
+      _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:true};
+      initReportCharts(rev);
+    }, 50);
   }
 };
 
