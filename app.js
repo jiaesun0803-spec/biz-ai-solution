@@ -477,15 +477,18 @@ async function callGeminiJSON(prompt, maxTokens=8192){
 // ===========================
 // ★ 보고서 CSS (A4 가로형 최적화)
 // ===========================
-function tplStyle(color) {
+function tplStyle(color, orientation) {
   var c = color||'#3b82f6';
+  var isPortrait = (orientation === 'portrait');
+  var coverMinH  = isPortrait ? '680px' : '480px';
+  var pageMinH   = isPortrait ? '740px' : '520px';
   return '<style>'
   + '* { box-sizing:border-box; }'
   + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:14px; }'
   + '.rp-wrap * { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }'
 
   // ── 표지 ──
-  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:20px 24px 18px 32px; position:relative; min-height:480px; display:flex; flex-direction:column; overflow:hidden; }'
+  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:20px 24px 18px 32px; position:relative; min-height:'+coverMinH+'; display:flex; flex-direction:column; overflow:hidden; }'
   + '.rp-cbar  { position:absolute; left:0; top:0; bottom:0; width:12px; background:'+c+'; }'
   + '.rp-cbadge{ font-size:12px; font-weight:700; padding:4px 12px; border-radius:4px; display:inline-block; margin-bottom:8px; letter-spacing:0.3px; }'
   + '.rp-ctitle{ font-size:24px; font-weight:700; color:#0f172a; margin-bottom:4px; letter-spacing:-0.5px; line-height:1.2; }'
@@ -498,7 +501,7 @@ function tplStyle(color) {
   + '.rp-cfoot { display:flex; justify-content:space-between; font-size:13px; color:#64748b; padding-top:10px; border-top:1px solid #e2e8f0; margin-top:10px; font-weight:500; }'
 
   // ── 페이지 (A4 landscape 기준) ──
-  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:16px 20px 18px; min-height:520px; display:flex; flex-direction:column; }'
+  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:16px 20px 18px; min-height:'+pageMinH+'; display:flex; flex-direction:column; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
@@ -948,7 +951,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
 }
 
 // ===========================
@@ -1118,7 +1121,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
 }
 
 
@@ -1237,7 +1240,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
 }
 
 // ===========================
@@ -1317,7 +1320,7 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
 }
 
 // ===========================
@@ -1377,7 +1380,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     )
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
 }
 
 // ===========================
@@ -1471,7 +1474,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
 }
 
 // ===========================
@@ -1714,7 +1717,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + '</div>';
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + '</div>';
 }
 
 
