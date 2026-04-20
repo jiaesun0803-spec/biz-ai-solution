@@ -906,7 +906,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var radar = (d.radar||[72,80,68,70,58]).join(',');
   var bars  = d.marketing_bars||{finance:82,strategy:80,operation:68,hr:64,it:55};
   var nm = cData.name;
-  var gradeVal = (gradeVal).replace(/등급/g,'').trim();
+  var gradeVal = (d.grade||'A-').replace(/등급/g,'').trim();
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
   var certs = d.certs||[
     {name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'},
@@ -2324,7 +2324,7 @@ window.generateReport = async function(type, version, event) {
       : buildMgmtConsultantHTML(data, cData, rev, today);
   } catch(htmlErr) {
     console.error('HTML 빌드 오류:', htmlErr);
-    ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + String(htmlErr) + '</pre></div>';
+    ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + (htmlErr.stack||String(htmlErr)) + '</pre></div>';
   }
 
   _currentReport = {
@@ -2406,7 +2406,7 @@ window.viewReport = function(id) {
       ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
     } catch(htmlErr2) {
       console.error('viewReport HTML 오류:', htmlErr2);
-      ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + String(htmlErr2) + '</pre></div>';
+      ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + (htmlErr2.stack||String(htmlErr2)) + '</pre></div>';
     }
       _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:false};
       initReportCharts(rev);
