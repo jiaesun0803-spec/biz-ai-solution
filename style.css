@@ -160,7 +160,7 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 }
 
 /* ====================================================
-   ★ 업체 관리 - 카드 목록 뷰
+   ★ 기업 관리 - 카드 목록 뷰
 ==================================================== */
 .company-list-header {
     display: flex;
@@ -214,7 +214,7 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 }
 .btn-add-company:hover { background: #0f172a; }
 
-/* 업체 카드 - 3열 그리드 */
+/* 기업 카드 - 3열 그리드 */
 .company-cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
