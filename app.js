@@ -204,6 +204,15 @@ window.saveApiSettings=function(){let s=JSON.parse(localStorage.getItem(DB_SESSI
 // ★ 탭 이동
 // ===========================
 window.showTab = function(tabId, updateUrl=true) {
+  // 탭 전환 로딩바 애니메이션
+  var bar = document.getElementById('tab-loading-bar');
+  if (bar) {
+    bar.style.display = 'block';
+    bar.style.animation = 'none';
+    void bar.offsetWidth; // reflow
+    bar.style.animation = 'tabLoadBar 0.6s ease-out forwards';
+    setTimeout(function(){ bar.style.display='none'; }, 650);
+  }
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.menu li, .bottom-menu li').forEach(i=>i.classList.remove('active'));
   const target=document.getElementById(tabId); if(target) target.classList.add('active');
@@ -423,7 +432,11 @@ function tpFeedback(items,color='#f97316'){return`<div class="fb-box"><div class
 async function _callCore(prompt, maxTokens, maxRetries) {
   const session=JSON.parse(localStorage.getItem('biz_session'));
   const apiKey=session?.apiKey;
-  if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
+  if(!apiKey){
+    alert('⚠️ Gemini API 키가 설정되지 않았습니다.\n\n설정 방법:\n1. 왼쪽 메뉴 하단 [설정] 탭 클릭\n2. API 키 항목에 Gemini API 키 입력\n3. 저장 후 다시 시도');
+    showTab('settings');
+    return null;
+  }
   let lastError=null;
   for(let attempt=1;attempt<=maxRetries;attempt++){
     if(attempt>1) await new Promise(r=>setTimeout(r,attempt*2000));
@@ -1951,7 +1964,13 @@ window.generateReport = async function(type, version, event) {
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var fRev = fRevAI(cData, rev);
   var prompt = version==='client' ? buildMgmtClientPrompt(cData,fRev) : buildMgmtConsultantPrompt(cData,fRev);
-  if (overlay) overlay.style.display = 'flex';
+  if (overlay) {
+    overlay.style.display = 'flex';
+    var tt = document.getElementById('loading-title-text');
+    var td = document.getElementById('loading-desc-text');
+    if(tt) tt.textContent = '경영진단보고서 생성 중...';
+    if(td) td.innerHTML = cData.name + ' 기업 데이터를 분석하여<br>맞춤형 경영진단보고서를 작성하고 있습니다.<br><b style="color:#3b82f6">최대 60초</b>가 소요될 수 있습니다.';
+  }
   var data = null;
   try {
     data = await callGeminiJSON(prompt, 8192);
@@ -1964,7 +1983,7 @@ window.generateReport = async function(type, version, event) {
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
   var vL = version==='client'?'기업전달용':'컨설턴트용';
-  var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'AI 경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
+  var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
   var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
   localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
@@ -1990,7 +2009,15 @@ window.generateAnyReport = async function(type, version, event) {
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var fRev = fRevAI(cData, rev);
   var cfg  = REPORT_CONFIGS[type]; if (!cfg) return;
-  if (overlay) overlay.style.display = 'flex';
+  if (overlay) {
+    overlay.style.display = 'flex';
+    var tt = document.getElementById('loading-title-text');
+    var td = document.getElementById('loading-desc-text');
+    var typeNames = {finance:'상세 재무진단', aiTrade:'상권분석 리포트', aiMarketing:'마케팅 제안서', aiFund:'정책자금매칭', aiBiz:'AI 사업계획서'};
+    if(tt) tt.textContent = (typeNames[type]||'보고서') + ' 생성 중...';
+    var waitSec = type==='aiBiz' ? '최대 <b style="color:#3b82f6">90초</b>' : '최대 <b style="color:#3b82f6">60초</b>';
+    if(td) td.innerHTML = cData.name + ' 기업 데이터를 분석하여<br>맞춤형 ' + (typeNames[type]||'보고서') + '를 작성하고 있습니다.<br>' + waitSec + '가 소요될 수 있습니다.';
+  }
   var data = null;
   try {
     var maxT = type==='aiBiz' ? 65536 : 8192;

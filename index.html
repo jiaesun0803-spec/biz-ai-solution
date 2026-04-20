@@ -608,11 +608,16 @@
     </main>
 </div>
 
+<div id="tab-loading-bar" class="tab-loading-bar" style="display:none"></div>
 <div id="ai-loading-overlay">
     <div class="scan-container">
-        <div class="document-icon"><div class="scan-line"></div></div>
-        <h3 class="loading-title">AI 분석 중...</h3>
-        <p class="loading-desc">기업 데이터를 스캔하여 맞춤형 리포트를 작성하고 있습니다.<br>최대 60초가 소요될 수 있습니다.</p>
+        <div class="document-icon">
+            <div class="scan-line"></div>
+            <div class="doc-line"></div>
+        </div>
+        <h3 class="loading-title" id="loading-title-text">AI 분석 중...</h3>
+        <p class="loading-desc" id="loading-desc-text">기업 데이터를 스캔하여 맞춤형 리포트를 작성하고 있습니다.<br>최대 60초가 소요될 수 있습니다.</p>
+        <div class="loading-dots"><span></span><span></span><span></span></div>
     </div>
 </div>
 <script src="app.js"></script>
