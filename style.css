@@ -4,40 +4,49 @@ body { background-color: #f1f5f9; color: #333; }
 
 /* 인증 */
 .auth-overlay { position: fixed; inset: 0; background: #0E162D; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.auth-box { background: white; padding: 40px; border-radius: 12px; width: 400px; text-align: center; }
-.auth-btn { width: 100%; padding: 12px; margin-top: 10px; cursor: pointer; border-radius: 6px; }
+.auth-box { background: white; padding: 40px; border-radius: 12px; width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+.auth-btn { width: 100%; padding: 14px; margin-top: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; border:none; }
 
 /* 사이드바 */
-.sidebar { width: 240px; background: #0E162D; color: white; display: flex; flex-direction: column; }
-.menu li { padding: 12px 20px; cursor: pointer; color: #94a3b8; list-style: none; }
-.menu li.active { background: #2563eb; color: white; }
+.sidebar { width: 240px; background: #0E162D; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo { padding: 25px 20px; border-bottom: 1px solid #1c2841; }
+.menu { flex: 1; padding: 15px 10px; overflow-y: auto; }
+.menu li { padding: 12px 15px; cursor: pointer; color: #94a3b8; list-style: none; border-radius: 8px; margin-bottom: 4px; display: flex; align-items: center; transition: 0.2s; }
+.menu li:hover { background: #1c2841; color: white; }
+.menu li.active { background: #2563eb; color: white; font-weight: bold; }
+
+/* 메인 레이아웃 */
+.main-content { flex: 1; padding: 30px; overflow-y: auto; }
+.tab-content { display: none; animation: fadeIn 0.3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.max-width-wrapper { max-width: 1100px; margin: 0 auto; }
 
 /* 기업 관리 카드 */
-.company-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-.company-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.company-card strong { font-size: 18px; color: #1e293b; }
+.company-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 25px; }
+.company-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+.company-card strong { font-size: 19px; color: #0f172a; display: block; margin-bottom: 8px; }
 
-/* 로딩 애니메이션 */
-#ai-loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100000; }
-.document-icon { width: 60px; height: 80px; background: white; position: relative; border-radius: 4px; overflow: hidden; }
-.scan-line { position: absolute; width: 100%; height: 4px; background: #3b82f6; top: 0; animation: scan 2s infinite linear; box-shadow: 0 0 10px #3b82f6; }
+/* 로딩 애니메이션 (z-index 최상단) */
+#ai-loading-overlay { position: fixed; inset: 0; background: rgba(14, 22, 45, 0.9); display: none; align-items: center; justify-content: center; z-index: 1000000; }
+.scan-container { display: flex; flex-direction: column; align-items: center; color: white; }
+.document-icon { width: 80px; height: 100px; background: white; position: relative; border-radius: 6px; overflow: hidden; border: 4px solid #3b82f6; }
+.scan-line { position: absolute; width: 100%; height: 5px; background: #ef4444; top: 0; animation: scan 1.5s infinite linear; box-shadow: 0 0 15px #ef4444; }
 @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-.loading-title { color: white; margin-top: 20px; }
+.loading-title { margin-top: 25px; font-size: 24px; font-weight: bold; }
 
-/* 보고서 용지 */
-.report-paper { width: 210mm; min-height: 297mm; background: white; padding: 20px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-.report-paper-landscape { width: 297mm; min-height: 210mm; background: white; padding: 20px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+/* 보고서 용지 (A4 규격 강제) */
+.report-paper { width: 210mm; min-height: 297mm; background: white; padding: 40px; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.1); flex-shrink: 0; }
+.report-paper-landscape { width: 297mm; min-height: 210mm; background: white; padding: 40px; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.1); flex-shrink: 0; }
 
-/* 그리드 및 폼 */
+/* 공통 UI */
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
-input, select, textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-.fund-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-.btn-primary { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-
-/* 가중치 그리드 */
-.criteria-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-.criteria-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; }
-.dot.blue { background: #3b82f6; } .dot.green { background: #10b981; } .dot.orange { background: #f97316; } .dot.purple { background: #8b5cf6; } .dot.teal { background: #14b8a6; } .dot.pink { background: #ec4899; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; text-align: left; }
+.form-group label { font-size: 13px; font-weight: bold; color: #475569; }
+input, select, textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 14px; }
+.btn-primary { background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; border:none; font-weight: bold; cursor: pointer; }
+.btn-outline { background: white; border: 1px solid #cbd5e1; padding: 12px 24px; border-radius: 8px; cursor: pointer; color: #475569; }
+.btn-report-blue { background: #bfdbfe; color: #1e3a8a; border: none; padding: 20px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 17px; }
+.btn-delete-account { background: #fee2e2; color: #dc2626; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.blue-banner { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; }
