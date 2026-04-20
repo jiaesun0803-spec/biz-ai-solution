@@ -487,18 +487,24 @@ function tplStyle(color, orientation) {
   + '.rp-cvtbl th { background:#f8fafc; border:1px solid #e2e8f0; padding:8px 12px; text-align:left; font-weight:700; color:'+c+'; white-space:nowrap; }'
   + '.rp-cvtbl td { border:1px solid #e2e8f0; padding:8px 12px; color:#1e293b; font-weight:500; }'
   + '.rp-cfoot { display:flex; justify-content:space-between; font-size:13px; color:#64748b; padding-top:10px; border-top:1px solid #e2e8f0; margin-top:10px; font-weight:500; }'
-  + '.rp-cover-unified { padding:0; justify-content:space-between; background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%); }'
-  + '.rp-cover-unified::before { content:""; position:absolute; left:44px; right:44px; top:34px; height:6px; border-radius:999px; background:'+c+'; }'
-  + '.rp-cover-unified::after { content:""; position:absolute; right:-40px; top:76px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, rgba(148,163,184,0.10) 0%, rgba(148,163,184,0.00) 72%); }'
-  + '.rp-cover-top { padding:58px 50px 0 50px; flex:0 0 auto; position:relative; z-index:1; }'
-  + '.rp-cover-main { flex:1 1 auto; min-height:0; display:flex; align-items:center; padding:0 56px; position:relative; z-index:1; }'
-  + '.rp-cover-main-inner { width:100%; }'
-  + '.rp-cover-kicker { display:inline-flex; align-items:center; padding:8px 14px; border-radius:999px; background:#f8fafc; border:1px solid #e2e8f0; font-size:11px; font-weight:800; color:#475569; letter-spacing:-0.1px; margin-bottom:18px; white-space:nowrap; }'
-  + '.rp-cover-title { font-size:42px; font-weight:900; color:#0f172a; letter-spacing:-1.6px; line-height:1.13; margin-bottom:12px; }'
-  + '.rp-cover-sub { font-size:16px; color:#94a3b8; font-weight:700; letter-spacing:-0.2px; }'
-  + '.rp-cover-divider { width:92px; height:2px; border-radius:999px; background:'+c+'; margin-top:24px; opacity:0.72; }'
+  + '.rp-cover-unified { padding:0; justify-content:space-between; background:#ffffff; }'
+  + '.rp-cover-unified::before { content:""; position:absolute; left:34px; right:34px; top:34px; height:8px; background:'+c+'; }'
+  + '.rp-cover-unified::after { content:""; position:absolute; left:48px; top:42px; bottom:34px; width:1px; background:#e5e7eb; }'
+  + '.rp-cover-top { padding:86px 62px 0 62px; flex:0 0 auto; position:relative; z-index:1; }'
+  + '.rp-cover-main { flex:1 1 auto; min-height:0; display:flex; align-items:flex-start; justify-content:center; padding:54px 56px 0 56px; position:relative; z-index:1; }'
+  + '.rp-cover-main-inner { width:100%; text-align:center; }'
+  + '.rp-cover-kicker { display:none; }'
+  + '.rp-cover-title { font-size:54px; font-weight:900; color:#3f3f46; letter-spacing:-2.2px; line-height:1.1; text-align:center; margin:0; }'
+  + '.rp-cover-sub { display:none; }'
+  + '.rp-cover-divider { width:82%; height:1px; border-radius:0; background:#cbd5e1; margin:28px auto 30px; opacity:1; }'
+  + '.rp-cover-company-label { font-size:18px; font-weight:700; color:#3f3f46; line-height:1.5; text-align:center; }'
+  + '.rp-cover-company-name { font-size:24px; font-weight:700; color:#111827; line-height:1.5; text-align:center; }'
+  + '.rp-cover-year { font-size:22px; font-weight:500; color:#111827; line-height:1.5; text-align:center; }'
   + '.rp-cover-bottom { flex:0 0 auto; padding:0 56px 34px 56px; position:relative; z-index:1; }'
-  + '.rp-cover-meta { display:flex; justify-content:space-between; gap:18px; padding-top:14px; border-top:1px solid #e5e7eb; font-size:11px; color:#64748b; font-weight:700; white-space:nowrap; }'
+  + '.rp-cover-meta { display:flex; justify-content:space-between; gap:18px; padding:14px 8px; border-top:1px solid #d1d5db; border-bottom:1px solid #d1d5db; font-size:11px; color:#3f3f46; font-weight:700; white-space:nowrap; }'
+  + '.rp-cover-brand { text-align:center; padding-top:20px; }'
+  + '.rp-cover-brand-name { font-size:34px; font-weight:900; color:'+c+'; letter-spacing:-1px; line-height:1.1; }'
+  + '.rp-cover-brand-contact { margin-top:8px; font-size:10px; color:#52525b; line-height:1.5; }'
 
   // ── 페이지 (A4 landscape 기준) ──
   + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
@@ -795,29 +801,38 @@ function mgmtPage(num, title, sub, accentColor, content) {
 
 // ═══════════════════════════════════════
 // ★ 통합 표지 — 모든 보고서 공통
-//   내용: 보고서제목 + 기업명 + 담당자명만
+//   두 번째 시안 기준의 정중앙 표지 레이아웃
 // ═══════════════════════════════════════
 function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColor) {
   var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
-  var cName = session.name||'담당 컨설턴트';
-  var cDept = session.dept||'소속 정보 미등록';
-  var subLabel = versionLabel ? '('+versionLabel+')' : '';
+  var cDept = session.dept||'전략컨설팅본부';
+  var safeTitle = String(reportTitle||'보고서').replace(/^AI\s*/,'').trim();
+  var companyName = (cData && cData.name) ? cData.name : '기업명 미입력';
+  var dateObj = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(dateObj.getTime())) dateObj = new Date();
+  var yyyy = dateObj.getFullYear();
+  var mm = dateObj.getMonth() + 1;
+  var issueMonth = yyyy + '년 ' + mm + '월';
 
   return '<div class="rp-cover rp-cover-unified" style="background:white;position:relative">'
-    +'<div class="rp-cover-top">'
-    +'<div class="rp-cover-kicker">BizConsult Report</div>'
-    +'</div>'
+    +'<div class="rp-cover-top"></div>'
     +'<div class="rp-cover-main">'
     +'<div class="rp-cover-main-inner">'
-    +'<div class="rp-cover-title">'+reportTitle+'</div>'
-    +(subLabel?'<div class="rp-cover-sub">'+subLabel+'</div>':'')
+    +'<div class="rp-cover-title">'+safeTitle+'</div>'
     +'<div class="rp-cover-divider"></div>'
+    +'<div class="rp-cover-company-label">기업명</div>'
+    +'<div class="rp-cover-company-name">'+companyName+'</div>'
+    +'<div class="rp-cover-year">'+yyyy+'</div>'
     +'</div>'
     +'</div>'
     +'<div class="rp-cover-bottom">'
     +'<div class="rp-cover-meta">'
-    +'<span>👤 담당 컨설턴트: '+cName+'</span>'
-    +'<span>🏢 소속: '+cDept+'</span>'
+    +'<span>작성일: '+issueMonth+'</span>'
+    +'<span>발행처: '+cDept+'</span>'
+    +'</div>'
+    +'<div class="rp-cover-brand">'
+    +'<div class="rp-cover-brand-name">BizConsult</div>'
+    +'<div class="rp-cover-brand-contact">전화: +82 2-123-4567&nbsp;&nbsp;|&nbsp;&nbsp;이메일: info@bizconsult.co.kr&nbsp;&nbsp;|&nbsp;&nbsp;www.bizconsult.co.kr</div>'
     +'</div>'
     +'</div>'
     +'</div>';
