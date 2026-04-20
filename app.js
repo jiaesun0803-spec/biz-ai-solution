@@ -2318,9 +2318,14 @@ window.generateReport = async function(type, version, event) {
   resetContentArea(ca);
 
   // ★ 클릭한 버튼의 버전을 먼저 표시
-  ca.innerHTML = version==='client'
-    ? buildMgmtClientHTML(data, cData, rev, today)
-    : buildMgmtConsultantHTML(data, cData, rev, today);
+  try {
+    ca.innerHTML = version==='client'
+      ? buildMgmtClientHTML(data, cData, rev, today)
+      : buildMgmtConsultantHTML(data, cData, rev, today);
+  } catch(htmlErr) {
+    console.error('HTML 빌드 오류:', htmlErr);
+    ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + String(htmlErr) + '</pre></div>';
+  }
 
   _currentReport = {
     company: cData.name,
@@ -2397,7 +2402,12 @@ window.viewReport = function(id) {
       document.getElementById('report-result-step').style.display='block';
       var ca = document.getElementById('report-content-area');
       resetContentArea(ca);
+      try {
       ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
+    } catch(htmlErr2) {
+      console.error('viewReport HTML 오류:', htmlErr2);
+      ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + String(htmlErr2) + '</pre></div>';
+    }
       _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:false};
       initReportCharts(rev);
     }, 50);
