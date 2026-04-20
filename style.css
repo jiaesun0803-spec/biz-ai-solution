@@ -334,6 +334,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-table { width: 100%; border-collapse: collapse; text-align: left; }
 .report-table th { background: #f8fafc; color: #64748b; font-size: 14px; padding: 15px; border-bottom: 2px solid #e2e8f0; }
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; vertical-align: middle; }
+
 /* ====================================================
    ★ 기업/보고서 목록 서브뷰
 ==================================================== */
