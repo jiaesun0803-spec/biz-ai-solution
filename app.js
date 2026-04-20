@@ -31,8 +31,14 @@ window.printReport = function() {
   var pw = window.open('','_blank','width=1400,height=900,scrollbars=yes');
   if (!pw) { alert('팝업이 차단되었습니다. 팝업을 허용해 주세요.'); return; }
 
+  var isLandscape = (_currentReport.landscape === true);
+  var pageSize   = isLandscape ? '297mm 210mm' : '210mm 297mm';
+  var pgMargin   = isLandscape ? '8mm 10mm'    : '10mm 12mm';
+  var coverMinH  = isLandscape ? '186mm'       : '257mm';
+  var pgMinH     = isLandscape ? '186mm'       : '257mm';
+
   var printCSS = `
-    @page { size: 297mm 210mm; margin: 8mm 10mm; }
+    @page { size: ${pageSize}; margin: ${pgMargin}; }
     * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
     body { margin: 0; padding: 0; background: #e8eaed; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
     .rp-wrap { background: #e8eaed !important; padding: 0 !important; }
@@ -43,7 +49,7 @@ window.printReport = function() {
       margin: 0 !important;
       border-radius: 0 !important;
       padding: 20px 24px 18px 32px !important;
-      min-height: 186mm !important;
+      min-height: ${coverMinH} !important;
       display: flex !important;
       flex-direction: column !important;
       page-break-inside: avoid !important;
@@ -57,7 +63,7 @@ window.printReport = function() {
       margin: 0 !important;
       border-radius: 0 !important;
       padding: 14px 18px 14px !important;
-      min-height: 186mm !important;
+      min-height: ${pgMinH} !important;
       display: flex !important;
       flex-direction: column !important;
     }
@@ -219,7 +225,7 @@ window.showTab = function(tabId, updateUrl=true) {
 window.addEventListener('popstate',()=>{const p=new URLSearchParams(window.location.search);showTab(p.get('tab')||'dashboard',false);});
 
 // ===========================
-// ★ 기업 관리
+// ★ 업체 관리
 // ===========================
 window.showCompanyList = function() {
   document.getElementById('company-list-step').style.display = 'block';
@@ -258,7 +264,7 @@ window.renderCompanyCards = function() {
   const keyword   = (document.getElementById('company-search-input')?.value||'').toLowerCase();
   const filtered  = companies.filter(c=>c.name.toLowerCase().includes(keyword)||(c.industry||'').toLowerCase().includes(keyword));
   if (!filtered.length) {
-    container.innerHTML=`<div class="company-empty-state"><div class="empty-icon">🏢</div><p>${keyword?'검색 결과가 없습니다.':'등록된 기업이 없습니다.'}</p><button class="btn-add-company" onclick="showCompanyForm()">＋ 기업 등록하기</button></div>`;
+    container.innerHTML=`<div class="company-empty-state"><div class="empty-icon">🏢</div><p>${keyword?'검색 결과가 없습니다.':'등록된 업체가 없습니다.'}</p><button class="btn-add-company" onclick="showCompanyForm()">＋ 업체 등록하기</button></div>`;
     return;
   }
   container.innerHTML = filtered.map(c => {
@@ -295,7 +301,7 @@ function updateDashboardReports() {
   setNum('stat-biz',reports.filter(r=>r.type==='사업계획서').length);
   setNum('stat-total',reports.length);
   setText('dashboard-recent-count', `${Math.min(reports.length,5)}건`);
-  setText('dashboard-company-hint', `기업 ${companies.length}개`);
+  setText('dashboard-company-hint', `업체 ${companies.length}개`);
   setText('dashboard-support-count', `${supportDocs.length}건`);
   setText('dashboard-notice-count', `${notices.length}건`);
 
@@ -352,7 +358,7 @@ window.updateDataLists = function() {
   const rBody=document.getElementById('report-list-body');
   if(rBody){ const shown=[...reports].reverse().slice(0,5); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없습니다.</td></tr>'; }
   const filterComp=document.getElementById('filter-company');
-  if(filterComp){ filterComp.innerHTML='<option value="">전체 기업</option>'; companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`); }
+  if(filterComp){ filterComp.innerHTML='<option value="">전체 업체</option>'; companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`); }
   updateDashboardReports(); renderCompanyCards();
 };
 
@@ -361,7 +367,7 @@ window.updateDataLists = function() {
 // ===========================
 window.showReportListSummary=function(){document.getElementById('rl-summary').style.display='block';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='none';updateDataLists();};
 window.showFullCompanies=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='block';document.getElementById('rl-reports').style.display='none';const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');const tbody=document.getElementById('company-full-body');if(tbody){tbody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.industry||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없습니다.</td></tr>';}};
-window.showFullReports=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='block';const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');const filterComp=document.getElementById('filter-company');if(filterComp){filterComp.innerHTML='<option value="">전체 기업</option>';companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`);}renderFullReports();};
+window.showFullReports=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='block';const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');const filterComp=document.getElementById('filter-company');if(filterComp){filterComp.innerHTML='<option value="">전체 업체</option>';companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`);}renderFullReports();};
 window.renderFullReports=function(){const tf=document.getElementById('filter-type')?.value||'';const cf=document.getElementById('filter-company')?.value||'';const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');const filtered=[...reports].reverse().filter(r=>(!tf||r.type===tf)&&(!cf||r.company===cf));const countEl=document.getElementById('filter-result-count');if(countEl)countEl.textContent=`총 ${filtered.length}건`;const tbody=document.getElementById('report-full-body');if(!tbody)return;tbody.innerHTML=filtered.length?filtered.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReportFull('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">조건에 맞는 보고서가 없습니다.</td></tr>';};
 window.deleteReportFull=function(id){if(!confirm('삭제하시겠습니까?'))return;let r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');r=r.filter(x=>x.id!==id);localStorage.setItem(DB_REPORTS,JSON.stringify(r));renderFullReports();updateDashboardReports();};
 window.deleteReport=function(id){if(!confirm('삭제하시겠습니까?'))return;let r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');r=r.filter(x=>x.id!==id);localStorage.setItem(DB_REPORTS,JSON.stringify(r));updateDataLists();};
@@ -732,7 +738,7 @@ function buildCoverHTML(cData, config, rev, dateStr) {
 function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
+  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
   var radar = (d.radar||[65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[
@@ -929,7 +935,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
 }
 
 // ===========================
@@ -938,7 +944,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
 function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
+  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
   var radar = (d.radar||[65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[{name:'벤처인증',effect:'중진공 우대금리 적용',amount:'+2억',period:'6개월'},{name:'이노비즈',effect:'기보 우대 보증',amount:'+3억',period:'1년'}];
@@ -1099,7 +1105,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
 }
 
 
@@ -1109,7 +1115,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 function buildFinanceHTML(d, cData, rev, dateStr) {
   var color = '#2563eb';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'상세 재무진단',reportKind:'상세 재무진단 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
+  var cover = buildCoverHTML(cData, {title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
   var scores = d.scores||{profit:72,stable:80,growth:88};
   var scD    = d.score_descs||{profit:'매출이익률 양호',stable:'부채비율 안정적',growth:'매출 성장률 최우수'};
   var debtData  = d.debt||[{name:'중진공',ratio:54},{name:'기보',ratio:27},{name:'재단',ratio:19}];
@@ -1218,7 +1224,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
 }
 
 // ===========================
@@ -1226,7 +1232,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
 // ===========================
 function buildTradeHTML(d, cData, rev, dateStr) {
   var color  = '#0d9488';
-  var cover  = buildCoverHTML(cData, {title:'상권분석 리포트',reportKind:'빅데이터 상권분석',vLabel:'리포트',borderColor:color}, rev, dateStr);
+  var cover  = buildCoverHTML(cData, {title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',vLabel:'리포트',borderColor:color}, rev, dateStr);
   var radar  = (d.radar||[82,75,68,72,80]).join(',');
   var sim    = d.sim||{s0:9167,s1:12500,s2:16667,s3:25000};
   var target = d.target||{age:'30~40대',household:'1~2인',channel:'온라인',cycle:'월 2~3회'};
@@ -1236,14 +1242,14 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     +'<div class="rp-3c">'
     +'<div class="rp-g3" style="flex-shrink:0;margin-bottom:10px">'
     +rpMC('유동인구 (일평균)',d.traffic||'2,400명','일평균 유동량',color)
-    +rpMC('반경1km 경쟁기업',(d.competitors||7)+'개','직접 경쟁',parseInt(d.competitors||7)>5?'#f97316':'#16a34a')
+    +rpMC('반경1km 경쟁업체',(d.competitors||7)+'개','직접 경쟁',parseInt(d.competitors||7)>5?'#f97316':'#16a34a')
     +rpMC('입지 경쟁력 등급',d.grade||'B+','상위 30%',color)
     +'</div>'
     +rpSec('상권 특성 분석', color, rpLst(d.features||[
       '주변 1km 내 핵심 소비층인 30~40대 1~2인 가구의 밀집도가 높아 타겟 고객 접근성이 우수한 입지임',
       '대중교통 접근성(지하철·버스)이 양호하여 광역 고객 유입 가능성이 높고 주중·주말 유동량이 고른 편임',
       '상권 성장 단계가 성숙기에 진입하여 안정적인 수요는 확보되어 있으나 신규 경쟁자 진입 리스크도 존재함',
-      '반경 내 유사 업종 경쟁기업 '+( d.comp_direct||7)+'개 중 강성 경쟁기업는 '+(d.comp_strong||3)+'개로 차별화 전략이 필수적임'
+      '반경 내 유사 업종 경쟁업체 '+( d.comp_direct||7)+'개 중 강성 경쟁업체는 '+(d.comp_strong||3)+'개로 차별화 전략이 필수적임'
     ], color))
     +'</div>'
     +'<div class="rp-3c">'
@@ -1298,7 +1304,7 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
 }
 
 // ===========================
@@ -1306,7 +1312,7 @@ function buildTradeHTML(d, cData, rev, dateStr) {
 // ===========================
 function buildMarketingHTML(d, cData, rev, dateStr) {
   var color    = '#db2777';
-  var cover    = buildCoverHTML(cData, {title:'마케팅 제안서',reportKind:'맞춤형 마케팅 제안서',vLabel:'제안서',borderColor:color}, rev, dateStr);
+  var cover    = buildCoverHTML(cData, {title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',vLabel:'제안서',borderColor:color}, rev, dateStr);
   var channels = d.channels||[{name:'SNS (인스타·유튜브 쇼츠)',score:88},{name:'네이버 검색·블로그 광고',score:75},{name:'인플루언서·리뷰 마케팅',score:72},{name:'쿠팡 상품 광고',score:65}];
   var budget   = d.budget||[{name:'SNS 광고',ratio:38},{name:'검색광고',ratio:25},{name:'콘텐츠제작',ratio:22},{name:'기타',ratio:15}];
   var bColors  = ['#db2777','#9d174d','#f4c0d1','#fdf2f8'];
@@ -1358,7 +1364,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     )
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
 }
 
 // ===========================
@@ -1366,7 +1372,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
 // ===========================
 function buildFundHTML(d, cData, rev, dateStr) {
   var color  = '#ea580c';
-  var cover  = buildCoverHTML(cData, {title:'정책자금매칭',reportKind:'정책자금 매칭 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
+  var cover  = buildCoverHTML(cData, {title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
   var checks = d.checks||[{text:'중소기업 해당 여부 확인',status:'pass'},{text:'국세·지방세 체납 없음',status:'pass'},{text:'금융 연체 이력 없음',status:'pass'},{text:'사업자 등록 유효',status:'pass'},{text:'업력 2년 이상 충족',status:'cond'},{text:'벤처·이노비즈 인증 보유',status:'fail'}];
   var score  = d.score||78;
   var gda    = Math.round((score/100)*151);
@@ -1452,7 +1458,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
 }
 
 // ===========================
@@ -1695,7 +1701,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + '</div>';
+  return tplStyle(color) + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + '</div>';
 }
 
 
@@ -1772,7 +1778,7 @@ function initReportCharts(rev) {
 function buildMgmtClientPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
   var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
-  return '너는 대한민국 최고의 경영컨설턴트야. 아래 기업 데이터를 기반으로 \''+nm+'\' 기업전달용 경영진단보고서를 작성해.\n\n'
+  return '너는 대한민국 최고의 경영컨설턴트야. 아래 기업 데이터를 기반으로 \''+nm+'\' 기업전달용 AI 경영진단보고서를 작성해.\n\n'
     +'【핵심 규칙】\n'
     +'- 반드시 기업명 \''+nm+'\'을 각 항목에 자연스럽게 포함\n'
     +'- 실제 수치(전년매출 '+r25+', 금년예상 '+rExp+', 핵심아이템: '+itm+')를 반드시 인용\n'
@@ -1919,11 +1925,11 @@ function buildBizPlanPrompt(cData, fRev) {
 // ★ REPORT_CONFIGS
 // ===========================
 var REPORT_CONFIGS = {
-  finance:     {typeLabel:'재무진단',    title:'상세 재무진단',   contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
-  aiTrade:     {typeLabel:'상권분석',    title:'상권분석 리포트', contentAreaId:'aiTrade-content-area',    landscape:false, buildPrompt:buildTradePrompt,     buildHTML:buildTradeHTML},
-  aiMarketing: {typeLabel:'마케팅제안',  title:'마케팅 제안서',   contentAreaId:'aiMarketing-content-area',landscape:false, buildPrompt:buildMarketingPrompt, buildHTML:buildMarketingHTML},
-  aiFund:      {typeLabel:'정책자금매칭',title:'정책자금매칭',    contentAreaId:'aiFund-content-area',     landscape:false, buildPrompt:buildFundPrompt,      buildHTML:buildFundHTML},
-  aiBiz:       {typeLabel:'사업계획서',  title:'AI 사업계획서',      contentAreaId:'aiBiz-content-area',      landscape:true,  buildPrompt:buildBizPlanPrompt,   buildHTML:buildBizPlanHTML}
+  finance:     {typeLabel:'재무진단',    title:'상세 재무진단',       contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
+  aiTrade:     {typeLabel:'상권분석',    title:'AI 상권분석 리포트',  contentAreaId:'aiTrade-content-area',    landscape:false, buildPrompt:buildTradePrompt,     buildHTML:buildTradeHTML},
+  aiMarketing: {typeLabel:'마케팅제안',  title:'마케팅 제안서',        contentAreaId:'aiMarketing-content-area',landscape:false, buildPrompt:buildMarketingPrompt, buildHTML:buildMarketingHTML},
+  aiFund:      {typeLabel:'정책자금매칭',title:'AI 정책자금매칭',      contentAreaId:'aiFund-content-area',     landscape:false, buildPrompt:buildFundPrompt,      buildHTML:buildFundHTML},
+  aiBiz:       {typeLabel:'사업계획서',  title:'AI 사업계획서',        contentAreaId:'aiBiz-content-area',      landscape:true,  buildPrompt:buildBizPlanPrompt,   buildHTML:buildBizPlanHTML}
 };
 
 function resetContentArea(el) {
@@ -1958,7 +1964,7 @@ window.generateReport = async function(type, version, event) {
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
   var vL = version==='client'?'기업전달용':'컨설턴트용';
-  var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
+  var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'AI 경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
   var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
   localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
@@ -1966,7 +1972,7 @@ window.generateReport = async function(type, version, event) {
   var ca = document.getElementById('report-content-area');
   resetContentArea(ca);
   ca.innerHTML = version==='client' ? buildMgmtClientHTML(data,cData,rev,today) : buildMgmtConsultantHTML(data,cData,rev,today);
-  _currentReport = {company:cData.name, type:'경영진단보고서 ('+vL+')', contentAreaId:'report-content-area', landscape:false};
+  _currentReport = {company:cData.name, type:'AI 경영진단보고서 ('+vL+')', contentAreaId:'report-content-area', landscape:false};
   initReportCharts(rev);
 };
 
