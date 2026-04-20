@@ -793,7 +793,7 @@ function mgmtPage(num, title, sub, accentColor, content) {
 function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColor) {
   var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
   var cName = session.name||'담당 컨설턴트';
-  var cDept = session.dept||'솔루션빌더스';
+  var cDept = session.dept||'소속 정보 미등록';
   var subLabel = versionLabel ? '('+versionLabel+')' : '';
 
   return '<div class="rp-cover rp-cover-unified" style="background:white;position:relative">'
@@ -808,12 +808,10 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'</div>'
     +'</div>'
     +'<div class="rp-cover-bottom">'
-    +'<div style="font-size:20px;font-weight:800;color:#334155;letter-spacing:-0.5px;margin-bottom:8px">'+cData.name+'</div>'
     +'<div style="font-size:12px;color:#94a3b8;margin-bottom:16px">'+(cData.industry||'-')+'</div>'
     +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:10.5px;color:#94a3b8;padding-top:10px;border-top:1px solid #e5e7eb">'
-    +'<span>📅 보고서 작성일: '+dateStr+'</span>'
     +'<span>👤 담당 컨설턴트: '+cName+'</span>'
-    +'<span>🏢 '+cDept+'</span>'
+    +'<span>🏢 소속: '+cDept+'</span>'
     +'</div>'
     +'</div>'
     +'</div>';
