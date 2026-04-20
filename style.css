@@ -455,9 +455,13 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 /* ── 가로형 (사업계획서) ── */
 .report-view-landscape {
     padding: 16px;
-    background: #d1d5db;
+    background: #e8eaed;
     border-radius: 10px;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    overflow: auto;
 }
 
 /* ── 세로형 (경영진단·재무진단·정책자금·상권분석·마케팅제안) ── */
@@ -469,11 +473,21 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    overflow: visible;
+    overflow: auto;
 }
-.report-view-header {
+.report-view-portrait .report-view-header {
     width: 100%;
-    max-width: 820px;
+    max-width: min(186mm, calc(100vw - 48px));
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.report-view-landscape .report-view-header {
+    width: 100%;
+    max-width: min(277mm, calc(100vw - 48px));
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -484,18 +498,18 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper-portrait {
     background: transparent;
     width: 100%;
-    max-width: 820px;
+    max-width: min(186mm, calc(100vw - 48px));
     margin: 0 auto;
     overflow: visible;
 }
 .report-paper-portrait .rp-wrap {
     width: 100%;
-    max-width: 820px;
+    max-width: none;
     overflow: visible;
 }
 .report-view-container {
     padding: 16px;
-    background: #d1d5db;
+    background: #e8eaed;
     border-radius: 10px;
     overflow: visible;
 }
@@ -503,6 +517,8 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper-landscape {
     background: transparent;
     width: 100%;
+    max-width: min(277mm, calc(100vw - 48px));
+    margin: 0 auto;
     overflow: visible;
 }
 .report-paper {
@@ -530,6 +546,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-paper-landscape .rp-wrap,
 .report-paper .rp-wrap {
   width: 100%;
+  max-width: none;
   overflow: visible;
 }
 /* 결과 스텝 배경 */

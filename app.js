@@ -7,6 +7,21 @@ const DB_SUPPORT_DOC = 'biz_support_documents';
 const DB_NOTICES     = 'biz_dashboard_notices';
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
 
+function getReportLayoutConfig(orientation) {
+  var isLandscape = (orientation === true || orientation === 'landscape');
+  return {
+    isLandscape: isLandscape,
+    pageSize: isLandscape ? '297mm 210mm' : '210mm 297mm',
+    printMargin: isLandscape ? '8mm 10mm' : '10mm 12mm',
+    contentWidth: isLandscape ? '277mm' : '186mm',
+    coverMinH: isLandscape ? '186mm' : '257mm',
+    pageMinH: isLandscape ? '186mm' : '257mm',
+    wrapPadding: isLandscape ? '10px' : '12px',
+    coverPadding: '20px 24px 18px 32px',
+    pagePadding: '14px 18px 14px'
+  };
+}
+
 // ===========================
 // ★ PDF 인쇄 (팝업창 → 인쇄 다이얼로그)
 // ===========================
@@ -21,59 +36,73 @@ window.printReport = function() {
 
   var rev = {};
   try {
-    var cs = JSON.parse(localStorage.getItem('biz_consult_companies')||'[]');
+    var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
     var cm = cs.find(function(x){return x.name===_currentReport.company;});
     if (cm && cm.revenueData) rev = cm.revenueData;
   } catch(e){}
-  var curM = new Date().getMonth();
-  var avgM = rev.cur&&curM>0 ? Math.round(rev.cur/curM) : (rev.y25?Math.round(rev.y25/12):3000);
 
-  var pw = window.open('','_blank','width=1400,height=900,scrollbars=yes');
+  var layout = getReportLayoutConfig(_currentReport.landscape === true);
+  var pw = window.open('','_blank','width=1600,height=1000,scrollbars=yes');
   if (!pw) { alert('팝업이 차단되었음. 팝업을 허용해 주세요.'); return; }
 
-  var isLandscape = (_currentReport.landscape === true);
-  var pageSize   = isLandscape ? '297mm 210mm' : '210mm 297mm';
-  var pgMargin   = isLandscape ? '8mm 10mm'    : '10mm 12mm';
-  var coverMinH  = isLandscape ? '186mm'       : '257mm';
-  var pgMinH     = isLandscape ? '186mm'       : '257mm';
-
   var printCSS = `
-    @page { size: ${pageSize}; margin: ${pgMargin}; }
+    @page { size: ${layout.pageSize}; margin: ${layout.printMargin}; }
+    html, body { margin:0; padding:0; background:#e8eaed; }
     * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #e8eaed; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
-    .rp-wrap { background: #e8eaed !important; padding: 0 !important; }
+    body {
+      font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+      min-width: ${layout.contentWidth};
+    }
+    .pdf-shell {
+      width: ${layout.contentWidth};
+      margin: 0 auto;
+      padding: ${layout.wrapPadding} 0;
+      background: #e8eaed;
+    }
+    .pdf-shell > * { width: 100%; }
+    .rp-wrap {
+      width: 100% !important;
+      max-width: none !important;
+      background: #e8eaed !important;
+      padding: ${layout.wrapPadding} !important;
+    }
     .rp-cover {
       background: white !important;
-      page-break-after: always !important;
-      break-after: page !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      padding: 20px 24px 18px 32px !important;
-      min-height: ${coverMinH} !important;
+      border-radius: 8px !important;
+      margin: 0 0 14px 0 !important;
+      padding: ${layout.coverPadding} !important;
+      min-height: ${layout.coverMinH} !important;
       display: flex !important;
       flex-direction: column !important;
+      overflow: hidden !important;
+      page-break-after: always !important;
+      break-after: page !important;
       page-break-inside: avoid !important;
+      box-shadow: none !important;
     }
     .rp-page {
       background: white !important;
+      border-radius: 8px !important;
+      margin: 0 0 14px 0 !important;
+      padding: ${layout.pagePadding} !important;
+      min-height: ${layout.pageMinH} !important;
+      display: flex !important;
+      flex-direction: column !important;
       page-break-before: always !important;
       break-before: page !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      padding: 14px 18px 14px !important;
-      min-height: ${pgMinH} !important;
-      display: flex !important;
-      flex-direction: column !important;
+      box-shadow: none !important;
     }
-    .rp-section { page-break-inside: avoid !important; break-inside: avoid !important; }
-    .rp-cert, .rp-rank, .rp-chk, .rp-mc, .rp-hbr { page-break-inside: avoid !important; }
+    .rp-section, .rp-cert, .rp-rank, .rp-chk, .rp-mc, .rp-hbr, .rp-rmi, .rp-gph, .rp-sws, .rp-sww, .rp-swo, .rp-swt {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
     @media print {
-      body { background: white !important; }
-      .rp-wrap { background: white !important; padding: 0 !important; }
-      .rp-cover { border-radius: 0 !important; }
-      .rp-page { border-radius: 0 !important; border: none !important; }
+      html, body { background: white !important; }
+      .pdf-shell { width: 100% !important; padding: 0 !important; background: white !important; }
+      .rp-wrap { width: 100% !important; padding: 0 !important; background: white !important; }
+      .rp-cover, .rp-page { border-radius: 0 !important; margin: 0 !important; }
     }
   `;
 
@@ -82,57 +111,14 @@ window.printReport = function() {
 <style>${printCSS}</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
 </head><body>
-${el.innerHTML}
+<div class="pdf-shell">${el.innerHTML}</div>
 <script>
-var _curM=${curM}, _avgM=${avgM};
-var _rev={y23:${rev.y23||0},y24:${rev.y24||0},y25:${rev.y25||0},cur:${rev.cur||0},exp:${rev.y25?Math.round(rev.y25/12*12):0}};
+${safeDestroyChart.toString()}
+${initReportCharts.toString()}
+var _popupRev = ${JSON.stringify(rev || {})};
 window.onload = function() {
-  // 레이더 차트 (경영진단)
-  var ra = document.getElementById('rp-radar');
-  if(ra && ra.dataset && ra.dataset.scores){
-    new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',pointBackgroundColor:'#1e3a8a',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  }
-  // 매출 라인 차트
-  var li = document.getElementById('rp-linechart');
-  if(li && li.dataset && li.dataset.y23 !== undefined){
-    var d=li.dataset;
-    new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+d.y23||0,+d.y24||0,+d.y25||0,+d.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25,label:'매출(만원)'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}});
-  }
-  // 재무진단 도넛
-  var de = document.getElementById('fp-donut');
-  if(de && de.dataset && de.dataset.names){
-    new Chart(de.getContext('2d'),{type:'doughnut',data:{labels:de.dataset.names.split('|'),datasets:[{data:de.dataset.ratios.split(',').map(Number),backgroundColor:['#2563eb','#7c3aed','#06b6d4','#16a34a','#ea580c'],borderWidth:2,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});
-  }
-  // 성장 라인
-  var fg = document.getElementById('fp-growth-chart');
-  if(fg){ new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:[14,24,35],borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'억';}}}}}}); }
-  // 상권 레이더
-  var tr = document.getElementById('tp-radar');
-  if(tr && tr.dataset && tr.dataset.scores){
-    new Chart(tr.getContext('2d'),{type:'radar',data:{labels:['유동인구','접근성','성장성','경쟁강도','가시성'],datasets:[{data:tr.dataset.scores.split(',').map(Number),backgroundColor:'rgba(13,148,136,0.18)',borderColor:'#0d9488',pointBackgroundColor:'#0d9488',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  }
-  // 상권 매출 라인
-  var tl = document.getElementById('tp-linechart');
-  if(tl && tl.dataset && tl.dataset.s0){
-    var td=tl.dataset;
-    new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:2.5,pointRadius:5,fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return Math.round(v/100)*100+'만';}}}}}});
-  }
-  // 마케팅 도넛
-  var md = document.getElementById('mp-donut');
-  if(md && md.dataset && md.dataset.names){
-    new Chart(md.getContext('2d'),{type:'doughnut',data:{labels:md.dataset.names.split('|'),datasets:[{data:md.dataset.ratios.split(',').map(Number),backgroundColor:['#db2777','#9d174d','#f4c0d1','#fdf2f8'],borderWidth:2,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});
-  }
-  // 시장 성장
-  var bm = document.getElementById('bp-market-chart');
-  if(bm){ new Chart(bm.getContext('2d'),{type:'line',data:{labels:['2016','2017','2018','2019','2020','2021','2022'],datasets:[{data:[2,2.4,3,3.8,4.5,5.8,7],borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.12)',borderWidth:2.5,pointRadius:4,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v+'조';}}}}}}); }
-  // 월별 매출 바
-  var bc = document.getElementById('biz-monthly-chart');
-  if(bc){
-    var ac=[],fc=[];
-    for(var i=0;i<12;i++){ if(i<_curM){ac.push(Math.round(_avgM*(0.88+i*0.025)));fc.push(null);}else{ac.push(null);fc.push(Math.round(_avgM*Math.pow(1.05,i-_curM+1)));} }
-    new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:4},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{callback:function(v){return v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천만';}}}}}});
-  }
-  setTimeout(function(){ window.print(); }, 2500);
+  initReportCharts(_popupRev);
+  setTimeout(function(){ window.print(); }, 900);
 };
 <\/script></body></html>`);
   pw.document.close();
@@ -481,16 +467,14 @@ async function callGeminiJSON(prompt, maxTokens=8192){
 // ===========================
 function tplStyle(color, orientation) {
   var c = color||'#3b82f6';
-  var isPortrait = (orientation === 'portrait');
-  var coverMinH  = isPortrait ? '680px' : '480px';
-  var pageMinH   = isPortrait ? '700px' : '520px';
+  var layout = getReportLayoutConfig(orientation === 'landscape');
   return '<style>'
   + '* { box-sizing:border-box; }'
-  + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:14px; }'
+  + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:'+layout.wrapPadding+'; width:100%; max-width:none; }'
   + '.rp-wrap * { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }'
 
   // ── 표지 ──
-  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:20px 24px 18px 32px; position:relative; min-height:'+coverMinH+'; display:flex; flex-direction:column; overflow:hidden; }'
+  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.coverPadding+'; position:relative; min-height:'+layout.coverMinH+'; display:flex; flex-direction:column; overflow:hidden; }'
   + '.rp-cbar  { position:absolute; left:0; top:0; bottom:0; width:12px; background:'+c+'; }'
   + '.rp-cbadge{ font-size:12px; font-weight:700; padding:4px 12px; border-radius:4px; display:inline-block; margin-bottom:8px; letter-spacing:0.3px; }'
   + '.rp-ctitle{ font-size:24px; font-weight:700; color:#0f172a; margin-bottom:4px; letter-spacing:-0.5px; line-height:1.2; }'
@@ -503,7 +487,7 @@ function tplStyle(color, orientation) {
   + '.rp-cfoot { display:flex; justify-content:space-between; font-size:13px; color:#64748b; padding-top:10px; border-top:1px solid #e2e8f0; margin-top:10px; font-weight:500; }'
 
   // ── 페이지 (A4 landscape 기준) ──
-  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:16px 20px 18px; min-height:'+pageMinH+'; display:flex; flex-direction:column; }'
+  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:'+layout.pageMinH+'; display:flex; flex-direction:column; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
