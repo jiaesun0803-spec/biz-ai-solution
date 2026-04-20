@@ -754,7 +754,7 @@ function buildCoverHTML(cData, config, rev, dateStr) {
 function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
+  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
   var radar = (d.radar||[65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[
@@ -960,7 +960,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
 function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
+  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
   var radar = (d.radar||[65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[{name:'벤처인증',effect:'중진공 우대금리 적용',amount:'+2억',period:'6개월'},{name:'이노비즈',effect:'기보 우대 보증',amount:'+3억',period:'1년'}];
@@ -1791,71 +1791,58 @@ function initReportCharts(rev) {
 // ===========================
 // ★ 프롬프트 — 기업명·수치 강제 반영
 // ===========================
-function buildMgmtClientPrompt(cData, fRev) {
-  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
+function buildMgmtCombinedPrompt(cData, fRev) {
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
   var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
-  return '너는 대한민국 최고의 경영컨설턴트야. 아래 기업 데이터를 기반으로 \''+nm+'\' 기업전달용 AI 경영진단보고서를 작성해.\n\n'
-    +'【핵심 규칙】\n'
-    +'- 반드시 기업명 \''+nm+'\'을 각 항목에 자연스럽게 포함\n'
-    +'- 실제 수치(전년매출 '+r25+', 금년예상 '+rExp+', 핵심아이템: '+itm+')를 반드시 인용\n'
-    +'- 각 항목은 반드시 60자 이상, 구체적이고 실질적인 내용\n'
-    +'- 긍정적이고 전문적인 톤\n'
-    +'- JSON만 출력 (마크다운, 설명 텍스트 없이)\n\n'
-    +'JSON:\n'
-    +'{"grade":"A-","grade_desc":"고성장 유망기업",'
-    +'"overview":["'+nm+'는 '+r25+' 매출을 달성하며 5개항목 각60자이상"],'
-    +'"finance_strengths":["'+nm+'의 '+r25+' 매출은 4개항목 각60자이상"],'
-    +'"finance_risks":["'+nm+'가 주의해야 할 3개항목 각60자이상"],'
-    +'"radar":[재무,전략,인사,운영,IT점수],'
+  return '너는 대한민국 최고 수준의 경영컨설턴트야. \n'
+    +'아래 기업 데이터를 기반으로 경영진단보고서에 필요한 전체 데이터를 한 번에 생성해.\n'
+    +'기업전달용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
+    +'【필수 규칙】\n'
+    +'- 기업명 \''+nm+'\', 핵심아이템 \''+itm+'\', 실제 수치('+r25+', '+rExp+') 를 각 항목에 반드시 자연스럽게 포함\n'
+    +'- 모든 텍스트 항목은 반드시 60자 이상, 구체적이고 실질적인 내용으로 작성\n'
+    +'- JSON만 출력 (마크다운·설명 텍스트 없이)\n\n'
+    +'JSON 구조:\n'
+    +'{'
+    +'"grade":"A- 등 등급",'
+    +'"grade_desc":"고성장 유망기업 등 8자이내",'
+
+    // ── 공통 데이터 (기업전달용·컨설턴트용 모두 사용) ──
+    +'"overview":["'+nm+'의 현황 5개항목 각60자이상"],'
+    +'"finance_strengths":["'+nm+'의 재무강점 4개 각60자이상"],'
+    +'"finance_risks":["'+nm+'의 재무개선포인트 3개 각60자이상"],'
+    +'"radar":[재무점수,전략점수,인사점수,운영점수,IT점수],'
     +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
-    +'"marketing":["'+nm+'의 '+itm+' 마케팅 5개항목 각60자이상"],'
-    +'"marketing_items":["포지셔닝 전략 3개 각50자이상"],'
+    +'"marketing":["'+nm+'의 '+itm+' 마케팅분석 5개 각60자이상"],'
+    +'"marketing_items":["포지셔닝전략 3개 각50자이상"],'
     +'"hr":["'+nm+' 인사조직 5개 각60자이상"],'
     +'"ops":["'+nm+' 운영생산 5개 각60자이상"],'
     +'"it":["'+nm+' IT디지털 5개 각60자이상"],'
     +'"certs":['
-    +'{"name":"벤처기업 인증","effect":"'+nm+'의 '+itm+' 기술력 인정 — 중진공·기보 우대금리 적용으로 추가 자금 한도 2억원 확보 가능","amount":"+2억","period":"6개월 내"},'
-    +'{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용","amount":"+3억","period":"1년 내"},'
-    +'{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지","amount":"+1.5억","period":"세액공제 병행"},'
-    +'{"name":"HACCP 인증","effect":"'+nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결","amount":"채널↑","period":"매출 확대"}],'
-    +'"roadmap_short":["'+nm+' 단기 4개 각35자이상"],'
-    +'"roadmap_mid":["'+nm+' 중기 4개 각35자이상"],'
-    +'"roadmap_long":["'+nm+' 장기 4개 각35자이상"],'
-    +'"summary":["'+nm+' 종합의견 3개 각80자이상"]}\n\n'
-    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp+', 금년현재:'+rCur+', 전전년:'+r24;
-}
+      +'{"name":"벤처기업 인증","effect":"'+nm+'의 '+itm+' 기술력 인정으로 중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능","amount":"+2억","period":"6개월 내"},'
+      +'{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용","amount":"+3억","period":"1년 내"},'
+      +'{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지 효과 동시 달성","amount":"+1.5억","period":"세액공제 병행"},'
+      +'{"name":"HACCP 인증","effect":"'+nm+' '+itm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결 — B2B 매출 신규 확보","amount":"채널↑","period":"매출 확대"}'
+    +'],'
+    +'"roadmap_short":["'+nm+' 단기실행 6개 각35자이상"],'
+    +'"roadmap_mid":["'+nm+' 중기실행 6개 각35자이상"],'
+    +'"roadmap_long":["'+nm+' 장기실행 6개 각35자이상"],'
+    +'"summary":["'+nm+' 종합의견 3개 각80자이상"],'
 
-function buildMgmtConsultantPrompt(cData, fRev) {
-  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
-  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
-  return '너는 대한민국 최고의 경영컨설턴트야. \''+nm+'\' 컨설턴트 내부용 경영진단보고서를 작성해.\n\n'
-    +'【핵심 규칙】\n'
-    +'- 기업명 \''+nm+'\'을 각 항목에 포함, 실제 수치('+r25+', '+rExp+') 반드시 인용\n'
-    +'- 컨설턴트 내부용: 리스크를 솔직하고 구체적으로 기술\n'
-    +'- 각 항목 60자 이상, JSON만 출력\n\n'
-    +'{"grade":"등급","grade_desc":"8자설명",'
-    +'"overview":["'+nm+' 현황 5개 60자이상"],'
-    +'"key_risks":["'+nm+' 리스크 4개 각70자이상"],'
-    +'"finance_strengths":["'+nm+' 재무강점 4개 60자이상"],'
-    +'"fb_finance":["재무 피드백 3개 70자이상"],'
-    +'"radar":[재무,전략,인사,운영,IT],'
-    +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
-    +'"marketing":["'+nm+' 마케팅 4개 60자이상"],'
-    +'"fb_marketing":["마케팅 피드백 3개 70자이상"],'
-    +'"hr":["'+nm+' 인사 5개 60자이상"],'
-    +'"ops":["'+nm+' 운영 5개 60자이상"],'
-    +'"fb_hr_ops":["인사운영 피드백 3개 70자이상"],'
-    +'"it":["'+nm+' IT 5개 60자이상"],'
-    +'"fb_it":["IT피드백 3개 70자이상"],'
-    +'"roadmap_short":["단기 4개 35자이상"],"roadmap_mid":["중기 4개"],"roadmap_long":["장기 4개"],'
-    +'"fb_roadmap":["로드맵피드백 2개 70자이상"],'
-    +'"certs":[{"name":"인증명","effect":"'+nm+' 관련 효과 50자이상","amount":"+X억","period":"기간"},3개],'
-    +'"consultant_issues":["'+nm+' 시급이슈 3개 80자이상"],'
-    +'"consultant_funds":["'+nm+' 자금전략 4개 70자이상"],'
-    +'"consultant_certs":["인증전략 3개 60자이상"],'
-    +'"consultant_marketing":["마케팅 2개 60자이상"],'
-    +'"consultant_credit":["신용개선 2개 60자이상"]}\n\n'
-    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp;
+    // ── 컨설턴트 전용 데이터 ──
+    +'"key_risks":["'+nm+' 핵심리스크 4개 각70자이상 솔직하게"],'
+    +'"fb_finance":["재무 컨설턴트피드백 3개 각70자이상 날카롭게"],'
+    +'"fb_marketing":["마케팅 컨설턴트피드백 3개 각70자이상 날카롭게"],'
+    +'"fb_hr_ops":["인사운영 컨설턴트피드백 3개 각70자이상 날카롭게"],'
+    +'"fb_it":["IT 컨설턴트피드백 3개 각70자이상 날카롭게"],'
+    +'"fb_roadmap":["로드맵 컨설턴트피드백 2개 각70자이상 날카롭게"],'
+    +'"consultant_issues":["'+nm+' 시급이슈TOP3 각80자이상 매우구체적으로"],'
+    +'"consultant_funds":["'+nm+' 정책자금신청전략 4개 각70자이상"],'
+    +'"consultant_certs":["인증취득전략 3개 각60자이상"],'
+    +'"consultant_marketing":["마케팅개선 3개 각60자이상"],'
+    +'"consultant_credit":["신용개선 2개 각50자이상"]'
+    +'}'
+    +'\n\n[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 대표:'+rep
+    +', 전년매출:'+r25+', 전전년:'+r24+', 금년예상:'+rExp+', 금년현재:'+rCur;
 }
 
 function buildFinancePrompt(cData, fRev) {
@@ -1966,17 +1953,21 @@ window.generateReport = async function(type, version, event) {
   if (!cData) { alert('기업 정보를 찾을 수 없습니다.'); return; }
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var fRev = fRevAI(cData, rev);
-  var prompt = version==='client' ? buildMgmtClientPrompt(cData,fRev) : buildMgmtConsultantPrompt(cData,fRev);
+
   if (overlay) {
     overlay.style.display = 'flex';
     var tt = document.getElementById('loading-title-text');
     var td = document.getElementById('loading-desc-text');
     if(tt) tt.textContent = '경영진단보고서 생성 중...';
-    if(td) td.innerHTML = cData.name + ' 기업 데이터를 분석하여<br>맞춤형 경영진단보고서를 작성하고 있습니다.<br><b style="color:#3b82f6">최대 60초</b>가 소요될 수 있습니다.';
+    if(td) td.innerHTML = '<b>'+cData.name+'</b> 기업 데이터를 종합 분석하여<br>'
+      +'기업전달용 + 컨설턴트용을 <b style="color:#3b82f6">동시에</b> 생성합니다.<br>'
+      +'<b style="color:#3b82f6">최대 90초</b>가 소요될 수 있습니다.';
   }
+
   var data = null;
   try {
-    data = await callGeminiJSON(prompt, 8192);
+    // ★ 하나의 통합 프롬프트로 두 버전 데이터 동시 생성
+    data = await callGeminiJSON(buildMgmtCombinedPrompt(cData, fRev), 16384);
   } catch(e) {
     console.error('보고서 생성 오류:', e);
     alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
@@ -1984,19 +1975,51 @@ window.generateReport = async function(type, version, event) {
     if (overlay) overlay.style.display = 'none';
   }
   if (!data) return;
+
   var today = new Date().toISOString().split('T')[0];
-  var vL = version==='client'?'기업전달용':'컨설턴트용';
-  var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
-  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
-  localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
+  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+
+  // ★ 두 버전 모두 저장 (같은 데이터, 다른 버전 태그)
+  var idBase = Date.now();
+  var rptClient = {
+    id:'rep_'+idBase+'_c',
+    type:'경영진단', company:cData.name,
+    title:'경영진단보고서 (기업전달용)',
+    date:today, content:JSON.stringify(data),
+    version:'client', revenueData:rev, reportType:'management'
+  };
+  var rptConsultant = {
+    id:'rep_'+(idBase+1)+'_k',
+    type:'경영진단', company:cData.name,
+    title:'경영진단보고서 (컨설턴트용)',
+    date:today, content:JSON.stringify(data),
+    version:'consultant', revenueData:rev, reportType:'management'
+  };
+  rs.push(rptClient);
+  rs.push(rptConsultant);
+  localStorage.setItem(DB_REPORTS, JSON.stringify(rs));
+  updateDataLists();
+
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
   tab.querySelector('[id$="-result-step"]').style.display = 'block';
+
   var ca = document.getElementById('report-content-area');
   resetContentArea(ca);
-  ca.innerHTML = version==='client' ? buildMgmtClientHTML(data,cData,rev,today) : buildMgmtConsultantHTML(data,cData,rev,today);
-  _currentReport = {company:cData.name, type:'AI 경영진단보고서 ('+vL+')', contentAreaId:'report-content-area', landscape:false};
+
+  // ★ 클릭한 버튼의 버전을 먼저 표시
+  ca.innerHTML = version==='client'
+    ? buildMgmtClientHTML(data, cData, rev, today)
+    : buildMgmtConsultantHTML(data, cData, rev, today);
+
+  _currentReport = {
+    company: cData.name,
+    type: '경영진단보고서 ('+(version==='client'?'기업전달용':'컨설턴트용')+')',
+    contentAreaId: 'report-content-area',
+    landscape: false
+  };
   initReportCharts(rev);
 };
+
 
 // ===========================
 // ★ 기타 보고서 생성 — try/finally 오버레이 보장
