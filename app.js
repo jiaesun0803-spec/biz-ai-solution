@@ -1,8 +1,10 @@
 // ===== BizConsult AI 보고서 플랫폼 =====
-const DB_USERS    = 'biz_users';
-const DB_SESSION  = 'biz_session';
-const STORAGE_KEY = 'biz_consult_companies';
-const DB_REPORTS  = 'biz_reports';
+const DB_USERS       = 'biz_users';
+const DB_SESSION     = 'biz_session';
+const STORAGE_KEY    = 'biz_consult_companies';
+const DB_REPORTS     = 'biz_reports';
+const DB_SUPPORT_DOC = 'biz_support_documents';
+const DB_NOTICES     = 'biz_dashboard_notices';
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
 
 // ===========================
@@ -284,15 +286,56 @@ function updateDashboardReports() {
   const listEl = document.getElementById('dashboard-report-list'); if (!listEl) return;
   const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
   const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const supportDocs = JSON.parse(localStorage.getItem(DB_SUPPORT_DOC)||'[]');
+  const notices = JSON.parse(localStorage.getItem(DB_NOTICES)||'[]');
   const setNum=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  const setText=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   setNum('stat-companies',companies.length);
   setNum('stat-mgmt',reports.filter(r=>r.type==='경영진단').length);
   setNum('stat-biz',reports.filter(r=>r.type==='사업계획서').length);
   setNum('stat-total',reports.length);
-  if (!reports.length) { listEl.innerHTML='<div class="empty-state">최근 생성된 보고서가 없습니다.</div>'; return; }
+  setText('dashboard-recent-count', `${Math.min(reports.length,5)}건`);
+  setText('dashboard-company-hint', `업체 ${companies.length}개`);
+  setText('dashboard-support-count', `${supportDocs.length}건`);
+  setText('dashboard-notice-count', `${notices.length}건`);
+
   const typeIcon=t=>({'경영진단':'📈','재무진단':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
-  listEl.innerHTML=[...reports].reverse().slice(0,5).map(r=>`<div class="recent-report-item"><div class="report-type-icon">${typeIcon(r.type)}</div><div><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></div><div class="report-item-right"><span class="report-badge">${r.type}</span><span class="report-date">🕐 ${r.date}</span><button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button></div></div>`).join('');
+
+  if (!reports.length) {
+    listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없습니다.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
+  } else {
+    listEl.innerHTML=[...reports].reverse().slice(0,5).map(r=>`<div class="recent-report-item"><div class="report-type-icon">${typeIcon(r.type)}</div><div><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></div><div class="report-item-right"><span class="report-badge">${r.type}</span><span class="report-date">🕐 ${r.date}</span><button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button></div></div>`).join('');
+  }
+
+  renderDashboardBoard('dashboard-support-docs', supportDocs, {
+    emptyEmoji:'📄',
+    emptyTitle:'등록된 지원사업 공문이 없습니다.',
+    emptyDesc:'공문 등록 기능은 다음 단계에서 연결할 수 있습니다. 현재는 공간과 구조를 먼저 정리해두었습니다.',
+    buttonText:'기능 준비 상태 보기',
+    buttonAction:`dashboardFeatureSoon('지원사업 공문')`
+  });
+
+  renderDashboardBoard('dashboard-notice-list', notices, {
+    emptyEmoji:'📢',
+    emptyTitle:'등록된 공지사항이 없습니다.',
+    emptyDesc:'운영 공지, 업무 알림, 배포 이력 등을 이 영역에 모아둘 수 있습니다.',
+    buttonText:'기능 준비 상태 보기',
+    buttonAction:`dashboardFeatureSoon('공지사항')`
+  });
 }
+
+function renderDashboardBoard(targetId, items, options) {
+  const el=document.getElementById(targetId); if(!el) return;
+  if(!items.length){
+    el.innerHTML=`<div class="bottom-empty"><div class="empty-state-emoji">${options.emptyEmoji||'📌'}</div><div class="empty-state-title">${options.emptyTitle||'등록된 데이터가 없습니다.'}</div><div class="empty-state-desc">${options.emptyDesc||''}</div>${options.buttonText?`<button class="btn-add-small" onclick="${options.buttonAction||''}">${options.buttonText}</button>`:''}</div>`;
+    return;
+  }
+  el.innerHTML=`<div class="bottom-feed-list">${items.slice(0,3).map(item=>`<div class="bottom-feed-item"><div class="bottom-feed-top"><div class="bottom-feed-title">${item.title||'-'}</div><div class="bottom-feed-date">${item.date||''}</div></div><div class="bottom-feed-desc">${item.desc||item.description||''}</div></div>`).join('')}</div>`;
+}
+
+window.dashboardFeatureSoon = function(name){
+  alert(`${name} 등록/관리 기능은 다음 단계에서 연결 가능합니다. 원하시면 이어서 구현해드릴게요.`);
+};
 
 // ===========================
 // ★ 데이터 목록 갱신
