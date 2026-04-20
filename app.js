@@ -748,6 +748,51 @@ function normalizeKoreanEndings(obj) {
   return obj;
 }
 
+
+// ── 섹션 박스 생성기
+function mgmtSec(title, icon, color, items, extraCSS) {
+  var bg = extraCSS||'background:#f8fafc';
+  return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 16px;'+bg+'">'
+    +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e9ecef">'+icon+' '+title+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>';
+}
+
+// ── 컨설턴트 피드백 박스
+function mgmtFB(items) {
+  return '<div style="border-radius:8px;padding:12px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
+    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>';
+}
+
+// ── 로드맵 단계 박스
+function mgmtRoadmapPhase(phaseLabel, bgColor, borderColor, textColor, items) {
+  return '<div style="border-radius:10px;padding:13px 16px;background:white;border:1px solid #e2e8f0;border-top:4px solid '+borderColor+'">'
+    +'<div style="font-size:13px;font-weight:800;color:'+textColor+';margin-bottom:10px;display:flex;align-items:center;gap:8px">'
+    +'<span style="background:'+bgColor+';border-radius:20px;padding:3px 12px">'+phaseLabel+'</span>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+borderColor+'"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>';
+}
+
+// ── 페이지 래퍼 (컨설턴트용 등 페이지 단위 보고서용)
+function mgmtPage(num, title, sub, accentColor, content) {
+  var numBg = accentColor==='#1e293b'?'#f1f5f9':'#eff6ff';
+  var numTc = accentColor==='#1e293b'?'#475569':accentColor;
+  return '<div class="rp-page">'
+    +'<div class="rp-ph">'
+    +'<div class="rp-pnum" style="background:'+numBg+';color:'+numTc+'">'+num+'</div>'
+    +'<span class="rp-ptitle">'+title+'</span>'
+    +'<span class="rp-psub">'+sub+'</span>'
+    +'</div>'
+    +'<div class="rp-body">'+content+'</div>'
+    +'</div>';
+}
+
 // ═══════════════════════════════════════
 // ★ 통합 표지 — 모든 보고서 공통
 //   내용: 보고서제목 + 기업명 + 담당자명만
