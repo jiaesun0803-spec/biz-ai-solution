@@ -449,6 +449,99 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .btn-report-blue { background: #bfdbfe; color: #1e3a8a; font-weight: bold; width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.2s; }
 .btn-report-blue:hover { opacity: 0.85; }
 
+
+.report-tab-header {
+    margin-bottom: 22px;
+}
+.report-tab-header .page-title-lg {
+    display: inline-flex;
+    align-items: center;
+    min-height: 52px;
+}
+.report-generate-actions {
+    width: 100%;
+    margin-top: 28px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 16px;
+}
+.report-generate-actions-single {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.report-generate-actions-double {
+    gap: 16px;
+}
+.report-generate-actions-compact {
+    margin-top: 24px;
+}
+.report-generate-btn {
+    min-height: 64px;
+    padding: 18px 22px;
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.35;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.10);
+}
+.report-generate-actions-double .report-generate-btn {
+    flex: 1 1 0;
+}
+.report-generate-btn-wide {
+    flex: 1.35 1 0;
+}
+.report-generate-btn-dark {
+    background: #1e293b;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(30, 41, 59, 0.16);
+}
+.report-generate-btn-gray {
+    background: #64748b;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(100, 116, 139, 0.16);
+}
+.report-generate-btn-green {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.16);
+}
+.report-generate-btn-orange {
+    background: #ea580c;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(234, 88, 12, 0.16);
+}
+.report-generate-btn-teal {
+    background: #0d9488;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(13, 148, 136, 0.16);
+}
+.report-generate-btn-pink {
+    background: #db2777;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(219, 39, 119, 0.16);
+}
+@media (max-width: 920px) {
+    .report-generate-actions,
+    .report-generate-actions-double,
+    .report-generate-actions-compact {
+        flex-direction: column;
+    }
+    .report-generate-actions-double .report-generate-btn,
+    .report-generate-btn-wide {
+        flex: 1 1 auto;
+    }
+    .report-generate-btn {
+        width: 100%;
+        min-height: 58px;
+        font-size: 16px;
+    }
+}
+
 /* ============================================
    ★ 가로형 A4 보고서 미리보기 컨테이너
 ============================================ */
