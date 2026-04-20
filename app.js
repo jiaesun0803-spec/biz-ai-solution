@@ -481,7 +481,7 @@ function tplStyle(color, orientation) {
   var c = color||'#3b82f6';
   var isPortrait = (orientation === 'portrait');
   var coverMinH  = isPortrait ? '680px' : '480px';
-  var pageMinH   = isPortrait ? '740px' : '520px';
+  var pageMinH   = isPortrait ? '700px' : '520px';
   return '<style>'
   + '* { box-sizing:border-box; }'
   + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:14px; }'
@@ -751,633 +751,625 @@ function buildCoverHTML(cData, config, rev, dateStr) {
 // ===========================
 // ★ 경영진단 기업전달용 (P1~P6)
 // ===========================
+
+// ═══════════════════════════════════════════════
+// ★ 공통 헬퍼 — 보고서용
+// ═══════════════════════════════════════════════
+
+function mgmtCover(cData, rev, exp, dateStr, version) {
+  var isConsultant = (version === 'consultant');
+  var accentColor  = isConsultant ? '#1e293b' : '#2563eb';
+  var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
+  var cName = session.name||'담당 컨설턴트';
+  var cDept = session.dept||'솔루션빌더스';
+
+  return '<div style="background:white;border-radius:8px;margin-bottom:14px;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:680px">'
+    // 왼쪽 파란 바
+    + '<div style="position:absolute;left:0;top:0;bottom:0;width:8px;background:'+accentColor+'"></div>'
+    // 상단 회색 배너
+    + '<div style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;padding:10px 24px 10px 28px;font-size:12px;color:#64748b;font-weight:600">경영진단보고서</div>'
+    // 중앙 타이틀 영역
+    + '<div style="padding:48px 36px 36px 36px;flex:1;display:flex;flex-direction:column">'
+    + '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'
+    + '<div style="font-size:42px;font-weight:900;color:#0f172a;letter-spacing:-1px;line-height:1.15;margin-bottom:8px">경영진단보고서</div>'
+    + '<div style="font-size:18px;color:#94a3b8;font-weight:500;margin-left:2px">('+( isConsultant ? '컨설턴트용' : '기업전달용')+')</div>'
+    + '</div>'
+    // 회사명 영역
+    + '<div style="margin-top:auto">'
+    + '<div style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:4px">'+cData.name+'</div>'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:16px">'+(cData.industry||'-')+'</div>'
+    // 기업정보 테이블
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px;border-top:2px solid '+accentColor+'">'
+    + '<tr>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap">기업명</th>'
+    + '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+cData.name+'</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap">대표자</th>'
+    + '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.rep||'-')+'</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap">업종</th>'
+    + '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.industry||'-')+'</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">설립일</th>'
+    + '<td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.bizDate||'-')+'</td>'
+    + '</tr>'
+    + '<tr>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">사업자번호</th>'
+    + '<td style="padding:8px 10px;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.bizNum||'-')+'</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">상시근로자</th>'
+    + '<td style="padding:8px 10px;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.empCount||'-')+'명</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">전년 매출</th>'
+    + '<td style="padding:8px 10px;border-right:1px solid #e2e8f0;font-weight:600">'+fKRW(rev.y25)+'</td>'
+    + '<th style="background:#f8fafc;padding:8px 10px;text-align:left;color:'+accentColor+';font-weight:700;white-space:nowrap">금년 예상</th>'
+    + '<td style="padding:8px 10px;font-weight:600">'+fKRW(exp)+'</td>'
+    + '</tr>'
+    + '</table>'
+    // 푸터
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;padding-top:10px;border-top:1px solid #f1f5f9;margin-top:10px">'
+    + '<span>📅 보고서 작성일: '+dateStr+'</span>'
+    + '<span>👤 담당 컨설턴트: '+cName+'</span>'
+    + '<span>🏢 '+cDept+'</span>'
+    + '</div>'
+    + '</div>'  // company area end
+    + '</div>'  // padding end
+    + '</div>'; // cover end
+}
+
+// ── 섹션 박스 생성기
+function mgmtSec(title, icon, color, items2col, extraCSS) {
+  var bg = extraCSS||'background:#f8fafc';
+  return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 16px;'+bg+'">'
+    + '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e9ecef">'+icon+' '+title+'</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + items2col.map(function(t){
+        return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6">'
+          +'<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div>'
+          +'<span>'+t+'</span>'
+          +'</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
+// ── 피드백 박스
+function mgmtFB(items) {
+  return '<div style="border-radius:8px;padding:12px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
+    + '<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + items.map(function(t){
+        return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6">'
+          +'<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div>'
+          +'<span>'+t+'</span>'
+          +'</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
+// ── 로드맵 단계 박스
+function mgmtRoadmapPhase(phaseLabel, bgColor, borderColor, textColor, items) {
+  return '<div style="border-radius:10px;padding:13px 16px;background:white;border:1px solid #e2e8f0;border-top:4px solid '+borderColor+'">'
+    + '<div style="font-size:13px;font-weight:800;color:'+textColor+';margin-bottom:10px;display:flex;align-items:center;gap:8px">'
+    + '<span style="background:'+bgColor+';border-radius:20px;padding:3px 12px">'+phaseLabel+'</span>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + items.map(function(t){
+        return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6">'
+          +'<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+borderColor+'"></div>'
+          +'<span>'+t+'</span>'
+          +'</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
+// ── 페이지 래퍼
+function mgmtPage(num, title, sub, accentColor, content) {
+  var numBg = accentColor === '#1e293b' ? '#f1f5f9' : '#eff6ff';
+  var numTc = accentColor === '#1e293b' ? '#475569' : accentColor;
+  return '<div class="rp-page">'
+    + '<div class="rp-ph">'
+    + '<div class="rp-pnum" style="background:'+numBg+';color:'+numTc+'">'+num+'</div>'
+    + '<span class="rp-ptitle">'+title+'</span>'
+    + '<span class="rp-psub">'+sub+'</span>'
+    + '</div>'
+    + '<div class="rp-body">'+content+'</div>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// ★ 경영진단 기업전달용 (표지+6P)
+// ═══════════════════════════════════════════════
 function buildMgmtClientHTML(d, cData, rev, dateStr) {
-  var color = '#3b82f6';
-  var exp   = calcExp(cData, rev);
-  var radar = (d.radar||[65,80,68,70,55]).join(',');
-  var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
+  var C = '#2563eb';  // accent color
+  var exp = calcExp(cData, rev);
+  var radar = (d.radar||[72,80,68,70,58]).join(',');
+  var bars  = d.marketing_bars||{finance:82,strategy:80,operation:68,hr:64,it:55};
   var certs = d.certs||[
-    {name:'벤처기업 인증',effect:'중진공·기보 우대금리 적용으로 추가 자금 한도 최대 2억원 확보 가능',amount:'+2억',period:'6개월 내'},
-    {name:'이노비즈 인증',effect:'기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용',amount:'+3억',period:'1년 내'},
-    {name:'기업부설연구소',effect:'R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지 효과',amount:'+1.5억',period:'세액공제 병행'},
-    {name:'HACCP 인증',effect:'대형마트·단체급식 납품 채널 확대 직접 연결 — B2B 매출 신규 확보',amount:'채널↑',period:'매출 확대'}
+    {name:'벤처기업 인증',effect:'기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'},
+    {name:'이노비즈 인증',effect:'기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'},
+    {name:'기업부설연구소',effect:'R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'},
+    {name:'HACCP 인증',effect:'대형마트·단체급식 납품 채널 확대 — B2B 매출 신규 확보',amount:'채널↑',period:'매출 확대'}
   ];
-  var cIcons=['🏆','📜','🔬','✅'], cBgs=['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
-  var totalC=certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
-  var session=JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
-  var cName=session.name||'담당 컨설턴트', cDept=session.dept||'솔루션빌더스';
-  var growRate=(rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'+895%';
+  var certBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
+  var certIcons = ['🏆','📜','🔬','✅'];
+  var growRate  = (rev.y24>0&&rev.y25>0) ? '+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%' : '-';
+  var totalC    = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
 
-  // ── 표지 (그라디언트 헤더) ──
-  var cover = '<div class="rp-cover" style="padding:0;min-height:auto">'
-    +'<div style="background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 55%,#3b82f6 100%);padding:28px 32px 24px;position:relative;overflow:hidden">'
-    +'<div style="position:absolute;top:-50px;right:-50px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,0.05)"></div>'
-    +'<div style="position:absolute;bottom:-20px;right:80px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>'
-    +'<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:20px;padding:4px 14px;font-size:12px;color:rgba(255,255,255,0.9);font-weight:600;margin-bottom:16px">📊 경영진단보고서 · 기업전달용</div>'
-    +'<div style="font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px;margin-bottom:5px">경영진단보고서</div>'
-    +'<div style="font-size:13px;color:rgba(255,255,255,0.65);margin-bottom:22px">'+cData.name+' &nbsp;·&nbsp; '+(cData.industry||'-')+'</div>'
-    +'<div style="display:flex;gap:12px">'
-    +'<div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:4px">AI 종합 등급</div><div style="font-size:22px;font-weight:800;color:white">'+(d.grade||'A-')+'</div><div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px">'+(d.grade_desc||'고성장 유망기업')+'</div></div>'
-    +'<div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:4px">매출 성장률</div><div style="font-size:22px;font-weight:800;color:white">'+growRate+'</div><div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px">전년 대비</div></div>'
-    +'<div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:4px">금년 예상 매출</div><div style="font-size:22px;font-weight:800;color:white">'+fKRW(exp)+'</div><div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px">연간 환산</div></div>'
-    +'</div></div>'
-    +'<div style="padding:18px 32px">'
-    +'<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:13px;border-top:2px solid '+color+'">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +'<tr><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap;width:12%">기업명</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600;border-right:1px solid #e2e8f0" colspan="3">'+cData.name+'</td><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap;width:12%">대표자</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600;border-right:1px solid #e2e8f0">'+( cData.rep||'-')+'</td><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap;width:8%">업종</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.industry||'-')+'</td></tr>'
-    +'<tr><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;white-space:nowrap">사업자번호</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+( cData.bizNum||'-')+'</td><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">상시근로자</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+( cData.empCount||'-')+'명</td><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">전년 매출</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+fKRW(rev.y25)+'</td><th style="background:#f0f6ff;padding:8px 12px;text-align:left;color:#1d4ed8;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">금년 예상</th><td style="padding:8px 12px;font-weight:600">'+fKRW(exp)+'</td></tr>'
-    +'</table></div>'
-    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;padding-top:8px;border-top:1px solid #f1f5f9">'
-    +'<span>📅 보고서 작성일: '+dateStr+'</span><span>👤 담당 컨설턴트: '+cName+'</span><span>🏢 '+cDept+'</span>'
-    +'</div></div></div>';
+  var nm = cData.name;
 
-  // ── P1: 경영진단 개요 ──
-  var p1 = rpPage(1,'경영진단 개요','기업현황 · 종합등급 · 진단목적',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col38">'
-    +'<div class="rp-section" style="padding:0;overflow:hidden;border-top:2px solid '+color+'">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +'<tr><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">기업명</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600" colspan="3">'+cData.name+'</td></tr>'
-    +'<tr><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.rep||'-')+'</td><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;border-left:1px solid #e2e8f0;white-space:nowrap">업종</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.industry||'-')+'</td></tr>'
-    +'<tr><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">설립일</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.bizDate||'-')+'</td><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;border-left:1px solid #e2e8f0;white-space:nowrap">근로자</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600" colspan="3">'+( cData.coreItem||'-')+'</td></tr>'
-    +'<tr><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;white-space:nowrap">전년 매출</th><td style="padding:8px 10px;font-weight:600">'+fKRW(rev.y25)+'</td><th style="background:#f0f6ff;padding:8px 10px;text-align:left;color:#1d4ed8;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">금년 예상</th><td style="padding:8px 10px;font-weight:600">'+fKRW(exp)+'</td></tr>'
-    +'</table></div>'
-    +'<div class="rp-grade"><div class="rp-glbl">AI 종합 진단 등급</div>'
-    +'<div class="rp-gval" style="color:'+color+'">'+(d.grade||'A-')+'</div>'
-    +'<div class="rp-gdesc">'+(d.grade_desc||'고성장 유망기업')+'</div>'
-    +'<div class="rp-gsub">전체 진단 기업 중 상위 15% 수준</div></div>'
-    +'<div class="rp-g2">'
-    +rpMC('매출 성장률',growRate,'전년 대비','#16a34a')
-    +rpMC('금년 예상 매출',fKRW(exp),'연환산',color)
-    +'</div>'
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('📌 진단 목적 및 방향', color,
-      rpLst(d.overview||[
-        cData.name+'의 재무·전략·인사·운영·IT 전 영역을 종합 진단하여 핵심 강점과 개선 기회를 파악함',
-        '창업 이후 폭발적 매출 성장 추이를 분석하고 시장 내 경쟁 우위 지속을 위한 전략적 포지셔닝 방향을 제시함',
+  var cover = mgmtCover(cData, rev, exp, dateStr, 'client');
+
+  // ── P1: 경영진단 개요 ──────────────────────────
+  var p1 = mgmtPage(1,'경영진단 개요','기업현황 · 종합등급 · 진단목적',C,
+    // 상단: 기업표(left) + 등급+지표(right)
+    '<div style="display:flex;gap:14px;margin-bottom:12px">'
+    + '<div style="flex:1;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;border-top:2px solid '+C+'">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<tr><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">기업명</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600" colspan="3">'+nm+'</td></tr>'
+    + '<tr><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">대표자</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.rep||'-')+'</td><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">업종</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.industry||'-')+'</td></tr>'
+    + '<tr><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">설립일</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.bizDate||'-')+'</td><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">핵심아이템</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.coreItem||'-')+'</td></tr>'
+    + '<tr><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">전년 매출</th><td style="padding:8px 11px;border-right:1px solid #e2e8f0;font-weight:600">'+fKRW(rev.y25)+'</td><th style="background:#eff6ff;padding:8px 11px;color:'+C+';font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">금년 예상</th><td style="padding:8px 11px;font-weight:600">'+fKRW(exp)+'</td></tr>'
+    + '</table></div>'
+    + '<div style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:8px">'
+    + '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #93c5fd;border-radius:10px;padding:14px;text-align:center">'
+    + '<div style="font-size:11px;color:#64748b;margin-bottom:4px">AI 종합 진단 등급</div>'
+    + '<div style="font-size:46px;font-weight:900;color:'+C+';line-height:1">'+(d.grade||'A-')+'</div>'
+    + '<div style="font-size:12px;color:#1e40af;font-weight:700;margin-top:6px">'+(d.grade_desc||'고성장 유망기업')+'</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">📈</div><div style="font-size:13px;font-weight:800;color:#16a34a">'+growRate+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">매출성장률</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">💰</div><div style="font-size:13px;font-weight:800;color:'+C+'">'+fKRW(exp)+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">금년예상</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">👥</div><div style="font-size:13px;font-weight:800;color:#7c3aed">'+(cData.empCount||'0')+'명</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">상시근로자</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">🏆</div><div style="font-size:13px;font-weight:800;color:'+C+'">'+(d.grade||'A-')+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">종합등급</div></div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    // 진단 목적 — full width
+    + mgmtSec('진단 목적 및 방향', '📌', C, d.overview||[
+        nm+'의 재무·전략·인사·운영·IT 전 영역을 종합 진단하여 핵심 강점과 개선 기회를 파악함',
+        '창업 이후 폭발적 매출 성장 추이를 분석하고 경쟁 우위 지속을 위한 전략적 포지셔닝 방향을 제시함',
         '중소기업 정책자금 지원 요건 충족 여부를 점검하고 신청 가능 자금 목록 및 조달 전략을 수립함',
         '벤처·이노비즈·HACCP 인증 취득을 통한 가점 확보로 정책자금 조달 한도를 극대화하는 방안을 제안함',
-        '단기·중기·장기 성장 로드맵을 기반으로 실행 가능한 경영 개선 우선순위 액션플랜을 수립함'
-      ], color)
-    )
-    +rpSec('✅ 진단 결과 요약', '#16a34a',
-      rpLst(d.summary||[
-        cData.name+'는 단기간의 폭발적 매출 성장과 독창적 사업 역량을 바탕으로 시장 내 입지를 빠르게 확보하고 있음',
-        '인증 취득 로드맵을 체계적으로 실행할 경우 추가 정책자금 조달과 성장 가속화가 충분히 기대되는 상황임'
-      ], '#16a34a')
-    )
-    +'</div>'
-    +'</div>'
+        '단기·중기·장기 성장 로드맵을 기반으로 실행 가능한 경영 개선 우선순위 액션플랜을 수립함',
+        nm+'의 현재 경쟁 우위를 유지하면서 지속 성장을 위한 채널 다각화 및 인프라 구축 전략을 마련함'
+      ])
+    // 진단 결과 요약 — full width
+    + '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 15px;margin-top:10px">'
+    + '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #dbeafe">✅ 진단 결과 요약</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + (d.summary||[
+        nm+'는 단기간의 폭발적 매출 성장과 독창적 사업 역량을 보유한 고성장 잠재력 기업으로 평가됨',
+        '인증 취득 로드맵을 체계적으로 실행할 경우 추가 정책자금 조달로 성장 가속화가 충분히 기대됨',
+        '전략적 채널 확대와 조직 역량 강화를 병행하여 3년 내 시장 리더십 확보가 현실적인 목표임',
+        '컨설턴트 밀착 지원 하에 인증·자금·채널을 동시 추진하는 종합 성장 전략 실행을 강력 권고함'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#1e40af;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+t+'</span></div>';}).join('')
+    + '</div></div>'
   );
 
-  // ── P2: 재무 현황 ──
-  var p2 = rpPage(2,'재무 현황 분석','매출 추이 · 수익성 · 개선 방향',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('📈 연도별 매출 추이', color,
-      '<div class="rp-ch" style="height:170px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
-    )
-    +'<div class="rp-g4">'
-    +rpMC('전년 매출',fKRW(rev.y25),'2025년',color)
-    +rpMC('금년 예상',fKRW(exp),'연환산',color)
-    +rpMC('성장률',growRate,'YoY','#16a34a')
-    +rpMC('2년 성장',(rev.y23>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y23)/rev.y23)*100)+'%':'분석중','2년누계','#16a34a')
-    +'</div>'
-    +rpSec('📊 영역별 재무 지표', color,
-      rpHB('매출 성장률',(bars.finance||85),(bars.finance||85)+'점',color)
-      +rpHB('매출이익률',Math.min((bars.finance||85)-10,78),Math.min((bars.finance||85)-10,78)+'점',color)
-      +rpHB('현금흐름 안정성',Math.min((bars.finance||85)-20,65),Math.min((bars.finance||85)-20,65)+'점','#f97316')
-      +rpHB('부채 안정성',Math.min((bars.finance||85)-5,80),Math.min((bars.finance||85)-5,80)+'점',color)
-    )
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('💪 재무 강점 분석', '#16a34a',
-      rpLst(d.finance_strengths||[
-        cData.name+'는 단기간에 폭발적 매출 성장을 달성하며 시장성을 완벽히 검증하였고 투자 및 자금 심사 신뢰도가 매우 높음',
-        '핵심 아이템의 독창성과 차별성을 바탕으로 높은 마진율을 유지하며 수익성 기반을 초기부터 견고하게 구축하고 있음',
-        '정책자금 중심의 저금리 차입 구조를 통해 금융 비용 부담을 최소화하고 재무 건전성을 안정적으로 유지하고 있음',
-        '영업이익률이 동업종 평균을 상회하여 수익 구조의 건전성이 입증되며 향후 성장을 위한 투자 여력이 충분한 상태임'
-      ], '#16a34a')
-    )
-    +rpSec('⚠️ 개선 필요 포인트', '#f97316',
-      rpLst(d.finance_risks||[
-        '단일 아이템 매출 의존도가 높아 포트폴리오 다각화를 통한 매출 안정성 강화가 시급히 요구됨',
+  // ── P2: 재무 현황 ──────────────────────────────
+  var p2 = mgmtPage(2,'재무 현황 분석','매출 추이 · 수익성 · 개선 방향',C,
+    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
+    + '<div class="rp-ch" style="height:150px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">전년 매출</div><div style="font-size:17px;font-weight:800;color:'+C+'">'+fKRW(rev.y25)+'</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">2025년</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">금년 예상</div><div style="font-size:17px;font-weight:800;color:'+C+'">'+fKRW(exp)+'</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">연환산</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">YoY 성장률</div><div style="font-size:17px;font-weight:800;color:#16a34a">'+growRate+'</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">전년 대비</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">2년 성장</div><div style="font-size:17px;font-weight:800;color:#16a34a">'+(rev.y23>0&&rev.y25>0?'+'+Math.round(((rev.y25-rev.y23)/rev.y23)*100)+'%':'분석중')+'</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">2년누계</div></div>'
+    + '</div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + mgmtSec('재무 강점 분석','💪','#16a34a', d.finance_strengths||[
+        nm+'는 단기간에 폭발적 매출 성장을 달성하며 시장성을 완벽히 검증, 투자·자금 심사 신뢰도가 매우 높음',
+        '핵심 아이템의 독창성과 차별성을 바탕으로 높은 마진율을 유지하며 수익성 기반을 안정적으로 구축함',
+        '정책자금 중심의 저금리 차입 구조로 금융 비용 부담을 최소화하고 재무 건전성을 유지하고 있음',
+        '영업이익률이 동업종 평균을 상회하여 수익 구조의 건전성이 입증, 향후 투자 여력이 충분함',
+        '빠른 매출 성장 대비 비용 구조가 효율적으로 관리되어 이익 레버리지 효과가 극대화되고 있음',
+        '안정적인 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하는 구조를 보유하고 있음'
+      ], 'background:#f0fdf4;border-color:#86efac')
+    + mgmtSec('개선 필요 포인트','⚠️','#f97316', d.finance_risks||[
+        nm+'의 단일 아이템 매출 의존도가 높아 포트폴리오 다각화를 통한 매출 안정성 강화가 시급히 요구됨',
         '급성장에 따른 운전자본 수요 증가에 대비하여 정책자금 조달 계획을 조기에 수립하고 실행해야 함',
-        '현금흐름 관리 체계가 미흡하여 월별 손익계산서 작성 및 현금흐름표 정기 관리 시스템 구축이 필요함'
-      ], '#f97316')
-    )
-    +'</div>'
-    +'</div>'
+        '현금흐름 관리 체계가 미흡하여 월별 손익계산서 작성 및 현금흐름표 정기 관리 시스템 구축이 필요함',
+        '매출 급성장 국면에서 재무 리스크 관리를 위한 내부 통제 시스템과 회계 체계 정비가 필요함',
+        '원재료/상품 조달의 단일 공급처 의존은 공급망 리스크를 높이므로 대체 공급처 확보가 필요함',
+        '대표자 중심의 재무 의사결정 구조는 핵심 인력 이탈 시 사업 연속성에 영향을 줄 수 있음'
+      ], 'background:#fff7ed;border-color:#fed7aa')
+    + '</div>'
+    // 재무지표 바
+    + '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
+    + '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 재무 지표</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + [['매출 성장률',bars.finance||82],['매출이익률',Math.max((bars.finance||82)-8,65)],['현금흐름',Math.max((bars.finance||82)-20,55)],['부채 안정성',Math.min((bars.finance||82)+5,90)]].map(function(b){
+        var c2=b[1]<60?'#f97316':C;
+        return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+b[0]+'</span><span style="font-weight:700;color:'+c2+'">'+b[1]+'점</span></div><div style="height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+b[1]+'%;background:'+c2+'"></div></div></div>';
+      }).join('')
+    + '</div></div>'
   );
 
-  // ── P3: 전략·마케팅 ──
-  var p3 = rpPage(3,'전략 및 마케팅 분석','역량 레이더 · 마케팅 포지셔닝',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col40">'
-    +rpSec('🎯 경영 역량 진단 레이더', color,
-      '<div class="rp-ch" style="height:195px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
-    )
-    +rpSec('📊 영역별 역량 점수', color,
-      rpHB('재무 건전성',bars.finance||85,(bars.finance||85)+'점',color)
-      +rpHB('전략 / 마케팅',bars.strategy||80,(bars.strategy||80)+'점',color)
-      +rpHB('운영 / 생산',bars.operation||70,(bars.operation||70)+'점',color)
-      +rpHB('인사 / 조직',bars.hr||55,(bars.hr||55)+'점','#f97316')
-      +rpHB('IT / 디지털',bars.it||50,(bars.it||50)+'점','#f97316')
-    )
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('📣 마케팅 현황 분석', color,
-      rpLst(d.marketing||[
-        cData.name+'의 핵심 아이템은 뛰어난 품질과 차별성으로 구매자 사이에서 자연 입소문 마케팅의 강력한 동력으로 작용하고 있음',
-        '인스타그램·유튜브 쇼츠 등 SNS 채널을 통한 콘텐츠 마케팅 강화로 브랜드 인지도를 집중적으로 확산시킬 필요가 있음',
-        '충성 고객층을 기반으로 한 재구매율 제고 전략과 리뷰 마케팅 활성화가 매출 안정성 확보의 핵심 역할을 담당함',
-        'B2B 납품 채널 확장을 통해 안정적 매출 기반을 조성할 수 있는 충분한 여건이 이미 갖추어져 있음',
-        '온라인 플랫폼 입점 확대와 자사몰 구축을 통한 유통 채널 다각화가 필요한 시점임'
-      ], color)
-    )
-    +rpSec('🔷 전략 포지셔닝 방향', '#7c3aed',
-      rpLst(d.marketing_items||[
+  // ── P3: 전략·마케팅 ────────────────────────────
+  var p3 = mgmtPage(3,'전략 및 마케팅 분석','역량 레이더 · 마케팅 포지셔닝',C,
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'
+    + '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
+    + '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">🎯 경영 역량 진단 레이더</div>'
+    + '<div class="rp-ch" style="height:185px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
+    + '</div>'
+    + '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
+    + '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 역량 점수</div>'
+    + [['재무 건전성',bars.finance||82],['전략 / 마케팅',bars.strategy||80],['운영 / 생산',bars.operation||68],['인사 / 조직',bars.hr||64],['IT / 디지털',bars.it||55]].map(function(b){
+        var warn=b[1]<65;
+        var c2=warn?'#f97316':C;
+        return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+b[0]+'</span><span style="font-weight:700;color:'+c2+'">'+b[1]+'점</span></div><div style="height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+b[1]+'%;background:'+c2+'"></div></div></div>';
+      }).join('')
+    + '</div>'
+    + '</div>'
+    + mgmtSec('마케팅 현황 분석','📣',C, d.marketing||[
+        nm+'의 핵심 아이템은 독창성과 품질로 구매자 사이에서 자연 입소문 마케팅의 강력한 동력으로 작용함',
+        '인스타그램·유튜브 쇼츠 등 SNS 콘텐츠 마케팅 강화로 브랜드 인지도를 집중 확산시킬 필요가 있음',
+        '충성 고객층 기반의 재구매율 제고 전략과 리뷰 마케팅 활성화가 매출 안정성 확보에 핵심 역할을 함',
+        'B2B 납품 채널 확장을 통해 안정적 매출 기반 조성이 가능한 충분한 여건이 갖추어져 있음',
+        '온라인 플랫폼 입점 확대와 자사몰 구축을 통한 유통 채널 다각화가 필요한 시점임',
+        '전문 박람회 참가 및 업계 네트워크 활용으로 신규 B2B 거래처 발굴을 확대해야 함'
+      ])
+    + '<div style="height:10px"></div>'
+    + mgmtSec('전략 포지셔닝 방향','🔷','#7c3aed', d.marketing_items||[
         '틈새시장 선점 전략으로 경쟁사 대비 차별화된 프리미엄 포지션을 구축하여 가격 결정력을 확보해야 함',
         '핵심 경쟁력을 마케팅 메시지 전면에 배치하여 브랜드 신뢰도와 시장 내 인지도를 높여야 함',
-        '정기구독 모델 도입으로 재구매 사이클을 단축하고 고객 생애가치(LTV)를 극대화하는 전략을 수립 권고함'
-      ], '#7c3aed')
-    )
-    +'</div>'
-    +'</div>'
+        '정기구독 모델 도입으로 재구매 사이클을 단축하고 고객 생애가치(LTV)를 극대화해야 함',
+        'B2B 영업 역량 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴 영업 프로세스 체계화 필요'
+      ], 'background:#fdf4ff;border-color:#d8b4fe')
   );
 
-  // ── P4: 인사·운영·IT (가로 박스 세로 정렬) ──
-  var p4 = rpPage(4,'인사·조직 및 운영·생산·IT 분석','조직 역량 · 생산 효율 · 디지털 현황',color,
-    '<div style="display:flex;flex-direction:column;gap:12px;flex:1">'
-    +'<div class="rp-section">'
-    +'<h4 style="color:'+color+';font-size:13px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e9ecef">👥 인사·조직 현황</h4>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.hr||[
-      cData.name+'는 소수 정예 팀 구성으로 핵심 역량에 집중하며 인당 생산성이 업종 평균 대비 우수한 수준임',
+  // ── P4: 인사·운영·IT ──────────────────────────
+  var p4 = mgmtPage(4,'인사·조직 및 운영·생산·IT 분석','조직 역량 · 생산 효율 · 디지털 현황',C,
+    mgmtSec('인사·조직 현황','👥',C, d.hr||[
+      nm+'는 소수 정예 팀 구성으로 핵심 역량에 집중하며 인당 생산성이 업종 평균 대비 우수한 수준임',
       '대표자 중심의 신속한 의사결정 구조로 시장 변화에 빠르게 대응하는 기민성(Agility)을 보유하고 있음',
       '핵심 인력 이탈 리스크를 관리하기 위한 성과 공유 제도 및 인센티브 체계 도입이 필요한 시점임',
       '사업 성장에 따른 영업·마케팅·운영 전문 인력 채용 계획을 조기에 수립해야 함',
-      '직무 기술서 및 업무 매뉴얼화를 통해 성장 기반의 운영 인프라를 구축해야 함'
-    ], color).replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    +'<div class="rp-section">'
-    +'<h4 style="color:'+color+';font-size:13px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e9ecef">🏭 운영·생산 현황</h4>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.ops||[
-      cData.name+'의 운영 방식은 초기 비용 효율을 극대화하는 구조로 고정비 부담을 최소화하고 있음',
+      '직무 기술서 및 업무 매뉴얼화를 통해 성장 기반의 운영 인프라를 구축해야 함',
+      '초기 멤버로 합류할 인재에게 성과급·스톡옵션 등 강력한 인센티브 제도를 마련하여 동기 부여 필요'
+    ])
+    + '<div style="height:10px"></div>'
+    + mgmtSec('운영·생산 현황','🏭',C, d.ops||[
+      nm+'의 운영 방식은 초기 비용 효율을 극대화하는 구조로 고정비 부담을 최소화하고 있음',
       '핵심 아이템의 안정적인 공급처 발굴 및 계약을 통해 공급망 리스크를 최소화하고 있음',
       '품질관리 체계를 고도화하여 고객 불만율을 낮추고 B2B 납품 가능성을 높여야 함',
-      '원재료 조달 프로세스 최적화를 통해 원가 변동성을 줄이고 공급 안정성을 확보해야 함',
-      '위탁 운영과 자체 운영의 비율 최적화를 통해 고정비를 최소화하고 수익성을 개선해야 함'
-    ], color).replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    +'<div class="rp-section">'
-    +'<h4 style="color:'+color+';font-size:13px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e9ecef">💻 IT·디지털 현황</h4>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.it||[
-      'ERP 시스템 도입을 통해 재고·매출·회계 데이터를 통합 관리하여 의사결정 속도와 정확도를 높여야 함',
+      '원재료 조달 프로세스 최적화(선매입·재고 관리)를 통해 원가 변동성을 줄이고 공급 안정성 확보 필요',
+      '물류 및 배송 프로세스 표준화를 통해 서비스 품질을 일관되게 유지할 체계를 구축해야 함',
+      '증가하는 수요에 대응하기 위한 창고 확보 및 물류 시스템 고도화 계획을 조기 수립해야 함'
+    ])
+    + '<div style="height:10px"></div>'
+    + mgmtSec('IT·디지털 현황','💻',C, d.it||[
+      'ERP 시스템 도입으로 재고·매출·회계 데이터를 통합 관리하여 의사결정 속도와 정확도를 높여야 함',
       'CRM 시스템 도입으로 고객 데이터를 통합 분석하고 재구매 유도 및 타겟 마케팅을 체계화해야 함',
       'SNS 채널 운영 역량을 내재화하여 외부 의존도를 낮추고 마케팅 비용을 절감하는 구조를 만들어야 함',
       '자사몰 구축을 통해 플랫폼 수수료를 절감하고 고객 데이터를 직접 확보·활용할 수 있음',
-      '온라인 B2B 플랫폼 구축을 통해 고객 편의성을 높이고 신규 유입 채널을 다각화해야 함'
-    ], color).replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    +'</div>'
+      '온라인 B2B 플랫폼 구축을 통해 고객 편의성을 높이고 신규 유입 채널을 다각화해야 함',
+      '클라우드 기반 데이터 관리 및 백업 시스템을 구축하여 중요 사업 정보를 안전하게 보호해야 함'
+    ])
   );
 
-  // ── P5: 가점추천 ──
-  var p5 = rpPage(5,'가점추천','인증 취득으로 정책자금 한도 최대화',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +'<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">📜 추천 인증 목록 (우선순위 순)</div>'
-    +certs.map(function(c,i){return '<div class="rp-cert"><div class="rp-certi" style="background:'+cBgs[i%cBgs.length]+'">'+cIcons[i%cIcons.length]+'</div><div class="rp-certb"><div class="rp-certn">'+c.name+'</div><div class="rp-certd">'+c.effect+'</div></div><div class="rp-certa"><div class="rp-certv" style="color:'+color+'">'+c.amount+'</div><div class="rp-certp">'+c.period+'</div></div></div>';}).join('')
-    +'</div>'
-    +'</div>'
-    +'<div class="rp-colF">'
-    +'<div style="background:#eff6ff;border-radius:10px;padding:18px;border:1.5px solid #bfdbfe;text-align:center;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +'<div style="font-size:32px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalC>0?totalC+'억원':'6.5억원')+'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-top:5px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
-    +'</div>'
-    +rpSec('🗓 취득 우선순위 전략', color,
-      rpLst([
-        '1순위: 벤처인증 (약 6개월) — 즉각적 자금 한도 확대 효과 최대 + 준비 난이도 낮음. 현재 매출로 충분히 취득 가능',
-        '2순위: 이노비즈 (1년 내) — 벤처인증 취득 후 연속 추진. 중진공 기술개발자금 신청 자격 + 기보 우대보증 동시 적용',
-        '3순위: 기업부설연구소 (중기) — 이노비즈와 병행하여 R&D 세액공제 25% 절세 효과 극대화 전략으로 추진 권고',
-        '4순위: HACCP (장기) — 대형마트·단체급식 채널 확보 후 안정적 B2B 매출 기반 마련 및 브랜드 신뢰도 강화',
-        '인증 준비는 사업계획서 작성과 병행하여 시너지를 극대화하고 컨설턴트와 일정 조율 권고'
-      ], color)
-    )
-    +'</div>'
-    +'</div>'
+  // ── P5: 가점추천 ──────────────────────────────
+  var totalC2 = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
+  var p5 = mgmtPage(5,'가점추천','인증 취득으로 정책자금 한도 최대화',C,
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'
+    + '<div>'
+    + '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
+    + certs.map(function(c,i){
+        return '<div style="display:flex;align-items:flex-start;gap:10px;background:white;border:1px solid #e2e8f0;border-radius:9px;padding:11px 13px;margin-bottom:9px">'
+          +'<div style="width:34px;height:34px;border-radius:8px;background:'+certBgs[i%certBgs.length]+';display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">'+certIcons[i%certIcons.length]+'</div>'
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px">'+c.name+'</div><div style="font-size:12px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
+          +'<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:14px;font-weight:800;color:'+C+'">'+c.amount+'</div><div style="font-size:11px;color:#94a3b8">'+c.period+'</div></div>'
+          +'</div>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:10px">'
+    + '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center">'
+    + '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:5px">인증 완료 시 총 추가 조달 가능 한도</div>'
+    + '<div style="font-size:30px;font-weight:900;color:'+C+';line-height:1.2">최대 +'+(totalC2>0?totalC2+'억원':'6.5억원')+'</div>'
+    + '<div style="font-size:12px;color:#64748b;margin-top:5px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
+    + '</div>'
+    + mgmtSec('취득 우선순위 전략','🗓',C, [
+        '1순위: 벤처인증 (약 6개월) — 즉각적 자금 한도 확대 효과 최대, 준비 난이도 낮음. 현재 매출로 충분히 취득 가능',
+        '2순위: 이노비즈 (1년 내) — 벤처인증 후 연속 추진. 중진공 기술개발자금 자격 + 기보 우대보증 동시 적용',
+        '3순위: 기업부설연구소 (중기) — 이노비즈와 병행, R&D 세액공제 25% 절세 효과 극대화 전략으로 추진',
+        '4순위: HACCP (장기) — 대형마트·단체급식 채널 확보 후 안정적 B2B 매출 기반 마련 및 신뢰도 강화',
+        '인증 준비는 사업계획서 작성과 병행하여 시너지 극대화, 컨설턴트와 일정 조율 강력 권고',
+        '인증별 담당 기관 사전 접촉 및 예비 상담을 통해 요건 충족 여부를 조기에 점검하고 준비 착수'
+      ])
+    + '</div>'
+    + '</div>'
   );
 
-  // ── P6: 성장 로드맵 + 종합의견 (가로 박스 세로 정렬) ──
-  var rm_s = d.roadmap_short||['벤처기업 인증 신청 착수 및 서류 준비','정책자금 신청서류 일괄 준비 완료','월별 현금흐름 관리 체계 구축','SNS 채널 최적화 및 온라인 입점 준비','인력 채용 계획 수립 및 공고 시작','주요 고객사 만족도 조사 실시'];
-  var rm_m = d.roadmap_mid  ||['정책자금 조달 완료 및 운영 기반 확충','이노비즈 인증 취득 추진 및 역량 강화','B2B 납품 채널 2~3곳 확보 및 수익 기반','자사몰 구축 및 정기구독 서비스 론칭','ERP·CRM 시스템 도입 및 데이터 기반 경영','마케팅 전담 인력 채용 완료'];
-  var rm_l = d.roadmap_long ||['매출 목표 달성 및 신제품 라인업 확장','기업부설연구소 설립 및 R&D 세액공제 활용','HACCP 인증 완료 및 대형마트 채널 확보','해외 수출 타당성 검토 및 글로벌 준비','자동화 운영 체계 완성 및 원가율 최적화','상시근로자 10인 이상 규모 성장 목표'];
+  // ── P6: 성장 로드맵 + 종합의견 ────────────────
+  var rm_s = d.roadmap_short||['벤처기업 인증 신청 착수 및 서류 준비 완료','정책자금 신청서류 일괄 준비 및 착수','월별 현금흐름 관리 체계 즉시 구축','SNS 채널 최적화 및 온라인 입점 준비','핵심 인력 채용 계획 수립 및 공고 시작','주요 고객사 만족도 조사 실시 및 피드백 수집'];
+  var rm_m = d.roadmap_mid  ||['정책자금 조달 완료 및 운영 기반 확충','이노비즈 인증 취득 추진 및 기술 역량 강화','B2B 납품 채널 2~3곳 확보 및 수익 기반 마련','자사몰 구축 및 정기구독 서비스 론칭 완료','ERP·CRM 도입 및 데이터 기반 경영 체계 구축','마케팅 전담 인력 채용 완료 및 인스타 채널 확장'];
+  var rm_l = d.roadmap_long ||['매출 목표 달성 및 신제품 라인업 확장 추진','기업부설연구소 설립 및 R&D 세액공제 활용','HACCP 인증 완료 및 대형마트 납품 채널 확보','해외 수출 타당성 검토 및 글로벌 진출 준비','자동화 운영 체계 완성 및 원가율 최적화 실현','상시근로자 10인 이상 규모 성장 및 조직 체계화'];
 
-  var p6 = rpPage(6,'개선 방향 및 성장 로드맵','단기·중기·장기 실행 계획',color,
-    '<div style="display:flex;flex-direction:column;gap:11px;margin-bottom:14px">'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-left:5px solid '+color+'">'
-    +'<div style="font-size:13px;font-weight:800;color:#1d4ed8;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#eff6ff;border-radius:20px;padding:3px 12px">⚡ 단기 (6개월)</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">즉시 착수 · 우선 실행 과제</span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-    +rm_s.map(function(t){return '<div class="rp-li"><div class="rp-dot" style="background:'+color+'"></div><span style="font-size:13px;color:#334155;line-height:1.55">'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-left:5px solid #16a34a">'
-    +'<div style="font-size:13px;font-weight:800;color:#15803d;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#f0fdf4;border-radius:20px;padding:3px 12px">📈 중기 (1년)</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">성장 기반 확충 · 채널 다각화</span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-    +rm_m.map(function(t){return '<div class="rp-li"><div class="rp-dot" style="background:#16a34a"></div><span style="font-size:13px;color:#334155;line-height:1.55">'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-left:5px solid #7c3aed">'
-    +'<div style="font-size:13px;font-weight:800;color:#6d28d9;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#fdf4ff;border-radius:20px;padding:3px 12px">🌟 장기 (3년)</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">시장 리더십 확보 · 지속 성장</span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-    +rm_l.map(function(t){return '<div class="rp-li"><div class="rp-dot" style="background:#7c3aed"></div><span style="font-size:13px;color:#334155;line-height:1.55">'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'</div>'
-    +'<div class="rp-section" style="background:#eff6ff;border-color:#bfdbfe">'
-    +'<h4 style="color:#1e40af">★ 종합 의견 및 컨설턴트 총평</h4>'
-    +rpLst(d.summary||[
-      cData.name+'는 단기간의 폭발적 매출 성장과 독창적 사업 역량을 바탕으로 시장 내 핵심 플레이어로 빠르게 부상하고 있음',
-      '인증 취득 로드맵을 체계적으로 실행할 경우 추가 정책자금 조달을 통한 성장 가속화와 시장 내 독점적 포지션 강화가 기대됨',
-      '전략적 채널 확대와 조직 역량 강화를 병행하여 3년 내 시장 리더십 확보가 현실적인 목표임을 컨설턴트로서 확신함'
-    ], color)
-    +'</div>'
+  var p6 = mgmtPage(6,'개선 방향 및 성장 로드맵','단기·중기·장기 실행 계획',C,
+    mgmtRoadmapPhase('⚡ 단기 (6개월)','#eff6ff','#3b82f6','#1d4ed8', rm_s)
+    + '<div style="height:10px"></div>'
+    + mgmtRoadmapPhase('📈 중기 (1년)','#f0fdf4','#16a34a','#15803d', rm_m)
+    + '<div style="height:10px"></div>'
+    + mgmtRoadmapPhase('🌟 장기 (3년)','#fdf4ff','#7c3aed','#6d28d9', rm_l)
+    + '<div style="height:10px"></div>'
+    + '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 15px">'
+    + '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #dbeafe">★ 종합 의견 및 컨설턴트 총평</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + (d.summary||[
+        nm+'는 단기간의 폭발적 매출 성장과 독창적 사업 역량을 보유한 고성장 잠재력 기업으로 평가됨',
+        '인증 취득 로드맵 실행 시 추가 정책자금 조달로 성장 가속화와 시장 내 독점적 포지션 강화 기대',
+        '전략적 채널 확대와 조직 역량 강화 병행으로 3년 내 시장 리더십 확보가 현실적인 목표임',
+        '컨설턴트 밀착 지원 하에 인증·자금·채널 동시 추진으로 종합 성장 전략 실행을 강력히 권고함'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#1e40af;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+t+'</span></div>';}).join('')
+    + '</div></div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
+  return tplStyle(C,'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
 }
 
-
-
-// ===========================
-// ★ 경영진단 컨설턴트용 (P1~P7)
-// ===========================
+// ═══════════════════════════════════════════════
+// ★ 경영진단 컨설턴트용 (표지+7P)
+// ═══════════════════════════════════════════════
 function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
-  var color = '#3b82f6';
-  var darkColor = '#1e293b';
-  var exp   = calcExp(cData, rev);
-  var radar = (d.radar||[65,80,68,70,55]).join(',');
-  var bars  = d.marketing_bars||{finance:85,strategy:75,operation:50,hr:30,it:45};
+  var C = '#1e293b';  // dark accent
+  var CB = '#3b82f6'; // blue for charts
+  var exp = calcExp(cData, rev);
+  var radar = (d.radar||[72,80,68,70,58]).join(',');
+  var bars  = d.marketing_bars||{finance:82,strategy:75,operation:50,hr:30,it:45};
   var certs = d.certs||[
-    {name:'벤처기업 인증',effect:'기술 혁신성·성장 잠재력 인정 — 정부 지원사업 참여 및 투자 유치에 유리한 발판',amount:'+2억',period:'4개월'},
+    {name:'벤처기업 인증',effect:'기술혁신성·성장 잠재력 인정 — 정부 지원사업 + 투자 유치에 유리한 발판 마련',amount:'+2억',period:'4개월'},
     {name:'이노비즈 인증',effect:'중진공 기술개발자금 신청 자격 + 기보 우대보증 동시 적용 가능',amount:'+3억',period:'1년 내'}
   ];
-  var session=JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
-  var cName=session.name||'담당 컨설턴트', cDept=session.dept||'솔루션빌더스';
-  var growRate=(rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'+895%';
+  var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
+  var nm = cData.name;
 
-  // ────────────────────────────────────────
-  // 표지 (다크 테마)
-  // ────────────────────────────────────────
-  var cover = '<div class="rp-cover" style="padding:0;min-height:auto">'
-    +'<div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%);padding:28px 32px 24px;position:relative;overflow:hidden;flex:1;min-height:320px;display:flex;flex-direction:column">'
-    +'<div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>'
-    +'<div style="position:absolute;bottom:-20px;right:80px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.03)"></div>'
-    +'<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:4px 14px;font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:14px">🔒 경영진단보고서 · 컨설턴트용</div>'
-    +'<div style="display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:18px;width:fit-content">대외비 — 기업 전달 금지</div>'
-    +'<div style="font-size:30px;font-weight:800;color:white;letter-spacing:-0.5px;margin-bottom:5px">경영진단보고서</div>'
-    +'<div style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:24px">'+cData.name+' &nbsp;·&nbsp; '+(cData.industry||'-')+'</div>'
-    +'<div style="display:flex;gap:12px;margin-top:auto">'
-    +'<div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">AI 종합 등급</div><div style="font-size:22px;font-weight:800;color:white">'+(d.grade||'A-')+'</div><div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">'+(d.grade_desc||'고성장 유망기업')+'</div></div>'
-    +'<div style="background:rgba(220,38,38,0.2);border:1px solid rgba(220,38,38,0.4);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">핵심 리스크</div><div style="font-size:22px;font-weight:800;color:#fca5a5">4건</div><div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">즉시 대응 필요</div></div>'
-    +'<div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:13px 16px;flex:1"><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">추가 조달 가능</div><div style="font-size:22px;font-weight:800;color:white">+6.5억</div><div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">인증 취득 시</div></div>'
-    +'</div></div>'
-    +'<div style="padding:16px 32px">'
-    +'<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;border-top:2px solid #475569">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +'<tr><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">기업명</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600;border-right:1px solid #e2e8f0" colspan="3">'+cData.name+'</td><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600;border-right:1px solid #e2e8f0">'+(cData.rep||'-')+'</td><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">업종</th><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.industry||'-')+'</td></tr>'
-    +'<tr><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap">사업자번호</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+(cData.bizNum||'-')+'</td><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">상시근로자</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">전년 매출</th><td style="padding:8px 12px;font-weight:600;border-right:1px solid #e2e8f0">'+fKRW(rev.y25)+'</td><th style="background:#f8fafc;padding:8px 12px;text-align:left;color:#475569;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">금년 예상</th><td style="padding:8px 12px;font-weight:600">'+fKRW(exp)+'</td></tr>'
-    +'</table></div>'
-    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;padding-top:8px;border-top:1px solid #f1f5f9">'
-    +'<span>📅 보고서 작성일: '+dateStr+'</span><span>👤 담당 컨설턴트: '+cName+'</span><span>🏢 '+cDept+'</span>'
-    +'</div></div></div>';
+  var cover = mgmtCover(cData, rev, exp, dateStr, 'consultant');
 
-  // ────────────────────────────────────────
-  // P1: 경영진단 개요 — 이미지 레이아웃 반영
-  // ────────────────────────────────────────
-  var p1_scoreItems = [
-    {label:'매출 성장률',val:growRate,color:'#16a34a',icon:'📈'},
-    {label:'금년 예상',val:fKRW(exp),color:'#3b82f6',icon:'💰'},
-    {label:'상시근로자',val:(cData.empCount||'0')+'명',color:'#7c3aed',icon:'👥'},
-    {label:'핵심 등급',val:(d.grade||'A-'),color:'#1d4ed8',icon:'🏆'}
-  ];
-
-  var p1 = rpPage(1,'경영진단 개요','기업현황 · 핵심 리스크',color,
-    // 상단: 기업정보 테이블 + 등급 카드 (2컬럼)
-    '<div style="display:flex;gap:14px;margin-bottom:14px">'
-    +'<div style="flex:1;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;border-top:2px solid #475569">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +'<tr><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">기업명</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600" colspan="3">'+cData.name+'</td></tr>'
-    +'<tr><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.rep||'-')+'</td><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-left:1px solid #e2e8f0;white-space:nowrap">업종</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.industry||'-')+'</td></tr>'
-    +'<tr><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap">설립일</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.bizDate||'-')+'</td><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-left:1px solid #e2e8f0;white-space:nowrap">근로자</th><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:600">'+( cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;white-space:nowrap">전년 매출</th><td style="padding:8px 10px;font-weight:600">'+fKRW(rev.y25)+'</td><th style="background:#f8fafc;padding:8px 10px;text-align:left;color:#475569;font-weight:700;border-left:1px solid #e2e8f0;white-space:nowrap">금년 예상</th><td style="padding:8px 10px;font-weight:600">'+fKRW(exp)+'</td></tr>'
-    +'</table></div>'
-    // 오른쪽: 등급 + 지표 카드들
-    +'<div style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:9px">'
-    +'<div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1.5px solid #cbd5e1;border-radius:10px;padding:14px;text-align:center">'
-    +'<div style="font-size:11px;color:#64748b;margin-bottom:4px">종합 진단 등급</div>'
-    +'<div style="font-size:46px;font-weight:900;color:#334155;line-height:1">'+(d.grade||'A-')+'</div>'
-    +'<div style="font-size:12px;color:#475569;font-weight:700;margin-top:6px">'+(d.grade_desc||'고성장 잠재력 보유')+'</div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'
-    +p1_scoreItems.map(function(s){return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:14px;margin-bottom:3px">'+s.icon+'</div><div style="font-size:13px;font-weight:800;color:'+s.color+'">'+s.val+'</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">'+s.label+'</div></div>';}).join('')
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    // 중단: 진단 목적 (full width)
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">📌 진단 목적</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.overview||[
-      cData.name+'의 재무·전략·인사·운영·IT 전 영역을 리스크 중심으로 종합 진단하여 컨설턴트 개입 포인트를 명확히 파악함',
-      '폭발적 매출 성장의 지속 가능성을 검증하고 성장 가속화를 위한 정책자금 조달 전략을 수립함',
-      '기업 전달용 대비 취약점과 리스크를 솔직하게 기술하여 실질적인 개선 방향을 제시하는 것을 목적으로 함',
-      '인증 취득 로드맵과 신용 개선 전략을 통해 정책자금 조달 한도를 최대화하는 방안을 도출함',
-      '단기·중기·장기 실행 계획과 KPI를 수립하여 컨설턴트 밀착 지원의 근거 자료로 활용함'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 하단: 핵심 리스크 요약 (full width, yellow)
-    +'<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 15px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">🚨 핵심 리스크 요약 (내부용)</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.key_risks||[
-      cData.name+'는 대표 1인 의존도가 극도로 높아 사업 연속성 리스크가 매우 큼 — 인력 분산 체계 즉시 구축 필요',
-      '현재 조직 구조로는 급증하는 매출에 상응하는 운영 및 관리 역량 강화에 명확한 한계가 있음',
-      '대표 1인이 모든 업무를 총괄함에 따라 업무 과중 및 전문성 분산으로 인한 효율 저하가 우려됨',
-      '내부 통제 시스템 및 체계적인 프로세스 부재는 사업 규모 확장에 따른 잠재적 법률·규제 리스크를 증대시킴'
-    ], '#d97706').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-  );
-
-  // ────────────────────────────────────────
-  // P2: 재무 현황 분석 — 차트 상단, 내용 중단, 피드백 하단
-  // ────────────────────────────────────────
-  var p2 = rpPage(2,'재무 현황 분석','리스크 중점 분석',color,
-    // 상단: 차트 + 지표카드 full width
-    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
-    +'<div class="rp-ch" style="height:160px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">'
-    +rpMC('전년 매출',fKRW(rev.y25),'2025년','#475569')
-    +rpMC('금년 예상',fKRW(exp),'연환산','#475569')
-    +rpMC('YoY 성장률',growRate,'전년 대비','#16a34a')
-    +rpMC('현금흐름','주의','관리 필요','#f97316')
-    +'</div>'
-    +'</div>'
-    // 중단: 재무 현황 (2컬럼 그리드)
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px;flex:1">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">💡 재무 현황</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.finance_strengths||[
-      cData.name+'는 전년 대비 금년 예상 매출이 80% 이상 급증하며 매우 강력한 성장세를 시현하고 있음',
-      '화장품 원료 유통업의 특성상 상대적으로 높은 마진율을 유지, 수익성 측면에서 긍정적인 구조를 보유함',
-      '상시근로자 0명으로 인건비 등 고정비가 최소화되어 재무 건전성 및 유동성 확보에 유리한 입지임',
-      '안정적인 해외 원료 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하고 있음'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 하단: 컨설턴트 피드백
-    +'<div style="border-radius:8px;padding:13px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px;display:flex;align-items:center;gap:6px">🔍 컨설턴트 피드백</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.fb_finance||[
-      cData.name+'는 기업 데이터의 중앙 집중 관리를 위한 클라우드 기반의 통합 솔루션 도입을 검토해야 함',
-      '정보 보안 강화를 위해 백업 시스템 구축 및 보안 솔루션 도입으로 데이터 유실 및 외부 공격에 대비해야 함',
-      '성장하는 매출 규모에 맞춰 ERP/CRM 시스템 도입을 통해 운영 효율성을 극대화해야 함'
-    ], '#f97316').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-  );
-
-  // ────────────────────────────────────────
-  // P3: 전략·마케팅 — 레이더+바 상단(2컬럼), 마케팅분석 중단, 피드백 하단
-  // ────────────────────────────────────────
-  var p3 = rpPage(3,'전략 및 마케팅 분석','취약점 포함 종합',color,
-    // 상단: 레이더(left) + 영역별 점수(right)
+  // ── P1: 경영진단 개요 + 핵심 리스크 ──────────
+  var p1 = mgmtPage(1,'경영진단 개요','기업현황 · 종합등급 · 핵심 리스크',C,
     '<div style="display:flex;gap:14px;margin-bottom:12px">'
-    +'<div style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">🎯 역량 레이더</div>'
-    +'<div class="rp-ch" style="height:190px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
-    +'</div>'
-    +'<div style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 점수</div>'
-    +[{label:'재무 건전성',v:bars.finance||85},{label:'전략/마케팅',v:bars.strategy||75},{label:'운영/생산',v:bars.operation||50,warn:true},{label:'인사/조직',v:bars.hr||30,warn:true},{label:'IT/디지털',v:bars.it||45,warn:true}].map(function(b){
-      var c=b.warn?'#f97316':'#475569';
-      return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>'+b.label+'</span><span style="font-weight:700;color:'+c+'">'+b.v+'점'+(b.warn?' ⚠':'')+'</span></div><div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+b.v+'%;background:'+c+'"></div></div></div>';
-    }).join('')
-    +'</div>'
-    +'</div>'
-    // 중단: 마케팅 분석 (full width, 2컬럼 그리드)
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">📣 마케팅 분석</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.marketing||[
-      cData.name+'는 특정 화장품 원료 시장에서 전문성을 기반으로 한 니치 마케팅 전략을 효과적으로 구사 중임',
-      '기존 거래처와의 신뢰 관계를 통해 안정적인 매출을 확보하고 있으며, 강력한 B2B 마케팅 채널로 작용함',
-      '화장품 산업 트렌드에 발맞춰 신규 원료 발굴 및 공급을 통해 시장 점유율을 지속적으로 확대하고 있음',
-      '온라인 채널 활용을 통한 잠재 고객 발굴 및 제품 정보 제공으로 확장 가능성을 높일 수 있음'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 하단: 컨설턴트 피드백
-    +'<div style="border-radius:8px;padding:13px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.fb_marketing||[
-      cData.name+'는 기업 데이터의 중앙 집중 관리를 위한 클라우드 기반의 통합 솔루션 도입을 검토해야 함',
-      '정보 보안 강화를 위해 백업 시스템 구축 및 보안 솔루션 도입으로 데이터 유실 및 외부 공격에 대비해야 함',
-      '성장하는 매출 규모에 맞춰 ERP/CRM 시스템 도입을 통해 운영 효율성을 극대화해야 함'
-    ], '#f97316').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
+    + '<div style="flex:1;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;border-top:2px solid '+C+'">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + '<tr><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">기업명</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600" colspan="3">'+nm+'</td></tr>'
+    + '<tr><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">대표자</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.rep||'-')+'</td><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">업종</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.industry||'-')+'</td></tr>'
+    + '<tr><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">설립일</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;font-weight:600">'+(cData.bizDate||'-')+'</td><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">핵심아이템</th><td style="padding:8px 11px;border-bottom:1px solid #e2e8f0;font-weight:600">'+(cData.coreItem||'-')+'</td></tr>'
+    + '<tr><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">전년 매출</th><td style="padding:8px 11px;border-right:1px solid #e2e8f0;font-weight:600">'+fKRW(rev.y25)+'</td><th style="background:#f8fafc;padding:8px 11px;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap;text-align:left">금년 예상</th><td style="padding:8px 11px;font-weight:600">'+fKRW(exp)+'</td></tr>'
+    + '</table></div>'
+    + '<div style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:8px">'
+    + '<div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1.5px solid #cbd5e1;border-radius:10px;padding:14px;text-align:center">'
+    + '<div style="font-size:11px;color:#64748b;margin-bottom:4px">종합 진단 등급</div>'
+    + '<div style="font-size:46px;font-weight:900;color:#334155;line-height:1">'+(d.grade||'A-')+'</div>'
+    + '<div style="font-size:12px;color:#475569;font-weight:700;margin-top:6px">'+(d.grade_desc||'고성장 잠재력 보유')+'</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">📈</div><div style="font-size:13px;font-weight:800;color:#16a34a">'+growRate+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">매출성장률</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">🚨</div><div style="font-size:13px;font-weight:800;color:#dc2626">4건</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">핵심리스크</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">💰</div><div style="font-size:13px;font-weight:800;color:#475569">'+fKRW(exp)+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">금년예상</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px 8px;text-align:center"><div style="font-size:13px;margin-bottom:2px">🏦</div><div style="font-size:13px;font-weight:800;color:#475569">+6.5억</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">추가조달가능</div></div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + mgmtSec('진단 목적', '📌', '#475569', d.overview||[
+        nm+'의 전 영역을 리스크 중심으로 종합 진단하여 컨설턴트 개입 포인트를 명확히 파악함',
+        '폭발적 매출 성장의 지속 가능성을 검증하고 성장 가속화를 위한 정책자금 조달 전략을 수립함',
+        '기업 전달용 대비 취약점·리스크를 솔직하게 기술하여 실질적인 개선 방향을 제시하는 것이 목적임',
+        '인증 취득 로드맵과 신용 개선 전략을 통해 정책자금 조달 한도를 최대화하는 방안을 도출함',
+        '단기·중기·장기 실행 계획과 KPI를 수립하여 컨설턴트 밀착 지원의 근거 자료로 활용함',
+        nm+'의 내부 구조적 취약점을 파악하고 즉각적인 개선이 필요한 시급 이슈 TOP 3을 도출함'
+      ])
+    + '<div style="height:10px"></div>'
+    + '<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:12px 15px">'
+    + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fcd34d">🚨 핵심 리스크 요약 (내부용)</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + (d.key_risks||[
+        nm+'는 대표 1인 의존도가 극도로 높아 사업 연속성 리스크가 매우 큼 — 인력 분산 체계 즉시 구축 필요',
+        '현재 조직 구조로는 급증하는 매출에 상응하는 운영 및 관리 역량 강화에 명확한 한계가 있음',
+        '대표 1인이 모든 업무를 총괄함에 따라 업무 과중 및 전문성 분산으로 인한 효율 저하가 우려됨',
+        '내부 통제 시스템 및 체계적인 프로세스 부재는 사업 규모 확장에 따른 잠재적 법률·규제 리스크를 증대시킴'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    + '</div></div>'
   );
 
-  // ────────────────────────────────────────
-  // P4: 인사·조직 및 운영·생산 (가로 박스 세로 + 피드백)
-  // ────────────────────────────────────────
-  var p4 = rpPage(4,'인사·조직 및 운영·생산','리스크 중점 분석',color,
-    // 인사·조직 full-width box
-    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">👥 인사·조직</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.hr||[
-      cData.name+'는 현재 상시근로자 0명으로 대표 1인이 모든 인사업무를 직접 수행하고 있는 상태임',
-      '공식적인 채용 프로세스 및 인력 관리 시스템이 부재하며, 이는 향후 사업 확장 시 심각한 병목 현상을 초래함',
-      '직무 정의 및 역할 분담이 명확하지 않아 업무 효율성 저하와 대표의 과도한 업무 부담을 야기하고 있음',
-      '직원 복리후생 및 경력 개발 프로그램이 전무하여 미래 인재 유치 및 유지에 심각한 장애 요인으로 작용함',
-      '조직 문화 형성에 대한 고민이 부족하며, 이는 향후 직원 고용 시 핵심 가치 공유에 어려움을 줄 수 있음'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 운영·생산 full-width box
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">🏭 운영·생산</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.ops||[
-      cData.name+'는 대표 1인이 해외 소싱부터 국내 유통까지 전 운영 과정을 직접 통제하고 있음',
-      '체계적인 재고 관리 시스템이 부재하여 과잉 재고 또는 품절 리스크에 대한 노출도가 매우 높음',
-      '물류 및 배송은 외부 업체에 전적으로 의존하고 있어, 서비스 품질 및 비용 통제에 한계가 명확함',
-      '운영 프로세스에 대한 표준화된 문서화가 부족하여 업무 인수인계 및 효율성 개선에 어려움이 있음',
-      '품질 관리 및 고객 불만 처리 시스템이 대표의 개별 판단에 의존하여 일관성 확보에 취약점을 보임'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 컨설턴트 피드백
-    +'<div style="border-radius:8px;padding:13px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.fb_hr_ops||[
-      cData.name+'의 인력 구조가 현재 최대 취약점 — 정책자금 조달 후 설비보다 인력에 먼저 투자해야 매출 추가 성장 가능',
-      '운영 매뉴얼 문서화는 이번 달 안에 완료해야 할 긴급 과제 — 핵심 담당자 이탈 시 재현 불가능한 상황 방지 필수'
-    ], '#f97316').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
+  // ── P2: 재무 현황 ──────────────────────────────
+  var p2 = mgmtPage(2,'재무 현황 분석','리스크 중점 분석',C,
+    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
+    + '<div class="rp-ch" style="height:145px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">전년 매출</div><div style="font-size:16px;font-weight:800;color:#475569">'+fKRW(rev.y25)+'</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">금년 예상</div><div style="font-size:16px;font-weight:800;color:#475569">'+fKRW(exp)+'</div></div>'
+    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">YoY 성장</div><div style="font-size:16px;font-weight:800;color:#16a34a">'+growRate+'</div></div>'
+    + '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">현금흐름</div><div style="font-size:16px;font-weight:800;color:#f97316">주의</div></div>'
+    + '</div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + mgmtSec('재무 현황','💡','#475569', d.finance_strengths||[
+        nm+'는 전년 대비 금년 예상 매출이 80% 이상 급증하며 매우 강력한 성장세를 시현하고 있음',
+        '고마진 구조를 바탕으로 수익성 측면에서 긍정적인 구조를 보유하고 있음',
+        '고정비 최소화를 통해 재무 건전성 및 유동성 확보에 유리한 입지를 점하고 있음',
+        '안정적인 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하고 있음'
+      ])
+    + mgmtSec('재무 리스크','⚠️','#f97316', d.finance_risks||[
+        '운전자본 부족 리스크 — 급성장에 따른 현금흐름 단기 경색 가능성을 사전에 차단해야 함',
+        '단일 아이템 의존 구조 — 포트폴리오 다각화를 통한 매출 안정성 강화가 시급함',
+        '대표 의존도 높은 재무 운영 구조 — 핵심 인력 이탈 시 사업 연속성에 심각한 영향을 미침',
+        '내부 통제 및 재무 관리 시스템 미흡 — 규모 확장에 따른 잠재적 리스크 증대 가능성 있음'
+      ], 'background:#fff7ed;border-color:#fed7aa')
+    + '</div>'
+    + mgmtFB(d.fb_finance||[
+        nm+'는 현금흐름 관리 체계가 가장 시급한 문제 — 매출이 높아도 현금 부족 시 흑자 도산 가능성 존재함',
+        '정책자금 신청을 위한 재무 서류(부가세 신고서, 손익계산서) 정비가 선행되어야 빠른 조달이 가능함',
+        '원재료 선매입 전략으로 원가 변동성을 줄이는 것을 정책자금 집행 1순위 항목으로 설정 권고함',
+        '월별 현금흐름 시뮬레이션 작성 의무화로 미래 자금 수요를 3개월 전에 예측하는 체계 구축 필요'
+      ])
   );
 
-  // ────────────────────────────────────────
-  // P5: IT·디지털 및 정부지원 (full-width 2섹션 + 피드백)
-  // ────────────────────────────────────────
-  var p5 = rpPage(5,'IT·디지털 및 정부지원','개선 과제',color,
-    // IT·디지털 full-width
-    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">💻 IT·디지털 현황</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.it||[
-      cData.name+'는 기본적인 비즈니스 운영을 위한 개인용 컴퓨터 및 사무용 소프트웨어에 의존하고 있음',
-      '핵심 데이터 관리 및 고객 정보는 수동 또는 개인 디바이스에 분산 저장되어 있어 보안 취약성이 높음',
-      'ERP, CRM 등 통합 비즈니스 관리 시스템의 부재로 효율적인 데이터 활용이 어려운 상태임',
+  // ── P3: 전략·마케팅 ────────────────────────────
+  var p3 = mgmtPage(3,'전략 및 마케팅 분석','취약점 포함 종합',C,
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'
+    + '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
+    + '<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">🎯 역량 레이더</div>'
+    + '<div class="rp-ch" style="height:185px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
+    + '</div>'
+    + '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
+    + '<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 점수</div>'
+    + [['재무 건전성',bars.finance||82],['전략/마케팅',bars.strategy||75],['운영/생산',bars.operation||50],['인사/조직',bars.hr||30],['IT/디지털',bars.it||45]].map(function(b){
+        var warn=b[1]<60;
+        var c2=warn?'#f97316':'#475569';
+        return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+b[0]+'</span><span style="font-weight:700;color:'+c2+'">'+b[1]+'점'+(warn?' ⚠':'')+'</span></div><div style="height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+b[1]+'%;background:'+c2+'"></div></div></div>';
+      }).join('')
+    + '</div>'
+    + '</div>'
+    + mgmtSec('마케팅 분석','📣','#475569', d.marketing||[
+        nm+'는 특정 시장에서 전문성을 기반으로 한 니치 마케팅 전략을 효과적으로 구사 중임',
+        '기존 거래처와의 신뢰 관계를 통해 안정적인 매출을 확보하고 있으며 강력한 B2B 채널로 작용함',
+        '산업 트렌드에 발맞춰 신규 아이템 발굴 및 공급을 통해 시장 점유율을 지속 확대하고 있음',
+        '온라인 채널 활용을 통한 잠재 고객 발굴 및 정보 제공으로 확장 가능성을 높일 수 있음'
+      ])
+    + '<div style="height:10px"></div>'
+    + mgmtFB(d.fb_marketing||[
+        nm+'의 마케팅 채널이 현재 사실상 무체계 — 빠른 성장 지속을 위해 마케팅 담당 인력 채용이 3개월 내 선행되어야 함',
+        '단일 플랫폼 의존 구조는 알고리즘 변경 시 매출이 30~50% 급감할 수 있어 자사몰 구축이 반드시 필요함',
+        '고객 데이터 수집·분석 체계 부재로 재구매 유도 및 맞춤형 마케팅 실행이 구조적으로 불가능한 상태임',
+        '전문 박람회 참가 계획을 즉시 수립하고 업계 네트워크를 통한 B2B 거래처 확보를 본격 추진해야 함'
+      ])
+  );
+
+  // ── P4: 인사·운영·IT ──────────────────────────
+  var p4 = mgmtPage(4,'인사·조직 및 운영·생산 분석','리스크 중점',C,
+    mgmtSec('인사·조직','👥','#475569', d.hr||[
+      nm+'는 현재 대표 1인이 모든 인사업무를 직접 수행하는 단일 의사결정 구조임',
+      '공식적인 채용 프로세스 및 인력 관리 시스템이 부재하여 사업 확장 시 병목 현상이 심각해질 것임',
+      '직무 정의 및 역할 분담이 불명확하여 업무 효율성 저하와 대표의 과도한 업무 부담이 발생함',
+      '직원 복리후생 및 경력 개발 프로그램 전무로 미래 인재 유치에 심각한 장애 요인으로 작용함',
+      '조직 문화 형성에 대한 고민이 부족하여 향후 핵심 가치 공유에 어려움을 줄 수 있음',
+      '성과에 따른 인센티브 및 스톡옵션 제도가 없어 우수 인재 동기 부여 및 장기 재직 유도가 어려움'
+    ])
+    + '<div style="height:10px"></div>'
+    + mgmtSec('운영·생산','🏭','#475569', d.ops||[
+      nm+'는 대표 1인이 해외 소싱부터 국내 유통까지 전 운영 과정을 직접 통제하고 있음',
+      '체계적인 재고 관리 시스템 부재로 과잉 재고 또는 품절 리스크에 대한 노출도가 매우 높음',
+      '물류 및 배송은 외부 업체에 전적으로 의존하여 서비스 품질 및 비용 통제에 한계가 명확함',
+      '운영 프로세스에 대한 표준화된 문서화가 부족하여 업무 인수인계 및 효율성 개선이 어려움',
+      '품질 관리 및 고객 불만 처리 시스템이 대표 개별 판단에 의존하여 일관성 확보에 취약점을 보임',
+      '공급처 단일화에 따른 리스크가 높아 대체 공급처 2곳 이상을 즉시 확보해야 함'
+    ])
+    + '<div style="height:10px"></div>'
+    + mgmtFB(d.fb_hr_ops||[
+        nm+'의 인력 구조가 현재 최대 취약점 — 정책자금 조달 후 설비보다 인력에 먼저 투자해야 추가 매출 성장 가능',
+        '운영 매뉴얼 문서화는 이번 달 안에 완료해야 할 긴급 과제 — 핵심 담당자 이탈 시 재현 불가 상황 방지 필수',
+        '생산·운영 데이터를 엑셀에서 전용 시스템으로 이전하는 것이 단기적으로 가장 높은 ROI를 가져다 줄 것임',
+        '원재료 공급처 다변화는 리스크 분산뿐만 아니라 가격 협상력 강화로 원가 절감 효과도 동시에 거둘 수 있음'
+      ])
+  );
+
+  // ── P5: IT·디지털 및 정부지원 ────────────────
+  var p5 = mgmtPage(5,'IT·디지털 및 정부지원','개선 과제',C,
+    mgmtSec('IT·디지털 현황','💻','#475569', d.it||[
+      nm+'는 기본적인 개인용 컴퓨터 및 사무용 소프트웨어에 의존하여 비즈니스를 운영하고 있음',
+      '핵심 데이터·고객 정보는 개인 디바이스에 분산 저장되어 있어 보안 취약성이 매우 높음',
+      'ERP, CRM 등 통합 비즈니스 관리 시스템 부재로 효율적인 데이터 활용이 어려운 상태임',
       '디지털 마케팅 및 온라인 판매 채널 구축을 위한 IT 인프라 투자가 전무하여 시장 확대에 제약이 있음',
-      '내부 협업 도구 및 클라우드 기반 솔루션 활용이 미흡하여 업무 생산성 향상에 개선의 여지가 많음'
-    ], '#475569').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    // 정부지원 활용 full-width
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;background:#f8fafc;margin-bottom:12px;flex:1">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e9ecef">🏛 정부지원 활용 현황</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>현재 정부지원 활용도 매우 낮음 — 신청 가능한 자금이 5개 이상임에도 미신청 상태로 즉시 착수가 필요함</span></div>'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>벤처인증 미취득 — 현재 매출과 사업 역량으로 충분히 취득 가능하며 취득 시 자금 한도 2억 즉시 추가 확보</span></div>'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#16a34a"></div><span>중진공 소공인 특화자금 즉시 신청 가능 — 서류 간소화로 빠른 승인 가능, 이번 달 안에 신청 착수 권고함</span></div>'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#16a34a"></div><span>기보 기술보증 신청 가능 — 현재 보유 역량 기반으로 보증료 우대 적용 가능하며 최대 3억 조달 가능함</span></div>'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#475569"></div><span>소진공 성장촉진자금(1억) 병행 신청 검토 — 창업 초기 요건 충족 시 추가 1억 조달로 총 조달 극대화 가능</span></div>'
-    +'<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#475569"></div><span>벤처인증 취득 후 신보 특례보증 추가 신청 — 총 6억+ 조달 시나리오 완성 가능, 인증 준비 병행 강력 권고</span></div>'
-    +'</div></div>'
-    // 피드백
-    +'<div style="border-radius:8px;padding:13px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.fb_it||[
-      'IT 투자 우선순위: ①기초 ERP(무료/저가) → ②자사몰 → ③CRM 순서로 단계적 도입 권고 — 한번에 다 하려다 실패하는 경우 많음',
-      '정책자금 신청은 이미 늦었다는 인식 필요 — 올해 매출이 급증한 만큼 내년 심사 기준이 더 까다로워질 수 있어 올해 안에 반드시 신청 완료해야 함'
-    ], '#f97316').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
+      '내부 협업 도구 및 클라우드 기반 솔루션 활용이 미흡하여 업무 생산성 향상에 개선의 여지가 많음',
+      '데이터 백업 체계 미구축으로 중요 사업 정보 유실 시 복구가 불가능한 위험 상태에 놓여 있음'
+    ])
+    + '<div style="height:10px"></div>'
+    + mgmtSec('정부지원 활용 현황','🏛','#475569', [
+        nm+'의 현재 정부지원 활용도 매우 낮음 — 신청 가능 자금이 5개 이상임에도 미신청 상태, 즉시 착수 필요',
+        '벤처인증 미취득 — 현재 매출·사업 역량으로 충분히 취득 가능, 취득 시 자금 한도 2억 즉시 추가 확보',
+        '중진공 소공인 특화자금 즉시 신청 가능 — 서류 간소화로 빠른 승인 가능, 이번 달 안에 신청 착수 권고',
+        '기보 기술보증 신청 가능 — 현재 보유 역량 기반으로 보증료 우대 적용 가능, 최대 3억 조달 가능함',
+        '소진공 성장촉진자금(1억) 병행 신청 검토 — 창업 초기 요건 충족 시 추가 1억 조달로 총 조달 극대화',
+        '벤처인증 취득 후 신보 특례보증 추가 신청으로 총 6억+ 조달 시나리오 완성, 인증 준비 병행 강력 권고'
+      ])
+    + '<div style="height:10px"></div>'
+    + mgmtFB(d.fb_it||[
+        'IT 투자 우선순위: ①기초 ERP(무료/저가) → ②자사몰 → ③CRM 순 단계적 도입 권고 — 한번에 다 하려다 실패 많음',
+        '정책자금 신청은 올해 안에 반드시 완료해야 함 — 매출 급증 후 내년 심사 기준이 더 까다로워질 수 있음',
+        '클라우드 기반 데이터 관리(구글 드라이브 등) 도입은 비용이 거의 없으므로 이번 주 안에 즉시 전환 가능함',
+        '디지털 마케팅 채널 구축은 외주(에이전시 계약)로 시작하되 6개월 내 인하우스 전환 계획을 병행해야 함'
+      ])
   );
 
-  // ────────────────────────────────────────
-  // P6: 성장 로드맵 (가로 박스 세로 + 피드백)
-  // ────────────────────────────────────────
-  var rm_s = d.roadmap_short||['핵심 인력 1인 신규 채용 (영업/관리)','사업 계획서 고도화 및 정책자금 신청','재고 관리 시스템 초도 구축','온라인 마케팅 채널 구축'];
-  var rm_m = d.roadmap_mid  ||['통합 ERP/CRM 시스템 구축 완료','수출 시장 진출 전략 수립','연구 개발 전담 부서 설립 검토','브랜드 포트폴리오 확장'];
-  var rm_l = d.roadmap_long ||['상장 추진 및 투자 유치','글로벌 시장 거점 확보','자체 원료 생산 시설 구축','화장품 완제품 사업 진출'];
+  // ── P6: 성장 로드맵 ────────────────────────────
+  var rm_s = d.roadmap_short||['핵심 인력 1인 신규 채용 (영업/관리)','사업 계획서 고도화 및 정책자금 신청','재고 관리 시스템 초도 구축','온라인 마케팅 채널 구축 착수','벤처기업 인증 서류 준비 완료','주요 고객사 만족도 조사 실시 및 개선'];
+  var rm_m = d.roadmap_mid  ||['통합 ERP/CRM 시스템 구축 완료','수출 시장 진출 전략 수립 및 파일럿','연구 개발 전담 부서 설립 검토','브랜드 포트폴리오 확장 및 신규 아이템','마케팅 전담 인력 채용 완료','이노비즈 인증 취득 추진 착수'];
+  var rm_l = d.roadmap_long ||['상장 추진 및 전략적 투자 유치','글로벌 시장 거점 확보 및 수출 확대','자체 원료/제품 생산 시설 구축','화장품 완제품 등 사업 다각화 진출','상시근로자 10인 이상 규모 성장','기업부설연구소 설립 및 R&D 투자'];
 
-  var p6 = rpPage(6,'개선 방향 및 성장 로드맵','우선순위별 실행 계획',color,
-    '<div style="display:flex;flex-direction:column;gap:11px;flex:1">'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-top:4px solid #3b82f6">'
-    +'<div style="font-size:13px;font-weight:800;color:#1d4ed8;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#eff6ff;border-radius:20px;padding:3px 12px">⚡ 단기</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">즉시 착수 · 긴급 과제 중심</span></div>'
-    +'<div style="display:flex;flex-direction:column;gap:7px">'
-    +rm_s.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-top:4px solid #16a34a">'
-    +'<div style="font-size:13px;font-weight:800;color:#15803d;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#f0fdf4;border-radius:20px;padding:3px 12px">📈 중기</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">성장 기반 확충 · 취약점 보완</span></div>'
-    +'<div style="display:flex;flex-direction:column;gap:7px">'
-    +rm_m.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#16a34a"></div><span>'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'<div style="border-radius:10px;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-top:4px solid #7c3aed">'
-    +'<div style="font-size:13px;font-weight:800;color:#6d28d9;margin-bottom:11px;display:flex;align-items:center;gap:8px">'
-    +'<span style="background:#fdf4ff;border-radius:20px;padding:3px 12px">🌟 장기</span>'
-    +'<span style="font-size:11px;color:#94a3b8;font-weight:500">시장 리더십 · 안정적 성장</span></div>'
-    +'<div style="display:flex;flex-direction:column;gap:7px">'
-    +rm_l.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#334155;line-height:1.6"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#7c3aed"></div><span>'+t+'</span></div>';}).join('')
-    +'</div></div>'
-    +'<div style="border-radius:8px;padding:13px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +rpLst(d.fb_roadmap||[
-      '단기 로드맵은 '+cData.name+'의 현 인력 부족 문제를 해소하고 기본적인 시스템을 구축하는 데 집중해야 함',
-      '중장기 로드맵은 시장 확대 및 사업 다각화를 목표로 하되, 각 단계별 면밀한 시장 분석과 자원 배분 계획이 수반되어야 함'
-    ], '#f97316').replace('<div class="rp-lst">', '<div class="rp-lst" style="display:contents">')
-    +'</div></div>'
-    +'</div>'
+  var p6 = mgmtPage(6,'개선 방향 및 성장 로드맵','우선순위별 실행 계획',C,
+    mgmtRoadmapPhase('⚡ 단기','#f1f5f9','#334155','#1e293b', rm_s)
+    + '<div style="height:10px"></div>'
+    + mgmtRoadmapPhase('📈 중기','#f0fdf4','#16a34a','#15803d', rm_m)
+    + '<div style="height:10px"></div>'
+    + mgmtRoadmapPhase('🌟 장기','#fdf4ff','#7c3aed','#6d28d9', rm_l)
+    + '<div style="height:10px"></div>'
+    + mgmtFB(d.fb_roadmap||[
+        '단기 로드맵은 '+nm+'의 현 인력 부족 문제 해소와 기본 시스템 구축에 집중해야 함',
+        '중장기 로드맵은 시장 확대·사업 다각화를 목표로 하되, 단계별 면밀한 시장 분석과 자원 배분 계획이 수반되어야 함',
+        '각 로드맵 단계별 KPI를 사전 설정하고 월별 점검으로 계획 대비 실행률을 체계적으로 관리해야 함',
+        '로드맵 실행 우선순위: 자금 조달 → 인력 채용 → 시스템 구축 → 채널 확대 순으로 진행해야 성과가 가시화됨'
+      ])
   );
 
-  // ────────────────────────────────────────
-  // P7: 컨설턴트 전용 (대외비) — 이미지 레이아웃 반영
-  // ────────────────────────────────────────
-  var p7 = rpPage('🔒','컨설턴트 실질 조언','내부 전용 — 대외비', '#d97706',
+  // ── P7: 컨설턴트 전용 ─────────────────────────
+  var p7 = mgmtPage('🔒','컨설턴트 실질 조언','내부 전용 — 대외비','#d97706',
     '<div style="background:#fffbeb;border:2px solid #f59e0b;border-left:6px solid #d97706;border-radius:12px;padding:16px 18px;flex:1">'
-    +'<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #fcd34d">🔒 컨설턴트 전용 자료 — 대외비 (기업 전달 금지)</div>'
-    +'<div style="display:flex;gap:14px">'
-    // 왼쪽 컬럼
-    +'<div style="flex:1;display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">🚨 시급 해결 이슈 TOP 3</div>'
-    +rpLst(d.consultant_issues||[
-      cData.name+'는 대표 1인 의존도를 낮추기 위한 핵심 인력 채용과 업무 분담 체계 구축이 가장 시급한 과제임',
-      '급성장하는 매출에 상응하는 내부 통제 및 운영 효율성 확보를 위해 체계적인 관리 시스템 도입이 절실히 요구됨',
-      '미래 성장을 위한 전략적 투자 재원 마련과 효과적인 자금 조달 계획 수립이 당면 핵심 과제임'
-    ], '#d97706')
-    +'</div>'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💰 정책자금 신청 전략</div>'
-    +rpLst(d.consultant_funds||[
-      '정책 자금 활용: '+cData.name+'의 성장 단계에 맞는 중소기업 정책자금을 적극적으로 발굴하고 신청을 지원함',
-      '투자 유치 전략: 벤처캐피탈, 엔젤투자자 대상 IR 자료 준비 및 투자 유치 피칭 전략을 수립하여 자금 확보를 도움',
-      '내부 유보 자금 관리: 매출 증대에 따른 이익을 효과적으로 관리하고, 재투자를 위한 내부 유보 자금 계획을 면밀히 수립함',
-      '신용 등급 개선: 재무 건전성 확보를 통해 신용 등급을 향상시켜 대출 조건 개선 및 추가 자금 조달 기회를 확대함'
-    ], '#d97706')
-    +'</div>'
-    +'</div>'
-    // 오른쪽 컬럼
-    +'<div style="flex:1;display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">📜 인증 취득 전략 + 가점추천</div>'
-    +rpLst(d.consultant_certs||[
-      'ISO 9001 인증 지원: '+cData.name+'의 품질 관리 시스템 구축 및 문서화 과정을 체계적으로 지원하여 인증 획득을 도움',
-      '벤처기업 인증 컨설팅: 기술력 및 사업성을 객관적으로 평가받아 벤처기업으로 인정받도록 전략을 제시함',
-      '수출유망중소기업 지정 지원: 수출 실적과 잠재력을 분석하여 관련 기관 지정을 위한 서류 준비를 도움'
-    ], '#d97706')
-    +certs.map(function(c,i){
-      var bg=['#f0fdf4','#eff6ff'];
-      return '<div style="background:white;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;margin-top:6px;display:flex;align-items:flex-start;gap:10px"><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:2px">'+c.name+'</div><div style="font-size:12px;color:#64748b;line-height:1.5">'+c.effect+'</div></div><div style="text-align:right;flex-shrink:0;margin-left:6px"><div style="font-size:14px;font-weight:800;color:#d97706">'+c.amount+'</div><div style="font-size:11px;color:#94a3b8">'+c.period+'</div></div></div>';
-    }).join('')
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:11px 13px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:7px">📈 마케팅 개선</div>'
-    +rpLst(d.consultant_marketing||[
-      '디지털 마케팅 전략 수립: '+cData.name+'을 위한 온라인 채널(웹사이트, 블로그, SNS)을 활용한 홍보 및 잠재 고객 발굴 전략을 제시함',
-      'B2B 영업 역량 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴을 위한 영업 프로세스 개선 방안을 제안함'
-    ], '#d97706')
-    +'</div>'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:11px 13px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:7px">💳 신용 개선</div>'
-    +rpLst(d.consultant_credit||[
-      '재무제표 개선 컨설팅: '+cData.name+'의 회계 처리 투명성을 높이고 재무 건전성을 강화하여 신용 평가에 긍정적 영향을 줌',
-      '정책 자금 활용 상환 계획: 안정적인 자금 흐름을 통해 부채 비율을 관리하며 신용도를 지속적으로 향상시킴'
-    ], '#d97706')
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    +'</div>'
+    + '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #fcd34d">🔒 컨설턴트 전용 자료 — 대외비 (기업 전달 금지)</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+    + '<div style="display:flex;flex-direction:column;gap:10px">'
+    + '<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
+    + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">🚨 시급 해결 이슈 TOP 3</div>'
+    + (d.consultant_issues||[
+        nm+'의 대표 1인 의존도를 낮추기 위한 핵심 인력 채용과 업무 분담 체계 구축이 가장 시급한 과제임',
+        '급성장하는 매출에 상응하는 내부 통제·운영 효율성 확보를 위해 체계적인 관리 시스템 도입이 절실함',
+        '미래 성장을 위한 전략적 투자 재원 마련과 효과적인 정책자금 조달 계획 수립이 당면 핵심 과제임'
+      ]).map(function(t,i){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:6px"><div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">TOP'+(i+1)+'</div><span>'+t+'</span></div>';}).join('')
+    + '</div>'
+    + '<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
+    + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💰 정책자금 신청 전략</div>'
+    + (d.consultant_funds||[
+        '1순위: 중진공 소공인 특화자금(1억) — 이번 달 신청 착수, 약 30일 내 승인 가능한 가장 빠른 루트임',
+        '2순위: 기보 기술보증(3억) — 현재 역량 기반 우대 적용, 사업계획서 준비 후 병행 신청 권고',
+        '3순위: 벤처인증 취득 후 신보 특례보증(2억) — 총 6억+ 조달 시나리오 실행 가능함',
+        '병행 전략: 소진공 성장촉진자금(1억) 추가 신청으로 최대 7억+ 조달 극대화 가능'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:5px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    + '</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:10px">'
+    + '<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
+    + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">📜 인증 취득 전략 + 가점추천</div>'
+    + (d.consultant_certs||[
+        '벤처인증 우선 취득 — 기술평가 방식 활용(현장 심사 불요), 현재 매출·역량으로 즉시 신청 가능함',
+        '이노비즈 인증은 벤처인증 취득 후 1년 내 추진 — 기술 경쟁력 지표 사전 정비 필요함'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:5px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    + certs.map(function(c,i){
+        var bg=['#f0fdf4','#eff6ff'][i%2];
+        return '<div style="background:white;border:1px solid #fcd34d;border-radius:8px;padding:9px 11px;margin-top:6px;display:flex;align-items:flex-start;gap:9px">'
+          +'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:2px">'+c.name+'</div><div style="font-size:11px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
+          +'<div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:800;color:#d97706">'+c.amount+'</div><div style="font-size:10px;color:#94a3b8">'+c.period+'</div></div>'
+          +'</div>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + '<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px">'
+    + '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">📈 마케팅 개선</div>'
+    + (d.consultant_marketing||[
+        '디지털 마케팅 전략: '+nm+'를 위한 SNS·블로그·온라인 채널을 활용한 홍보 및 잠재 고객 발굴 전략 수립',
+        'B2B 영업 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴을 위한 영업 프로세스 개선 방안 제안'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:4px"><div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    + '</div>'
+    + '<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px">'
+    + '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">💳 신용 개선</div>'
+    + (d.consultant_credit||[
+        '재무제표 개선: '+nm+'의 회계 처리 투명성을 높이고 재무 건전성을 강화하여 신용 평가에 긍정적 영향을 줌',
+        '정책 자금 활용 상환 계획: 안정적인 자금 흐름으로 부채 비율을 관리하며 신용도를 지속 향상시킴'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:4px"><div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
+  return tplStyle(C,'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
 }
 
 
