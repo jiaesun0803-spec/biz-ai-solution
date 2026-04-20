@@ -668,7 +668,9 @@ function tplStyle(color, orientation) {
   + '}'
   + '.rp-cat { background:white; border-radius:8px; margin-bottom:12px; padding:18px 20px; page-break-inside:avoid; break-inside:avoid; }'
   + '.rp-flow { background:#e8eaed; }'
-  + '@media print { .rp-flow .rp-cat { border-radius:0 !important; margin:0 !important; page-break-inside:avoid !important; break-inside:avoid !important; } }'
+  + '.rp-flow-tight .rp-cat { margin-bottom:8px; page-break-inside:auto; break-inside:auto; }'
+  + '.rp-flow-tight .rp-section, .rp-flow-tight .rp-fb, .rp-flow-tight .rp-rank, .rp-flow-tight .rp-cert, .rp-flow-tight .rp-chk { page-break-inside:avoid; break-inside:avoid; }'
+  + '@media print { .rp-flow .rp-cat { border-radius:0 !important; margin:0 !important; page-break-inside:avoid !important; break-inside:avoid !important; } .rp-flow-tight .rp-cat { page-break-inside:auto !important; break-inside:auto !important; } }'
   + '</style>';
 }
 
@@ -804,18 +806,20 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
   var subLabel = versionLabel ? '('+versionLabel+')' : '';
 
   return '<div class="rp-cover" style="padding:0;background:white;position:relative;min-height:700px;display:flex;flex-direction:column;overflow:hidden">'
-    +'<div style="position:absolute;left:0;top:0;bottom:0;width:7px;background:'+accentColor+'"></div>'
-    +'<div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:11px 28px 11px 22px;font-size:12px;font-weight:700;color:#475569">'+reportTitle+'</div>'
-    +'<div style="flex:1;display:flex;align-items:flex-start;padding:138px 56px 0 56px">'
+    +'<div style="position:absolute;left:12px;top:18px;bottom:18px;width:8px;border-radius:8px;background:'+accentColor+'"></div>'
+    +'<div style="padding:18px 28px 0 34px">'
+    +'<div style="background:#f1f5f9;border:1px solid #e5e7eb;border-left:none;border-radius:0 3px 3px 0;padding:8px 16px 8px 14px;font-size:11px;font-weight:700;color:#475569;letter-spacing:-0.1px">'+reportTitle+'</div>'
+    +'</div>'
+    +'<div style="flex:1;display:flex;align-items:flex-start;padding:118px 56px 0 56px">'
     +'<div style="width:100%">'
-    +'<div style="font-size:44px;font-weight:900;color:#0f172a;letter-spacing:-1.5px;line-height:1.15;margin-bottom:14px">'+reportTitle+'</div>'
-    +(subLabel?'<div style="font-size:17px;color:#94a3b8;font-weight:500;letter-spacing:-0.2px;padding-left:4px">'+subLabel+'</div>':'')
+    +'<div style="font-size:43px;font-weight:900;color:#0f172a;letter-spacing:-1.7px;line-height:1.14;margin-bottom:12px">'+reportTitle+'</div>'
+    +(subLabel?'<div style="font-size:17px;color:#b6c2cf;font-weight:600;letter-spacing:-0.2px;padding-left:4px">'+subLabel+'</div>':'')
     +'</div>'
     +'</div>'
     +'<div style="padding:0 56px 28px 56px">'
-    +'<div style="font-size:21px;font-weight:800;color:#334155;letter-spacing:-0.4px;margin-bottom:8px">'+cData.name+'</div>'
-    +'<div style="font-size:13px;color:#94a3b8;margin-bottom:14px">'+(cData.industry||'-')+'</div>'
-    +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#94a3b8;padding-top:10px;border-top:1px solid #e5e7eb">'
+    +'<div style="font-size:20px;font-weight:800;color:#334155;letter-spacing:-0.5px;margin-bottom:8px">'+cData.name+'</div>'
+    +'<div style="font-size:12px;color:#94a3b8;margin-bottom:16px">'+(cData.industry||'-')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:10.5px;color:#94a3b8;padding-top:10px;border-top:1px solid #e5e7eb">'
     +'<span>📅 보고서 작성일: '+dateStr+'</span>'
     +'<span>👤 담당 컨설턴트: '+cName+'</span>'
     +'<span>🏢 '+cDept+'</span>'
@@ -1375,7 +1379,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>';
 
-  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
+  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
 }
 
 
