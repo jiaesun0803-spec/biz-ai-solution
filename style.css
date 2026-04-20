@@ -555,6 +555,11 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
   border-radius: 8px;
   padding: 8px;
 }
+.report-view-portrait,
+.report-view-landscape {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
 
 /* ============================================
    ★ AI 로딩 오버레이

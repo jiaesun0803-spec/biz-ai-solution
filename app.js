@@ -14,8 +14,7 @@ function getReportLayoutConfig(orientation) {
     pageSize: isLandscape ? '297mm 210mm' : '210mm 297mm',
     printMargin: isLandscape ? '8mm 10mm' : '10mm 12mm',
     contentWidth: isLandscape ? '277mm' : '186mm',
-    coverMinH: isLandscape ? '186mm' : '257mm',
-    pageMinH: isLandscape ? '186mm' : '257mm',
+    contentHeight: isLandscape ? '194mm' : '277mm',
     wrapPadding: isLandscape ? '10px' : '12px',
     coverPadding: '20px 24px 18px 32px',
     pagePadding: '14px 18px 14px'
@@ -71,7 +70,8 @@ window.printReport = function() {
       border-radius: 8px !important;
       margin: 0 0 14px 0 !important;
       padding: ${layout.coverPadding} !important;
-      min-height: ${layout.coverMinH} !important;
+      height: ${layout.contentHeight} !important;
+      min-height: ${layout.contentHeight} !important;
       display: flex !important;
       flex-direction: column !important;
       overflow: hidden !important;
@@ -85,9 +85,11 @@ window.printReport = function() {
       border-radius: 8px !important;
       margin: 0 0 14px 0 !important;
       padding: ${layout.pagePadding} !important;
-      min-height: ${layout.pageMinH} !important;
+      height: ${layout.contentHeight} !important;
+      min-height: ${layout.contentHeight} !important;
       display: flex !important;
       flex-direction: column !important;
+      overflow: hidden !important;
       page-break-before: always !important;
       break-before: page !important;
       page-break-inside: avoid !important;
@@ -474,7 +476,7 @@ function tplStyle(color, orientation) {
   + '.rp-wrap * { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }'
 
   // ── 표지 ──
-  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.coverPadding+'; position:relative; min-height:'+layout.coverMinH+'; display:flex; flex-direction:column; overflow:hidden; }'
+  + '.rp-cover { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.coverPadding+'; position:relative; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
   + '.rp-cbar  { position:absolute; left:0; top:0; bottom:0; width:12px; background:'+c+'; }'
   + '.rp-cbadge{ font-size:12px; font-weight:700; padding:4px 12px; border-radius:4px; display:inline-block; margin-bottom:8px; letter-spacing:0.3px; }'
   + '.rp-ctitle{ font-size:24px; font-weight:700; color:#0f172a; margin-bottom:4px; letter-spacing:-0.5px; line-height:1.2; }'
@@ -485,9 +487,14 @@ function tplStyle(color, orientation) {
   + '.rp-cvtbl th { background:#f8fafc; border:1px solid #e2e8f0; padding:8px 12px; text-align:left; font-weight:700; color:'+c+'; white-space:nowrap; }'
   + '.rp-cvtbl td { border:1px solid #e2e8f0; padding:8px 12px; color:#1e293b; font-weight:500; }'
   + '.rp-cfoot { display:flex; justify-content:space-between; font-size:13px; color:#64748b; padding-top:10px; border-top:1px solid #e2e8f0; margin-top:10px; font-weight:500; }'
+  + '.rp-cover-unified { padding:0; justify-content:space-between; }'
+  + '.rp-cover-top { padding:18px 28px 0 34px; flex:0 0 auto; }'
+  + '.rp-cover-main { flex:1 1 auto; min-height:0; display:flex; align-items:flex-start; padding:118px 56px 0 56px; }'
+  + '.rp-cover-main-inner { width:100%; }'
+  + '.rp-cover-bottom { flex:0 0 auto; padding:0 56px 28px 56px; }'
 
   // ── 페이지 (A4 landscape 기준) ──
-  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:'+layout.pageMinH+'; display:flex; flex-direction:column; }'
+  + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
@@ -789,18 +796,18 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
   var cDept = session.dept||'솔루션빌더스';
   var subLabel = versionLabel ? '('+versionLabel+')' : '';
 
-  return '<div class="rp-cover" style="padding:0;background:white;position:relative;min-height:700px;display:flex;flex-direction:column;overflow:hidden">'
+  return '<div class="rp-cover rp-cover-unified" style="background:white;position:relative">'
     +'<div style="position:absolute;left:12px;top:18px;bottom:18px;width:8px;border-radius:8px;background:'+accentColor+'"></div>'
-    +'<div style="padding:18px 28px 0 34px">'
+    +'<div class="rp-cover-top">'
     +'<div style="background:#f1f5f9;border:1px solid #e5e7eb;border-left:none;border-radius:0 3px 3px 0;padding:8px 16px 8px 14px;font-size:11px;font-weight:700;color:#475569;letter-spacing:-0.1px">'+reportTitle+'</div>'
     +'</div>'
-    +'<div style="flex:1;display:flex;align-items:flex-start;padding:118px 56px 0 56px">'
-    +'<div style="width:100%">'
+    +'<div class="rp-cover-main">'
+    +'<div class="rp-cover-main-inner">'
     +'<div style="font-size:43px;font-weight:900;color:#0f172a;letter-spacing:-1.7px;line-height:1.14;margin-bottom:12px">'+reportTitle+'</div>'
     +(subLabel?'<div style="font-size:17px;color:#b6c2cf;font-weight:600;letter-spacing:-0.2px;padding-left:4px">'+subLabel+'</div>':'')
     +'</div>'
     +'</div>'
-    +'<div style="padding:0 56px 28px 56px">'
+    +'<div class="rp-cover-bottom">'
     +'<div style="font-size:20px;font-weight:800;color:#334155;letter-spacing:-0.5px;margin-bottom:8px">'+cData.name+'</div>'
     +'<div style="font-size:12px;color:#94a3b8;margin-bottom:16px">'+(cData.industry||'-')+'</div>'
     +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:10.5px;color:#94a3b8;padding-top:10px;border-top:1px solid #e5e7eb">'
