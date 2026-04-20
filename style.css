@@ -94,14 +94,14 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 ==================================================== */
 .company-list-header {
     display: flex;
-    justify-content: space-between;  /* 검색바 좌측, 버튼 우측 끝 */
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
     width: 100%;
 }
 .company-search-wrap {
     position: relative;
-    width: 420px;          /* 고정 폭 */
+    width: 420px;
     flex-shrink: 0;
 }
 .company-search-wrap input {
@@ -144,7 +144,6 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 }
 .btn-add-company:hover { background: #0f172a; }
 
-/* 업체 카드 - 3열 그리드 */
 .company-cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -160,8 +159,6 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
     min-width: 0;
 }
 .company-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #cbd5e1; }
-
-/* 카드 상단 */
 .company-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .company-card-icon { width: 38px; height: 38px; background: #eff6ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 .company-card-info { flex: 1; min-width: 0; }
@@ -173,7 +170,6 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 .btn-card-delete { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; transition: 0.2s; padding: 2px 4px; }
 .btn-card-delete:hover { color: #ef4444; }
 
-/* 카드 본문 - 업종/주소 */
 .company-card-body { display: flex; flex-direction: column; gap: 8px; }
 .company-card-row { display: flex; align-items: baseline; gap: 8px; }
 .company-card-label {
@@ -214,7 +210,6 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 }
 .back-to-list-btn:hover { color: #1e293b; }
 
-/* ===== 공통 폼 스타일 ===== */
 .fund-card, .list-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
 .form-section { background: transparent; padding: 0 0 50px 0; margin-bottom: 50px; border-bottom: 1px solid #e2e8f0; }
 .section-title { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-left: 4px solid #1e3a8a; padding-left: 10px; }
@@ -264,6 +259,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .report-table { width: 100%; border-collapse: collapse; text-align: left; }
 .report-table th { background: #f8fafc; color: #64748b; font-size: 14px; padding: 15px; border-bottom: 2px solid #e2e8f0; }
 .report-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; vertical-align: middle; }
+
 /* ====================================================
    ★ 기업/보고서 목록 서브뷰
 ==================================================== */
@@ -302,7 +298,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 }
 .btn-back-list:hover { background: #f8fafc; border-color: #94a3b8; }
 
-/* 보고서 필터 바 */
 .report-filter-bar {
     display: flex;
     align-items: center;
@@ -360,7 +355,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .label-box { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #475569; white-space: nowrap; }
 .sign-box { width: 60px; height: 46px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; background: #f8fafc; flex-shrink: 0; }
 
-/* 진단 가중치 */
 .criteria-grid { display: grid !important; grid-template-columns: 1fr 1px 1fr !important; gap: 0 !important; align-items: start; width: 100% !important; margin-bottom: 12px; }
 .criteria-col { display: block !important; min-width: 0 !important; }
 .criteria-col:first-child { padding-right: 20px !important; }
@@ -386,7 +380,7 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     padding: 16px;
     background: #d1d5db;
     border-radius: 10px;
-    overflow-x: hidden;
+    overflow-x: auto; /* 화면이 작아도 스크롤 생기도록 변경 */
 }
 .report-view-container {
     padding: 16px;
@@ -394,7 +388,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     border-radius: 10px;
     overflow-x: hidden;
 }
-/* report-paper: resetContentArea()가 padding=0으로 강제함 */
 .report-paper-landscape {
     background: transparent;
     width: 100%;
@@ -405,7 +398,6 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     width: 100%;
     overflow: hidden;
 }
-/* tp-wrap 내부 가로 스크롤 방지 */
 .report-paper .tp-wrap,
 .report-paper-landscape .tp-wrap {
     width: 100%;
@@ -431,4 +423,72 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
   background: #e8eaed;
   border-radius: 8px;
   padding: 8px;
+}
+
+/* ====================================================
+   ★ 로딩 오버레이 (애니메이션 복구)
+==================================================== */
+#ai-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(14, 22, 45, 0.85);
+    display: none; /* JS에서 flex로 전환 */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.scan-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: white;
+}
+
+.document-icon {
+    width: 80px;
+    height: 100px;
+    background: #ffffff;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+    border: 4px solid #3b82f6;
+}
+
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #ef4444;
+    box-shadow: 0 0 15px 2px #ef4444;
+    animation: scanAnim 1.5s infinite linear;
+}
+
+@keyframes scanAnim {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.loading-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+}
+
+.loading-desc {
+    font-size: 15px;
+    color: #cbd5e1;
+    line-height: 1.6;
 }
