@@ -87,38 +87,45 @@
                     <div class="stat-card"><div class="stat-icon yellow">💡</div><div><div class="stat-num" id="stat-biz">0</div><div class="stat-label">AI 사업계획서</div></div></div>
                     <div class="stat-card"><div class="stat-icon orange">📄</div><div><div class="stat-num" id="stat-total">0</div><div class="stat-label">전체 보고서</div></div></div>
                 </div>
-                <div class="dashboard-mid">
-                    <div class="dash-card">
-                        <div class="dash-card-title">빠른 실행</div>
-                        <div class="quick-grid-2x2">
-                            <div class="quick-item-sm" onclick="showCompanyForm()"><div class="qi-icon">🏢</div><div>업체 등록</div><div class="qi-desc">새 관리업체를 등록합니다</div></div>
-                            <div class="quick-item-sm" onclick="showTab('report')"><div class="qi-icon">📈</div><div>경영진단보고서</div><div class="qi-desc">AI로 경영진단보고서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiBiz')"><div class="qi-icon">💡</div><div>AI 사업계획서</div><div class="qi-desc">AI 사업계획서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiFund')"><div class="qi-icon">🎯</div><div>AI 정책자금매칭</div><div class="qi-desc">AI 정책자금 매칭 리포트 작성</div></div>
+                <div class="dashboard-main-grid">
+                    <div class="dashboard-left-stack">
+                        <div class="dash-card quick-actions-card">
+                            <div class="dash-card-title">빠른 실행</div>
+                            <div class="quick-grid-2x2">
+                                <div class="quick-item-sm" onclick="showCompanyForm()"><div class="qi-icon">🏢</div><div>업체 등록</div><div class="qi-desc">새 관리업체를 등록합니다</div></div>
+                                <div class="quick-item-sm" onclick="showTab('report')"><div class="qi-icon">📈</div><div>경영진단보고서</div><div class="qi-desc">AI로 경영진단보고서 작성</div></div>
+                                <div class="quick-item-sm" onclick="showTab('aiBiz')"><div class="qi-icon">💡</div><div>AI 사업계획서</div><div class="qi-desc">AI 사업계획서 작성</div></div>
+                                <div class="quick-item-sm" onclick="showTab('aiFund')"><div class="qi-icon">🎯</div><div>AI 정책자금매칭</div><div class="qi-desc">AI 정책자금 매칭 리포트 작성</div></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-bottom-grid">
+                            <div class="bottom-card bottom-card-compact">
+                                <div class="bottom-card-header">
+                                    <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count">0건</span></div>
+                                    <button class="btn-add-small" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
+                                </div>
+                                <div class="bottom-card-desc">정부지원사업 관련 공문, 접수 안내, 제출 요청자료를 관리합니다.</div>
+                                <div id="dashboard-support-docs"><div class="bottom-empty">등록된 공문이 없습니다.</div></div>
+                            </div>
+                            <div class="bottom-card bottom-card-compact">
+                                <div class="bottom-card-header">
+                                    <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count">0건</span></div>
+                                    <button class="btn-add-small orange" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
+                                </div>
+                                <div class="bottom-card-desc">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</div>
+                                <div id="dashboard-notice-list"><div class="bottom-empty">등록된 공지사항이 없습니다.</div></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="dash-card">
+                    <div class="dash-card recent-report-card">
                         <div class="recent-report-header">
-                            <div class="dash-card-title" style="margin-bottom:0;">최근 보고서</div>
+                            <div>
+                                <div class="dash-card-title" style="margin-bottom:4px;">최근 보고서</div>
+                                <div class="dash-card-subtitle">최근 생성된 보고서와 작성 이력을 한눈에 확인합니다.</div>
+                            </div>
                             <a href="#" class="view-all" onclick="showTab('reportList')">전체 보기 →</a>
                         </div>
                         <div id="dashboard-report-list"><div class="empty-state">최근 생성된 보고서가 없습니다.</div></div>
-                    </div>
-                </div>
-                <div class="dashboard-bottom">
-                    <div class="bottom-card">
-                        <div class="bottom-card-header">
-                            <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count">0건</span></div>
-                            <button class="btn-add-small" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
-                        </div>
-                        <div class="bottom-empty">등록된 공문이 없습니다.</div>
-                    </div>
-                    <div class="bottom-card">
-                        <div class="bottom-card-header">
-                            <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count">0건</span></div>
-                            <button class="btn-add-small orange" onclick="alert('준비 중인 기능입니다.')">＋ 등록</button>
-                        </div>
-                        <div class="bottom-empty">등록된 공지사항이 없습니다.</div>
                     </div>
                 </div>
             </div>
