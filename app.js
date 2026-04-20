@@ -1,4 +1,4 @@
-// ===== BizConsult AI 보고서 플랫폼 =====
+// ===== BizConsult 플랫폼 엔진 =====
 const DB_USERS    = 'biz_users';
 const DB_SESSION  = 'biz_session';
 const STORAGE_KEY = 'biz_consult_companies';
@@ -6,196 +6,113 @@ const DB_REPORTS  = 'biz_reports';
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
 
 // ===========================
-// ★ PDF 인쇄 (팝업창 → 인쇄 다이얼로그)
+// ★ PDF 인쇄 시스템 (가로/세로 자동 대응)
 // ===========================
 window.printReport = function() {
-  var caid = _currentReport.contentAreaId;
-  if (!caid) {
-    var ids = ['report-content-area','finance-content-area','aiBiz-content-area','aiFund-content-area','aiTrade-content-area','aiMarketing-content-area'];
-    for (var k=0; k<ids.length; k++) { var e=document.getElementById(ids[k]); if(e&&e.innerHTML.trim()){caid=ids[k];break;} }
-  }
-  var el = document.getElementById(caid);
-  if (!el || !el.innerHTML.trim()) { alert('출력할 보고서가 없습니다.'); return; }
+  const caid = _currentReport.contentAreaId;
+  const el = document.getElementById(caid);
+  if (!el || !el.innerHTML.trim()) { alert('출력할 내용이 없습니다.'); return; }
 
-  var rev = {};
-  try {
-    var cs = JSON.parse(localStorage.getItem('biz_consult_companies')||'[]');
-    var cm = cs.find(function(x){return x.name===_currentReport.company;});
-    if (cm && cm.revenueData) rev = cm.revenueData;
-  } catch(e){}
-  var curM = new Date().getMonth();
-  var avgM = rev.cur&&curM>0 ? Math.round(rev.cur/curM) : (rev.y25?Math.round(rev.y25/12):3000);
+  const pw = window.open('','_blank','width=1200,height=900');
+  const isL = _currentReport.landscape;
+  const pageW = isL ? '297mm' : '210mm';
+  const pageH = isL ? '210mm' : '297mm';
 
-  var pw = window.open('','_blank','width=1400,height=900,scrollbars=yes');
-  if (!pw) { alert('팝업이 차단되었습니다. 팝업을 허용해 주세요.'); return; }
-
-  var isLandscape = _currentReport.landscape;
-  var pageW = isLandscape ? '297mm' : '210mm';
-  var pageH = isLandscape ? '210mm' : '297mm';
-
-  var printCSS = `
+  const css = `
     @page { size: ${pageW} ${pageH}; margin: 0; }
-    * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: white; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
-    .rp-wrap { background: white !important; padding: 0 !important; gap: 0 !important; display: block !important; }
-    .rp-cover, .rp-page {
-      width: ${pageW} !important;
-      height: ${pageH} !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      page-break-after: always !important;
-      break-after: page !important;
-      page-break-inside: avoid !important;
-    }
+    body { margin: 0; padding: 0; background: white; font-family: "Malgun Gothic", sans-serif; }
+    .rp-wrap { background: white !important; display: block !important; padding: 0 !important; }
+    .rp-cover, .rp-page { width: ${pageW}; height: ${pageH}; margin: 0; border-radius: 0; box-shadow: none; page-break-after: always; break-after: page; position: relative; overflow: hidden; background: white; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
   `;
 
-  pw.document.write(`<!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>${_currentReport.type||'보고서'}</title>
-<style>${printCSS}</style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-</head><body>
-${el.innerHTML}
-<script>
-window.onload = function() {
-  // 레이더 차트
-  var ra = document.getElementById('rp-radar');
-  if(ra && ra.dataset.scores){
-    new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',pointRadius:5}]},options:{scales:{r:{min:0,max:100}},maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  }
-  // 매출 라인 차트
-  var li = document.getElementById('rp-linechart');
-  if(li && li.dataset.y23){
-    var d=li.dataset;
-    new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+d.y23,+d.y24,+d.y25,+d.exp],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  }
-  setTimeout(function(){ window.print(); }, 1800);
-};
-<\/script></body></html>`);
+  pw.document.write(`<html><head><style>${css}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body>${el.innerHTML}<\/body></html>`);
   pw.document.close();
+  setTimeout(() => { pw.print(); }, 1000);
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-  checkAuth();
-  const urlParams = new URLSearchParams(window.location.search);
-  showTab(urlParams.get('tab') || 'dashboard', false);
-  window.toggleCorpNumber(); window.toggleRentInputs(); window.toggleExportInputs();
-});
-
 // ===========================
-// ★ 인증 및 프로필
+// ★ 설정 및 데이터 관리
 // ===========================
-window.devBypassLogin = function() {
-  const tu = { email:'test@biz.com', pw:'1234', name:'선지영', dept:'솔루션빌더스', apiKey:'' };
+window.saveApiSettings = function() {
+  const key = document.getElementById('set-api-key').value.trim();
+  if(!key) { alert('API 키를 입력하세요.'); return; }
+  let session = JSON.parse(localStorage.getItem(DB_SESSION) || '{}');
+  session.apiKey = key;
+  localStorage.setItem(DB_SESSION, JSON.stringify(session));
+  
+  // 전체 유저 DB에도 업데이트
   let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-  if (!users.find(u => u.email === tu.email)) { users.push(tu); localStorage.setItem(DB_USERS, JSON.stringify(users)); }
-  localStorage.setItem(DB_SESSION, JSON.stringify(tu));
-  checkAuth();
-};
-function checkAuth() {
-  const session = JSON.parse(localStorage.getItem(DB_SESSION));
-  const authEl = document.getElementById('auth-container');
-  const appEl  = document.getElementById('main-app');
-  if (session) { authEl.style.display='none'; appEl.style.display='flex'; loadUserProfile(); updateDataLists(); initInputHandlers(); }
-  else { authEl.style.display='flex';  appEl.style.display='none'; }
-}
-window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location.reload(); };
-function loadUserProfile() {
-  const user = JSON.parse(localStorage.getItem(DB_SESSION)); if (!user) return;
-  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
-  setEl('display-user-name',user.name); setEl('display-user-dept',user.dept||'솔루션빌더스');
-}
-window.updateDataLists = function() {
-  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-  document.querySelectorAll('.company-dropdown').forEach(sel=>{
-    sel.innerHTML='<option value="">기업을 선택하세요</option>';
-    companies.forEach(c=>sel.innerHTML+=`<option value="${c.name}">${c.name}</option>`);
-  });
+  const idx = users.findIndex(u => u.email === session.email);
+  if(idx > -1) { users[idx].apiKey = key; localStorage.setItem(DB_USERS, JSON.stringify(users)); }
+  
+  alert('API 키가 안전하게 저장되었습니다.');
+  console.log("API Key Saved Successfully");
 };
 
-// ===========================
-// ★ 탭 및 업체 관리
-// ===========================
-window.showTab = function(tabId, updateUrl=true) {
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.menu li, .bottom-menu li').forEach(i=>i.classList.remove('active'));
-  const target=document.getElementById(tabId); if(target) target.classList.add('active');
-  const menu=document.getElementById('menu-'+tabId); if(menu) menu.classList.add('active');
-  if(tabId==='company') showCompanyList();
-  if(updateUrl) history.pushState(null,'',`?tab=${tabId}`);
-};
-window.showCompanyList = function() {
-  document.getElementById('company-list-step').style.display = 'block';
-  document.getElementById('company-form-step').style.display = 'none';
-  renderCompanyCards();
-};
-window.showCompanyForm = function(editName=null) {
-  document.getElementById('company-list-step').style.display = 'none';
-  document.getElementById('company-form-step').style.display = 'block';
-};
-window.renderCompanyCards = function() {
-  const container = document.getElementById('company-cards-container'); if (!container) return;
-  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-  if (!companies.length) { container.innerHTML='<p>등록된 업체가 없습니다.</p>'; return; }
-  container.innerHTML = companies.map(c => `<div class="company-card"><strong>${c.name}</strong><br>${c.industry}</div>`).join('');
-};
 window.saveCompanyData = function() {
-  const name=document.getElementById('comp_name')?.value; if(!name){alert('상호명을 입력해주세요.');return;}
-  const rev={cur:parseInt(document.getElementById('rev_cur')?.value?.replace(/,/g,'')||0),y25:parseInt(document.getElementById('rev_25')?.value?.replace(/,/g,'')||0),y24:parseInt(document.getElementById('rev_24')?.value?.replace(/,/g,'')||0),y23:parseInt(document.getElementById('rev_23')?.value?.replace(/,/g,'')||0)};
-  const newC={name, industry:document.getElementById('comp_industry').value, revenueData:rev};
-  let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-  companies.push(newC); localStorage.setItem(STORAGE_KEY,JSON.stringify(companies));
-  alert('저장되었습니다.'); showCompanyList(); updateDataLists();
+  const name = document.getElementById('comp_name').value.trim();
+  if(!name) { alert('기업명을 입력하세요.'); return; }
+  const rev = {
+    cur: parseInt(document.getElementById('rev_cur').value.replace(/,/g,'')||0),
+    y25: parseInt(document.getElementById('rev_25').value.replace(/,/g,'')||0),
+    y24: parseInt(document.getElementById('rev_24').value.replace(/,/g,'')||0),
+    y23: parseInt(document.getElementById('rev_23').value.replace(/,/g,'')||0)
+  };
+  const data = {
+    name, 
+    industry: document.getElementById('comp_industry').value,
+    empCount: document.getElementById('emp_count').value,
+    bizDate: document.getElementById('biz_date').value,
+    coreItem: document.getElementById('core_item').value,
+    revenueData: rev,
+    date: new Date().toISOString().split('T')[0]
+  };
+  let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const idx = list.findIndex(c => c.name === name);
+  if(idx > -1) list[idx] = data; else list.push(data);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  alert('기업 정보가 저장되었습니다.');
+  showCompanyList();
 };
 
 // ===========================
-// ★ 유틸리티 및 템플릿
+// ★ 보고서 생성 엔진 (안정성 강화)
 // ===========================
-function fKRW(n){const num=parseInt(n,10);if(!num||isNaN(num))return'0원';const uk=Math.floor(num/10000),man=num%10000;if(uk>0)return uk.toLocaleString('ko-KR')+'억'+(man>0?' '+man.toLocaleString('ko-KR')+'만원':'원');return man.toLocaleString('ko-KR')+'만원';}
-function fRevAI(cData,rev){return{매출_2025년:fKRW(rev.y25),금년예상연간매출:fKRW(rev.cur*1.2)};}
-function calcExp(cData,rev){return Math.round((rev.cur||0)*1.2);}
+const REPORT_CONFIGS = {
+  finance: { title: '상세 재무진단 리포트', area: 'finance-content-area', landscape: false },
+  aiTrade: { title: '상권분석 리포트', area: 'aiTrade-content-area', landscape: false },
+  aiMarketing: { title: '마케팅제안서', area: 'aiMarketing-content-area', landscape: false },
+  aiFund: { title: '정책자금매칭 리포트', area: 'aiFund-content-area', landscape: false },
+  aiBiz: { title: '사업계획서', area: 'aiBiz-content-area', landscape: true }
+};
 
-function tplStyle(color, isLandscape) {
-  var c = color||'#3b82f6';
-  var w = isLandscape ? '297mm' : '210mm';
-  var h = isLandscape ? '210mm' : '297mm';
-  return `<style>.rp-wrap{display:flex;flex-direction:column;align-items:center;background:#e8eaed;padding:30px;gap:20px;}.rp-cover,.rp-page{background:white;width:${w};height:${h};padding:40px;box-shadow:0 4px 10px rgba(0,0,0,0.1);flex-shrink:0;position:relative;}.rp-cbar{position:absolute;left:0;top:0;bottom:0;width:15px;background:${c};}.rp-ctitle{font-size:28px;font-weight:700;margin-top:20px;}.rp-section{border:1px solid #e2e8f0;padding:15px;margin-top:15px;border-radius:8px;}.rp-2col{display:flex;gap:15px;}.rp-colF{flex:1;}</style>`;
-}
-
-function buildPage(num, title, color, content) {
-  return `<div class="rp-page"><div style="border-bottom:2px solid #eee;padding-bottom:10px;margin-bottom:15px;display:flex;justify-content:space-between;"><strong>${num}. ${title}</strong></div><div class="rp-body">${content}</div></div>`;
-}
-
-// ===========================
-// ★ 보고서 생성 (핵심 로직)
-// ===========================
 window.generateReport = async function(type, version, event) {
-  const session = JSON.parse(localStorage.getItem(DB_SESSION));
-  if(!session || !session.apiKey) { alert('설정에서 API 키를 입력해주세요.'); return; }
-  const cN = event.target.closest('.tab-content').querySelector('.company-dropdown').value;
-  if(!cN) { alert('기업을 선택하세요.'); return; }
-
   const overlay = document.getElementById('ai-loading-overlay');
-  overlay.style.display = 'flex'; // 애니메이션 시작
+  const session = JSON.parse(localStorage.getItem(DB_SESSION));
+  if(!session || !session.apiKey) { alert('설정에서 API 키를 먼저 저장해 주세요.'); showTab('settings'); return; }
+  
+  const cN = event.target.closest('.tab-content').querySelector('.company-dropdown').value;
+  if(!cN) { alert('기업을 선택해 주세요.'); return; }
 
-  // 애니메이션이 화면에 그려질 시간을 줌
-  await new Promise(r => setTimeout(r, 100));
+  overlay.style.display = 'flex';
+  await new Promise(r => setTimeout(r, 100)); // UI 갱신 유도
 
   try {
-    const cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-    const cData = cs.find(c => c.name === cN);
-    const rev = cData.revenueData || {y25:0, cur:0};
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const cData = list.find(c => c.name === cN);
+    const rev = cData.revenueData || {};
     
-    // AI 호출 시뮬레이션 (실제 Gemini 호출)
-    const prompt = `경영진단보고서를 작성해줘. 기업명: ${cN}`;
+    const prompt = `기업 '${cN}'의 경영진단보고서를 작성해줘. JSON 형식으로.`;
     const data = await callGeminiJSON(prompt);
-
+    
     const today = new Date().toISOString().split('T')[0];
-    const isLandscape = false; // 경영진단은 세로형
+    const isL = false; // 경영진단은 세로
+    const title = `경영진단보고서 (${version==='client'?'기업전달용':'컨설턴트용'})`;
 
-    let html = tplStyle('#3b82f6', isLandscape) + '<div class="rp-wrap">';
-    html += `<div class="rp-cover"><div class="rp-cbar"></div><div class="rp-ctitle">경영진단보고서</div><p>${cN}</p></div>`;
-    html += buildPage(1, "진단 개요", "#3b82f6", `<div class="rp-section">AI 분석 결과에 따른 경영 전략...</div>`);
+    let html = tplStyle('#3b82f6', isL) + '<div class="rp-wrap">';
+    html += `<div class="rp-cover"><div class="rp-cbar"></div><h1 class="rp-ctitle">${title}</h1><p>${cN}</p></div>`;
+    html += `<div class="rp-page"><div class="rp-section"><h3>분석 결과 요약</h3><p>AI 분석 결과, ${cN}의 경영 상태는...</p></div></div>`;
     html += '</div>';
 
     document.getElementById('report-input-step').style.display = 'none';
@@ -203,64 +120,107 @@ window.generateReport = async function(type, version, event) {
     const ca = document.getElementById('report-content-area');
     ca.innerHTML = html;
     
-    _currentReport = { company:cN, type:'경영진단보고서', contentAreaId:'report-content-area', landscape: isLandscape };
+    _currentReport = { company:cN, type: title, contentAreaId:'report-content-area', landscape: isL };
+    updateReportList(cN, title, today);
   } catch(e) {
-    alert('오류가 발생했습니다.');
-  } finally {
-    overlay.style.display = 'none'; // 애니메이션 종료
-  }
-};
-
-window.generateAnyReport = async function(type, version, event) {
-  const session = JSON.parse(localStorage.getItem(DB_SESSION));
-  if(!session || !session.apiKey) { alert('설정에서 API 키를 입력해주세요.'); return; }
-  const cN = event.target.closest('.tab-content').querySelector('.company-dropdown').value;
-  if(!cN) { alert('기업을 선택하세요.'); return; }
-
-  const overlay = document.getElementById('ai-loading-overlay');
-  overlay.style.display = 'flex';
-
-  await new Promise(r => setTimeout(r, 100));
-
-  try {
-    const isLandscape = (type === 'aiBiz'); // 사업계획서만 가로형
-    const today = new Date().toISOString().split('T')[0];
-    
-    // AI 호출
-    const data = await callGeminiJSON(`${type} 보고서 작성. 기업명: ${cN}`);
-
-    let html = tplStyle('#16a34a', isLandscape) + '<div class="rp-wrap">';
-    html += `<div class="rp-cover"><div class="rp-cbar" style="background:#16a34a"></div><div class="rp-ctitle">${type} 리포트</div><p>${cN}</p></div>`;
-    html += buildPage(1, "상세 분석", "#16a34a", `<div class="rp-section">분석 데이터...</div>`);
-    html += '</div>';
-
-    const tabId = event.target.closest('.tab-content').id;
-    document.getElementById(tabId + '-input-step').style.display = 'none';
-    document.getElementById(tabId + '-result-step').style.display = 'block';
-    const ca = document.getElementById(tabId + '-content-area');
-    ca.innerHTML = html;
-
-    _currentReport = { company:cN, type: type, contentAreaId: tabId + '-content-area', landscape: isLandscape };
-  } catch(e) {
-    alert('오류 발생');
+    alert('보고서 생성 중 오류가 발생했습니다: ' + e.message);
   } finally {
     overlay.style.display = 'none';
   }
 };
 
-async function callGeminiJSON(prompt) {
+window.generateAnyReport = async function(type, version, event) {
+  const overlay = document.getElementById('ai-loading-overlay');
   const session = JSON.parse(localStorage.getItem(DB_SESSION));
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${session.apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt + " [중요] 반드시 순수 JSON만 출력" }] }] })
-  });
-  const json = await res.json();
-  return json.candidates[0].content.parts[0].text;
+  if(!session || !session.apiKey) { alert('설정에서 API 키를 저장해 주세요.'); return; }
+  
+  const cN = event.target.closest('.tab-content').querySelector('.company-dropdown').value;
+  if(!cN) { alert('기업을 선택하세요.'); return; }
+  const cfg = REPORT_CONFIGS[type];
+
+  overlay.style.display = 'flex';
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    const prompt = `${cfg.title}를 작성해줘. 기업명: ${cN}`;
+    const data = await callGeminiJSON(prompt);
+    
+    let html = tplStyle(cfg.landscape ? '#16a34a' : '#2563eb', cfg.landscape) + '<div class="rp-wrap">';
+    html += `<div class="rp-cover"><div class="rp-cbar" style="background:${cfg.landscape?'#16a34a':'#2563eb'}"></div><h1 class="rp-ctitle">${cfg.title}</h1><p>${cN}</p></div>`;
+    html += `<div class="rp-page"><h3>상세 데이터 분석</h3><p>전략적 분석 결과...</p></div>`;
+    html += '</div>';
+
+    const tabId = event.target.closest('.tab-content').id;
+    document.getElementById(tabId + '-input-step').style.display = 'none';
+    document.getElementById(tabId + '-result-step').style.display = 'block';
+    document.getElementById(cfg.area).innerHTML = html;
+
+    _currentReport = { company:cN, type: cfg.title, contentAreaId: cfg.area, landscape: cfg.landscape };
+  } catch(e) {
+    alert('오류가 발생했습니다.');
+  } finally {
+    overlay.style.display = 'none';
+  }
+};
+
+// ===========================
+// ★ 핵심 렌더링 및 UI (업체->기업 용어 수정)
+// ===========================
+function tplStyle(color, isL) {
+  const w = isL ? '297mm' : '210mm';
+  const h = isL ? '210mm' : '297mm';
+  return `<style>.rp-wrap{display:flex;flex-direction:column;align-items:center;background:#e8eaed;padding:30px;gap:30px;}.rp-cover,.rp-page{width:${w};height:${h};background:white;padding:40px;box-shadow:0 4px 15px rgba(0,0,0,0.1);position:relative;flex-shrink:0;}.rp-cbar{position:absolute;left:0;top:0;bottom:0;width:15px;background:${color};}.rp-ctitle{font-size:32px;font-weight:900;margin-bottom:10px;}.rp-section{border:1px solid #e2e8f0;padding:20px;border-radius:10px;margin-top:20px;}</style>`;
 }
 
-function resetContentArea(el) { if(el) el.style.cssText = 'padding:0!important;background:transparent!important;'; }
-window.backToInput = function(tab) { document.getElementById(tab+'-input-step').style.display='block'; document.getElementById(tab+'-result-step').style.display='none'; };
+window.renderCompanyCards = function() {
+  const container = document.getElementById('company-cards-container'); if(!container) return;
+  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  container.innerHTML = companies.map(c => `<div class="company-card"><div class="company-card-top"><strong>${c.name}</strong></div><div class="company-card-body">업종: ${c.industry}</div></div>`).join('');
+};
 
-// 완료 메세지
-console.log("모든 수정 사항 반영 완료");
+window.updateReportList = function(cN, title, date) {
+  let list = JSON.parse(localStorage.getItem(DB_REPORTS) || '[]');
+  list.push({ id: Date.now(), company: cN, title, date });
+  localStorage.setItem(DB_REPORTS, JSON.stringify(list));
+};
+
+// 초기화
+function initInputHandlers() {
+  document.querySelectorAll('.money-format').forEach(i => {
+    i.addEventListener('input', function() { let v = this.value.replace(/[^0-9]/g,''); this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g,','); });
+  });
+}
+
+function loadUserProfile() {
+  const user = JSON.parse(localStorage.getItem(DB_SESSION)); if(!user) return;
+  document.getElementById('display-user-name').innerText = user.name;
+  if(user.apiKey) document.getElementById('set-api-key').value = user.apiKey;
+}
+
+// 탭 전환 시스템
+window.showTab = function(tabId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.menu li').forEach(li => li.classList.remove('active'));
+  const target = document.getElementById(tabId);
+  if(target) target.classList.add('active');
+  const menu = document.getElementById('menu-' + tabId);
+  if(menu) menu.classList.add('active');
+  
+  if(tabId === 'company') renderCompanyCards();
+  
+  // 기업 드롭다운 갱신
+  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  document.querySelectorAll('.company-dropdown').forEach(sel => {
+    sel.innerHTML = '<option value="">기업을 선택하세요</option>';
+    companies.forEach(c => sel.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+  });
+};
+
+function handleLogin() {
+  const email = document.getElementById('login-email').value;
+  const user = { email, name: '사용자', apiKey: '' };
+  localStorage.setItem(DB_SESSION, JSON.stringify(user));
+  checkAuth();
+}
+
+console.log("수정완료");
