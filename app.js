@@ -305,7 +305,7 @@ function tpFeedback(items,color='#f97316'){return`<div class="fb-box"><div class
 async function _callCore(prompt, maxTokens, maxRetries) {
   const session=JSON.parse(localStorage.getItem('biz_session'));
   const apiKey=session?.apiKey;
-  if(!apiKey){alert('설정 탭에서 Gemini API 키를 등록해주세요.');showTab('settings');return null;}
+  if(!apiKey) return null; 
   let lastError=null;
   for(let attempt=1;attempt<=maxRetries;attempt++){
     if(attempt>1) await new Promise(r=>setTimeout(r,attempt*2000));
@@ -324,8 +324,7 @@ async function _callCore(prompt, maxTokens, maxRetries) {
       return text;
     }catch(e){if(e.name==='AbortError')lastError=new Error('응답 시간 초과(120초)');else lastError=e;console.warn(`[Gemini] 오류 (${attempt}/${maxRetries}):`,e.message);}
   }
-  alert(`AI 생성 실패 (${maxRetries}회 시도):\n${lastError?.message||'알 수 없는 오류'}`);
-  return null;
+  throw new Error(`AI 생성 실패 (${maxRetries}회 시도):\n${lastError?.message||'알 수 없는 오류'}`);
 }
 async function callGeminiJSON(prompt, maxTokens=8192){
   const fullPrompt=prompt+'\n\n[중요] 반드시 순수 JSON만 출력. 마크다운 코드블록(```), 설명 텍스트 없이 JSON 객체만 출력.';
@@ -337,7 +336,10 @@ async function callGeminiJSON(prompt, maxTokens=8192){
     const end=clean.lastIndexOf('}');
     if(start>=0&&end>=0) return JSON.parse(clean.slice(start,end+1));
     return JSON.parse(clean);
-  }catch(e){console.error('JSON 파싱 실패:',e,raw.slice(0,200));alert('AI 응답 파싱 오류. 다시 시도해주세요.');return null;}
+  }catch(e){
+    console.error('JSON 파싱 실패:',e,raw.slice(0,200));
+    throw new Error('AI 응답 처리 오류. 형식이 맞지 않습니다. 다시 시도해주세요.');
+  }
 }
 
 // ===========================
@@ -605,13 +607,13 @@ function buildCoverHTML(cData, config, rev, dateStr) {
 }
 
 // ===========================
-// ★ 경영진단 기업전달용 (P1~P6)
+// ★ 경영진단 기업전달용 (P1~P6) - 세로형
 // ===========================
 function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
-  var radar = (d.radar||[65,80,68,70,55]).join(',');
+  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'client',borderColor:color}, rev, dateStr);
+  var radar = (Array.isArray(d.radar) ? d.radar : [65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[
     {name:'벤처기업 인증',effect:'중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능',amount:'+2억',period:'6개월 내'},
@@ -621,7 +623,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   ];
   var cIcons = ['🏆','📜','🔬','✅'];
   var cBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
-  var totalC = certs.reduce(function(s,c){ var n=parseFloat(c.amount.replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n); }, 0);
+  var totalC = certs.reduce(function(s,c){ var n=parseFloat(String(c.amount||'').replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n); }, 0);
 
   var p1 = rpPage(1,'경영진단 개요','기업현황 · 진단목적',color,
     '<div class="rp-2col">'
@@ -633,7 +635,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
       +'<tr><th>핵심아이템</th><td>'+(cData.coreItem||'-')+'</td><th>사업자번호</th><td>'+(cData.bizNum||'-')+'</td></tr>'
       +'<tr><th>전년 매출</th><td>'+fKRW(rev.y25)+'</td><th>금년 예상</th><td>'+fKRW(exp)+'</td></tr>'
       +'</table>'
-      +'<div class="rp-grade"><div class="rp-glbl">AI 종합 진단 등급</div>'
+      +'<div class="rp-grade"><div class="rp-glbl">종합 진단 등급</div>'
       +'<div class="rp-gval" style="color:'+color+'">'+(d.grade||'B+')+'</div>'
       +'<div class="rp-gdesc">'+(d.grade_desc||'성장 유망 단계')+'</div>'
       +'<div class="rp-gsub">전체 진단 기업 기준 상위 30% 수준</div></div>'
@@ -805,13 +807,13 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ 경영진단 컨설턴트용 (P1~P7)
+// ★ 경영진단 컨설턴트용 (P1~P7) - 세로형
 // ===========================
 function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var color = '#3b82f6';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 경영진단보고서',reportKind:'AI 경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
-  var radar = (d.radar||[65,80,68,70,55]).join(',');
+  var cover = buildCoverHTML(cData, {title:'경영진단보고서',reportKind:'경영진단보고서',version:'consultant',borderColor:'#1e293b'}, rev, dateStr);
+  var radar = (Array.isArray(d.radar) ? d.radar : [65,80,68,70,55]).join(',');
   var bars  = d.marketing_bars||{finance:72,strategy:85,operation:68,hr:64,it:57};
   var certs = d.certs||[{name:'벤처인증',effect:'중진공 우대금리 적용',amount:'+2억',period:'6개월'},{name:'이노비즈',effect:'기보 우대 보증',amount:'+3억',period:'1년'}];
 
@@ -975,7 +977,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ 상세 재무진단 (표지+3P)
+// ★ 상세 재무진단 (표지+3P) - 세로형
 // ===========================
 function buildFinanceHTML(d, cData, rev, dateStr) {
   var color = '#2563eb';
@@ -1093,12 +1095,12 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ 상권분석 (표지+2P)
+// ★ 상권분석 (표지+2P) - 세로형
 // ===========================
 function buildTradeHTML(d, cData, rev, dateStr) {
   var color  = '#0d9488';
   var cover  = buildCoverHTML(cData, {title:'AI 상권분석 리포트',reportKind:'AI 빅데이터 상권분석',vLabel:'리포트',borderColor:color}, rev, dateStr);
-  var radar  = (d.radar||[82,75,68,72,80]).join(',');
+  var radar  = (Array.isArray(d.radar) ? d.radar : [82,75,68,72,80]).join(',');
   var sim    = d.sim||{s0:9167,s1:12500,s2:16667,s3:25000};
   var target = d.target||{age:'30~40대',household:'1~2인',channel:'온라인',cycle:'월 2~3회'};
 
@@ -1173,7 +1175,7 @@ function buildTradeHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ 마케팅제안 (표지+2P)
+// ★ 마케팅제안 (표지+2P) - 세로형
 // ===========================
 function buildMarketingHTML(d, cData, rev, dateStr) {
   var color    = '#db2777';
@@ -1233,7 +1235,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ 정책자금매칭 (표지+3P)
+// ★ 정책자금매칭 (표지+3P) - 세로형
 // ===========================
 function buildFundHTML(d, cData, rev, dateStr) {
   var color  = '#ea580c';
@@ -1327,7 +1329,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
 }
 
 // ===========================
-// ★ AI 사업계획서 (표지+10P)
+// ★ AI 사업계획서 (표지+10P) - 가로형 유지
 // ===========================
 function buildBizPlanHTML(d, cData, rev, dateStr) {
   var color = '#16a34a';
@@ -1342,7 +1344,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var bpCerts = d.s6_certs||[{name:'벤처기업 인증',effect:'중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능',amount:'+2억',period:'6개월 내'},{name:'이노비즈 인증',effect:'기술혁신형 중소기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'},{name:'기업부설연구소',effect:'R&D 세액공제 25% 적용 및 기보 기술보증 우대 적용 동시 가능',amount:'+1.5억',period:'세액공제 병행'},{name:'HACCP 인증',effect:'대형마트·단체급식 납품 채널 확대 — 매출 직접 연결 효과 확인',amount:'채널↑',period:'매출 확대'}];
   var bpIcons = ['🏆','📜','🔬','✅'];
   var bpBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
-  var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
+  var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(String(c.amount||'').replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
   var nf = cData.needFund>0 ? fKRW(cData.needFund) : '4억원';
   var fundRows = d.s7_rows||[{item:'원재료 구입',amount:'1억 5천만원',ratio:'37.5%',purpose:'돈육 사골 등 핵심 원재료 선매입 및 안정적 재고 확보'},{item:'생산 설비 투자',amount:'1억원',ratio:'25%',purpose:'반자동 생산설비 도입 — 원가율 20% 절감 목표'},{item:'마케팅·채널 확대',amount:'7천만원',ratio:'17.5%',purpose:'SNS 광고·쿠팡 입점·브랜드 마케팅 집행'},{item:'운전자금',amount:'8천만원',ratio:'20%',purpose:'인건비·공과금·운영 고정비 등'}];
   var kpi9 = d.s9_kpi||{y1:'18억',y2:'24억',ch:'5개↑',emp:'11명'};
@@ -1589,14 +1591,22 @@ function resetContentArea(el) {
 // ★ 보고서 생성 (경영진단 - 세로형)
 // ===========================
 window.generateReport = async function(type, version, event) {
-  var overlay = document.getElementById('ai-loading-overlay');
-  var tab = event.target.closest('.tab-content');
+  var tab = event ? event.target.closest('.tab-content') : document.getElementById('report');
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
   var cs  = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
   var cData = cs.find(function(c){return c.name===cN;});
   if (!cData) { alert('기업 정보를 찾을 수 없습니다.'); return; }
   
+  // API 키 확인
+  const session = JSON.parse(localStorage.getItem(DB_SESSION));
+  if(!session || !session.apiKey) {
+    alert('설정 탭에서 Gemini API 키를 등록해 주세요.');
+    showTab('settings');
+    return;
+  }
+
+  var overlay = document.getElementById('ai-loading-overlay');
   if (overlay) overlay.style.display = 'flex'; 
   
   try {
@@ -1604,11 +1614,12 @@ window.generateReport = async function(type, version, event) {
     var fRev = fRevAI(cData, rev);
     var prompt = version==='client' ? buildMgmtClientPrompt(cData,fRev) : buildMgmtConsultantPrompt(cData,fRev);
     var data = await callGeminiJSON(prompt, 8192);
-    if (!data) throw new Error("AI 응답을 받지 못했습니다.");
     
     var today = new Date().toISOString().split('T')[0];
     var vL = version==='client'?'기업전달용':'컨설턴트용';
-    var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:'AI 경영진단보고서 ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
+    var rptTitle = '경영진단보고서 ('+vL+')'; // AI경영진단보고서 -> 경영진단보고서 변경 적용
+    
+    var rpt = {id:'rep_'+Date.now(),type:'경영진단',company:cData.name,title:rptTitle,date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:'management'};
     var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
     localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
     
@@ -1618,11 +1629,11 @@ window.generateReport = async function(type, version, event) {
     resetContentArea(ca);
     ca.innerHTML = version==='client' ? buildMgmtClientHTML(data,cData,rev,today) : buildMgmtConsultantHTML(data,cData,rev,today);
     
-    // 경영진단보고서는 세로형(false)으로 설정
-    _currentReport = {company:cData.name, type:'AI 경영진단보고서 ('+vL+')', contentAreaId:'report-content-area', landscape:false};
+    _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'report-content-area', landscape:false};
     initReportCharts(rev);
   } catch(e) {
-    console.error(e); alert('오류: ' + e.message);
+    console.error(e); 
+    alert('오류: ' + e.message);
   } finally {
     if (overlay) overlay.style.display = 'none'; 
   }
@@ -1632,8 +1643,7 @@ window.generateReport = async function(type, version, event) {
 // ★ 기타 보고서 생성 (동적 가로/세로형)
 // ===========================
 window.generateAnyReport = async function(type, version, event) {
-  var overlay = document.getElementById('ai-loading-overlay');
-  var tab = event.target.closest('.tab-content');
+  var tab = event ? event.target.closest('.tab-content') : document.getElementById(type);
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
   var cs  = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
@@ -1641,13 +1651,21 @@ window.generateAnyReport = async function(type, version, event) {
   if (!cData) { alert('기업 정보를 찾을 수 없습니다.'); return; }
   var cfg  = REPORT_CONFIGS[type]; if (!cfg) return;
   
+  // API 키 확인
+  const session = JSON.parse(localStorage.getItem(DB_SESSION));
+  if(!session || !session.apiKey) {
+    alert('설정 탭에서 Gemini API 키를 등록해 주세요.');
+    showTab('settings');
+    return;
+  }
+
+  var overlay = document.getElementById('ai-loading-overlay');
   if (overlay) overlay.style.display = 'flex';
   
   try {
     var rev = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
     var fRev = fRevAI(cData, rev);
     var data = await callGeminiJSON(cfg.buildPrompt(cData, fRev, version), type==='aiBiz'?65536:8192);
-    if (!data) throw new Error("AI 응답을 받지 못했습니다.");
     
     var today = new Date().toISOString().split('T')[0];
     var vL = type==='aiBiz'?(version==='draft'?'초안':'완성본'):'리포트';
@@ -1661,11 +1679,11 @@ window.generateAnyReport = async function(type, version, event) {
     resetContentArea(ca);
     ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
     
-    // config에 정의된 landscape 속성 부여
     _currentReport = {company:cData.name, type:cfg.title+' ('+vL+')', contentAreaId:cfg.contentAreaId, landscape:cfg.landscape};
     initReportCharts(rev);
   } catch(e) {
-    console.error(e); alert('오류: ' + e.message);
+    console.error(e); 
+    alert('오류: ' + e.message);
   } finally {
     if (overlay) overlay.style.display = 'none';
   }
@@ -1690,7 +1708,6 @@ window.viewReport = function(id) {
       var ca = document.getElementById('report-content-area');
       resetContentArea(ca);
       ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
-      // 경영진단 세로형 고정
       _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:false};
       initReportCharts(rev);
     }, 100);
@@ -1703,7 +1720,6 @@ window.viewReport = function(id) {
       var ca2 = document.getElementById(cfg.contentAreaId);
       resetContentArea(ca2);
       ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
-      // config에 맞춰 가로/세로 복원
       _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape};
       initReportCharts(rev);
     }, 100);
@@ -1719,4 +1735,74 @@ function initReportCharts(rev) {
     var li = document.getElementById('rp-linechart');
     if(li && li.dataset.y23) new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023','2024','2025','금년(예)'],datasets:[{data:[+li.dataset.y23,+li.dataset.y24,+li.dataset.y25,+li.dataset.exp],borderColor:'#3b82f6',fill:true,tension:0.25}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}});
   }, 500);
+}
+
+// ===========================
+// ★ 프롬프트 빌더 (텍스트 수정 반영)
+// ===========================
+function buildMgmtClientPrompt(cData, fRev) {
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
+  var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
+  return '너는 대한민국 최고의 경영컨설턴트야. 아래 기업 데이터를 기반으로 \''+nm+'\' 기업전달용 경영진단보고서를 작성해.\n\n'
+    +'【핵심 규칙】\n'
+    +'- 반드시 기업명 \''+nm+'\'을 각 항목에 자연스럽게 포함\n'
+    +'- 실제 수치(전년매출 '+r25+', 금년예상 '+rExp+', 핵심아이템: '+itm+')를 반드시 인용\n'
+    +'- 각 항목은 반드시 60자 이상, 구체적이고 실질적인 내용\n'
+    +'- 긍정적이고 전문적인 톤\n'
+    +'- JSON만 출력 (마크다운, 설명 텍스트 없이)\n\n'
+    +'JSON:\n'
+    +'{"grade":"A-","grade_desc":"고성장 유망기업",'
+    +'"overview":["'+nm+'는 '+r25+' 매출을 달성하며 5개항목 각60자이상"],'
+    +'"finance_strengths":["'+nm+'의 '+r25+' 매출은 4개항목 각60자이상"],'
+    +'"finance_risks":["'+nm+'가 주의해야 할 3개항목 각60자이상"],'
+    +'"radar":[재무,전략,인사,운영,IT점수],'
+    +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
+    +'"marketing":["'+nm+'의 '+itm+' 마케팅 5개항목 각60자이상"],'
+    +'"marketing_items":["포지셔닝 전략 3개 각50자이상"],'
+    +'"hr":["'+nm+' 인사조직 5개 각60자이상"],'
+    +'"ops":["'+nm+' 운영생산 5개 각60자이상"],'
+    +'"it":["'+nm+' IT디지털 5개 각60자이상"],'
+    +'"certs":['
+    +'{"name":"벤처기업 인증","effect":"'+nm+'의 '+itm+' 기술력 인정 — 중진공·기보 우대금리 적용으로 추가 자금 한도 2억원 확보 가능","amount":"+2억","period":"6개월 내"},'
+    +'{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용","amount":"+3억","period":"1년 내"},'
+    +'{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지","amount":"+1.5억","period":"세액공제 병행"},'
+    +'{"name":"HACCP 인증","effect":"'+nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결","amount":"채널↑","period":"매출 확대"}],'
+    +'"roadmap_short":["'+nm+' 단기 4개 각35자이상"],'
+    +'"roadmap_mid":["'+nm+' 중기 4개 각35자이상"],'
+    +'"roadmap_long":["'+nm+' 장기 4개 각35자이상"],'
+    +'"summary":["'+nm+' 종합의견 3개 각80자이상"]}\n\n'
+    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp+', 금년현재:'+rCur+', 전전년:'+r24;
+}
+
+function buildMgmtConsultantPrompt(cData, fRev) {
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4';
+  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
+  return '너는 대한민국 최고의 경영컨설턴트야. \''+nm+'\' 컨설턴트 내부용 경영진단보고서를 작성해.\n\n'
+    +'【핵심 규칙】\n'
+    +'- 기업명 \''+nm+'\'을 각 항목에 포함, 실제 수치('+r25+', '+rExp+') 반드시 인용\n'
+    +'- 컨설턴트 내부용: 리스크를 솔직하고 구체적으로 기술\n'
+    +'- 각 항목 60자 이상, JSON만 출력\n\n'
+    +'{"grade":"등급","grade_desc":"8자설명",'
+    +'"overview":["'+nm+' 현황 5개 60자이상"],'
+    +'"key_risks":["'+nm+' 리스크 4개 각70자이상"],'
+    +'"finance_strengths":["'+nm+' 재무강점 4개 60자이상"],'
+    +'"fb_finance":["재무 피드백 3개 70자이상"],'
+    +'"radar":[재무,전략,인사,운영,IT],'
+    +'"marketing_bars":{"finance":점수,"strategy":점수,"operation":점수,"hr":점수,"it":점수},'
+    +'"marketing":["'+nm+' 마케팅 4개 60자이상"],'
+    +'"fb_marketing":["마케팅 피드백 3개 70자이상"],'
+    +'"hr":["'+nm+' 인사 5개 60자이상"],'
+    +'"ops":["'+nm+' 운영 5개 60자이상"],'
+    +'"fb_hr_ops":["인사운영 피드백 3개 70자이상"],'
+    +'"it":["'+nm+' IT 5개 60자이상"],'
+    +'"fb_it":["IT피드백 3개 70자이상"],'
+    +'"roadmap_short":["단기 4개 35자이상"],"roadmap_mid":["중기 4개"],"roadmap_long":["장기 4개"],'
+    +'"fb_roadmap":["로드맵피드백 2개 70자이상"],'
+    +'"certs":[{"name":"인증명","effect":"'+nm+' 관련 효과 50자이상","amount":"+X억","period":"기간"},3개],'
+    +'"consultant_issues":["'+nm+' 시급이슈 3개 80자이상"],'
+    +'"consultant_funds":["'+nm+' 자금전략 4개 70자이상"],'
+    +'"consultant_certs":["인증전략 3개 60자이상"],'
+    +'"consultant_marketing":["마케팅 2개 60자이상"],'
+    +'"consultant_credit":["신용개선 2개 60자이상"]}\n\n'
+    +'[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 금년예상:'+rExp;
 }
