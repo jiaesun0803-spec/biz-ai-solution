@@ -1,6 +1,20 @@
 // ===== BizConsult AI 보고서 플랫폼 =====
 const DB_USERS       = 'biz_users';
 const DB_SESSION     = 'biz_session';
+// ===== API 서버 URL (Netlify Functions 사용) =====
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001'
+  : '';  // Netlify: 상대경로로 /.netlify/functions/api 사용
+
+async function apiCall(path, options={}) {
+  const token = localStorage.getItem('biz_jwt_token');
+  const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.error || '서버 오류가 발생했습니다.');
+  return data;
+}
 const STORAGE_KEY    = 'biz_consult_companies';
 const DB_REPORTS     = 'biz_reports';
 const DB_SUPPORT_DOC = 'biz_support_documents';
@@ -187,32 +201,18 @@ window.devBypassLogin = function() {
   alert('배포 모드에서는 테스트 계정 바로 접속 기능을 사용하지 않음.');
 };
 function checkAuth() {
-  ensureAdminAccount();
   const session = JSON.parse(localStorage.getItem(DB_SESSION)||'null');
   const authEl = document.getElementById('auth-container');
   const appEl  = document.getElementById('main-app');
-  if (session) {
-    const user = getUsers().find(function(u){ return u.email === session.email; });
-    if (!user) {
-      localStorage.removeItem(DB_SESSION);
-      authEl.style.display='flex';
-      appEl.style.display='none';
-      return;
-    }
-    if (!user.isAdmin && !user.approved) {
-      localStorage.removeItem(DB_SESSION);
-      alert('현재 계정은 관리자 승인 대기 상태임. 승인 후 로그인할 수 있음.');
-      authEl.style.display='flex';
-      appEl.style.display='none';
-      return;
-    }
-    localStorage.setItem(DB_SESSION, JSON.stringify(user));
+  if (session && localStorage.getItem('biz_jwt_token')) {
     authEl.style.display='none';
     appEl.style.display='flex';
     loadUserProfile();
     updateDataLists();
     initInputHandlers();
   } else {
+    localStorage.removeItem(DB_SESSION);
+    localStorage.removeItem('biz_jwt_token');
     authEl.style.display='flex';
     appEl.style.display='none';
   }
@@ -221,42 +221,57 @@ window.toggleAuthMode = function(mode) {
   document.getElementById('login-form-area').style.display  = mode==='login'  ? 'block' : 'none';
   document.getElementById('signup-form-area').style.display = mode==='signup' ? 'block' : 'none';
 };
-window.handleSignup = function() {
+window.handleSignup = async function() {
   const email=(document.getElementById('signup-email').value||'').trim();
   const pw=(document.getElementById('signup-pw').value||'').trim();
   const name=(document.getElementById('signup-name').value||'').trim();
   const dept=(document.getElementById('signup-dept').value||'').trim();
   const phone=(document.getElementById('signup-phone').value||'').trim();
   if (!email||!pw||!name) { alert('이메일, 비밀번호, 사용자명은 필수 입력 항목임.'); return; }
-  let users=getUsers();
-  if (users.find(function(u){ return u.email===email; })) { alert('이미 가입된 이메일임.'); return; }
-  users.push(normalizeUser({
-    email:email,
-    pw:pw,
-    name:name,
-    dept:dept,
-    phone:phone,
-    apiKey:'',
-    isAdmin:false,
-    approved:false,
-    createdAt:new Date().toISOString(),
-    approvedAt:''
-  }));
-  saveUsers(users);
-  ['signup-email','signup-pw','signup-name','signup-dept','signup-phone'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  alert('회원가입 신청이 접수되었음. 관리자 승인 후 로그인할 수 있음.');
-  toggleAuthMode('login');
+  const btn = document.querySelector('#signup-form-area button');
+  if(btn){ btn.disabled=true; btn.textContent='처리 중...'; }
+  try {
+    await apiCall('/api/auth/signup', { method:'POST', body: JSON.stringify({email,pw,name,dept,phone}) });
+    ['signup-email','signup-pw','signup-name','signup-dept','signup-phone'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    alert('회원가입 신청이 접수되었음. 관리자 승인 후 로그인할 수 있음.');
+    toggleAuthMode('login');
+  } catch(e) {
+    alert(e.message);
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
+  }
 };
-window.handleLogin = function() {
+window.handleLogin = async function() {
   const email=(document.getElementById('login-email').value||'').trim();
   const pw=(document.getElementById('login-pw').value||'').trim();
-  const user=getUsers().find(function(u){ return u.email===email && u.pw===pw; });
-  if (!user) { alert('이메일 또는 비밀번호가 일치하지 않음.'); return; }
-  if (!user.isAdmin && !user.approved) { alert('현재 계정은 관리자 승인 대기 상태임.'); return; }
-  localStorage.setItem(DB_SESSION, JSON.stringify(user));
-  checkAuth();
+  if(!email||!pw){ alert('이메일과 비밀번호를 입력해주세요.'); return; }
+  const btn = document.querySelector('#login-form-area .btn-primary');
+  if(btn){ btn.disabled=true; btn.textContent='로그인 중...'; }
+  try {
+    const res = await apiCall('/api/auth/login', { method:'POST', body: JSON.stringify({email,pw}) });
+    // API 응답을 localStorage 호환 형식으로 변환
+    const user = {
+      email: res.user.email,
+      name: res.user.name,
+      dept: res.user.dept||'',
+      phone: res.user.phone||'',
+      apiKey: res.user.api_key||'',
+      isAdmin: res.user.is_admin||false,
+      approved: res.user.approved||false,
+      createdAt: res.user.created_at||'',
+      approvedAt: res.user.approved_at||'',
+      _id: res.user.id
+    };
+    localStorage.setItem(DB_SESSION, JSON.stringify(user));
+    localStorage.setItem('biz_jwt_token', res.token);
+    checkAuth();
+  } catch(e) {
+    alert(e.message);
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='로그인'; }
+  }
 };
-window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location.reload(); };
+window.handleLogout = function() { localStorage.removeItem(DB_SESSION); localStorage.removeItem('biz_jwt_token'); location.reload(); };
 
 // ===========================
 // ★ 프로필
@@ -366,42 +381,36 @@ function renderAdminApprovalList(){
       + '</div>';
   }).join('');
 }
-window.approveUser=function(email){
-  let users=getUsers();
-  const idx=users.findIndex(function(u){ return u.email===email; });
-  if(idx<0){ alert('대상 사용자를 찾지 못했음.'); return; }
-  users[idx].approved=true;
-  users[idx].approvedAt=new Date().toISOString();
-  saveUsers(users);
-  renderAdminApprovalList();
-  renderAdminTab();
-  alert('사용자 승인이 완료되었음.');
+window.approveUser=async function(userId){
+  try {
+    await apiCall('/api/admin/users/'+userId+'/approve', { method:'PUT' });
+    renderAdminTab();
+    alert('사용자 승인이 완료되었음.');
+  } catch(e) { alert(e.message); }
 };
-window.rejectUser=function(email){
+window.rejectUser=async function(userId){
   if(!confirm('승인 대기 사용자를 삭제하시겠습니까?')) return;
-  let users=getUsers().filter(function(u){ return u.email!==email; });
-  saveUsers(users);
-  renderAdminApprovalList();
-  renderAdminTab();
-  alert('승인 대기 사용자가 삭제되었음.');
+  try {
+    await apiCall('/api/admin/users/'+userId, { method:'DELETE' });
+    renderAdminTab();
+    alert('승인 대기 사용자가 삭제되었음.');
+  } catch(e) { alert(e.message); }
 };
-window.revokeUser=function(email){
+window.revokeUser=async function(userId){
   if(!confirm('이 회원의 승인을 취소하시겠습니까? 해당 회원은 다시 승인 대기 상태가 됩니다.')) return;
-  let users=getUsers();
-  const idx=users.findIndex(function(u){ return u.email===email; });
-  if(idx<0){ alert('사용자를 찾지 못했음.'); return; }
-  users[idx].approved=false;
-  users[idx].approvedAt='';
-  saveUsers(users);
-  renderAdminTab();
-  alert('승인이 취소되었음.');
+  try {
+    await apiCall('/api/admin/users/'+userId+'/reject', { method:'PUT' });
+    renderAdminTab();
+    alert('승인이 취소되었음.');
+  } catch(e) { alert(e.message); }
 };
-window.deleteUser=function(email){
+window.deleteUser=async function(userId){
   if(!confirm('이 회원을 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
-  let users=getUsers().filter(function(u){ return u.email!==email; });
-  saveUsers(users);
-  renderAdminTab();
-  alert('회원이 삭제되었음.');
+  try {
+    await apiCall('/api/admin/users/'+userId, { method:'DELETE' });
+    renderAdminTab();
+    alert('회원이 삭제되었음.');
+  } catch(e) { alert(e.message); }
 };
 
 // ===========================
@@ -410,71 +419,84 @@ window.deleteUser=function(email){
 function renderAdminTab(){
   const session=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null'));
   if(!session||!session.isAdmin) return;
-  const allUsers=getUsers().filter(function(u){ return !u.isAdmin; });
-  const pending=allUsers.filter(function(u){ return !u.approved; });
-  const approved=allUsers.filter(function(u){ return u.approved; });
+  const el=function(id){ return document.getElementById(id); };
   const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
-
-  // 통계 업데이트
-  var el=function(id){ return document.getElementById(id); };
-  if(el('admin-stat-total')) el('admin-stat-total').textContent=allUsers.length;
-  if(el('admin-stat-pending')) el('admin-stat-pending').textContent=pending.length;
-  if(el('admin-stat-approved')) el('admin-stat-approved').textContent=approved.length;
   if(el('admin-stat-reports')) el('admin-stat-reports').textContent=reports.length;
 
-  // 승인 대기 목록
-  var pendingCountEl=el('admin-tab-pending-count');
-  var pendingListEl=el('admin-tab-pending-list');
-  if(pendingCountEl) pendingCountEl.textContent='대기 '+pending.length+'명';
-  if(pendingListEl){
-    if(!pending.length){
-      pendingListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">✅</div><div class="empty-state-title">승인 대기 중인 사용자가 없음.</div><div class="empty-state-desc">신규 회원가입이 들어오면 이 영역에서 바로 승인할 수 있음.</div></div>';
-    } else {
-      pendingListEl.innerHTML=pending.map(function(u){
-        return '<div class="admin-user-card">'
-          + '<div class="admin-user-head">'
-          +   '<div>'
-          +     '<div class="admin-user-name">'+(u.name||'이름 미입력')+'</div>'
-          +     '<div class="admin-user-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입신청: '+(u.createdAt?new Date(u.createdAt).toLocaleString('ko-KR'):'-')+'</div>'
-          +   '</div>'
-          +   '<span class="status-badge warning">승인 대기</span>'
-          + '</div>'
-          + '<div class="admin-user-actions">'
-          +   '<button class="btn-primary" style="padding:8px 16px;font-size:13px;" onclick="approveUser(\'' + u.email + '\')"> 승인</button>'
-          +   '<button class="btn-delete" onclick="rejectUser(\'' + u.email + '\')"> 거절/삭제</button>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-    }
-  }
+  // API에서 사용자 목록 가져오기
+  Promise.all([
+    apiCall('/api/admin/users'),
+    apiCall('/api/admin/stats')
+  ]).then(function(results){
+    const allUsers = results[0];
+    const stats = results[1];
 
-  // 전체 회원 목록
-  var allCountEl=el('admin-tab-all-count');
-  var allListEl=el('admin-tab-all-list');
-  if(allCountEl) allCountEl.textContent='전체 '+allUsers.length+'명';
-  if(allListEl){
-    if(!allUsers.length){
-      allListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">👥</div><div class="empty-state-title">등록된 회원이 없음.</div></div>';
-    } else {
-      allListEl.innerHTML=allUsers.map(function(u){
-        var badge=u.approved
-          ? '<span class="status-badge success">승인 완료</span>'
-          : '<span class="status-badge warning">승인 대기</span>';
-        var actions=u.approved
-          ? '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.email + '\')"> 승인 취소</button>'
-            + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.email + '\')"> 삭제</button>'
-          : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.email + '\')"> 승인</button>'
-            + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.email + '\')"> 삭제</button>';
-        return '<div class="admin-member-card">'
-          + '<div class="admin-member-info">'
-          +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'
-          +   '<div class="admin-member-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입일: '+(u.createdAt?new Date(u.createdAt).toLocaleString('ko-KR'):'-')+(u.approvedAt?' · 승인일: '+new Date(u.approvedAt).toLocaleString('ko-KR'):'')+'</div>'
-          + '</div>'
-          + '<div class="admin-member-actions">'+ badge + actions +'</div>'
-          + '</div>';
-      }).join('');
+    // 통계 업데이트
+    if(el('admin-stat-total')) el('admin-stat-total').textContent=stats.total||0;
+    if(el('admin-stat-pending')) el('admin-stat-pending').textContent=stats.pending||0;
+    if(el('admin-stat-approved')) el('admin-stat-approved').textContent=stats.approved||0;
+    if(el('admin-stat-reports')) el('admin-stat-reports').textContent=stats.reports||reports.length;
+
+    const pending=allUsers.filter(function(u){ return !u.is_admin && !u.approved; });
+    const approved=allUsers.filter(function(u){ return !u.is_admin && u.approved; });
+
+    // 승인 대기 목록
+    var pendingCountEl=el('admin-tab-pending-count');
+    var pendingListEl=el('admin-tab-pending-list');
+    if(pendingCountEl) pendingCountEl.textContent='대기 '+pending.length+'명';
+    if(pendingListEl){
+      if(!pending.length){
+        pendingListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">✅</div><div class="empty-state-title">승인 대기 중인 사용자가 없음.</div><div class="empty-state-desc">신규 회원가입이 들어오면 이 영역에서 바로 승인할 수 있음.</div></div>';
+      } else {
+        pendingListEl.innerHTML=pending.map(function(u){
+          return '<div class="admin-user-card">'
+            + '<div class="admin-user-head">'
+            +   '<div>'
+            +     '<div class="admin-user-name">'+(u.name||'이름 미입력')+'</div>'
+            +     '<div class="admin-user-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입신청: '+(u.created_at?new Date(u.created_at).toLocaleString('ko-KR'):'-')+'</div>'
+            +   '</div>'
+            +   '<span class="status-badge warning">승인 대기</span>'
+            + '</div>'
+            + '<div class="admin-user-actions">'
+            +   '<button class="btn-primary" style="padding:8px 16px;font-size:13px;" onclick="approveUser(\'' + u.id + '\')"> 승인</button>'
+            +   '<button class="btn-delete" onclick="rejectUser(\'' + u.id + '\')"> 거절/삭제</button>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      }
     }
-  }
+
+    // 전체 회원 목록
+    var allCountEl=el('admin-tab-all-count');
+    var allListEl=el('admin-tab-all-list');
+    const nonAdminUsers = allUsers.filter(function(u){ return !u.is_admin; });
+    if(allCountEl) allCountEl.textContent='전체 '+nonAdminUsers.length+'명';
+    if(allListEl){
+      if(!nonAdminUsers.length){
+        allListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">👥</div><div class="empty-state-title">등록된 회원이 없음.</div></div>';
+      } else {
+        allListEl.innerHTML=nonAdminUsers.map(function(u){
+          var badge=u.approved
+            ? '<span class="status-badge success">승인 완료</span>'
+            : '<span class="status-badge warning">승인 대기</span>';
+          var actions=u.approved
+            ? '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.id + '\')"> 승인 취소</button>'
+              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.id + '\')"> 삭제</button>'
+            : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.id + '\')"> 승인</button>'
+              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.id + '\')"> 삭제</button>';
+          return '<div class="admin-member-card">'
+            + '<div class="admin-member-info">'
+            +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'
+            +   '<div class="admin-member-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입일: '+(u.created_at?new Date(u.created_at).toLocaleString('ko-KR'):'-')+(u.approved_at?' · 승인일: '+new Date(u.approved_at).toLocaleString('ko-KR'):'')+'</div>'
+            + '</div>'
+            + '<div class="admin-member-actions">'+ badge + actions +'</div>'
+            + '</div>';
+        }).join('');
+      }
+    }
+  }).catch(function(e){
+    console.error('관리자 탭 로드 실패:', e.message);
+  });
 }
 
 // ===========================
