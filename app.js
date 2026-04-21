@@ -25,12 +25,12 @@ function normalizeUser(u) {
     phone:'',
     apiKey:'',
     isAdmin:false,
-    approved:true,
+    approved:false,
     createdAt:'',
     approvedAt:''
   }, u);
   if (nu.isAdmin) nu.approved = true;
-  if (typeof u.approved === 'undefined' && !u.isAdmin) nu.approved = true;
+  // approved가 명시적으로 저장된 경우 그 값을 그대로 사용 (undefined일 때만 false 유지)
   return nu;
 }
 function getUsers() {
@@ -1660,7 +1660,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'<div class="rp-body">'
     +'<div style="border-bottom:2px solid #fcd34d;padding-bottom:10px;margin-bottom:14px;font-size:13px;font-weight:700;color:#92400e">🔒 컨설턴트 전용 자료 (기업 전달 금지)</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">'
+    +'<div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">'
     +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
     +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">🚨 시급 해결 이슈 TOP 3</div>'
     +(d.consultant_issues||[
@@ -1905,31 +1905,31 @@ function buildTradeHTML(d, cData, rev, dateStr) {
   var target = d.target||{age:'30~40대',household:'1~2인',channel:'온라인',cycle:'월 2~3회'};
 
   var p1 = rpPage(1,'상권 현황 분석','핵심 입지 지표 · 경쟁 분석',color,
-    '<div class="rp-3col">'
-    +'<div class="rp-3c">'
-    +'<div class="rp-g3" style="flex-shrink:0;margin-bottom:10px">'
+    '<div class="rp-2col" style="margin-bottom:12px">'
+    +'<div class="rp-col50" style="display:flex;flex-direction:column;gap:10px">'
+    +'<div class="rp-g3">'
     +rpMC('유동인구 (일평균)',d.traffic||'2,400명','일평균 유동량',color)
     +rpMC('반경1km 경쟁업체',(d.competitors||7)+'개','직접 경쟁',parseInt(d.competitors||7)>5?'#f97316':'#16a34a')
     +rpMC('입지 경쟁력 등급',d.grade||'B+','상위 30%',color)
+    +'</div>'
+    +rpSec('경쟁 현황 요약', color,
+      '<div style="display:flex;justify-content:space-around;text-align:center;padding:8px 0">'
+      +'<div><div style="font-size:28px;font-weight:800;color:'+color+'">'+(d.comp_direct||7)+'</div><div style="font-size:12px;color:#64748b;margin-top:3px">직접 경쟁</div></div>'
+      +'<div><div style="font-size:28px;font-weight:800;color:#f97316">'+(d.comp_strong||3)+'</div><div style="font-size:12px;color:#64748b;margin-top:3px">강성 경쟁</div></div>'
+      +'<div><div style="font-size:28px;font-weight:800;color:#16a34a">'+(d.diff_potential||'高')+'</div><div style="font-size:12px;color:#64748b;margin-top:3px">차별화 여지</div></div>'
+      +'</div>'
+    )
+    +'</div>'
+    +'<div class="rp-colF">'
+    +rpSec('입지 경쟁력 레이더', color, '<div class="rp-ch" style="height:240px"><canvas id="tp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>')
+    +'</div>'
     +'</div>'
     +rpSec('상권 특성 분석', color, rpLst(d.features||[
       '주변 1km 내 핵심 소비층인 30~40대 1~2인 가구의 밀집도가 높아 타겟 고객 접근성이 우수한 입지임',
       '대중교통 접근성(지하철·버스)이 양호하여 광역 고객 유입 가능성이 높고 주중·주말 유동량이 고른 편임',
       '상권 성장 단계가 성숙기에 진입하여 안정적인 수요는 확보되어 있으나 신규 경쟁자 진입 리스크도 존재함',
-      '반경 내 유사 업종 경쟁업체 '+( d.comp_direct||7)+'개 중 강성 경쟁업체는 '+(d.comp_strong||3)+'개로 차별화 전략이 필수적임'
+      '반경 내 유사 업종 경쟁업체 '+(d.comp_direct||7)+'개 중 강성 경쟁업체는 '+(d.comp_strong||3)+'개로 차별화 전략이 필수적임'
     ], color))
-    +'</div>'
-    +'<div class="rp-3c">'
-    +rpSec('입지 경쟁력 레이더', color, '<div class="rp-ch" style="height:215px"><canvas id="tp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>')
-    +'</div>'
-    +'<div class="rp-3c">'
-    +rpSec('경쟁 현황 요약', color,
-      '<div style="display:flex;justify-content:space-around;text-align:center;padding:10px 0;margin-bottom:10px">'
-      +'<div><div style="font-size:26px;font-weight:700;color:'+color+'">'+(d.comp_direct||7)+'</div><div style="font-size:13px;color:#64748b;margin-top:3px">직접 경쟁</div></div>'
-      +'<div><div style="font-size:26px;font-weight:700;color:#f97316">'+(d.comp_strong||3)+'</div><div style="font-size:13px;color:#64748b;margin-top:3px">강성 경쟁</div></div>'
-      +'<div><div style="font-size:26px;font-weight:700;color:#16a34a">'+(d.diff_potential||'高')+'</div><div style="font-size:13px;color:#64748b;margin-top:3px">차별화 여지</div></div>'
-      +'</div>'
-    )
     +rpSec('운영 전략 포인트', color, rpLst(d.strategy||[
       '경쟁사 대비 차별화된 제품·서비스 강점을 명확히 하여 가격 경쟁이 아닌 가치 경쟁으로 포지셔닝해야 함',
       '네이버 스마트플레이스 최적화 및 SNS 위치 태그 활성화로 주변 고객 자연 유입을 극대화해야 함',
@@ -1937,38 +1937,39 @@ function buildTradeHTML(d, cData, rev, dateStr) {
       '피크타임(점심·저녁·주말) 운영 최적화와 비피크타임 프로모션으로 시간대별 매출을 균등화해야 함',
       '배달·픽업 서비스 도입으로 반경 3km 이내 비방문 고객까지 커버하여 잠재 시장을 확대해야 함'
     ], color))
-    +'</div>'
-    +'</div>'
   );
 
   var p2 = rpPage(2,'타겟 고객 및 매출 예측','고객 프로파일 · 시뮬레이션',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col40">'
-    +rpSec('타겟 고객 프로파일', color,
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px">'
-      +[['주 연령대',target.age],['가구 유형',target.household],['구매 채널',target.channel],['구매 주기',target.cycle]].map(function(pair){
+    rpSec('타겟 고객 프로파일', color,
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">'
+      +[['\uc8fc \uc5f0\ub839\ub300',target.age],['\uac00\uad6c \uc720\ud615',target.household],['\uad6c\ub9e4 \ucc44\ub110',target.channel],['\uad6c\ub9e4 \uc8fc\uae30',target.cycle]].map(function(pair){
         return '<div style="background:white;border-radius:8px;padding:11px 9px;border:1px solid #e2e8f0;text-align:center"><div style="font-size:12px;color:#64748b;margin-bottom:4px">'+pair[0]+'</div><div style="font-size:16px;font-weight:700;color:'+color+'">'+pair[1]+'</div></div>';
-      }).join('')+'</div>'
+      }).join('')
+      +'</div>'
     )
-    +rpSec('고객 전략', color, rpLst([
-      target.age+' 타겟층의 소비 패턴을 분석하여 선호하는 가격대·패키지·홍보 메시지를 최적화해야 함',
-      target.household+' 가구 맞춤 소용량·편의성 제품 구성으로 구매 장벽을 낮추고 재구매율을 높여야 함',
-      target.channel+' 채널 최적화를 통해 소비자 접점을 다각화하고 구매 전환율을 체계적으로 관리해야 함'
-    ], color))
+    +'<div class="rp-2col">'
+    +'<div class="rp-col50">'
+    +rpSec('\ub9e4\ucd9c \uc7a0\uc7ac\ub825 \uc2dc\ubbac\ub808\uc774\uc158 (\ub9cc\uc6d0/\uc6d4)', color,
+      '<div class="rp-ch" style="height:200px"><canvas id="tp-linechart" data-s0="'+sim.s0+'" data-s1="'+sim.s1+'" data-s2="'+sim.s2+'" data-s3="'+sim.s3+'" style="width:100%;height:100%"></canvas></div>'
+    )
     +'</div>'
     +'<div class="rp-colF">'
-    +rpSec('매출 잠재력 시뮬레이션 (만원/월)', color,
-      '<div class="rp-ch" style="height:205px"><canvas id="tp-linechart" data-s0="'+sim.s0+'" data-s1="'+sim.s1+'" data-s2="'+sim.s2+'" data-s3="'+sim.s3+'" style="width:100%;height:100%"></canvas></div>'
-    )
-    +'<div class="rp-g4" style="margin-top:0">'
-    +rpMC('현재',Math.round(sim.s0/100)*100+'만','/월',color)
-    +rpMC('6개월',Math.round(sim.s1/100)*100+'만','+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
-    +rpMC('1년',Math.round(sim.s2/100)*100+'만','+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
-    +rpMC('2년',Math.round(sim.s3/100)*100+'만','+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
+    +'<div class="rp-g2" style="margin-bottom:8px">'
+    +rpMC('\ud604\uc7ac',Math.round(sim.s0/100)*100+'\ub9cc','/\uc6d4',color)
+    +rpMC('6\uac1c\uc6d4',Math.round(sim.s1/100)*100+'\ub9cc','+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
     +'</div>'
-    +'<div style="font-size:12px;color:#64748b;padding:9px;background:#f0fdfa;border-radius:7px;margin-top:6px">※ 업종 평균 성장률 달성 가정 시 추정값 (전제: 운영 전략 이행, 계절성 반영, 경쟁 환경 유사 수준 유지)</div>'
+    +'<div class="rp-g2">'
+    +rpMC('1\ub144',Math.round(sim.s2/100)*100+'\ub9cc','+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('2\ub144',Math.round(sim.s3/100)*100+'\ub9cc','+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
+    +'</div>'
+    +'<div style="font-size:11px;color:#64748b;padding:9px;background:#f0fdfa;border-radius:7px;margin-top:8px">\u203b \uc5c5\uc885 \ud3c9\uade0 \uc131\uc7a5\ub960 \ub2ec\uc131 \uac00\uc815 \uc2dc \ucd94\uc815\uac12 (\uc804\uc81c: \uc6b4\uc601 \uc804\ub7b5 \uc774\ud589, \uacc4\uc808\uc131 \ubc18\uc601, \uacbd\uc7c1 \ud658\uacbd \uc720\uc0ac \uc218\uc900 \uc720\uc9c0)</div>'
     +'</div>'
     +'</div>'
+    +rpSec('\uace0\uac1d \uc804\ub7b5', color, rpLst([
+      target.age+' \ud0c0\uac9f\uce35\uc758 \uc18c\ube44 \ud328\ud134\uc744 \ubd84\uc11d\ud558\uc5ec \uc120\ud638\ud558\ub294 \uac00\uaca9\ub300\u00b7\ud328\ud0a4\uc9c0\u00b7\ud64d\ubcf4 \uba54\uc2dc\uc9c0\ub97c \ucd5c\uc801\ud654\ud574\uc57c \ud568',
+      target.household+' \uac00\uad6c \ub9de\ucda4 \uc18c\uc6a9\ub7c9\u00b7\ud3b8\uc758\uc131 \uc81c\ud488 \uad6c\uc131\uc73c\ub85c \uad6c\ub9e4 \uc7a5\ubcbd\uc744 \ub099\ucdb0\uace0 \uc7ac\uad6c\ub9e4\uc728\uc744 \ub192\uc5ec\uc57c \ud568',
+      target.channel+' \ucc44\ub110 \ucd5c\uc801\ud654\ub97c \ud1b5\ud574 \uc18c\ube44\uc790 \uc811\uc810\uc744 \ub2e4\uac01\ud654\ud558\uace0 \uad6c\ub9e4 \uc804\ud658\uc728\uc744 \uccb4\uacc4\uc801\uc73c\ub85c \uad00\ub9ac\ud574\uc57c \ud568'
+    ], color))
   );
 
   return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
