@@ -99,6 +99,30 @@ app.put('/api/auth/me', authMiddleware, async (req, res) => {
   res.json(data);
 });
 
+// 비밀번호 변경
+app.put('/api/auth/change-password', authMiddleware, async (req, res) => {
+  const { current_pw, new_pw } = req.body;
+  if (!current_pw || !new_pw) return res.status(400).json({ error: '현재 비밀번호와 새 비밀번호를 입력해주세요.' });
+  if (new_pw.length < 4) return res.status(400).json({ error: '새 비밀번호는 4자 이상이어야 합니다.' });
+
+  const { data: user, error } = await supabase.from('users').select('id,pw').eq('id', req.user.id).single();
+  if (error || !user) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+
+  let valid = false;
+  if (user.pw && user.pw.startsWith('$2')) {
+    valid = await bcrypt.compare(current_pw, user.pw);
+  } else {
+    valid = (current_pw === user.pw);
+  }
+  if (!valid) return res.status(401).json({ error: '현재 비밀번호가 일치하지 않습니다.' });
+
+  const hashed = await bcrypt.hash(new_pw, 10);
+  const { error: updateError } = await supabase.from('users').update({ pw: hashed }).eq('id', req.user.id);
+  if (updateError) return res.status(500).json({ error: updateError.message });
+
+  res.json({ message: '비밀번호가 변경되었습니다.' });
+});
+
 // ===== 관리자 API =====
 
 // 전체 사용자 목록

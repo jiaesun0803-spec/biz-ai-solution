@@ -331,19 +331,19 @@ window.saveProfileSettings=function(){
   s.email=nextEmail;
   if(updateUserDB(s, prevEmail)) alert('계정 정보가 저장되었음.');
 };
-window.savePasswordSettings=function(){
-  let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
+window.savePasswordSettings=async function(){
   const currentPw=(document.getElementById('set-current-pw').value||'').trim();
   const nextPw=(document.getElementById('set-new-pw').value||'').trim();
   const confirmPw=(document.getElementById('set-confirm-pw').value||'').trim();
   if(!currentPw||!nextPw||!confirmPw){ alert('비밀번호 변경 항목을 모두 입력해주세요.'); return; }
-  if(currentPw!==s.pw){ alert('현재 비밀번호가 일치하지 않음.'); return; }
   if(nextPw.length<4){ alert('새 비밀번호는 4자 이상으로 입력해주세요.'); return; }
   if(nextPw!==confirmPw){ alert('새 비밀번호 확인이 일치하지 않음.'); return; }
-  s.pw=nextPw;
-  if(updateUserDB(s)){
+  try {
+    await apiCall('/api/auth/change-password', { method:'PUT', body: JSON.stringify({ current_pw: currentPw, new_pw: nextPw }) });
     ['set-current-pw','set-new-pw','set-confirm-pw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     alert('비밀번호가 변경되었음.');
+  } catch(e) {
+    alert(e.message);
   }
 };
 window.saveApiSettings=function(){
