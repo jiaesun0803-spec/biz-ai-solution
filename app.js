@@ -1187,18 +1187,26 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     }).join('')
     +'</div></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-    + mgmtSec('재무 현황 분석','💡','#475569', d.finance_strengths||[
+    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 16px;background:#f8fafc">'
+    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0">💡 재무 현황 분석</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +(d.finance_strengths||[
         nm+'는 전년 대비 금년 예상 매출이 80% 이상 급증하며 매우 강력한 성장세를 시현하고 있음',
         '화장품 원료 유통업의 특성상 상대적으로 높은 마진율을 유지하며 수익성 측면에서 긍정적인 구조를 보유함',
         '고정비 최소화를 통해 재무 건전성 및 유동성 확보에 유리한 입지를 점하고 있음',
         '안정적인 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하는 구조를 보유함'
-      ])
-    + mgmtSec('재무 리스크','⚠️','#f97316', d.finance_risks||[
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#475569"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>'
+    +'<div style="border:1px solid #fed7aa;border-radius:10px;padding:13px 16px;background:#fff7ed">'
+    +'<div style="font-size:13px;font-weight:700;color:#f97316;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #fed7aa">⚠️ 재무 리스크</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +(d.finance_risks||[
         '운전자본 부족 리스크 — 급성장에 따른 현금흐름 단기 경색 가능성을 사전에 차단해야 함',
         '단일 아이템 의존 구조 — 포트폴리오 다각화를 통한 매출 안정성 강화가 시급함',
         '대표 의존도 높은 재무 운영 구조 — 핵심 인력 이탈 시 사업 연속성에 심각한 영향이 있음',
         '내부 통제 및 재무 관리 시스템 미흡 — 규모 확장에 따른 잠재적 리스크 증대 가능성 있음'
-      ], 'background:#fff7ed;border-color:#fed7aa')
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>'
     +'</div>'
     +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:10px">'
     +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 재무 지표</div>'
@@ -1249,7 +1257,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 
   // ── CAT4: 인사·운영·IT ──────────────────────
   var cat4 = cat(4,'인사·조직 및 운영·생산 분석','리스크 중점',
-    mgmtSec('인사·조직','👥','#475569', d.hr||[
+    '<div style="page-break-inside:avoid;break-inside:avoid">'+mgmtSec('인사·조직','👥','#475569', d.hr||[
       nm+'는 현재 대표 1인이 모든 인사업무를 직접 수행하는 단일 의사결정 구조로 병목 리스크가 매우 높음',
       '공식적인 채용 프로세스 및 인력 관리 시스템이 부재하여 사업 확장 시 병목 현상이 심각해질 것임',
       '직무 정의 및 역할 분담이 불명확하여 업무 효율성 저하와 대표의 과도한 업무 부담이 발생함',
@@ -1257,8 +1265,9 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
       '성과에 따른 인센티브 및 스톡옵션 제도가 없어 우수 인재 동기 부여 및 장기 재직 유도가 어려움',
       '조직 문화 형성에 대한 고민이 부족하여 향후 핵심 가치 공유에 어려움을 줄 수 있음'
     ])
+    +'</div>'
     +'<div style="height:10px"></div>'
-    + mgmtSec('운영·생산','🏭','#475569', d.ops||[
+    +'<div style="page-break-inside:avoid;break-inside:avoid">'+mgmtSec('운영·생산','🏭','#475569', d.ops||[
       nm+'는 대표 1인이 해외 소싱부터 국내 유통까지 전 운영 과정을 직접 통제하여 리스크가 집중되어 있음',
       '체계적인 재고 관리 시스템 부재로 과잉 재고 또는 품절 리스크에 대한 노출도가 매우 높음',
       '물류 및 배송은 외부 업체에 전적으로 의존하여 서비스 품질 및 비용 통제에 한계가 명확함',
@@ -1266,6 +1275,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
       '공급처 단일화에 따른 리스크가 높아 대체 공급처 2곳 이상을 즉시 확보해야 함',
       '품질 관리 및 고객 불만 처리 시스템이 대표 개별 판단에 의존하여 일관성 확보에 취약함'
     ])
+    +'</div>'
     +'<div style="height:10px"></div>'
     + mgmtFB(d.fb_hr_ops||[
         nm+'의 인력 구조가 현재 최대 취약점 — 정책자금 조달 후 설비보다 인력에 먼저 투자해야 추가 매출 성장이 가능함',
@@ -1387,7 +1397,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>';
 
-  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
+  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
 }
 
 
