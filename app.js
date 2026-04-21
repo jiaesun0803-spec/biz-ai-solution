@@ -805,7 +805,8 @@ function mgmtPage(num, title, sub, accentColor, content) {
 // ═══════════════════════════════════════
 function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColor) {
   var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
-  var cDept = session.dept||'전략컨설팅본부';
+  var cName = session.name||'담당 컨설턴트';
+  var cDept = session.dept||'솔루션빌더스';
   var safeTitle = String(reportTitle||'보고서').replace(/^AI\s*/,'').trim();
   var companyName = (cData && cData.name) ? cData.name : '기업명 미입력';
   var dateObj = dateStr ? new Date(dateStr) : new Date();
@@ -820,19 +821,16 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-main-inner">'
     +'<div class="rp-cover-title">'+safeTitle+'</div>'
     +'<div class="rp-cover-divider"></div>'
-    +'<div class="rp-cover-company-label">기업명</div>'
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
-    +'<div class="rp-cover-year">'+yyyy+'</div>'
     +'</div>'
     +'</div>'
     +'<div class="rp-cover-bottom">'
     +'<div class="rp-cover-meta">'
     +'<span>작성일: '+issueMonth+'</span>'
-    +'<span>발행처: '+cDept+'</span>'
+    +'<span>담당자: '+cName+'</span>'
     +'</div>'
     +'<div class="rp-cover-brand">'
-    +'<div class="rp-cover-brand-name">BizConsult</div>'
-    +'<div class="rp-cover-brand-contact">전화: +82 2-123-4567&nbsp;&nbsp;|&nbsp;&nbsp;이메일: info@bizconsult.co.kr&nbsp;&nbsp;|&nbsp;&nbsp;www.bizconsult.co.kr</div>'
+    +'<div class="rp-cover-brand-name">'+cDept+'</div>'
     +'</div>'
     +'</div>'
     +'</div>';
