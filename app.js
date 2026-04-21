@@ -288,6 +288,9 @@ function loadUserProfile() {
   var adminPanel=document.getElementById('admin-settings-panel');
   if(adminPanel) adminPanel.style.display = user.isAdmin ? 'block' : 'none';
   if(user.isAdmin) renderAdminApprovalList();
+  // 관리자 메뉴 탭 표시/숨김
+  var adminMenu = document.getElementById('menu-admin');
+  if(adminMenu) adminMenu.style.display = user.isAdmin ? 'flex' : 'none';
 }
 function updateUserDB(u, prevEmail){
   let users=getUsers();
@@ -371,6 +374,7 @@ window.approveUser=function(email){
   users[idx].approvedAt=new Date().toISOString();
   saveUsers(users);
   renderAdminApprovalList();
+  renderAdminTab();
   alert('사용자 승인이 완료되었음.');
 };
 window.rejectUser=function(email){
@@ -378,8 +382,100 @@ window.rejectUser=function(email){
   let users=getUsers().filter(function(u){ return u.email!==email; });
   saveUsers(users);
   renderAdminApprovalList();
+  renderAdminTab();
   alert('승인 대기 사용자가 삭제되었음.');
 };
+window.revokeUser=function(email){
+  if(!confirm('이 회원의 승인을 취소하시겠습니까? 해당 회원은 다시 승인 대기 상태가 됩니다.')) return;
+  let users=getUsers();
+  const idx=users.findIndex(function(u){ return u.email===email; });
+  if(idx<0){ alert('사용자를 찾지 못했음.'); return; }
+  users[idx].approved=false;
+  users[idx].approvedAt='';
+  saveUsers(users);
+  renderAdminTab();
+  alert('승인이 취소되었음.');
+};
+window.deleteUser=function(email){
+  if(!confirm('이 회원을 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+  let users=getUsers().filter(function(u){ return u.email!==email; });
+  saveUsers(users);
+  renderAdminTab();
+  alert('회원이 삭제되었음.');
+};
+
+// ===========================
+// ★ 관리자 탭 렌더링
+// ===========================
+function renderAdminTab(){
+  const session=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null'));
+  if(!session||!session.isAdmin) return;
+  const allUsers=getUsers().filter(function(u){ return !u.isAdmin; });
+  const pending=allUsers.filter(function(u){ return !u.approved; });
+  const approved=allUsers.filter(function(u){ return u.approved; });
+  const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+
+  // 통계 업데이트
+  var el=function(id){ return document.getElementById(id); };
+  if(el('admin-stat-total')) el('admin-stat-total').textContent=allUsers.length;
+  if(el('admin-stat-pending')) el('admin-stat-pending').textContent=pending.length;
+  if(el('admin-stat-approved')) el('admin-stat-approved').textContent=approved.length;
+  if(el('admin-stat-reports')) el('admin-stat-reports').textContent=reports.length;
+
+  // 승인 대기 목록
+  var pendingCountEl=el('admin-tab-pending-count');
+  var pendingListEl=el('admin-tab-pending-list');
+  if(pendingCountEl) pendingCountEl.textContent='대기 '+pending.length+'명';
+  if(pendingListEl){
+    if(!pending.length){
+      pendingListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">✅</div><div class="empty-state-title">승인 대기 중인 사용자가 없음.</div><div class="empty-state-desc">신규 회원가입이 들어오면 이 영역에서 바로 승인할 수 있음.</div></div>';
+    } else {
+      pendingListEl.innerHTML=pending.map(function(u){
+        return '<div class="admin-user-card">'
+          + '<div class="admin-user-head">'
+          +   '<div>'
+          +     '<div class="admin-user-name">'+(u.name||'이름 미입력')+'</div>'
+          +     '<div class="admin-user-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입신청: '+(u.createdAt?new Date(u.createdAt).toLocaleString('ko-KR'):'-')+'</div>'
+          +   '</div>'
+          +   '<span class="status-badge warning">승인 대기</span>'
+          + '</div>'
+          + '<div class="admin-user-actions">'
+          +   '<button class="btn-primary" style="padding:8px 16px;font-size:13px;" onclick="approveUser(\'' + u.email + '\')"> 승인</button>'
+          +   '<button class="btn-delete" onclick="rejectUser(\'' + u.email + '\')"> 거절/삭제</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+  }
+
+  // 전체 회원 목록
+  var allCountEl=el('admin-tab-all-count');
+  var allListEl=el('admin-tab-all-list');
+  if(allCountEl) allCountEl.textContent='전체 '+allUsers.length+'명';
+  if(allListEl){
+    if(!allUsers.length){
+      allListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">👥</div><div class="empty-state-title">등록된 회원이 없음.</div></div>';
+    } else {
+      allListEl.innerHTML=allUsers.map(function(u){
+        var badge=u.approved
+          ? '<span class="status-badge success">승인 완료</span>'
+          : '<span class="status-badge warning">승인 대기</span>';
+        var actions=u.approved
+          ? '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.email + '\')"> 승인 취소</button>'
+            + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.email + '\')"> 삭제</button>'
+          : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.email + '\')"> 승인</button>'
+            + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.email + '\')"> 삭제</button>';
+        return '<div class="admin-member-card">'
+          + '<div class="admin-member-info">'
+          +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'
+          +   '<div class="admin-member-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입일: '+(u.createdAt?new Date(u.createdAt).toLocaleString('ko-KR'):'-')+(u.approvedAt?' · 승인일: '+new Date(u.approvedAt).toLocaleString('ko-KR'):'')+'</div>'
+          + '</div>'
+          + '<div class="admin-member-actions">'+ badge + actions +'</div>'
+          + '</div>';
+      }).join('');
+    }
+  }
+}
 
 // ===========================
 // ★ 탭 이동
@@ -400,6 +496,7 @@ window.showTab = function(tabId, updateUrl=true) {
   const menu=document.getElementById('menu-'+tabId); if(menu) menu.classList.add('active');
   if(tabId==='settings') loadUserProfile();
   if(tabId==='company') showCompanyList();
+  if(tabId==='admin') renderAdminTab();
   // 보고서 탭 → 항상 입력 화면
   ['report','finance','aiBiz','aiFund','aiTrade','aiMarketing'].forEach(rt=>{
     if(tabId===rt){

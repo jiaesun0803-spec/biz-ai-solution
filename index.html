@@ -69,6 +69,7 @@
             </ul>
         </nav>
         <div class="bottom-menu"><ul>
+            <li onclick="showTab('admin')" id="menu-admin" style="display:none;"><span>🛡️</span> 관리자</li>
             <li onclick="showTab('settings')" id="menu-settings"><span>⚙️</span> 설정</li>
             <li onclick="handleLogout()"><span>🚪</span> 로그아웃</li>
         </ul></div>
@@ -583,6 +584,72 @@
                     <div class="fund-split-layout report-control-layout"><div class="fund-left report-control-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiMarketing-company-select"><option value="">기업을 선택하세요</option></select><div class="report-generate-actions report-left-actions"><button class="btn-report-blue report-generate-btn report-generate-btn-pink" onclick="generateAnyReport('aiMarketing','client',event)">◎ 마케팅 제안서 생성</button></div></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">마케팅 채널 분석 대상</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot pink"></div><div><strong>SNS 마케팅</strong><div class="criteria-desc">인스타그램, 유튜브, 블로그 전략</div></div></div><div class="criteria-item"><div class="dot green"></div><div><strong>오프라인 마케팅</strong><div class="criteria-desc">전단지, 지역 홍보, 이벤트 기획</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>디지털 광고</strong><div class="criteria-desc">네이버·구글 검색광고, 배너 광고</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>고객 관계 관리(CRM)</strong><div class="criteria-desc">재구매 유도, 리뷰 관리, 충성고객</div></div></div></div></div></div></div>
                 </div>
                 <div id="aiMarketing-result-step" style="display:none;"><div class="report-view-portrait"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiMarketing')">← 다시 생성</button><div class="header-btns"><button class="btn-primary" onclick="printReport()">PDF 다운로드</button></div></div><div id="aiMarketing-content-area" class="report-paper-portrait"></div></div></div>
+            </div>
+        </section>
+
+        <!-- 관리자 전용 탭 -->
+        <section id="admin" class="tab-content">
+            <div class="max-width-wrapper">
+                <div class="page-header">
+                    <h2 class="page-title-lg">🛡️ 관리자 대시보드</h2>
+                    <p style="color:#64748b;font-size:14px;margin-top:4px;">사용자 관리 및 시스템 운영</p>
+                </div>
+
+                <!-- 통계 카드 -->
+                <div class="admin-stat-grid">
+                    <div class="admin-stat-card" style="border-top:4px solid #2563eb">
+                        <div class="admin-stat-icon">👥</div>
+                        <div class="admin-stat-body">
+                            <div class="admin-stat-label">전체 회원</div>
+                            <div class="admin-stat-value" id="admin-stat-total">0</div>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card" style="border-top:4px solid #f59e0b">
+                        <div class="admin-stat-icon">⏳</div>
+                        <div class="admin-stat-body">
+                            <div class="admin-stat-label">승인 대기</div>
+                            <div class="admin-stat-value" id="admin-stat-pending">0</div>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card" style="border-top:4px solid #16a34a">
+                        <div class="admin-stat-icon">✅</div>
+                        <div class="admin-stat-body">
+                            <div class="admin-stat-label">승인 완료</div>
+                            <div class="admin-stat-value" id="admin-stat-approved">0</div>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card" style="border-top:4px solid #7c3aed">
+                        <div class="admin-stat-icon">📋</div>
+                        <div class="admin-stat-body">
+                            <div class="admin-stat-label">전체 보고서</div>
+                            <div class="admin-stat-value" id="admin-stat-reports">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 승인 대기 섹션 -->
+                <div class="fund-card" style="margin-bottom:24px;border-top:4px solid #f59e0b;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                        <div>
+                            <h3 style="margin:0 0 4px;font-size:16px;">⏳ 가입 승인 대기</h3>
+                            <p style="margin:0;font-size:13px;color:#64748b;">신규 가입 신청을 검토하고 승인 또는 거절할 수 있습니다.</p>
+                        </div>
+                        <span class="status-badge warning" id="admin-tab-pending-count">대기 0명</span>
+                    </div>
+                    <div id="admin-tab-pending-list"></div>
+                </div>
+
+                <!-- 전체 회원 목록 -->
+                <div class="fund-card" style="margin-bottom:24px;border-top:4px solid #2563eb;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                        <div>
+                            <h3 style="margin:0 0 4px;font-size:16px;">👥 전체 회원 목록</h3>
+                            <p style="margin:0;font-size:13px;color:#64748b;">승인된 회원 및 관리자 계정 목록입니다.</p>
+                        </div>
+                        <span class="status-badge soft" id="admin-tab-all-count">전체 0명</span>
+                    </div>
+                    <div id="admin-tab-all-list"></div>
+                </div>
             </div>
         </section>
 
