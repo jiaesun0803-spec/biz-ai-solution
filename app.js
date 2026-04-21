@@ -765,6 +765,15 @@ function mgmtSec(title, icon, color, items, extraCSS) {
     +'</div></div>';
 }
 
+function mgmtWideSec(title, icon, color, items, extraCSS) {
+  var bg = extraCSS||'background:#f8fafc';
+  return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;'+bg+'">'
+    +'<div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(148,163,184,0.25)">'+icon+' '+title+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px">'
+    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#334155;line-height:1.7"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+t+'</span></div>';}).join('')
+    +'</div></div>';
+}
+
 // ── 컨설턴트 피드백 박스
 function mgmtFB(items) {
   return '<div style="border-radius:8px;padding:12px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
@@ -946,8 +955,8 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
       return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:16px;font-weight:800;color:'+v[3]+'">'+v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-    + mgmtSec('재무 강점 분석','💪','#16a34a', d.finance_strengths||[
+    +'<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">'
+    + mgmtWideSec('재무 강점 분석','💪','#16a34a', d.finance_strengths||[
         nm+'는 단기간에 폭발적 매출 성장을 달성하며 시장성을 완벽히 검증, 투자·자금 심사 신뢰도가 매우 높음',
         '핵심 아이템의 독창성과 차별성을 바탕으로 높은 마진율을 유지하며 수익성 기반을 안정적으로 구축함',
         '정책자금 중심 저금리 차입 구조로 금융 비용 부담을 최소화하고 재무 건전성을 유지하고 있음',
@@ -955,7 +964,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
         '빠른 매출 성장 대비 비용 구조가 효율적으로 관리되어 이익 레버리지 효과가 극대화되고 있음',
         '안정적인 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하는 구조를 보유함'
       ], 'background:#f0fdf4;border-color:#86efac')
-    + mgmtSec('개선 필요 포인트','⚠️','#f97316', d.finance_risks||[
+    + mgmtWideSec('개선 필요 포인트','⚠️','#f97316', d.finance_risks||[
         nm+'의 단일 아이템 매출 의존도가 높아 포트폴리오 다각화를 통한 매출 안정성 강화가 시급히 요구됨',
         '급성장에 따른 운전자본 수요 증가에 대비하여 정책자금 조달 계획을 조기에 수립하고 실행해야 함',
         '현금흐름 관리 체계가 미흡하여 월별 손익계산서 작성 및 현금흐름표 정기 관리 시스템 구축이 필요함',
@@ -974,10 +983,10 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
 
   // ── CAT3: 전략·마케팅 ───────────────────────
   var cat3 = cat(3,'전략 및 마케팅 분석','역량 레이더 · 마케팅 포지셔닝',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'
+    '<div style="display:grid;grid-template-columns:1.18fr 0.82fr;gap:12px;margin-bottom:10px">'
     +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
     +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">🎯 경영 역량 진단 레이더</div>'
-    +'<div class="rp-ch" style="height:185px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
+    +'<div class="rp-ch" style="height:235px;padding:14px 12px 10px"><canvas id="rp-radar" data-scores="'+radar+'" style="width:100%;height:100%"></canvas></div>'
     +'</div>'
     +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc">'
     +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 역량 점수</div>'
@@ -2012,7 +2021,7 @@ function initReportCharts(rev) {
     var ra = document.getElementById('rp-radar');
     if(ra && ra.dataset && ra.dataset.scores) {
       safeDestroyChart(ra);
-      try { new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',pointBackgroundColor:'#1e3a8a',pointRadius:5,pointHoverRadius:7}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12,weight:'bold'}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){console.error('레이더 오류:',e);}
+      try { new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',borderWidth:2,pointBackgroundColor:'#1e3a8a',pointBorderColor:'#ffffff',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6}]},options:{layout:{padding:{top:6,right:10,bottom:6,left:10}},scales:{r:{min:0,max:100,ticks:{display:false,stepSize:20,showLabelBackdrop:false},angleLines:{color:'rgba(148,163,184,0.28)'},grid:{color:'rgba(148,163,184,0.20)'},pointLabels:{font:{size:13,weight:'bold'},color:'#475569'}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){console.error('레이더 오류:',e);}
     }
     // ─ 매출 라인
     var li = document.getElementById('rp-linechart');
