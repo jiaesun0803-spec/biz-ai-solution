@@ -297,7 +297,7 @@ function updateDashboardReports() {
   setNum('stat-mgmt',reports.filter(r=>r.type==='경영진단').length);
   setNum('stat-biz',reports.filter(r=>r.type==='사업계획서').length);
   setNum('stat-total',reports.length);
-  setText('dashboard-recent-count', `${Math.min(reports.length,5)}건`);
+  setText('dashboard-recent-count', `${Math.min(reports.length,3)}건`);
   setText('dashboard-company-hint', `업체 ${companies.length}개`);
   setText('dashboard-support-count', `${supportDocs.length}건`);
   setText('dashboard-notice-count', `${notices.length}건`);
@@ -307,7 +307,7 @@ function updateDashboardReports() {
   if (!reports.length) {
     listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없음.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
   } else {
-    listEl.innerHTML=[...reports].reverse().slice(0,5).map(r=>`<div class="recent-report-item"><div class="report-type-icon">${typeIcon(r.type)}</div><div><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></div><div class="report-item-right"><span class="report-badge">${r.type}</span><span class="report-date">🕐 ${r.date}</span><button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button></div></div>`).join('');
+    listEl.innerHTML=[...reports].reverse().slice(0,3).map(r=>`<div class="recent-report-item"><div class="report-type-icon">${typeIcon(r.type)}</div><div><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></div><div class="report-item-right"><span class="report-badge">${r.type}</span><span class="report-date">🕐 ${r.date}</span><button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button></div></div>`).join('');
   }
 
   renderDashboardBoard('dashboard-support-docs', supportDocs, {
@@ -351,9 +351,9 @@ window.updateDataLists = function() {
     companies.forEach(c=>sel.innerHTML+=`<option value="${c.name}">${c.name}</option>`);
   });
   const cBody=document.getElementById('company-list-body');
-  if(cBody){ const shown=companies.slice(0,5); cBody.innerHTML=shown.length?shown.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>'; }
+  if(cBody){ const shown=companies.slice(0,3); cBody.innerHTML=shown.length?shown.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>'; }
   const rBody=document.getElementById('report-list-body');
-  if(rBody){ const shown=[...reports].reverse().slice(0,5); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
+  if(rBody){ const shown=[...reports].reverse().slice(0,3); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
   const filterComp=document.getElementById('filter-company');
   if(filterComp){ filterComp.innerHTML='<option value="">전체 업체</option>'; companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`); }
   updateDashboardReports(); renderCompanyCards();
@@ -1677,7 +1677,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     {name:'인플루언서 협업 및 리뷰 마케팅',score:80},
     {name:'쿠팡·마켓컬리 등 이커머스 광고',score:75},
     {name:'제휴 마케팅 (밀키트·HMR 브랜드)',score:60}
-  ]).slice(0,5);
+  ]).slice(0,3);
   var strategies = d.strategies && d.strategies.length ? d.strategies : [
     (cData.name||'해당 기업')+'의 핵심 제품 메시지를 SNS 숏폼 콘텐츠 중심으로 재정의하여 브랜드 인지도와 검색량을 동시에 끌어올려야 함',
     '인플루언서 협업과 후기형 콘텐츠를 병행하여 초기 신뢰 형성과 체험 전환을 동시에 유도해야 함',

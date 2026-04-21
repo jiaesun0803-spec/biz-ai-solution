@@ -549,9 +549,13 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     width: 100%;
     min-height: 54px;
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 14px;
     border-radius: 9px;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+    white-space: nowrap;
+    word-break: keep-all;
+    line-height: 1.1;
+    letter-spacing: -0.2px;
 }
 .report-left-actions-double {
     flex-direction: column;
