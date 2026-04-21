@@ -346,10 +346,18 @@ window.savePasswordSettings=async function(){
     alert(e.message);
   }
 };
-window.saveApiSettings=function(){
+window.saveApiSettings=async function(){
   let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
-  s.apiKey=document.getElementById('set-api-key').value||'';
-  if(updateUserDB(s)) alert('API 키가 저장되었음.');
+  const apiKey=document.getElementById('set-api-key').value||'';
+  try {
+    await apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: apiKey }) });
+    s.apiKey = apiKey;
+    localStorage.setItem(DB_SESSION, JSON.stringify(s));
+    loadUserProfile();
+    alert('API 키가 저장되었음.');
+  } catch(e) {
+    alert('API 키 저장 실패: ' + (e.message||'알 수 없는 오류'));
+  }
 };
 function renderAdminApprovalList(){
   const panel=document.getElementById('admin-settings-panel');
@@ -2744,9 +2752,9 @@ function buildBizPlanPrompt(cData, fRev) {
 // ★ REPORT_CONFIGS
 // ===========================
 var REPORT_CONFIGS = {
-  finance:     {typeLabel:'재무진단',    title:'상세 재무진단',       contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
-  aiTrade:     {typeLabel:'상권분석',    title:'AI 상권분석 리포트',  contentAreaId:'aiTrade-content-area',    landscape:false, buildPrompt:buildTradePrompt,     buildHTML:buildTradeHTML},
-  aiMarketing: {typeLabel:'마케팅제안',  title:'마케팅 제안서',        contentAreaId:'aiMarketing-content-area',landscape:false, buildPrompt:buildMarketingPrompt, buildHTML:buildMarketingHTML},
+  finance:     {typeLabel:'재무진단',    title:'재무진단',              contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
+  aiTrade:     {typeLabel:'상권분석',    title:'AI 상권분석',           contentAreaId:'aiTrade-content-area',    landscape:false, buildPrompt:buildTradePrompt,     buildHTML:buildTradeHTML},
+  aiMarketing: {typeLabel:'마케팅제안',  title:'마케팅제안',            contentAreaId:'aiMarketing-content-area',landscape:false, buildPrompt:buildMarketingPrompt, buildHTML:buildMarketingHTML},
   aiFund:      {typeLabel:'정책자금매칭',title:'AI 정책자금매칭',      contentAreaId:'aiFund-content-area',     landscape:false, buildPrompt:buildFundPrompt,      buildHTML:buildFundHTML},
   aiBiz:       {typeLabel:'사업계획서',  title:'AI 사업계획서',        contentAreaId:'aiBiz-content-area',      landscape:true,  buildPrompt:buildBizPlanPrompt,   buildHTML:buildBizPlanHTML}
 };
@@ -2800,14 +2808,14 @@ window.generateReport = async function(type, version, event) {
   var rptClient = {
     id:'rep_'+idBase+'_c',
     type:'경영진단', company:cData.name,
-    title:'경영진단보고서 (클라이언트용)',
+    title:cData.name+'_경영진단보고서(클라이언트용)',
     date:today, content:JSON.stringify(data),
     version:'client', revenueData:rev, reportType:'management'
   };
   var rptConsultant = {
     id:'rep_'+(idBase+1)+'_k',
     type:'경영진단', company:cData.name,
-    title:'경영진단보고서 (컨설턴트용)',
+    title:cData.name+'_경영진단보고서(컨설턴트용)',
     date:today, content:JSON.stringify(data),
     version:'consultant', revenueData:rev, reportType:'management'
   };
@@ -2877,8 +2885,8 @@ window.generateAnyReport = async function(type, version, event) {
   }
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
-  var vL = type==='aiBiz'?(version==='draft'?'초안':'완성본'):(version==='client'?'클라이언트용':'컨설턴트용');
-  var rpt = {id:'rep_'+Date.now(),type:cfg.typeLabel,company:cData.name,title:cfg.title+' ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
+  var rptTitle = cData.name+'_'+cfg.title;
+  var rpt = {id:'rep_'+Date.now(),type:cfg.typeLabel,company:cData.name,title:rptTitle,date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
   var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
   localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
@@ -2886,7 +2894,7 @@ window.generateAnyReport = async function(type, version, event) {
   var ca = document.getElementById(cfg.contentAreaId);
   resetContentArea(ca);
   ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
-  _currentReport = {company:cData.name, type:cfg.title+' ('+vL+')', contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
+  _currentReport = {company:cData.name, type:rptTitle, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
   initReportCharts(rev);
 };
 
