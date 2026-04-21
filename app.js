@@ -1138,20 +1138,20 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
 
 function buildCoverHTML(cData, config, rev, dateStr) {
   var color = config.borderColor||'#3b82f6';
-  var vLabel = config.version==='consultant'?'컨설턴트용':config.version==='client'?'기업전달용':(config.vLabel||'');
+  var vLabel = config.version==='consultant'?'컨설턴트용':config.version==='client'?'클라이언트용':(config.vLabel||'');
   return buildUnifiedCover(config.title||config.reportKind||'보고서', vLabel, cData, dateStr, color);
 }
 
 function mgmtCover(cData, rev, exp, dateStr, version) {
   var isConsultant = (version === 'consultant');
   var color = isConsultant ? '#334155' : '#2563eb';
-  var vLabel = isConsultant ? '컨설턴트용' : '기업전달용';
+  var vLabel = isConsultant ? '컨설턴트용' : '클라이언트용';
   return buildUnifiedCover('AI 경영진단보고서', vLabel, cData, dateStr, color);
 }
 
 
 // ═══════════════════════════════════════
-// ★ 경영진단 기업전달용 — 자연 흐름 레이아웃
+// ★ 경영진단 클라이언트용 — 자연 흐름 레이아웃
 //   페이지 강제 없음, 카테고리 단위 break-inside:avoid
 // ═══════════════════════════════════════
 function buildMgmtClientHTML(d, cData, rev, dateStr) {
@@ -1392,7 +1392,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
 
 
 // ═══════════════════════════════════════════════
-// ★ 경영진단 컨설턴트용 — 자연 흐름 레이아웃 (기업전달용 동일 구조)
+// ★ 경영진단 컨설턴트용 — 자연 흐름 레이아웃 (클라이언트용 동일 구조)
 // ═══════════════════════════════════════════════
 function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var C = '#1e293b';   // dark accent
@@ -1477,42 +1477,60 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 
   // ── CAT2: 재무 현황 ────────────────────────
   var cat2 = cat(2,'재무 현황 분석','리스크 중점 분석',
-    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:10px">'
+    '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:12px">'
     +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
     +'<div class="rp-ch" style="height:140px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">'
     +[['전년 매출',fKRW(rev.y25),'2025년','#475569'],['금년 예상',fKRW(exp),'연환산','#475569'],['YoY 성장',growRate,'전년 대비','#16a34a'],['현금흐름','주의','관리 필요','#f97316']].map(function(v){
-      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:15px;font-weight:800;color:'+v[3]+'">'+v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
+      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:15px;font-weight:800;color:'+v[3]+'">' +v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 16px;background:#f8fafc">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0">💡 재무 현황 분석</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    +'<div style="border:1.5px solid #3b82f6;border-radius:10px;padding:14px 16px;background:#eff6ff">'
+    +'<div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #bfdbfe">💡 재무 현황 분석</div>'
+    +'<div style="display:flex;flex-direction:column;gap:9px">'
     +(d.finance_strengths||[
         nm+'는 전년 대비 금년 예상 매출이 80% 이상 급증하며 매우 강력한 성장세를 시현하고 있음',
-        '화장품 원료 유통업의 특성상 상대적으로 높은 마진율을 유지하며 수익성 측면에서 긍정적인 구조를 보유함',
-        '고정비 최소화를 통해 재무 건전성 및 유동성 확보에 유리한 입지를 점하고 있음',
-        '안정적인 공급처 확보로 원가 경쟁력을 유지하며 수익 극대화에 기여하는 구조를 보유함'
-      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#475569"></div><span>'+t+'</span></div>';}).join('')
+        '매출 성장에 비해 고정비 증가가 억제되어 영업 레버리지 효과가 수익성 개선으로 이어지고 있음',
+        '주요 원재료 공급처와의 장기 계약으로 원가 안정성을 확보하고 있으며 마진율 방어에 유리한 구조임',
+        '재고 회전율이 업종 평균 대비 양호한 수준을 유지하여 운전자본 효율성이 상대적으로 높음',
+        '매출채권 회수 기간이 짧아 현금 전환 주기(CCC)가 경쟁사 대비 유리한 편이며 유동성 리스크가 낮음',
+        '고정비 최소화 구조로 손익분기점이 낮게 형성되어 매출 변동에도 흑자 구조를 유지할 가능성이 높음'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#1e3a5f;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+t+'</span></div>';}).join('')
     +'</div></div>'
-    +'<div style="border:1px solid #fed7aa;border-radius:10px;padding:13px 16px;background:#fff7ed">'
-    +'<div style="font-size:13px;font-weight:700;color:#f97316;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #fed7aa">⚠️ 재무 리스크</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<div style="border:1.5px solid #f97316;border-radius:10px;padding:14px 16px;background:#fff7ed">'
+    +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #fed7aa">⚠️ 재무 리스크</div>'
+    +'<div style="display:flex;flex-direction:column;gap:9px">'
     +(d.finance_risks||[
-        '운전자본 부족 리스크 — 급성장에 따른 현금흐름 단기 경색 가능성을 사전에 차단해야 함',
-        '단일 아이템 의존 구조 — 포트폴리오 다각화를 통한 매출 안정성 강화가 시급함',
-        '대표 의존도 높은 재무 운영 구조 — 핵심 인력 이탈 시 사업 연속성에 심각한 영향이 있음',
-        '내부 통제 및 재무 관리 시스템 미흡 — 규모 확장에 따른 잠재적 리스크 증대 가능성 있음'
-      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
+        '운전자본 부족 리스크 — 급성장에 따른 현금흐름 단기 경색 가능성이 높아 즉각적인 관리 체계 구축이 필요함',
+        '단일 아이템 의존 구조 — 핵심 제품 매출 집중도가 80% 이상으로 포트폴리오 다각화가 시급함',
+        '대표 의존도 높은 재무 운영 구조 — 핵심 인력 이탈 시 재무 의사결정 공백이 발생할 위험이 있음',
+        '내부 통제 및 재무 관리 시스템 미흡 — 규모 확장에 따른 회계 오류 및 부정 리스크가 증대됨',
+        '부채 의존도 증가 추세 — 차입금 증가로 인한 이자 부담이 영업이익을 잠식할 가능성이 있음',
+        '매출 급증 대비 자본 적립 속도 부족 — 자기자본비율 하락 시 금융기관 신용 평가에 부정적 영향이 있음'
+      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#7c2d12;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
     +'</div></div>'
     +'</div>'
-    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;background:#f8fafc;margin-bottom:10px">'
-    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📊 영역별 재무 지표</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-    +[['매출 성장률',bars.finance||82],['매출이익률',Math.max((bars.finance||82)-8,62)],['현금흐름 안정성',Math.max((bars.finance||82)-25,45)],['부채 안정성',Math.min((bars.finance||82)+3,88)]].map(function(b){
-      var bc=b[1]<60?'#f97316':'#475569';
-      return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+b[0]+'</span><span style="font-weight:700;color:'+bc+'">'+b[1]+'점</span></div><div style="height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+b[1]+'%;background:'+bc+'"></div></div></div>';
+    +'<div style="page-break-before:always;break-before:page"></div>'
+    +'<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;background:#f8fafc;margin-bottom:12px">'
+    +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid #e2e8f0">📊 영역별 재무 지표</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+    +[['매출 성장률','전년 대비 매출 증가율로 사업 확장 속도를 나타냄',bars.finance||82,'#16a34a'],['매출이익률','매출 대비 매출총이익 비율로 상품 경쟁력을 반영함',Math.max((bars.finance||82)-8,62),'#2563eb'],['현금흐름 안정성','영업활동 현금흐름의 안정성으로 단기 지급 능력을 나타냄',Math.max((bars.finance||82)-25,45),'#f97316'],['부채 안정성','부채비율 역수 기반 지표로 재무 건전성 수준을 나타냄',Math.min((bars.finance||82)+3,88),'#7c3aed']].map(function(b){
+      var score=b[2]; var color=b[3];
+      var grade=score>=80?'우수':score>=65?'양호':score>=50?'보통':'주의';
+      var gradeBg=score>=80?'#dcfce7':score>=65?'#dbeafe':score>=50?'#fef9c3':'#fee2e2';
+      var gradeColor=score>=80?'#15803d':score>=65?'#1d4ed8':score>=50?'#854d0e':'#dc2626';
+      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<span style="font-size:13px;font-weight:700;color:#334155">'+b[0]+'</span>'
+        +'<span style="background:'+gradeBg+';color:'+gradeColor+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">'+grade+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#64748b;margin-bottom:8px;line-height:1.5">'+b[1]+'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+        +'<div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+score+'%;background:'+color+'"></div></div>'
+        +'<span style="font-size:15px;font-weight:900;color:'+color+';min-width:36px;text-align:right">'+score+'점</span>'
+        +'</div>'
+        +'</div>';
     }).join('')
     +'</div></div>'
     + mgmtFB(d.fb_finance||[
@@ -1641,33 +1659,21 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'<div class="rp-body">'
     +'<div style="border-bottom:2px solid #fcd34d;padding-bottom:10px;margin-bottom:14px;font-size:13px;font-weight:700;color:#92400e">🔒 컨설턴트 전용 자료 (기업 전달 금지)</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
-    +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">🚨 시급 해결 이슈 TOP 3</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">'
+    +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
+    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">🚨 시급 해결 이슈 TOP 3</div>'
     +(d.consultant_issues||[
       nm+'의 대표 1인 의존도를 낮추기 위한 핵심 인력 채용과 업무 분담 체계 구축이 가장 시급한 과제임',
       '급성장하는 매출에 상응하는 내부 통제·운영 효율성 확보를 위해 체계적인 관리 시스템 도입이 절실함',
       '미래 성장을 위한 전략적 투자 재원 마련과 효과적인 정책자금 조달 계획 수립이 당면 핵심 과제임'
-    ]).map(function(t,i){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:6px"><div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;flex-shrink:0">TOP'+(i+1)+'</div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t,i){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:8px"><div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:800;flex-shrink:0">TOP'+(i+1)+'</div><span>'+t+'</span></div>';}).join('')
     +'</div>'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💰 정책자금 신청 전략</div>'
-    +(d.consultant_funds||[
-      '1순위: 중진공 소공인 특화자금(1억) — 이번 달 신청 착수, 약 30일 내 승인 가능한 가장 빠른 루트임',
-      '2순위: 기보 기술보증(3억) — 현재 역량 기반 우대 적용, 사업계획서 준비 후 병행 신청 권고',
-      '3순위: 벤처인증 취득 후 신보 특례보증(2억) — 총 6억+ 조달 시나리오 실행이 가능함',
-      '병행 전략: 소진공 성장촉진자금(1억) 추가 신청으로 최대 7억+ 조달 극대화가 가능함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:5px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
-    +'</div>'
-    +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px">'
-    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">📜 인증 취득 전략 + 가점추천</div>'
+    +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
+    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">📜 인증 취득 전략 + 가점추천</div>'
     +(d.consultant_certs||[
       '벤처인증 우선 취득 — 기술평가 방식 활용(현장 심사 불요), 현재 매출·역량으로 즉시 신청이 가능함',
       '이노비즈 인증은 벤처인증 취득 후 1년 내 추진 — 기술 경쟁력 지표 사전 정비가 필요함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:5px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
     +certs.map(function(c,i){
       return '<div style="background:white;border:1px solid #fcd34d;border-radius:8px;padding:9px 11px;margin-top:6px;display:flex;align-items:flex-start;gap:9px">'
         +'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:2px">'+c.name+'</div><div style="font-size:11px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
@@ -1675,22 +1681,34 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
         +'</div>';
     }).join('')
     +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px">'
-    +'<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">📈 마케팅 개선</div>'
+    +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
+    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">💰 정책자금 신청 전략</div>'
+    +(d.consultant_funds||[
+      '1순위: 중진공 소공인 특화자금(1억) — 이번 달 신청 착수, 약 30일 내 승인 가능한 가장 빠른 루트임',
+      '2순위: 기보 기술보증(3억) — 현재 역량 기반 우대 적용, 사업계획서 준비 후 병행 신청 권고',
+      '3순위: 벤처인증 취득 후 신보 특례보증(2억) — 총 6억+ 조달 시나리오 실행이 가능함',
+      '병행 전략: 소진공 성장촉진자금(1억) 추가 신청으로 최대 7억+ 조달 극대화가 가능함'
+    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    +'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
+    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">📈 마케팅 개선</div>'
     +(d.consultant_marketing||[
       '디지털 마케팅: '+nm+'를 위한 SNS·블로그·온라인 채널을 활용한 홍보 및 잠재 고객 발굴 전략을 수립함',
-      'B2B 영업 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴을 위한 영업 프로세스 개선 방안을 제안함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:4px"><div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+      'B2B 영업 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴을 위한 영업 프로세스 개선 방안을 제안함',
+      '콘텐츠 마케팅: 전문 블로그·유튜브 채널 운영으로 업계 신뢰도를 높이고 인바운드 리드를 창출함',
+      '리뷰·UGC 전략: 기존 고객의 후기를 적극 수집·활용하여 신규 고객 전환율을 높이는 방안을 실행함'
+    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
     +'</div>'
-    +'<div style="background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px">'
-    +'<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">💳 신용 개선</div>'
+    +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
+    +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">💳 신용 개선</div>'
     +(d.consultant_credit||[
-      '재무제표 개선: '+nm+'의 회계 처리 투명성을 높이고 재무 건전성을 강화하여 신용 평가에 긍정적 영향을 줌',
-      '정책 자금 활용 상환 계획: 안정적인 자금 흐름으로 부채 비율을 관리하며 신용도를 지속 향상시킴'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:4px"><div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
-    +'</div>'
-    +'</div>'
+      '재무제표 정비: '+nm+'의 회계 처리 투명성을 높이고 재무 건전성을 강화하여 신용 평가에 긍정적 영향을 줌',
+      '부채 비율 관리: 정책자금 상환 계획을 수립하여 안정적인 자금 흐름으로 신용도를 지속 향상시킴',
+      '연체 이력 관리: 기존 대출 원리금 연체 없이 관리하여 신용등급 유지 및 추가 조달 여력을 확보함',
+      '세금 완납 유지: 국세·지방세 완납 상태를 유지하여 정책자금 심사 시 결격 사유를 사전에 차단함'
+    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
     +'</div>'
     +'</div>'
     +'</div>'
@@ -2564,7 +2582,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
   var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
   return '너는 대한민국 최고 수준의 경영컨설턴트야. \n'
     +'아래 기업 데이터를 기반으로 경영진단보고서에 필요한 전체 데이터를 한 번에 생성해.\n'
-    +'기업전달용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
+    +'클라이언트용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
     +'【필수 규칙】\n'
     +'- 기업명 \''+nm+'\', 핵심아이템 \''+itm+'\', 실제 수치('+r25+', '+rExp+') 를 각 항목에 반드시 자연스럽게 포함\n'
     +'- 모든 텍스트 항목은 반드시 60자 이상, 구체적이고 실질적인 내용으로 작성\n'
@@ -2574,7 +2592,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'"grade":"A- 등 등급",'
     +'"grade_desc":"고성장 유망기업 등 8자이내",'
 
-    // ── 공통 데이터 (기업전달용·컨설턴트용 모두 사용) ──
+    // ── 공통 데이터 (클라이언트용·컨설턴트용 모두 사용) ──
     +'"overview":["'+nm+'의 현황 5개항목 각60자이상"],'
     +'"finance_strengths":["'+nm+'의 재무강점 4개 각60자이상"],'
     +'"finance_risks":["'+nm+'의 재무개선포인트 3개 각60자이상"],'
@@ -2730,7 +2748,7 @@ window.generateReport = async function(type, version, event) {
     var td = document.getElementById('loading-desc-text');
     if(tt) tt.textContent = '경영진단보고서 생성 중...';
     if(td) td.innerHTML = '<b>'+cData.name+'</b> 기업 데이터를 종합 분석하여<br>'
-      +'기업전달용 + 컨설턴트용을 <b style="color:#3b82f6">동시에</b> 생성함.<br>'
+      +'클라이언트용 + 컨설턴트용을 <b style="color:#3b82f6">동시에</b> 생성함.<br>'
       +'<b style="color:#3b82f6">최대 90초</b>가 소요될 수 있음.';
   }
 
@@ -2754,7 +2772,7 @@ window.generateReport = async function(type, version, event) {
   var rptClient = {
     id:'rep_'+idBase+'_c',
     type:'경영진단', company:cData.name,
-    title:'경영진단보고서 (기업전달용)',
+    title:'경영진단보고서 (클라이언트용)',
     date:today, content:JSON.stringify(data),
     version:'client', revenueData:rev, reportType:'management'
   };
@@ -2788,7 +2806,7 @@ window.generateReport = async function(type, version, event) {
 
   _currentReport = {
     company: cData.name,
-    type: '경영진단보고서 ('+(version==='client'?'기업전달용':'컨설턴트용')+')',
+    type: '경영진단보고서 ('+(version==='client'?'클라이언트용':'컨설턴트용')+')',
     contentAreaId: 'report-content-area',
     landscape: false
   };
@@ -2831,7 +2849,7 @@ window.generateAnyReport = async function(type, version, event) {
   }
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
-  var vL = type==='aiBiz'?(version==='draft'?'초안':'완성본'):(version==='client'?'기업전달용':'컨설턴트용');
+  var vL = type==='aiBiz'?(version==='draft'?'초안':'완성본'):(version==='client'?'클라이언트용':'컨설턴트용');
   var rpt = {id:'rep_'+Date.now(),type:cfg.typeLabel,company:cData.name,title:cfg.title+' ('+vL+')',date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
   var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
   localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
