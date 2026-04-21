@@ -1416,112 +1416,169 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 function buildFinanceHTML(d, cData, rev, dateStr) {
   var color = '#2563eb';
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 상세 재무진단',reportKind:'AI 상세 재무진단 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
   var scores = d.scores||{profit:72,stable:80,growth:88};
   var scD    = d.score_descs||{profit:'매출이익률 양호',stable:'부채비율 안정적',growth:'매출 성장률 최우수'};
   var debtData  = d.debt||[{name:'중진공',ratio:54},{name:'기보',ratio:27},{name:'재단',ratio:19}];
   var dColors   = ['#2563eb','#7c3aed','#06b6d4','#16a34a','#ea580c'];
   var pbars = d.profit_bars||[{label:'매출 성장률(YoY)',value:85,display:'+21%'},{label:'매출이익률',value:62,display:'38%'},{label:'영업이익률',value:44,display:'22%'},{label:'현금흐름 안정성',value:70,display:'양호'}];
+  var totalScore = Math.round((scores.profit+scores.stable+scores.growth)/3);
+  var yoy = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'분석중';
+  var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
+  var managerName = session.name || '담당자 미등록';
+  var brandName = session.dept || '솔루션빌더스';
+  var issueDateObj = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(issueDateObj.getTime())) issueDateObj = new Date();
+  var issueYear = issueDateObj.getFullYear();
+  var issueMonth = issueDateObj.getMonth() + 1;
+  var issueMonthText = issueYear + '년 ' + issueMonth + '월';
+  var companyName = (cData && cData.name) ? cData.name : '기업명 미입력';
+  var growthTargets = Array.isArray(d.growth_targets) && d.growth_targets.length >= 3
+    ? d.growth_targets.slice(0,3)
+    : [Math.max(exp, 10000), Math.round(Math.max(exp, 10000) * 1.45), Math.round(Math.max(exp, 10000) * 1.95)];
+  var growthNarrative = Array.isArray(d.growth_items) && d.growth_items.length
+    ? d.growth_items.slice(0,2)
+    : [
+        companyName+'의 최근 매출 성장세는 업종 평균을 크게 상회하며 향후 3개년 동안 안정적인 외형 확대 가능성을 보여주고 있음',
+        '신규 거래처 확보, 채널 다각화, 운영 효율 개선이 병행될 경우 성장성과 재무 건전성을 동시에 강화할 수 있음'
+      ];
+  var stableMetrics = d.stable_metrics||[
+    {label:'부채비율',value:'낮음',desc:'정책자금 중심'},
+    {label:'연체이력',value:'없음',desc:'건전'},
+    {label:'KCB신용',value:'710점',desc:'3등급'},
+    {label:'종합등급',value:'A-',desc:'우수'}
+  ];
 
-  function gauge(val, col, lbl, desc) {
-    var da = Math.round((val/100)*126);
-    return '<div class="rp-section" style="text-align:center">'
-      +'<div style="font-size:14px;font-weight:700;color:'+col+';margin-bottom:8px">'+lbl+'</div>'
-      +'<svg viewBox="0 0 100 56" width="95" height="58" style="display:block;margin:0 auto 5px">'
-      +'<path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#e2e8f0" stroke-width="10"/>'
-      +'<path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="'+col+'" stroke-width="10" stroke-dasharray="'+da+' '+(126-da)+'" stroke-linecap="round"/>'
-      +'<text x="50" y="47" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">'+val+'</text>'
-      +'</svg>'
-      +'<div style="font-size:12px;color:#64748b;font-weight:500">'+desc+'</div>'
+  function buildFinanceCover() {
+    return '<div class="rp-cover" style="background:white;padding:0 28px 30px;position:relative;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden">'
+      +'<div style="position:absolute;left:40px;top:40px;bottom:78px;width:1px;background:#e5e7eb"></div>'
+      +'<div style="padding-top:34px">'
+      +'<div style="height:8px;background:'+color+';border-radius:0;margin:0 0 88px 0"></div>'
+      +'<div style="text-align:center;padding:0 34px">'
+      +'<div style="font-size:56px;font-weight:900;color:#3f3f46;letter-spacing:-2.1px;line-height:1.08;margin-bottom:28px">상세 재무진단</div>'
+      +'<div style="width:64%;height:1px;background:#d1d5db;margin:0 auto 30px"></div>'
+      +'<div style="font-size:28px;font-weight:800;color:#111827;line-height:1.4">'+companyName+'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div style="padding:0 22px">'
+      +'<div style="border-top:1px solid #d1d5db"></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 11px;font-size:12px;font-weight:700;color:#3f3f46">'
+      +'<span>작성일: '+issueMonthText+'</span>'
+      +'<span>담당자: '+managerName+'</span>'
+      +'</div>'
+      +'<div style="border-top:1px solid #d1d5db;padding-top:12px;text-align:center">'
+      +'<div style="font-size:30px;font-weight:900;color:'+color+';letter-spacing:-1px;line-height:1.1">'+brandName+'</div>'
+      +'</div>'
+      +'</div>'
       +'</div>';
   }
 
+  function financeMetricCard(label, value, desc, valueColor) {
+    return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;min-height:122px;display:flex;flex-direction:column;justify-content:center;text-align:center">'
+      +'<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700">'+label+'</div>'
+      +'<div style="font-size:20px;font-weight:900;color:'+(valueColor||color)+';line-height:1.28;letter-spacing:-0.5px">'+value+'</div>'
+      +'<div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.4">'+desc+'</div>'
+      +'</div>';
+  }
+
+  function financeGaugeCard(label, val, col, desc) {
+    var dash = Math.max(0, Math.min(126, Math.round((val/100)*126)));
+    return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 14px 12px;min-height:188px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center">'
+      +'<div style="font-size:14px;font-weight:800;color:'+col+';margin-bottom:8px">'+label+'</div>'
+      +'<svg viewBox="0 0 100 58" width="112" height="66" style="display:block;margin:0 auto 4px">'
+      +'<path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#e2e8f0" stroke-width="10"/>'
+      +'<path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="'+col+'" stroke-width="10" stroke-dasharray="'+dash+' '+(126-dash)+'" stroke-linecap="round"/>'
+      +'<text x="50" y="47" text-anchor="middle" font-size="16" font-weight="800" fill="#1e293b">'+val+'</text>'
+      +'</svg>'
+      +'<div style="font-size:12px;color:#334155;line-height:1.65">'+desc+'</div>'
+      +'</div>';
+  }
+
+  function financeKeyMetricCard(metric) {
+    return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 12px;min-height:104px;display:flex;flex-direction:column;justify-content:center;text-align:center">'
+      +'<div style="font-size:12px;color:#64748b;margin-bottom:10px;font-weight:700">'+metric.label+'</div>'
+      +'<div style="font-size:24px;font-weight:900;color:'+color+';line-height:1.1;margin-bottom:6px">'+metric.value+'</div>'
+      +'<div style="font-size:12px;color:#94a3b8;line-height:1.45">'+metric.desc+'</div>'
+      +'</div>';
+  }
+
+  function financeActionCard(topColor, title, body) {
+    return '<div class="rp-rmi" style="border-top:4px solid '+topColor+';display:flex;flex-direction:column;min-height:262px;height:100%;padding:16px 15px">'
+      +'<div class="rp-rmh" style="color:'+topColor+';font-size:14px">'+title+'</div>'
+      +'<div style="font-size:13px;color:#475569;line-height:1.82;white-space:pre-line">'+body+'</div>'
+      +'</div>';
+  }
+
+  var cover = buildFinanceCover();
+
   var p1 = rpPage(1,'재무 종합 현황','수익성·안정성·성장성',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('연도별 매출 추이', color, '<div class="rp-ch" style="height:195px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>')
-    +'<div class="rp-g4">'
-    +rpMC('전년 매출',fKRW(rev.y25),'2025년',color)
-    +rpMC('금년 예상',fKRW(exp),'연환산',color)
-    +rpMC('성장률',(rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'분석중','YoY','#16a34a')
-    +rpMC('종합 점수',Math.round((scores.profit+scores.stable+scores.growth)/3)+'점','100점 만점',color)
+    '<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="display:grid;grid-template-columns:1.45fr 1fr;gap:14px;align-items:stretch">'
+    +rpSec('연도별 매출 추이', color, '<div class="rp-ch" style="height:198px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>')
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +financeMetricCard('전년 매출', fKRW(rev.y25), '2025년', color)
+    +financeMetricCard('금년 예상', fKRW(exp), '연환산', color)
+    +financeMetricCard('성장률', yoy, 'YoY', '#16a34a')
+    +financeMetricCard('종합 점수', totalScore+'점', '100점 만점', color)
     +'</div>'
     +'</div>'
-    +'<div class="rp-colF">'
-    +'<div class="rp-g3">'
-    +gauge(scores.profit,color,'수익성',scD.profit)
-    +gauge(scores.stable,'#16a34a','안정성',scD.stable)
-    +gauge(scores.growth,'#7c3aed','성장성',scD.growth)
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'
+    +financeGaugeCard('수익성', scores.profit, color, scD.profit)
+    +financeGaugeCard('안정성', scores.stable, '#16a34a', scD.stable)
+    +financeGaugeCard('성장성', scores.growth, '#7c3aed', scD.growth)
     +'</div>'
     +rpSec('종합 재무 진단 요약', color, rpLst([
-      '3개 핵심 지표 종합 점수 '+Math.round((scores.profit+scores.stable+scores.growth)/3)+'점 — 업종 평균 대비 우수한 재무 건전성을 유지하고 있음',
+      '3개 핵심 지표 종합 점수 '+totalScore+'점 — 업종 평균 대비 우수한 재무 건전성을 유지하고 있음',
       scD.profit+' — 매출 대비 이익 창출 능력이 동업종 평균을 상회하여 수익성 기반이 견고함',
       scD.stable+' — 외부 차입 의존도가 낮고 자체 자본 비율이 안정적으로 유지되고 있어 재무 위험이 낮음',
-      scD.growth+' — 전년 대비 성장률이 업계 평균을 크게 상회하여 시장 내 성장 잠재력이 충분히 확인됨'
+      scD.growth+' — 시장 내 성장 잠재력이 충분히 확인되며 중기 확장 여력이 높은 상태임'
     ], color))
-    +'</div>'
     +'</div>'
   );
 
   var p2 = rpPage(2,'수익성 및 안정성 분석','부채 구성 · 핵심 재무 지표',color,
-    '<div class="rp-3col">'
-    +'<div class="rp-3c">'
+    '<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
     +rpSec('수익성 분석', color, pbars.map(function(b){return rpHB(b.label,b.value,b.display,color);}).join(''))
-    +rpSec('수익성 상세 분석', color, rpLst([
+    +rpSec('부채 구성 비율', color,
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:156px">'
+      +'<div class="rp-ch" style="width:142px;height:142px;flex-shrink:0;padding:6px;border:none"><canvas id="fp-donut" data-names="'+debtData.map(function(x){return x.name;}).join('|')+'" data-ratios="'+debtData.map(function(x){return x.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
+      +'<div class="rp-dleg" style="flex:1">'+debtData.map(function(dd,i){return '<div class="rp-dli"><div class="rp-ddt" style="background:'+dColors[i]+'"></div><span style="flex:1">'+dd.name+'</span><span style="font-weight:800;color:#1e293b">'+dd.ratio+'</span></div>';}).join('')+'</div>'
+      +'</div>'
+    )
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
+    +rpSec('수익성 상세 분석', color, rpLst(d.profit_detail||[
       '매출이익률이 업종 평균(25~30%)을 상회하여 단위당 수익성이 우수한 제품 구조를 보유하고 있음',
       '영업이익률이 안정적으로 유지되고 있어 판매관리비 통제 능력이 검증된 것으로 평가할 수 있음'
     ], color))
-    +'</div>'
-    +'<div class="rp-3c">'
-    +rpSec('부채 구성 비율', color,
-      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">'
-      +'<div class="rp-ch" style="width:110px;height:110px;flex-shrink:0;padding:4px;border:none"><canvas id="fp-donut" data-names="'+debtData.map(function(x){return x.name;}).join('|')+'" data-ratios="'+debtData.map(function(x){return x.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
-      +'<div class="rp-dleg">'+debtData.map(function(dd,i){return '<div class="rp-dli"><div class="rp-ddt" style="background:'+dColors[i]+'"></div><span style="flex:1">'+dd.name+'</span><span style="font-weight:700">'+dd.ratio+'%</span></div>';}).join('')+'</div>'
-      +'</div>'
-    )
-    +rpSec('부채 구조 분석', color, rpLst([
+    +rpSec('부채 구조 분석', color, rpLst(d.debt_detail||[
       '정책자금 비중이 높아 금리 부담이 낮고 장기 상환 구조로 안정적인 재무 구조를 유지하고 있음',
       '단기 차입금 비중이 낮아 만기 도래에 따른 유동성 위기 가능성이 매우 낮은 수준임'
     ], color))
     +'</div>'
-    +'<div class="rp-3c">'
     +rpSec('안정성 핵심 지표', color,
-      (d.stable_metrics||[{label:'부채비율',value:'낮음',desc:'전액 정책자금'},{label:'KCB 신용',value:'710점',desc:'3등급'},{label:'NICE 신용',value:'740점',desc:'3등급'},{label:'연체·체납',value:'없음',desc:'리스크 최저'}]).map(function(m){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9">'
-          +'<span style="font-size:13px;color:#64748b">'+m.label+'</span>'
-          +'<div style="text-align:right"><div style="font-size:15px;font-weight:700;color:'+color+'">'+m.value+'</div><div style="font-size:12px;color:#94a3b8">'+m.desc+'</div></div>'
-          +'</div>';
-      }).join('')
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">'
+      +stableMetrics.slice(0,4).map(financeKeyMetricCard).join('')
+      +'</div>'
     )
-    +rpSec('신용 개선 방향', color, rpLst([
+    +rpSec('신용 개선 방향', color, rpLst(d.credit_improvements||[
       '현재 신용 3등급 유지 — 정책자금 신청 기준(3등급 이상) 충족 상태로 즉시 신청 가능한 조건임',
       '부가세·소득세 성실 신고 유지로 국세 체납 이력 발생을 원천 차단해야 함'
     ], color))
     +'</div>'
-    +'</div>'
   );
 
   var p3 = rpPage(3,'성장성 분석 및 재무 개선 방향','목표 · 3개년 액션플랜',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('성장성 분석', '#7c3aed', rpLst(d.growth_items||[
-      '매출 성장세가 업종 평균을 크게 상회하며 시장 내 입지를 빠르게 확대하고 있어 성장 가속화 국면임',
-      '신규 고객 유입율이 높아 시장 침투(penetration) 단계에서 확산(expansion) 단계로의 전환이 가시화됨',
-      '핵심 제품 기술력을 기반으로 신제품 개발 및 라인업 확장 가능성이 충분하여 추가 성장 동력 확보 가능',
-      '정책자금 조달 시 생산 설비 투자로 원가율 개선과 매출 성장이 동시에 가속화될 것으로 예상됨',
-      '채널 다각화(쿠팡·B2B·자사몰)를 실현하면 현재 대비 2년 내 매출 2배 이상 달성이 현실적인 목표임'
-    ], '#7c3aed'))
-    +rpSec('3개년 매출 목표', '#7c3aed', '<div class="rp-ch" style="height:120px"><canvas id="fp-growth-chart" style="width:100%;height:100%"></canvas></div>')
-    +'</div>'
-    +'<div class="rp-colF">'
+    '<div style="display:flex;flex-direction:column;gap:14px">'
+    +rpSec('성장성 분석', '#7c3aed', rpLst(growthNarrative, '#7c3aed'))
+    +rpSec('3개년 매출 목표', '#7c3aed', '<div class="rp-ch" style="height:144px"><canvas id="fp-growth-chart" data-y1="'+growthTargets[0]+'" data-y2="'+growthTargets[1]+'" data-y3="'+growthTargets[2]+'" style="width:100%;height:100%"></canvas></div>')
     +rpSec('재무 개선 우선순위 액션플랜', color,
       '<div class="rp-rm3">'
-      +'<div class="rp-rmi" style="border-top:3px solid #ef4444"><div class="rp-rmh" style="color:#dc2626;font-size:13px">🔴 즉시 (1개월)</div><div style="font-size:13px;color:#64748b;line-height:1.65">'+(d.action_urgent||'월별 손익계산서 작성 체계 구축, 현금흐름표 정기 관리 시작, 정책자금 신청서류 목록 작성')+'</div></div>'
-      +'<div class="rp-rmi" style="border-top:3px solid #f97316"><div class="rp-rmh" style="color:#ea580c;font-size:13px">🟠 단기 (3개월)</div><div style="font-size:13px;color:#64748b;line-height:1.65">'+(d.action_short||'정책자금 1~2개 기관 동시 신청, 벤처인증 추진 착수, 회계 ERP 시스템 도입 검토')+'</div></div>'
-      +'<div class="rp-rmi" style="border-top:3px solid '+color+'"><div class="rp-rmh" style="color:#1d4ed8;font-size:13px">🔵 중기 (1년)</div><div style="font-size:13px;color:#64748b;line-height:1.65">'+(d.action_mid||'조달 자금으로 생산 설비 확충 및 원가율 개선 실현, 제2 매출 채널 확보, 이노비즈 인증 취득')+'</div></div>'
+      +financeActionCard('#ef4444','🔴 즉시 (1개월)', d.action_urgent||'월별 손익계산서 작성 체계 구축, 현금흐름표 정기 관리 시작, 정책자금 신청서류 목록 작성')
+      +financeActionCard('#f97316','🟠 단기 (3개월)', d.action_short||'정책자금 1~2개 기관 동시 신청, 벤처인증 추진 착수, 회계 ERP 시스템 도입 검토')
+      +financeActionCard(color,'🔵 중기 (1년)', d.action_mid||'조달 자금으로 생산 설비 확충 및 원가율 개선 실현, 제2 매출 채널 확보, 이노비즈 인증 취득')
       +'</div>'
     )
-    +'</div>'
     +'</div>'
   );
 
@@ -1614,55 +1671,139 @@ function buildTradeHTML(d, cData, rev, dateStr) {
 function buildMarketingHTML(d, cData, rev, dateStr) {
   var color    = '#db2777';
   var cover    = buildCoverHTML(cData, {title:'AI 마케팅 제안서',reportKind:'AI 맞춤형 마케팅 제안서',vLabel:'제안서',borderColor:color}, rev, dateStr);
-  var channels = d.channels||[{name:'SNS (인스타·유튜브 쇼츠)',score:88},{name:'네이버 검색·블로그 광고',score:75},{name:'인플루언서·리뷰 마케팅',score:72},{name:'쿠팡 상품 광고',score:65}];
-  var budget   = d.budget||[{name:'SNS 광고',ratio:38},{name:'검색광고',ratio:25},{name:'콘텐츠제작',ratio:22},{name:'기타',ratio:15}];
-  var bColors  = ['#db2777','#9d174d','#f4c0d1','#fdf2f8'];
-  var kpi      = d.kpi||[{label:'SNS 팔로워',value:'+3,000',period:'3개월'},{label:'월 매출 증가',value:'+30%',period:'6개월'},{label:'재구매율',value:'40%',period:'목표'},{label:'리뷰 누적',value:'500건',period:'6개월'}];
-  var roadmap  = d.roadmap||[{period:'1월',task:'SNS 채널 개설·브랜딩 확립',highlight:false},{period:'2월',task:'인플루언서·블로거 협업 시작',highlight:false},{period:'3월',task:'바이럴 캠페인 집행',highlight:false},{period:'4~5월',task:'성과 분석·채널 최적화',highlight:true},{period:'6월',task:'정기구독 서비스 론칭',highlight:false},{period:'7월~',task:'오프라인·B2B 진출 시작',highlight:false}];
+  var channels = (d.channels && d.channels.length ? d.channels : [
+    {name:'SNS (인스타그램, 유튜브 쇼츠, 틱톡)',score:92},
+    {name:'네이버 검색광고 및 블로그 체험단',score:85},
+    {name:'인플루언서 협업 및 리뷰 마케팅',score:80},
+    {name:'쿠팡·마켓컬리 등 이커머스 광고',score:75},
+    {name:'제휴 마케팅 (밀키트·HMR 브랜드)',score:60}
+  ]).slice(0,5);
+  var strategies = d.strategies && d.strategies.length ? d.strategies : [
+    (cData.name||'해당 기업')+'의 핵심 제품 메시지를 SNS 숏폼 콘텐츠 중심으로 재정의하여 브랜드 인지도와 검색량을 동시에 끌어올려야 함',
+    '인플루언서 협업과 후기형 콘텐츠를 병행하여 초기 신뢰 형성과 체험 전환을 동시에 유도해야 함',
+    '네이버 검색광고·블로그 체험단을 통해 브랜드 검색 유입과 구매 전환 퍼널을 안정적으로 확보해야 함',
+    '이커머스 광고는 시즌성 프로모션과 묶음상품 전략을 연계하여 객단가 상승 구조로 설계해야 함',
+    '성과 측정은 월 단위 KPI와 채널별 ROI 기준으로 운영하여 예산 재배분이 가능하도록 해야 함'
+  ];
+  var budgetTotal = d.budget_total || '700만원/월';
+  var budget   = (d.budget && d.budget.length ? d.budget : [
+    {name:'SNS 광고',ratio:40},
+    {name:'검색광고',ratio:25},
+    {name:'체험단·리뷰',ratio:20},
+    {name:'콘텐츠 제작',ratio:15}
+  ]).slice(0,4);
+  var bColors  = ['#db2777','#be185d','#f472b6','#fbcfe8'];
+  var principles = d.principles && d.principles.length ? d.principles : [
+    '초기 3개월은 디지털 채널 집중 투자로 브랜드 인지도와 검색량을 빠르게 구축함',
+    '4개월차부터는 성과 데이터 기반으로 채널별 비중을 재조정하여 효율을 최적화함',
+    '월별 ROI(광고 수익률) 분석 후 성과가 낮은 채널 예산은 즉시 이동함'
+  ];
+  var kpi = (d.kpi && d.kpi.length ? d.kpi : [
+    {label:'SNS 팔로워',value:'+5,000',period:'3개월'},
+    {label:'월 매출 증가',value:'+40%',period:'6개월'},
+    {label:'재구매율',value:'45%',period:'목표'},
+    {label:'리뷰 누적',value:'700건',period:'6개월'},
+    {label:'검색량 증가',value:'+50%',period:'3개월'},
+    {label:'정기구독 전환',value:'45%',period:'목표'}
+  ]).slice(0,6);
+  var roadmap = (d.roadmap && d.roadmap.length ? d.roadmap : [
+    {period:'1월',task:(cData.name||'해당 기업')+' SNS 채널 리뉴얼 및 숏폼 브랜딩 강화',highlight:false},
+    {period:'2월',task:(cData.coreItem||'핵심 제품')+' 인플루언서 1차 협업 및 숏폼 콘텐츠 기획',highlight:false},
+    {period:'3월',task:(cData.coreItem||'핵심 제품')+' 바이럴 캠페인 런칭',highlight:false},
+    {period:'4월',task:(cData.coreItem||'핵심 제품')+' 마케팅 성과 분석 및 채널별 최적화 진행',highlight:true},
+    {period:'5월',task:(cData.coreItem||'핵심 제품')+' 마케팅 성과 분석 및 채널별 최적화 진행',highlight:true},
+    {period:'6월',task:(cData.coreItem||'핵심 제품')+' 정기구독 서비스 론칭 및 프로모션 운영',highlight:false},
+    {period:'7월~',task:'B2B 채널·외식업체·급식업체 대상 영업 및 재유통 확대',highlight:false},
+    {period:'8월',task:'리뷰 확보 캠페인 및 검색광고 확장',highlight:false},
+    {period:'9월',task:'라이브커머스·이커머스 프로모션 집행',highlight:false},
+    {period:'10월',task:'브랜드 검색량 증대형 콘텐츠 집중 집행',highlight:false},
+    {period:'11월',task:'재구매 고객 리텐션 캠페인 운영',highlight:false},
+    {period:'12월',task:'연말 프로모션 및 성과 정리',highlight:false}
+  ]).slice(0,12).map(function(item){
+    if (item && item.false !== undefined && item.highlight === undefined) item.highlight = item.false;
+    return item;
+  });
+  var focusBoxes = (d.focus_boxes && d.focus_boxes.length ? d.focus_boxes : [
+    {icon:'📊',title:'1~3개월 핵심 지표',items:['SNS 팔로워 +3,000명 달성','리뷰 100건 이상 확보','브랜드 검색량 200% 증가']},
+    {icon:'📈',title:'4~6개월 핵심 지표',items:['월 매출 +30% 달성','재구매율 40% 이상 확보','정기구독 고객 200명 확보']},
+    {icon:'📝',title:'1~3개월 실행 체크',items:['숏폼 콘텐츠 주 3회 발행','체험단·리뷰 운영 정착','검색광고 A/B 테스트 진행']},
+    {icon:'🎯',title:'4~6개월 성과 목표',items:['채널별 CPA 안정화','이커머스 전환율 개선','B2B 제휴처 발굴 시작']}
+  ]).slice(0,4);
+
+  function scoreBar(channel, idx) {
+    var fill = bColors[idx] || color;
+    return '<div style="margin-bottom:13px">'
+      +'<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:5px">'
+      +'<div style="font-size:13px;font-weight:700;color:#334155;line-height:1.45;flex:1">'+channel.name+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:'+fill+';white-space:nowrap">'+channel.score+'점</div>'
+      +'</div>'
+      +'<div style="height:8px;background:#fce7f3;border-radius:999px;overflow:hidden">'
+      +'<div style="width:'+Math.max(8, Math.min(100, channel.score))+'%;height:100%;background:'+fill+';border-radius:999px"></div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  function kpiCard(item) {
+    return '<div style="background:white;border:1px solid #f1d5e4;border-radius:10px;min-height:86px;padding:14px 10px;display:flex;flex-direction:column;justify-content:center;text-align:center">'
+      +'<div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:6px;line-height:1.4">'+item.label+'</div>'
+      +'<div style="font-size:18px;font-weight:900;color:'+color+';line-height:1.15">'+item.value+'</div>'
+      +'<div style="font-size:11px;color:#a1a1aa;margin-top:6px;font-weight:700">'+item.period+'</div>'
+      +'</div>';
+  }
+
+  function roadmapCard(item) {
+    var bg = item.highlight ? '#fbcfe8' : '#fdf2f8';
+    var bd = item.highlight ? color : '#f5c2da';
+    var tc = item.highlight ? '#9d174d' : color;
+    return '<div style="border-radius:10px;background:'+bg+';border:1px solid '+bd+';padding:12px 11px;min-height:126px;height:100%">'
+      +'<div style="font-size:13px;font-weight:800;color:'+tc+';margin-bottom:7px">'+item.period+'</div>'
+      +'<div style="font-size:12px;color:#52525b;line-height:1.68">'+item.task+'</div>'
+      +'</div>';
+  }
+
+  function focusCard(box) {
+    return '<div style="background:#fdf2f8;border:1px solid #f5c2da;border-radius:10px;padding:14px 14px;min-height:138px">'
+      +'<div style="font-size:13px;font-weight:800;color:#9d174d;margin-bottom:8px">'+(box.icon||'📌')+' '+box.title+'</div>'
+      +'<div style="font-size:12px;color:#52525b;line-height:1.8">'+(box.items||[]).map(function(t){return t;}).join('<br>')+'</div>'
+      +'</div>';
+  }
 
   var p1 = rpPage(1,'채널별 마케팅 전략 및 예산','채널 효과 분석 · 예산 배분',color,
-    '<div class="rp-3col">'
-    +'<div class="rp-3c">'
-    +rpSec('채널별 예상 효과 (점수/100)', color, channels.map(function(c,i){return rpHB(c.name,c.score,c.score+'점',i===0?color:i===1?'#be185d':'#9d174d');}).join(''))
+    '<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
+    +rpSec('채널별 예상 효과 (점수/100)', color, channels.map(scoreBar).join(''))
+    +rpSec('핵심 마케팅 전략', color, rpLst(strategies, color))
     +'</div>'
-    +'<div class="rp-3c">'
-    +rpSec('핵심 마케팅 전략', color, rpLst(d.strategies||[
-      '인스타그램·유튜브 쇼츠 중심의 콘텐츠 마케팅으로 브랜드 인지도를 비용 효율적으로 집중 확산함',
-      '식품 전문 인플루언서(팔로워 1~10만 규모)와의 협업으로 신뢰도 높은 바이럴 마케팅을 실행함',
-      '리뷰 이벤트 및 정기구독 할인 프로그램으로 재구매율을 40% 이상으로 높이는 것을 목표로 함',
-      '네이버 스마트플레이스 최적화 및 블로그 협업으로 로컬 브랜드 노출을 극대화해야 함',
-      '쿠팡·스마트스토어 상세페이지 A/B테스트로 구매 전환율을 체계적으로 최적화해야 함'
-    ], color))
-    +'</div>'
-    +'<div class="rp-3c">'
-    +rpSec('월 예산 배분 ('+(d.budget_total||'700만원/월')+')', color,
-      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">'
-      +'<div class="rp-ch" style="width:115px;height:115px;flex-shrink:0;padding:4px;border:none"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
-      +'<div class="rp-dleg">'+budget.map(function(b,i){return '<div class="rp-dli"><div class="rp-ddt" style="background:'+bColors[i]+'"></div><span style="flex:1">'+b.name+'</span><span style="font-weight:700">'+b.ratio+'%</span></div>';}).join('')+'</div>'
+    +rpSec('월 예산 배분 ('+budgetTotal+')', color,
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">'
+      +budget.map(function(b,i){
+        return '<div style="text-align:center">'
+          +'<div style="font-size:18px;font-weight:900;color:#3f3f46;line-height:1">'+b.ratio+'%</div>'
+          +'<div style="font-size:11px;color:#64748b;margin:6px 0 4px;line-height:1.35;min-height:30px">'+b.name+'</div>'
+          +'<div style="width:10px;height:10px;border-radius:50%;background:'+(bColors[i]||color)+';margin:0 auto"></div>'
+          +'</div>';
+      }).join('')
+      +'</div>'
+      +'<div style="display:flex;justify-content:center;align-items:center;padding:8px 0 2px">'
+      +'<div class="rp-ch" style="width:170px;height:170px;flex-shrink:0;padding:6px;border:none;background:transparent"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
       +'</div>'
     )
-    +rpSec('예산 운영 원칙', color, rpLst(['초기 3개월: 디지털 채널 집중 투자로 브랜드 인지도 빠르게 구축','4개월차~: 성과 데이터 기반 채널별 비중 재조정 및 최적화','월별 ROI(광고 수익률) 분석 후 성과 낮은 채널 예산 즉시 이동'], color))
-    +'</div>'
+    +rpSec('예산 운영 원칙', color, rpLst(principles, color))
     +'</div>'
   );
 
   var p2 = rpPage(2,'KPI 목표 및 월별 실행 로드맵','성과 지표 · 실행 타임라인',color,
-    '<div class="rp-g4" style="flex-shrink:0;margin-bottom:14px">'+kpi.map(function(k){return rpMC(k.label,k.value,k.period,color);}).join('')+'</div>'
+    '<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+kpi.map(kpiCard).join('')+'</div>'
     +rpSec('월별 실행 로드맵', color,
-      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:14px">'
-      +roadmap.map(function(r){
-        return '<div style="border-radius:8px;background:'+(r.highlight?'#f4c0d1':'#fdf2f8')+';border:1px solid '+(r.highlight?color:'#f4c0d1')+';padding:11px 9px">'
-          +'<div style="font-size:12px;font-weight:700;color:'+(r.highlight?'#9d174d':color)+';margin-bottom:6px">'+r.period+'</div>'
-          +'<div style="font-size:13px;color:#64748b;line-height:1.5;font-weight:400">'+r.task+'</div>'
-          +'</div>';
-      }).join('')
+      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px">'
+      +roadmap.map(roadmapCard).join('')
       +'</div>'
-      +'<div class="rp-g3">'
-      +'<div style="background:#fdf2f8;border-radius:8px;padding:12px;border:1px solid #fbcfe8"><div style="font-size:13px;font-weight:700;color:#9d174d;margin-bottom:7px">📊 1~3개월 핵심 지표</div><div style="font-size:13px;color:#64748b;line-height:1.7">SNS 팔로워 +3,000명 달성<br>리뷰 100건 이상 확보<br>브랜드 검색량 200% 증가</div></div>'
-      +'<div style="background:#fdf2f8;border-radius:8px;padding:12px;border:1px solid #fbcfe8"><div style="font-size:13px;font-weight:700;color:#9d174d;margin-bottom:7px">📈 4~6개월 핵심 지표</div><div style="font-size:13px;color:#64748b;line-height:1.7">월 매출 +30% 달성<br>재구매율 40% 이상 확보<br>정기구독 고객 200명 확보</div></div>'
-      +'<div style="background:#fdf2f8;border-radius:8px;padding:12px;border:1px solid #fbcfe8"><div style="font-size:13px;font-weight:700;color:#9d174d;margin-bottom:7px">🎯 7개월~ 핵심 지표</div><div style="font-size:13px;color:#64748b;line-height:1.7">B2B 거래처 3건 이상 확보<br>리뷰 500건 누적 달성<br>오프라인 판매 채널 진출</div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      +focusBoxes.map(focusCard).join('')
       +'</div>'
     )
+    +'</div>'
   );
 
   return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
@@ -1683,83 +1824,136 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
   var cReady = d.checklist_ready||['사업자등록증 사본','부가세 신고서 (최근 2년)','국세납부증명서','신용정보 동의서'];
   var cNeed  = d.checklist_need||['사업계획서 (기보 필수)','벤처인증서 (취득 후 추가)'];
+  var scoreItems = d.score_items||[
+    '기본 자격요건 4개 충족 — 중진공·기보·소진공 등 주요 정책자금 즉시 신청 가능한 상태임',
+    '벤처·이노비즈 인증 취득 시 추가 우대 한도 최대 3억원 이상 추가 확보 가능함',
+    '현재 조건에서 신청 가능한 자금 총액: 중진공+기보+소진공 합계 최대 약 5억원 수준임'
+  ];
+  var totalRange = d.total_range || '기본 3억 ~ 최대 7억+';
 
-  function chkS(s){return s==='pass'?{bg:'#dcfce7',tc:'#16a34a',ic:'✓',bbc:'#dcfce7',btc:'#166534',bl:'통과'}:s==='cond'?{bg:'#fef9c3',tc:'#ca8a04',ic:'!',bbc:'#fef9c3',btc:'#854d0e',bl:'조건부'}:{bg:'#fee2e2',tc:'#dc2626',ic:'✗',bbc:'#fee2e2',btc:'#991b1b',bl:'미보유'};}
+  function chkS(s){
+    return s==='pass'?{bg:'#dcfce7',tc:'#16a34a',ic:'✓',bbc:'#dcfce7',btc:'#166534',bl:'통과'}
+      :s==='cond'?{bg:'#fef9c3',tc:'#ca8a04',ic:'!',bbc:'#fef9c3',btc:'#854d0e',bl:'조건부'}
+      :{bg:'#fee2e2',tc:'#dc2626',ic:'✗',bbc:'#fee2e2',btc:'#991b1b',bl:'미보유'};
+  }
+  function fundCat(title, sub, body){
+    return '<div class="rp-cat">'
+      + '<div class="rp-ph">'
+      + '<div class="rp-pnum" style="background:#fff7ed;color:'+color+'">•</div>'
+      + '<span class="rp-ptitle">'+title+'</span>'
+      + '<span class="rp-psub">'+(sub||'')+'</span>'
+      + '</div>'
+      + body
+      + '</div>';
+  }
 
-  var p1 = rpPage(1,'기업 자격요건 분석','신청 가능 여부 종합 체크',color,
+  var topFunds = funds.slice(0, 3);
+  var otherFunds = funds.slice(3);
+
+  var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('기본 자격 체크리스트', color,
-      checks.map(function(c){var s=chkS(c.status);return '<div class="rp-chk"><div class="rp-chi" style="background:'+s.bg+';color:'+s.tc+'">'+s.ic+'</div><div class="rp-cht">'+c.text+'</div><span class="rp-chb" style="background:'+s.bbc+';color:'+s.btc+'">'+s.bl+'</span></div>';}).join('')
-    )
-    +'</div>'
-    +'<div class="rp-colF">'
-    +'<div class="rp-section" style="text-align:center;margin-bottom:10px">'
-    +'<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:8px">신청 가능성 종합 점수</div>'
-    +'<svg viewBox="0 0 130 72" width="130" height="72" style="display:block;margin:6px auto">'
-    +'<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="#e2e8f0" stroke-width="16"/>'
-    +'<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="'+color+'" stroke-width="16" stroke-dasharray="'+gda+' '+(151-gda)+'" stroke-linecap="round"/>'
-    +'<text x="65" y="57" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b">'+score+'</text>'
-    +'</svg>'
-    +'<div style="font-size:16px;font-weight:700;color:'+color+'">'+(d.score_desc||'신청 가능')+'</div>'
-    +'<div style="font-size:13px;color:#64748b;margin-top:4px">'+(d.match_count||5)+'개 기관 매칭 완료</div>'
-    +'</div>'
-    +rpSec('자격 분석 종합', color, rpLst(d.score_items||[
-      '기본 자격요건 4개 충족 — 중진공·기보·소진공 등 주요 정책자금 즉시 신청 가능한 상태임',
-      '벤처·이노비즈 인증 취득 시 추가 우대 한도 최대 3억원 이상 추가 확보 가능함',
-      '현재 조건에서 신청 가능한 자금 총액: 중진공+기보+소진공 합계 최대 약 5억원 수준임'
-    ], color))
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col45">'
+    +   '<div class="rp-section" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa">'
+    +     '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px">신청 가능성 종합 점수</div>'
+    +     '<svg viewBox="0 0 130 72" width="138" height="76" style="display:block;margin:4px auto 10px">'
+    +       '<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="#e2e8f0" stroke-width="16"/>'
+    +       '<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="'+color+'" stroke-width="16" stroke-dasharray="'+gda+' '+(151-gda)+'" stroke-linecap="round"/>'
+    +       '<text x="65" y="57" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b">'+score+'</text>'
+    +     '</svg>'
+    +     '<div style="font-size:18px;font-weight:800;color:'+color+';line-height:1.2">'+(d.score_desc||'신청 가능')+'</div>'
+    +     '<div style="font-size:13px;color:#64748b;margin-top:6px">'+(d.match_count||5)+'개 기관 매칭 완료 · 예상 조달 범위 '+totalRange+'</div>'
+    +     '<div class="rp-g3" style="width:100%;margin-top:14px">'
+    +       + rpMC('우선 검토', (topFunds[0]&&topFunds[0].name)||'중진공', '즉시 신청 권장', color)
+    +       + rpMC('최대 한도', (topFunds[1]&&topFunds[1].limit)||'3억', '단일 기관 기준', '#ea580c')
+    +       + rpMC('추가 레버리지', '인증 취득', '벤처·이노비즈 연계', '#7c3aed')
+    +     '</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('기본 자격 체크리스트', color,
+          checks.map(function(c){ var s=chkS(c.status); return '<div class="rp-chk"><div class="rp-chi" style="background:'+s.bg+';color:'+s.tc+'">'+s.ic+'</div><div class="rp-cht">'+c.text+'</div><span class="rp-chb" style="background:'+s.bbc+';color:'+s.btc+'">'+s.bl+'</span></div>'; }).join('')
+        )
+    +   rpSec('자격 분석 종합', color, rpLst(scoreItems, color))
+    + '</div>'
+    + '</div>'
   );
 
-  var p2 = rpPage(2,'추천 정책자금 TOP 5','한도 · 금리 · 특징 · 신청 전략',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col55 rp-col50">'
-    +funds.map(function(f,i){
-      return '<div class="rp-rank" style="'+(i<3?'border-left:4px solid '+rColors[i]+';':'')+'">'
-        +'<div class="rp-rh"><div class="rp-rn" style="background:'+rColors[i]+'">'+f.rank+'</div>'
-        +'<span class="rp-rnm">'+f.name+'</span>'
-        +'<span class="rp-rlm" style="color:'+rColors[i]+'">'+f.limit+'</span></div>'
-        +'<div class="rp-rtgs">'+f.tags.map(function(t,j){return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f1f5f9')+';color:'+(j===0?'#c2410c':'#475569')+'">'+t+'</span>';}).join('')+'</div>'
-        +'</div>';
-    }).join('')
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('자금 신청 우선순위 전략', color, rpLst([
-      '1순위: 중진공 소공인 특화자금(1억) — 신청 장벽이 가장 낮고 즉시 실행 가능한 최적 선택임',
-      '2순위: 기보 기술보증(3억) — 특허 1건 보유로 우대 적용 가능, 한도가 가장 크고 효과도 큼',
-      '3순위: 소진공 성장촉진자금(1억) — 창업 3년 이내 요건 충족 시 추가 신청으로 조달 극대화 가능',
-      '4순위: 벤처인증 취득 후 신보 특례보증(2억) 추가 신청 — 총 7억+ 조달 시나리오 완성',
-      '총 신청 가능 예상 한도: 기본 3억 ~ 최대 7억+ (인증 취득 및 병행 신청 전략 실행 시)'
-    ], color))
-    +'</div>'
-    +'</div>'
+  var s2 = fundCat('추천 정책자금 포트폴리오','TOP 자금 · 우선순위 · 신청 포인트',
+    '<div class="rp-section" style="margin-bottom:12px;background:#fff7ed;border-color:#fed7aa">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+    +   '<div><div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:4px">추천 우선순위 전략</div><div style="font-size:13px;color:#7c2d12">가장 신청 난도가 낮은 자금부터 확보하고, 인증 취득 후 고한도 보증 상품으로 확장하는 구조임</div></div>'
+    +   '<div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="rp-g3" style="margin-bottom:12px">'
+    + topFunds.map(function(f,i){
+        return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[i]+';min-height:150px">'
+          + '<div class="rp-rh"><div class="rp-rn" style="background:'+rColors[i]+'">'+f.rank+'</div><span class="rp-rnm">'+f.name+'</span><span class="rp-rlm" style="color:'+rColors[i]+'">'+f.limit+'</span></div>'
+          + '<div style="font-size:13px;color:#64748b;line-height:1.55;margin-bottom:10px">우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함</div>'
+          + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+'">'+t+'</span>'; }).join('')+'</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '<div class="rp-2col">'
+    + '<div class="rp-col50">'
+    +   rpSec('추가 검토 가능한 자금', color,
+          otherFunds.map(function(f,i){
+            var idx = i + 3;
+            return '<div class="rp-rank" style="margin-bottom:8px;border-left:4px solid '+rColors[idx]+'">'
+              + '<div class="rp-rh"><div class="rp-rn" style="background:'+rColors[idx]+'">'+f.rank+'</div><span class="rp-rnm">'+f.name+'</span><span class="rp-rlm" style="color:'+rColors[idx]+'">'+f.limit+'</span></div>'
+              + '<div class="rp-rtgs">'+f.tags.map(function(t){ return '<span class="rp-rtg" style="background:#f8fafc;color:#475569">'+t+'</span>'; }).join('')+'</div>'
+              + '</div>';
+          }).join('')
+        )
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('신청 순서 권장안', color, rpLst([
+          '1단계: 중진공·소진공 등 신청 난도가 낮은 자금을 먼저 확보해 초기 유동성을 안정화함',
+          '2단계: 특허·기술력 기반으로 기보 보증을 연결해 더 큰 한도를 추가 조달하는 구조를 설계함',
+          '3단계: 벤처·이노비즈 인증 취득 후 신보 특례보증까지 확장해 총 조달액을 극대화함',
+          '4단계: 기관별 심사 일정이 겹치지 않도록 월 단위 제출 캘린더를 운영해 승인 확률을 높임'
+        ], color))
+    + '</div>'
+    + '</div>'
   );
 
-  var p3 = rpPage(3,'기관별 비교 및 신청 전략','비교표 · 서류 체크리스트',color,
+  var s3 = fundCat('기관 비교 및 서류 준비','비교표 · 준비 현황 · 실행 체크',
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('기관별 조건 비교표', color,
-      '<table class="rp-cmpt"><thead><tr style="background:#fff7ed">'
-      +'<th style="color:'+color+'">기관</th><th style="color:'+color+'">한도</th><th style="color:'+color+'">금리/보증료</th><th style="color:'+color+'">기간</th><th style="color:'+color+'">난이도</th>'
-      +'</tr></thead><tbody>'
-      +comp.map(function(c,i){var dm=dMap[c.diff]||dMap.easy;return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+c.org+'</td><td>'+c.limit+'</td><td style="color:#16a34a;font-weight:700">'+c.rate+'</td><td>'+c.period+'</td><td><span style="background:'+dm.bg+';color:'+dm.tc+';padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">'+dm.l+'</span></td></tr>';}).join('')
-      +'</tbody></table>'
-    )
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('신청 준비 서류 체크리스트', color,
-      '<div style="margin-bottom:8px;font-size:13px;font-weight:700;color:#15803d">✅ 준비 완료 서류</div>'
-      +cReady.map(function(t){return '<div class="rp-chk"><div class="rp-chi" style="background:#dcfce7;color:#16a34a">✓</div><div class="rp-cht">'+t+'</div></div>';}).join('')
-      +'<div style="margin:12px 0 8px;font-size:13px;font-weight:700;color:#dc2626">❌ 추가 준비 필요 서류</div>'
-      +cNeed.map(function(t){return '<div class="rp-chk"><div class="rp-chi" style="background:#fee2e2;color:#dc2626">✗</div><div class="rp-cht">'+t+'</div></div>';}).join('')
-    )
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col50">'
+    +   rpSec('기관별 조건 비교표', color,
+          '<table class="rp-cmpt"><thead><tr style="background:#fff7ed"><th style="color:'+color+'">기관</th><th style="color:'+color+'">한도</th><th style="color:'+color+'">금리/보증료</th><th style="color:'+color+'">기간</th><th style="color:'+color+'">난이도</th></tr></thead><tbody>'
+          + comp.map(function(c,i){ var dm=dMap[c.diff]||dMap.easy; return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+c.org+'</td><td>'+c.limit+'</td><td style="color:#16a34a;font-weight:700">'+c.rate+'</td><td>'+c.period+'</td><td><span style="background:'+dm.bg+';color:'+dm.tc+';padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">'+dm.l+'</span></td></tr>'; }).join('')
+          + '</tbody></table>'
+        )
+    +   '<div class="rp-g2" style="margin-top:10px">'
+    +     '<div class="rp-section" style="background:#fff7ed;border-color:#fed7aa"><h4 style="color:'+color+'">핵심 비교 포인트</h4>'+rpLst([
+            '중진공·소진공은 상대적으로 접근성이 높아 초기 확보용 자금으로 적합함',
+            '기보·신보는 보증 구조상 한도가 크지만 기술성과 자료 완성도가 중요함'
+          ], color)+'</div>'
+    +     '<div class="rp-section" style="background:#fffbeb;border-color:#fde68a"><h4 style="color:#ca8a04">심사 대응 팁</h4>'+rpLst([
+            '최근 매출 흐름과 자금 사용계획을 연결해 상환 가능성을 수치 중심으로 설명함',
+            '대표자 신용·세금·4대보험 이슈를 사전에 점검해 서류 보완 발생을 최소화함'
+          ], '#ca8a04')+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('신청 준비 서류 체크리스트', color,
+          '<div style="margin-bottom:8px;font-size:13px;font-weight:700;color:#15803d">✅ 준비 완료 서류</div>'
+          + cReady.map(function(t){ return '<div class="rp-chk"><div class="rp-chi" style="background:#dcfce7;color:#16a34a">✓</div><div class="rp-cht">'+t+'</div></div>'; }).join('')
+          + '<div style="margin:14px 0 8px;font-size:13px;font-weight:700;color:#dc2626">❌ 추가 준비 필요 서류</div>'
+          + cNeed.map(function(t){ return '<div class="rp-chk"><div class="rp-chi" style="background:#fee2e2;color:#dc2626">✗</div><div class="rp-cht">'+t+'</div></div>'; }).join('')
+        )
+    +   rpSec('권장 실행 순서', color, rpLst([
+          '이번 주: 신청 대상 1·2순위 확정 및 제출용 기본 서류 취합',
+          '2주 내: 자금 사용계획서·사업계획서 보완 후 중진공 또는 소진공 접수',
+          '1개월 내: 기술보증용 특허·기술설명 자료 보강 및 기보 상담 진행',
+          '분기 내: 벤처·이노비즈 인증 로드맵 착수 후 추가 보증 한도 확보'
+        ], color))
+    + '</div>'
+    + '</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + '</div>';
 }
 
 // ===========================
@@ -1778,231 +1972,222 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var bpCerts = d.s6_certs||[{name:'벤처기업 인증',effect:'중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능',amount:'+2억',period:'6개월 내'},{name:'이노비즈 인증',effect:'기술혁신형 중소기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'},{name:'기업부설연구소',effect:'R&D 세액공제 25% 적용 및 기보 기술보증 우대 적용 동시 가능',amount:'+1.5억',period:'세액공제 병행'},{name:'HACCP 인증',effect:'대형마트·단체급식 납품 채널 확대 — 매출 직접 연결 효과 확인',amount:'채널↑',period:'매출 확대'}];
   var bpIcons = ['🏆','📜','🔬','✅'];
   var bpBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
-  var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
+  var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(String(c.amount||'').replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
   var nf = cData.needFund>0 ? fKRW(cData.needFund) : '4억원';
   var fundRows = d.s7_rows||[{item:'원재료 구입',amount:'1억 5천만원',ratio:'37.5%',purpose:'돈육 사골 등 핵심 원재료 선매입 및 안정적 재고 확보'},{item:'생산 설비 투자',amount:'1억원',ratio:'25%',purpose:'반자동 생산설비 도입 — 원가율 20% 절감 목표'},{item:'마케팅·채널 확대',amount:'7천만원',ratio:'17.5%',purpose:'SNS 광고·쿠팡 입점·브랜드 마케팅 집행'},{item:'운전자금',amount:'8천만원',ratio:'20%',purpose:'인건비·공과금·운영 고정비 등'}];
   var kpi9 = d.s9_kpi||{y1:'18억',y2:'24억',ch:'5개↑',emp:'11명'};
   var rmYears = d.s9_roadmap||[{year:'2026',tasks:['정책자금 4억 조달 완료','생산 설비 확충 가동','쿠팡·스마트스토어 입점']},{year:'2027',tasks:['벤처인증 취득 완료','B2B 납품 채널 3곳','매출 24억 달성']},{year:'2028',tasks:['이노비즈 취득','매출 35억 달성','자동화 생산 완성']},{year:'2029~',tasks:['해외 수출 추진','기업부설연구소','매출 100억 목표']}];
   var rmColors = ['#16a34a','#2563eb','#7c3aed','#ea580c'];
   var conclusion = d.s10_conclusion||cData.name+'는 창업 이후 단기간에 폭발적인 매출 성장을 달성하며 HMR 시장의 핵심 플레이어로 부상하고 있음. 돈육 사골 농축 압축 기술 특허와 1회 분량 개별 포장이라는 독창적 제품력은 경쟁사가 쉽게 모방할 수 없는 진입 장벽을 구축하고 있음. 정책자금 4억원 조달 시 생산 설비 확충과 마케팅 채널 다각화를 통해 2년 내 매출 24억 달성이 충분히 가능한 성장 기반을 갖추고 있음. 인증 취득 로드맵을 체계적으로 실행하면 추가 자금 최대 6.5억원 확보와 함께 중장기 매출 100억 목표 달성 가능성이 충분히 있음.';
+  var yoy = (rev.y24>0&&rev.y25>0)?Math.round(((rev.y25-rev.y24)/rev.y24)*100):21;
+  var overviewItems = d.s1_items||[
+    '창업 1년 만에 11억 4천만원 달성 → 금년 14억원 예상 — 업종 내 최고 수준의 초고속 성장세를 기록 중임',
+    '돈육 사골 농축 압축 기술 특허를 보유하여 경쟁사의 제품 모방 및 시장 진입을 원천 방어하고 있음',
+    'HMR 시장 내 돈육 특화 세그먼트에서 독보적인 포지션을 구축하여 빠른 시장 침투를 성공적으로 실현함',
+    '소수 정예 4인 팀 운영으로 인당 생산성이 업종 평균을 크게 상회하는 탁월한 운영 효율성을 보여줌',
+    '정책자금 4억원 조달 시 생산 설비 확충 및 채널 다각화로 2년 내 매출 2배 이상 성장이 가능한 기반을 보유함'
+  ];
 
-  var p1 = rpPage(1,'기업현황분석','기업정보 · 핵심 경쟁력',color,
+  function diffCard(it){
+    var bg=bgMap[it.color]||'#f0fdf4', bd=bdMap[it.color]||'#86efac';
+    return '<div class="rp-diff" style="background:'+bg+';border:1px solid '+bd+';border-left:5px solid '+it.color+';margin-bottom:0;min-height:132px">'
+      + '<div class="rp-dt" style="color:'+it.color+'">'+it.title+'</div>'
+      + '<div class="rp-dd">'+it.text+'</div>'
+      + '</div>';
+  }
+
+  var p1 = rpPage(1,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col45">'
-    +rpSec('', color,
-      '<table class="rp-ovt" style="border-top-color:'+color+'">'
-      +'<tr><th style="color:'+color+'">기업명</th><td colspan="3">'+cData.name+'</td></tr>'
-      +'<tr><th style="color:'+color+'">대표자</th><td>'+(cData.rep||'-')+'</td><th style="color:'+color+'">업종</th><td>'+(cData.industry||'-')+'</td></tr>'
-      +'<tr><th style="color:'+color+'">설립일</th><td>'+(cData.bizDate||'-')+'</td><th style="color:'+color+'">상시근로자</th><td>'+(cData.empCount||'-')+'명</td></tr>'
-      +'<tr><th style="color:'+color+'">핵심아이템</th><td colspan="3">'+(cData.coreItem||'-')+'</td></tr>'
-      +'<tr><th style="color:'+color+'">전년 매출</th><td>'+fKRW(rev.y25)+'</td><th style="color:'+color+'">금년 예상</th><td>'+fKRW(exp)+'</td></tr>'
-      +'</table>'
-    )
-    +'<div class="rp-g4">'
-    +rpMC('업력',cData.bizDate?Math.round((Date.now()-new Date(cData.bizDate))/31536000000)+'년':'2년','고성장 초기',color)
-    +rpMC('매출 성장률',(rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'+21%','전년 대비',color)
-    +rpMC('신용등급','3등급','KCB 710점','#2563eb')
-    +rpMC('필요자금',cData.needFund>0?fKRW(cData.needFund):'4억원','조달 목표','#7c3aed')
-    +'</div>'
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('기업 현황 분석', color, rpLst(d.s1_items||[
-      '창업 1년 만에 11억 4천만원 달성 → 금년 14억원 예상 — 업종 내 최고 수준의 초고속 성장세를 기록 중임',
-      '돈육 사골 농축 압축 기술 특허를 보유하여 경쟁사의 제품 모방 및 시장 진입을 원천 방어하고 있음',
-      'HMR 시장 내 돈육 특화 세그먼트에서 독보적인 포지션을 구축하여 빠른 시장 침투를 성공적으로 실현함',
-      '소수 정예 4인 팀 운영으로 인당 생산성이 업종 평균을 크게 상회하는 탁월한 운영 효율성을 보여줌',
-      '정책자금 4억원 조달 시 생산 설비 확충 및 채널 다각화로 2년 내 매출 2배 이상 성장이 가능한 기반을 보유함'
-    ], color))
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col45">'
+    +   rpSec('기업 기본 정보', color,
+          '<table class="rp-ovt" style="border-top-color:'+color+'">'
+          + '<tr><th style="color:'+color+'">기업명</th><td colspan="3">'+cData.name+'</td></tr>'
+          + '<tr><th style="color:'+color+'">대표자</th><td>'+(cData.rep||'-')+'</td><th style="color:'+color+'">업종</th><td>'+(cData.industry||'-')+'</td></tr>'
+          + '<tr><th style="color:'+color+'">설립일</th><td>'+(cData.bizDate||'-')+'</td><th style="color:'+color+'">상시근로자</th><td>'+(cData.empCount||'-')+'명</td></tr>'
+          + '<tr><th style="color:'+color+'">핵심아이템</th><td colspan="3">'+(cData.coreItem||'-')+'</td></tr>'
+          + '<tr><th style="color:'+color+'">전년 매출</th><td>'+fKRW(rev.y25)+'</td><th style="color:'+color+'">금년 예상</th><td>'+fKRW(exp)+'</td></tr>'
+          + '</table>'
+        )
+    +   '<div class="rp-g2">'
+    +     rpMC('업력', cData.bizDate?Math.max(1,Math.round((Date.now()-new Date(cData.bizDate))/31536000000))+'년':'2년', '초기 고성장 단계', color)
+    +     rpMC('매출 성장률', '+'+yoy+'%', '전년 대비', '#2563eb')
+    +     rpMC('필요 자금', nf, '조달 목표', '#7c3aed')
+    +     rpMC('핵심 경쟁력', '특허·제품력', '시장 진입장벽', '#ea580c')
+    +   '</div>'
+    +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0">'
+    +     '<h4 style="color:'+color+'">사업 핵심 한 줄 요약</h4>'
+    +     '<div style="font-size:14px;line-height:1.75;color:#14532d;font-weight:700">'+(overviewItems[0]||'고성장 기반과 차별화된 제품력을 바탕으로 빠른 확장이 가능한 사업 구조임')+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('사업개요 및 추진 배경', color, rpLst(overviewItems, color))
+    + '</div>'
+    + '</div>'
   );
 
-  var p2 = rpPage(2,'SWOT 분석','강점·약점·기회·위협 종합 분석',color,
-    '<div class="rp-swot" style="flex:1">'
-    +'<div class="rp-sws rp-sw" style="flex:1"><div class="rp-swl">💪 S — 강점 (Strength)</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +'<div class="rp-sww rp-sw" style="flex:1"><div class="rp-swl">⚠️ W — 약점 (Weakness)</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +'<div class="rp-swo rp-sw" style="flex:1"><div class="rp-swl">🚀 O — 기회 (Opportunity)</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +'<div class="rp-swt rp-sw" style="flex:1"><div class="rp-swl">🛡️ T — 위협 (Threat)</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +'</div>'
-  );
-
-  var p3 = rpPage(3,'시장현황','시장 규모 · 트렌드 · 성장성',color,
+  var p2 = rpPage(2,'시장기회 및 SWOT','시장 성장성 · 외부환경 · 리스크 구조',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +'<div class="rp-g3" style="flex-shrink:0;margin-bottom:10px">'
-    +rpMC('HMR 시장','7조원','2022년 기준',color)
-    +rpMC('연평균 성장률','18%','육수·국물 세그먼트',color)
-    +rpMC('1~2인 가구','61%','핵심 소비층','#7c3aed')
-    +'</div>'
-    +rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:185px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
-      '1~2인 가구 비율 61%로 증가세 — 간편식 수요가 구조적으로 증가하며 HMR 시장 연 18% 성장 지속',
-      '건강·프리미엄 간편식에 대한 소비자 선호도 급상승 — 고가 제품군의 성장이 업계 평균을 크게 상회',
-      '쿠팡·마켓컬리 등 온라인 식품 채널 급성장 — 소규모 브랜드의 진입 장벽이 낮아져 성장 기회 확대됨',
-      '육수·국물 세그먼트는 HMR 중 가장 빠른 성장 구간 — 대체 불가 필수 식품으로 소비 빈도가 높음',
-      '식품 안전·품질 인증(HACCP 등)에 대한 소비자 요구 강화 — 인증 기업이 채널 확보에서 유리한 위치를 점함'
-    ], color))
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col45">'
+    +   '<div class="rp-g3" style="margin-bottom:10px">'
+    +     rpMC('HMR 시장', '7조원', '2022년 기준', color)
+    +     rpMC('연평균 성장률', '18%', '육수·국물 세그먼트', '#2563eb')
+    +     rpMC('핵심 소비층', '1~2인 가구 61%', '구조적 성장', '#7c3aed')
+    +   '</div>'
+    +   rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:196px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
+          '1~2인 가구 비율 61%로 증가세 — 간편식 수요가 구조적으로 증가하며 HMR 시장 연 18% 성장 지속',
+          '건강·프리미엄 간편식에 대한 소비자 선호도 급상승 — 고가 제품군의 성장이 업계 평균을 크게 상회',
+          '쿠팡·마켓컬리 등 온라인 식품 채널 급성장 — 소규모 브랜드의 진입 장벽이 낮아져 성장 기회 확대됨',
+          '육수·국물 세그먼트는 HMR 중 가장 빠른 성장 구간 — 대체 불가 필수 식품으로 소비 빈도가 높음',
+          '식품 안전·품질 인증(HACCP 등)에 대한 소비자 요구 강화 — 인증 기업이 채널 확보에서 유리한 위치를 점함'
+        ], color))
+    + '</div>'
+    + '</div>'
+    + '<div class="rp-swot" style="margin-top:12px">'
+    +   '<div class="rp-sws rp-sw"><div class="rp-swl">강점 Strength</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-sww rp-sw"><div class="rp-swl">약점 Weakness</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swo rp-sw"><div class="rp-swl">기회 Opportunity</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swt rp-sw"><div class="rp-swl">위협 Threat</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    + '</div>'
   );
 
-  var p4 = rpPage(4,'경쟁력분석','경쟁사 비교표 · 시장 포지셔닝',color,
+  var p3 = rpPage(3,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('경쟁력 분석', color, rpLst(d.s4_items||[
-      '특허 기술 보유로 동일 제품 제조가 불가능하여 직접적인 가격 경쟁에서 원천 차단됨',
-      '1회 개별 포장 스펙으로 경쟁사 제품과 직접 비교가 어려운 독자적 카테고리를 형성하고 있음',
-      '창업 초기에 검증된 시장 수요를 보유하여 경쟁사 대비 제품 신뢰도와 재구매율이 높음',
-      '초기 시장 선점 효과로 충성 고객 확보 속도가 빨라 경쟁사의 후발 진입을 어렵게 만들고 있음'
-    ], color))
-    +rpSec('강점 종합', '#7c3aed', rpLst(['기술 특허 + 제품 차별화 + 성장 검증 = 경쟁사가 모방하기 어려운 압도적 경쟁 우위 구조를 보유하고 있음'], '#7c3aed'))
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('경쟁사 비교표', color,
-      '<table class="rp-ctb"><thead><tr><th style="text-align:left">비교 항목</th><th>'+cData.name+'</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead>'
-      +'<tbody>'+compRows.map(function(r,i){return '<tr'+(i%2===0?'':' style="background:#f8fafc"')+'><td>'+r.item+'</td><td>'+r.self+'</td><td>'+r.a+'</td><td>'+r.b+'</td></tr>';}).join('')+'</tbody></table>'
-    )
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col50">'
+    +   rpSec('경쟁사 비교표', color,
+          '<table class="rp-ctb"><thead><tr><th style="text-align:left">비교 항목</th><th>'+cData.name+'</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead>'
+          + '<tbody>'+compRows.map(function(r,i){ return '<tr'+(i%2===0?'':' style="background:#f8fafc"')+'><td>'+r.item+'</td><td>'+r.self+'</td><td>'+r.a+'</td><td>'+r.b+'</td></tr>'; }).join('')+'</tbody></table>'
+        )
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('경쟁력 분석', color, rpLst(d.s4_items||[
+          '특허 기술 보유로 동일 제품 제조가 불가능하여 직접적인 가격 경쟁에서 원천 차단됨',
+          '1회 개별 포장 스펙으로 경쟁사 제품과 직접 비교가 어려운 독자적 카테고리를 형성하고 있음',
+          '창업 초기에 검증된 시장 수요를 보유하여 경쟁사 대비 제품 신뢰도와 재구매율이 높음',
+          '초기 시장 선점 효과로 충성 고객 확보 속도가 빨라 경쟁사의 후발 진입을 어렵게 만들고 있음'
+        ], color))
+    +   '<div class="rp-section" style="background:#fdf4ff;border-color:#e9d5ff"><h4 style="color:#7c3aed">포지셔닝 결론</h4><div style="font-size:13px;color:#5b21b6;line-height:1.7;font-weight:700">특허 기반 기술력과 세그먼트 특화 제품력이 결합되어 후발 경쟁사가 가격만으로 흔들기 어려운 구조를 형성하고 있음</div></div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="rp-g2" style="margin-top:12px">'+(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,4).map(diffCard).join('')+'</div>'
   );
 
-  var p5 = rpPage(5,'차별점 및 핵심경쟁력','4대 핵심 강점',color,
-    '<div class="rp-2col" style="flex:1">'
-    +'<div style="display:flex;flex-direction:column;gap:11px">'
-    +(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,2).map(function(it){
-      var bg=bgMap[it.color]||'#f0fdf4', bd=bdMap[it.color]||'#86efac';
-      return '<div class="rp-diff" style="background:'+bg+';border:1px solid '+bd+';border-left:5px solid '+it.color+';flex:1">'
-        +'<div class="rp-dt" style="color:'+it.color+'">🔹 '+it.title+'</div>'
-        +'<div class="rp-dd">'+it.text+'</div>'
-        +'</div>';
-    }).join('')
-    +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:11px">'
-    +(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(2,4).map(function(it){
-      var bg=bgMap[it.color]||'#f0fdf4', bd=bdMap[it.color]||'#86efac';
-      return '<div class="rp-diff" style="background:'+bg+';border:1px solid '+bd+';border-left:5px solid '+it.color+';flex:1">'
-        +'<div class="rp-dt" style="color:'+it.color+'">🔹 '+it.title+'</div>'
-        +'<div class="rp-dd">'+it.text+'</div>'
-        +'</div>';
-    }).join('')
-    +'</div>'
-    +'</div>'
-  );
-
-  var p6 = rpPage(6,'가점추천','인증 취득으로 정책자금 한도 최대화',color,
+  var p4 = rpPage(4,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +bpCerts.map(function(c,i){return '<div class="rp-cert"><div class="rp-certi" style="background:'+bpBgs[i%bpBgs.length]+'">'+bpIcons[i%bpIcons.length]+'</div><div class="rp-certb"><div class="rp-certn">'+c.name+'</div><div class="rp-certd">'+c.effect+'</div></div><div class="rp-certa"><div class="rp-certv" style="color:'+color+'">'+c.amount+'</div><div class="rp-certp">'+c.period+'</div></div></div>';}).join('')
-    +'</div>'
-    +'<div class="rp-colF">'
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:18px;border:1px solid #86efac;text-align:center;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:6px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +'<div style="font-size:30px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
-    +'<div style="font-size:13px;color:#64748b;margin-top:5px">현재 신청 한도 + 인증 취득 후 추가 조달 합계</div>'
-    +'</div>'
-    +rpSec('취득 우선순위 전략', color, rpLst([
-      '1순위: 벤처인증 (약 6개월) — 즉각적 자금 한도 확대 + 기보 우대 적용 — 최우선 추진',
-      '2순위: 이노비즈 인증 (1년) — 중진공 기술개발자금 신청 자격 + 기술보증 우대 적용',
-      '3순위: 기업부설연구소 (중기) — R&D 세액공제 25% 절세 + 기보 기술보증 동시 우대',
-      '4순위: HACCP (장기) — 대형마트·단체급식 채널 확보 → 안정적 B2B 매출 기반 마련'
-    ], color))
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col50">'
+    +   bpCerts.map(function(c,i){
+          return '<div class="rp-cert" style="margin-bottom:10px;min-height:88px">'
+            + '<div class="rp-certi" style="background:'+bpBgs[i%bpBgs.length]+'">'+bpIcons[i%bpIcons.length]+'</div>'
+            + '<div class="rp-certb"><div class="rp-certn">'+c.name+'</div><div class="rp-certd">'+c.effect+'</div></div>'
+            + '<div class="rp-certa"><div class="rp-certv" style="color:'+color+'">'+c.amount+'</div><div class="rp-certp">'+c.period+'</div></div>'
+            + '</div>';
+        }).join('')
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;margin-bottom:10px;text-align:center">'
+    +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:8px">인증 완료 시 총 추가 조달 가능 한도</div>'
+    +     '<div style="font-size:32px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
+    +     '<div style="font-size:13px;color:#64748b;margin-top:6px">현재 신청 한도 + 인증 취득 후 추가 조달 합계 기준</div>'
+    +   '</div>'
+    +   rpSec('취득 우선순위 전략', color, rpLst([
+          '1순위: 벤처인증 — 자금 한도 확대와 기술성 인정 효과가 동시에 발생하여 가장 먼저 추진할 가치가 높음',
+          '2순위: 이노비즈 인증 — 기술혁신 기업 포지션을 강화해 중진공·기보 계열 자금 접근성을 높임',
+          '3순위: 기업부설연구소 — 세액공제와 연구개발 신뢰도를 함께 확보해 중장기 자금 조달의 기반을 만듦',
+          '4순위: HACCP — 대형 유통과 B2B 채널 확장에 직접 연결되어 매출 성장의 증빙 자료로 활용 가능함'
+        ], color))
+    +   '<div class="rp-section" style="background:#eff6ff;border-color:#bfdbfe"><h4 style="color:#2563eb">정책자금 연결 포인트</h4>'+rpLst([
+          '인증 취득 시 금리·보증료 우대뿐 아니라 심사 신뢰도 향상 효과가 커서 승인 확률 개선에 유리함',
+          '사업계획서와 인증 로드맵을 하나의 성장 서사로 연결하면 기관별 심사에서 일관성을 확보할 수 있음'
+        ], '#2563eb')+'</div>'
+    + '</div>'
+    + '</div>'
   );
 
-  var p7 = rpPage(7,'자금사용계획','총 '+nf+' 집행 계획',color,
+  var p5 = rpPage(5,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('자금 집행 계획표', color,
-      '<table class="rp-ftb"><thead><tr><th style="text-align:left">항목</th><th>금액</th><th>비율</th><th>사용 목적</th></tr></thead>'
-      +'<tbody>'+fundRows.map(function(r,i){return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td></tr>';}).join('')
-      +'<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td>-</td></tr>'
-      +'</tbody></table>'
-    )
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('자금 집행 전략 및 기대 효과', color, rpLst(d.s7_strategy||[
-      '1단계: 원재료 선매입(1.5억)으로 공급망 안정성 확보 — 원가 변동성 해소 및 원가율 하락 기대',
-      '2단계: 반자동 생산 설비 도입(1억)으로 원가율 20% 절감 — 매출이익률 즉각 개선 효과 발생',
-      '3단계: 마케팅·채널 투자(0.7억)로 매출 2배 성장 가속 — SNS·쿠팡 동시 집행',
-      '4단계: 운전자금(0.8억)으로 고성장 구간 현금흐름 안정 유지 — 리스크 최소화',
-      '자금 집행 후 6개월 내 조달 자금 대비 ROI 200% 이상 달성 목표 — 컨설턴트 분기 점검 병행'
-    ], color))
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col50">'
+    +   rpSec('자금 집행 계획표', color,
+          '<table class="rp-ftb"><thead><tr><th style="text-align:left">항목</th><th>금액</th><th>비율</th><th>사용 목적</th></tr></thead>'
+          + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td></tr>'; }).join('')
+          + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td>-</td></tr>'
+          + '</tbody></table>'
+        )
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   rpSec('집행 비중 요약', color,
+          (fundRows||[]).map(function(r,idx){
+            var barColor = [color,'#2563eb','#7c3aed','#ea580c'][idx%4];
+            var ratioNum = parseFloat(String(r.ratio||'0').replace(/[^0-9.]/g,'')) || 0;
+            return rpHB(r.item, ratioNum, r.ratio, barColor);
+          }).join('')
+        )
+    +   rpSec('자금 집행 전략 및 기대 효과', color, rpLst(d.s7_strategy||[
+          '1단계: 원재료 선매입으로 공급망 안정성과 원가 협상력을 동시에 확보하여 매출 증가 구간에 대응함',
+          '2단계: 생산 설비 투자로 원가율과 생산 리드타임을 함께 낮춰 수익성과 공급 안정성을 높임',
+          '3단계: 마케팅·채널 확대를 통해 온라인 유통 접점을 넓히고 반복 구매 기반을 조기에 형성함',
+          '4단계: 운전자금 확보로 고성장 구간의 현금흐름 리스크를 줄여 사업 운영의 안정성을 강화함',
+          '집행 이후 6개월 단위 KPI 점검 체계를 두어 자금 사용 효과를 정량적으로 관리함'
+        ], color))
+    + '</div>'
+    + '</div>'
   );
 
-  var p8 = rpPage(8,'매출 추이 및 1년 전망','월별 시뮬레이션 · 단중장기 전략',color,
+  var p6 = rpPage(6,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +rpSec('월별 매출 시뮬레이션 (1년 전망)', color, '<div class="rp-ch" style="height:205px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
-    +'</div>'
-    +'<div class="rp-colF">'
-    +'<div class="rp-gph rp-gphs" style="flex:1"><div class="rp-gphh">⚡ 단기 (1년)</div><ul>'+(d.s8_short||['정책자금 4억 조달 완료','쿠팡·스마트스토어 입점','생산 설비 교체 가동','월 매출 1.5억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
-    +'<div class="rp-gph rp-gphm" style="flex:1"><div class="rp-gphh">📈 중기 (3년)</div><ul>'+(d.s8_mid||['벤처인증 취득 완료','B2B 납품 3채널 확보','이노비즈 인증 추진','매출 24억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
-    +'<div class="rp-gph rp-gphl" style="flex:1"><div class="rp-gphh">🌟 장기 (5년)</div><ul>'+(d.s8_long||['자동화 생산 체계 완성','해외 수출 시장 진출','기업부설연구소 설립','매출 100억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col45">'
+    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:210px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
+    +   '<div class="rp-g2" style="margin-top:10px">'
+    +     rpMC('1년 후 매출', kpi9.y1, '단기 목표', color)
+    +     rpMC('2년 후 매출', kpi9.y2, '중기 목표', '#2563eb')
+    +     rpMC('목표 채널', kpi9.ch, '유통 다각화', '#7c3aed')
+    +     rpMC('목표 인력', kpi9.emp, '운영 확장', '#ea580c')
+    +   '</div>'
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   '<div class="rp-gph rp-gphs" style="margin-bottom:8px"><div class="rp-gphh">단기 1년</div><ul>'+(d.s8_short||['정책자금 4억 조달 완료','쿠팡·스마트스토어 입점','생산 설비 교체 가동','월 매출 1.5억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-gph rp-gphm" style="margin-bottom:8px"><div class="rp-gphh">중기 3년</div><ul>'+(d.s8_mid||['벤처인증 취득 완료','B2B 납품 3채널 확보','이노비즈 인증 추진','매출 24억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-gph rp-gphl"><div class="rp-gphh">장기 5년</div><ul>'+(d.s8_long||['자동화 생산 체계 완성','해외 수출 시장 진출','기업부설연구소 설립','매출 100억 달성']).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
+    + '</div>'
+    + '</div>'
+    + rpSec('연차별 실행 로드맵', color,
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">'
+        + rmYears.map(function(r,i){
+            return '<div style="border-radius:8px;padding:12px;border:1px solid #e2e8f0;border-top:4px solid '+rmColors[i]+';background:white;min-height:146px">'
+              + '<div style="font-size:13px;font-weight:800;color:'+rmColors[i]+';margin-bottom:8px">'+r.year+'</div>'
+              + (r.tasks||[]).map(function(t){ return '<div style="font-size:13px;color:#475569;padding-left:11px;position:relative;line-height:1.55;margin-bottom:5px"><span style="position:absolute;left:0;color:'+rmColors[i]+';font-weight:700">•</span>'+t+'</div>'; }).join('')
+              + '</div>';
+          }).join('')
+        + '</div>'
+      )
   );
 
-  var p9 = rpPage(9,'성장비전','향후 발전 가능성 · KPI · 로드맵',color,
+  var p7 = rpPage(7,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
     '<div class="rp-2col">'
-    +'<div class="rp-col45">'
-    +'<div class="rp-g4" style="flex-shrink:0;margin-bottom:12px">'
-    +rpMC('1년후 매출',kpi9.y1,'+30%',color)
-    +rpMC('2년후 매출',kpi9.y2,'+74%',color)
-    +rpMC('목표 채널',kpi9.ch,'현재 1개','#2563eb')
-    +rpMC('목표 인력',kpi9.emp,'2년 내','#7c3aed')
-    +'</div>'
-    +rpSec('핵심 성장 동력', color, rpLst(d.s9_items||[
-      '특허 기반 기술력으로 경쟁사 진입을 방어하면서 HMR 시장 내 독점적 포지션을 장기적으로 유지 가능',
-      'HMR 시장 연 18% 성장의 직접 수혜자로서 자연적 시장 성장만으로도 상당한 매출 증가가 보장됨',
-      '정책자금 조달 후 설비 자동화로 원가율 개선과 매출 성장이 동시에 가속화되어 이익 레버리지 발생',
-      '채널 다각화(쿠팡+B2B+자사몰) 완성 시 매출 안정성과 성장성을 동시에 확보하는 구조 완성'
-    ], color))
-    +'</div>'
-    +'<div class="rp-colF">'
-    +rpSec('앞으로의 계획 로드맵', color,
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">'
-      +rmYears.map(function(r,i){
-        return '<div style="border-radius:8px;padding:11px;border:1px solid #e2e8f0;border-top:3px solid '+rmColors[i]+';background:white">'
-          +'<div style="font-size:13px;font-weight:700;color:'+rmColors[i]+';margin-bottom:7px">'+r.year+'</div>'
-          +r.tasks.map(function(t){return '<div style="font-size:13px;color:#64748b;padding-left:10px;position:relative;line-height:1.5;margin-bottom:4px"><span style="position:absolute;left:0;font-weight:700;color:'+rmColors[i]+'">·</span>'+t+'</div>';}).join('')
-          +'</div>';
-      }).join('')
-      +'</div>'
-    )
-    +'</div>'
-    +'</div>'
+    + '<div class="rp-col50">'
+    +   '<div class="rp-cls" style="height:100%">'
+    +     '<div class="rp-clst">'+cData.name+' 종합 의견</div>'
+    +     '<div class="rp-clstx">'+conclusion+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="rp-colF">'
+    +   '<div class="rp-g4" style="margin-bottom:12px">'
+    +     [{l:'시장성',v:'★★★★★',c:color},{l:'기술력',v:'★★★★★',c:'#2563eb'},{l:'성장성',v:'★★★★★',c:'#7c3aed'},{l:'실행력',v:'★★★★☆',c:'#ea580c'}].map(function(r){
+            return '<div class="rp-mc" style="border-top:3px solid '+r.c+'"><div class="rp-mcl">'+r.l+'</div><div class="rp-mcv" style="color:'+r.c+';font-size:17px">'+r.v+'</div><div class="rp-mcd">사업계획서 관점 평가</div></div>';
+        }).join('')
+    +   '</div>'
+    +   rpSec('핵심 실행 메시지', color, rpLst([
+          '차별화된 제품력과 시장 성장성이 동시에 확인되어 자금 조달 후 확장 전략의 설득력이 높음',
+          '인증 취득·자금 조달·채널 확대를 하나의 실행 패키지로 묶어 추진할 때 성과 속도가 가장 빠르게 나타남',
+          '초기 고성장 구간인 만큼 운영체계와 현금흐름 관리까지 함께 설계해야 성장의 질을 유지할 수 있음',
+          '본 사업계획서는 심사용 기본 문서로 활용 가능하며 기관별 요구사항에 맞춰 세부 수치만 보정하면 즉시 제출 수준임'
+        ], color))
+    + '</div>'
+    + '</div>'
   );
 
-  var p10 = rpPage('✦','마무리','종합 요약 · 컨설턴트 총평',color,
-    '<div class="rp-2col">'
-    +'<div class="rp-col50">'
-    +'<div class="rp-cls" style="flex:1">'
-    +'<div class="rp-clst">'+cData.name+' — 종합 의견 및 컨설턴트 총평</div>'
-    +'<div class="rp-clstx">'+conclusion+'</div>'
-    +'</div>'
-    +'</div>'
-    +'<div class="rp-colF">'
-    +'<div class="rp-g4" style="flex-shrink:0;margin-bottom:12px">'
-    +[{l:'시장성',v:'★★★★★',c:color},{l:'기술력',v:'★★★★★',c:'#2563eb'},{l:'성장성',v:'★★★★★',c:'#7c3aed'},{l:'안정성',v:'★★★★',c:'#ea580c'}].map(function(r){
-      return '<div class="rp-mc" style="border-top:3px solid '+r.c+'"><div class="rp-mcl">'+r.l+'</div><div class="rp-mcv" style="color:'+r.c+';font-size:17px">'+r.v+'</div></div>';
-    }).join('')
-    +'</div>'
-    +rpSec('★ 컨설턴트 핵심 메시지', color, rpLst([
-      '특허 기술력 + 폭발적 매출 성장 = 정책자금 심사 기관이 최우선으로 지원하는 기업 프로파일에 완벽 부합함',
-      '인증 취득 로드맵 실행 시 추가 자금 최대 6.5억원 확보 가능 — 성장 가속화를 위한 자금 기반 완성',
-      '3년 내 매출 35억, 5년 내 매출 100억 달성 목표는 현재 성장 추이를 감안할 때 충분히 현실적인 수준임',
-      '컨설턴트 밀착 지원 하에 인증·자금·채널을 동시 추진하는 종합 성장 전략 실행을 강력히 권고함'
-    ], color))
-    +'</div>'
-    +'</div>'
-  );
-
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + '</div>';
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
 }
 
 
@@ -2037,7 +2222,15 @@ function initReportCharts(rev) {
     }
     // ─ 3개년 성장
     var fg = document.getElementById('fp-growth-chart');
-    if(fg) { safeDestroyChart(fg); try { new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:[14,24,35],borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'억';}}}}}}); } catch(e){} }
+    if(fg) {
+      safeDestroyChart(fg);
+      try {
+        var gd = fg.dataset || {};
+        var growthData = [+(gd.y1||0), +(gd.y2||0), +(gd.y3||0)];
+        if (!growthData[0] && !growthData[1] && !growthData[2]) growthData = [140000,240000,350000];
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:growthData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:6,pointHoverRadius:7,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}});
+      } catch(e){}
+    }
     // ─ 상권 레이더
     var tr = document.getElementById('tp-radar');
     if(tr && tr.dataset && tr.dataset.scores) {
@@ -2162,13 +2355,15 @@ function buildTradePrompt(cData, fRev) {
 function buildMarketingPrompt(cData, fRev) {
   var nm=cData.name, itm=cData.coreItem||'주력제품';
   var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
-  return '디지털마케팅 전문가. \''+nm+'\'의 \''+itm+'\' 마케팅 제안서. 기업명과 제품명 반드시 포함. JSON만.\n\n'
-    +'{"channels":[{"name":"SNS (인스타·유튜브쇼츠)","score":88},{"name":"네이버 검색·블로그","score":75},{"name":"인플루언서·리뷰마케팅","score":72},{"name":"쿠팡 광고","score":65}],'
-    +'"strategies":["'+nm+'의 '+itm+' SNS 전략 5개 60자이상"],'
+  return '디지털마케팅 전문가. \''+nm+'\'의 \''+itm+'\' 마케팅 제안서. 기업명·제품명·실제 매출수치 반영. JSON만.\n\n'
+    +'{"channels":[{"name":"SNS (인스타그램, 유튜브 쇼츠, 틱톡)","score":92},{"name":"네이버 검색광고 및 블로그 체험단","score":85},{"name":"인플루언서 협업 및 리뷰 마케팅","score":80},{"name":"쿠팡·마켓컬리 등 이커머스 광고","score":75},{"name":"제휴 마케팅 (밀키트·HMR 브랜드)","score":60}],'
+    +'"strategies":["'+nm+'의 '+itm+' 마케팅 전략 5개 각 60자 이상"],'
     +'"budget_total":"700만원/월",'
-    +'"budget":[{"name":"SNS광고","ratio":38},{"name":"검색광고","ratio":25},{"name":"콘텐츠제작","ratio":22},{"name":"기타","ratio":15}],'
-    +'"kpi":[{"label":"SNS 팔로워","value":"+3,000","period":"3개월"},{"label":"월 매출 증가","value":"+30%","period":"6개월"},{"label":"재구매율","value":"40%","period":"목표"},{"label":"리뷰 누적","value":"500건","period":"6개월"}],'
-    +'"roadmap":[{"period":"1월","task":"'+nm+' SNS채널 개설·브랜딩","highlight":false},{"period":"2월","task":"인플루언서 협업","highlight":false},{"period":"3월","task":"'+itm+' 바이럴캠페인","highlight":false},{"period":"4~5월","task":"성과분석·최적화","highlight":true},{"period":"6월","task":"정기구독 론칭","highlight":false},{"period":"7월~","task":"B2B채널 진출","highlight":false}]}\n\n'
+    +'"budget":[{"name":"SNS 광고","ratio":40},{"name":"검색광고","ratio":25},{"name":"체험단·리뷰","ratio":20},{"name":"콘텐츠 제작","ratio":15}],'
+    +'"principles":["예산 운영 원칙 3개 각 45자 이상"],'
+    +'"kpi":[{"label":"SNS 팔로워","value":"+5,000","period":"3개월"},{"label":"월 매출 증가","value":"+40%","period":"6개월"},{"label":"재구매율","value":"45%","period":"목표"},{"label":"리뷰 누적","value":"700건","period":"6개월"},{"label":"검색량 증가","value":"+50%","period":"3개월"},{"label":"정기구독 전환","value":"45%","period":"목표"}],'
+    +'"roadmap":[{"period":"1월","task":"'+nm+' SNS 채널 리뉴얼 및 숏폼 브랜딩 강화","highlight":false},{"period":"2월","task":"'+itm+' 인플루언서 1차 협업 및 숏폼 콘텐츠 기획","highlight":false},{"period":"3월","task":"'+itm+' 바이럴 캠페인 런칭","highlight":false},{"period":"4월","task":"마케팅 성과 분석 및 채널별 최적화 진행","highlight":true},{"period":"5월","task":"마케팅 성과 분석 및 채널별 최적화 진행","highlight":true},{"period":"6월","task":"정기구독 서비스 론칭 및 프로모션 운영","highlight":false},{"period":"7월~","task":"B2B 채널·외식업체·급식업체 대상 영업 및 재유통 확대","highlight":false},{"period":"8월","task":"리뷰 확보 캠페인 및 검색광고 확장","highlight":false},{"period":"9월","task":"라이브커머스·이커머스 프로모션 집행","highlight":false},{"period":"10월","task":"브랜드 검색량 증대형 콘텐츠 집중 집행","highlight":false},{"period":"11월","task":"재구매 고객 리텐션 캠페인 운영","highlight":false},{"period":"12월","task":"연말 프로모션 및 성과 정리","highlight":false}],'
+    +'"focus_boxes":[{"icon":"📊","title":"1~3개월 핵심 지표","items":["핵심 지표 3개"]},{"icon":"📈","title":"4~6개월 핵심 지표","items":["핵심 지표 3개"]},{"icon":"📝","title":"1~3개월 실행 체크","items":["실행 체크 3개"]},{"icon":"🎯","title":"4~6개월 성과 목표","items":["성과 목표 3개"]}]}\n\n'
     +'[기업] 기업명:'+nm+', 핵심아이템:'+itm+', 전년매출:'+r25+', 금년예상:'+rExp;
 }
 
