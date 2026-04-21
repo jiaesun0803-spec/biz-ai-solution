@@ -6,6 +6,52 @@ const DB_REPORTS     = 'biz_reports';
 const DB_SUPPORT_DOC = 'biz_support_documents';
 const DB_NOTICES     = 'biz_dashboard_notices';
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
+const ADMIN_BOOTSTRAP = {
+  email:'admin@bizconsult.com',
+  pw:'Admin1234!',
+  name:'시스템 관리자',
+  dept:'BizConsult Admin',
+  phone:'',
+  apiKey:'',
+  isAdmin:true,
+  approved:true
+};
+
+function normalizeUser(u) {
+  if (!u) return null;
+  var nu = Object.assign({
+    name:'',
+    dept:'',
+    phone:'',
+    apiKey:'',
+    isAdmin:false,
+    approved:true,
+    createdAt:'',
+    approvedAt:''
+  }, u);
+  if (nu.isAdmin) nu.approved = true;
+  if (typeof u.approved === 'undefined' && !u.isAdmin) nu.approved = true;
+  return nu;
+}
+function getUsers() {
+  return (JSON.parse(localStorage.getItem(DB_USERS)||'[]')||[]).map(function(u){ return normalizeUser(u); });
+}
+function saveUsers(users) {
+  localStorage.setItem(DB_USERS, JSON.stringify((users||[]).map(function(u){ return normalizeUser(u); })));
+}
+function ensureAdminAccount() {
+  var raw = JSON.parse(localStorage.getItem(DB_USERS)||'[]') || [];
+  var normalized = raw.map(function(u){ return normalizeUser(u); });
+  var changed = JSON.stringify(raw) !== JSON.stringify(normalized);
+  if (!normalized.some(function(u){ return u.isAdmin === true; })) {
+    var admin = normalizeUser(ADMIN_BOOTSTRAP);
+    admin.createdAt = new Date().toISOString();
+    admin.approvedAt = admin.createdAt;
+    normalized.push(admin);
+    changed = true;
+  }
+  if (changed) saveUsers(normalized);
+}
 
 function getReportLayoutConfig(orientation) {
   var isLandscape = (orientation === true || orientation === 'landscape');
@@ -127,6 +173,7 @@ window.onload = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+  ensureAdminAccount();
   checkAuth();
   const urlParams = new URLSearchParams(window.location.search);
   showTab(urlParams.get('tab') || 'dashboard', false);
@@ -137,36 +184,77 @@ document.addEventListener('DOMContentLoaded', function() {
 // ★ 인증
 // ===========================
 window.devBypassLogin = function() {
-  const tu = { email:'test@biz.com', pw:'1234', name:'선지영', dept:'솔루션빌더스', apiKey:'' };
-  let users = JSON.parse(localStorage.getItem(DB_USERS) || '[]');
-  if (!users.find(u => u.email === tu.email)) { users.push(tu); localStorage.setItem(DB_USERS, JSON.stringify(users)); }
-  localStorage.setItem(DB_SESSION, JSON.stringify(tu));
-  checkAuth();
+  alert('배포 모드에서는 테스트 계정 바로 접속 기능을 사용하지 않음.');
 };
 function checkAuth() {
-  const session = JSON.parse(localStorage.getItem(DB_SESSION));
+  ensureAdminAccount();
+  const session = JSON.parse(localStorage.getItem(DB_SESSION)||'null');
   const authEl = document.getElementById('auth-container');
   const appEl  = document.getElementById('main-app');
-  if (session) { authEl.style.display='none'; appEl.style.display='flex'; loadUserProfile(); updateDataLists(); initInputHandlers(); }
-  else          { authEl.style.display='flex';  appEl.style.display='none'; }
+  if (session) {
+    const user = getUsers().find(function(u){ return u.email === session.email; });
+    if (!user) {
+      localStorage.removeItem(DB_SESSION);
+      authEl.style.display='flex';
+      appEl.style.display='none';
+      return;
+    }
+    if (!user.isAdmin && !user.approved) {
+      localStorage.removeItem(DB_SESSION);
+      alert('현재 계정은 관리자 승인 대기 상태임. 승인 후 로그인할 수 있음.');
+      authEl.style.display='flex';
+      appEl.style.display='none';
+      return;
+    }
+    localStorage.setItem(DB_SESSION, JSON.stringify(user));
+    authEl.style.display='none';
+    appEl.style.display='flex';
+    loadUserProfile();
+    updateDataLists();
+    initInputHandlers();
+  } else {
+    authEl.style.display='flex';
+    appEl.style.display='none';
+  }
 }
 window.toggleAuthMode = function(mode) {
   document.getElementById('login-form-area').style.display  = mode==='login'  ? 'block' : 'none';
   document.getElementById('signup-form-area').style.display = mode==='signup' ? 'block' : 'none';
 };
 window.handleSignup = function() {
-  const email=document.getElementById('signup-email').value, pw=document.getElementById('signup-pw').value, name=document.getElementById('signup-name').value;
-  if (!email||!pw||!name) { alert('모든 정보를 입력해주세요.'); return; }
-  let users=JSON.parse(localStorage.getItem(DB_USERS)||'[]');
-  if (users.find(u=>u.email===email)) { alert('이미 가입된 이메일임.'); return; }
-  users.push({email,pw,name,dept:'솔루션빌더스',apiKey:''}); localStorage.setItem(DB_USERS,JSON.stringify(users));
-  alert('회원가입 완료!'); toggleAuthMode('login');
+  const email=(document.getElementById('signup-email').value||'').trim();
+  const pw=(document.getElementById('signup-pw').value||'').trim();
+  const name=(document.getElementById('signup-name').value||'').trim();
+  const dept=(document.getElementById('signup-dept').value||'').trim();
+  const phone=(document.getElementById('signup-phone').value||'').trim();
+  if (!email||!pw||!name) { alert('이메일, 비밀번호, 사용자명은 필수 입력 항목임.'); return; }
+  let users=getUsers();
+  if (users.find(function(u){ return u.email===email; })) { alert('이미 가입된 이메일임.'); return; }
+  users.push(normalizeUser({
+    email:email,
+    pw:pw,
+    name:name,
+    dept:dept,
+    phone:phone,
+    apiKey:'',
+    isAdmin:false,
+    approved:false,
+    createdAt:new Date().toISOString(),
+    approvedAt:''
+  }));
+  saveUsers(users);
+  ['signup-email','signup-pw','signup-name','signup-dept','signup-phone'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  alert('회원가입 신청이 접수되었음. 관리자 승인 후 로그인할 수 있음.');
+  toggleAuthMode('login');
 };
 window.handleLogin = function() {
-  const email=document.getElementById('login-email').value, pw=document.getElementById('login-pw').value;
-  const user=JSON.parse(localStorage.getItem(DB_USERS)||'[]').find(u=>u.email===email&&u.pw===pw);
-  if (user) { localStorage.setItem(DB_SESSION,JSON.stringify(user)); checkAuth(); }
-  else alert('이메일 또는 비밀번호가 일치하지 않음.');
+  const email=(document.getElementById('login-email').value||'').trim();
+  const pw=(document.getElementById('login-pw').value||'').trim();
+  const user=getUsers().find(function(u){ return u.email===email && u.pw===pw; });
+  if (!user) { alert('이메일 또는 비밀번호가 일치하지 않음.'); return; }
+  if (!user.isAdmin && !user.approved) { alert('현재 계정은 관리자 승인 대기 상태임.'); return; }
+  localStorage.setItem(DB_SESSION, JSON.stringify(user));
+  checkAuth();
 };
 window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location.reload(); };
 
@@ -174,19 +262,124 @@ window.handleLogout = function() { localStorage.removeItem(DB_SESSION); location
 // ★ 프로필
 // ===========================
 function loadUserProfile() {
-  const user=JSON.parse(localStorage.getItem(DB_SESSION)); if (!user) return;
+  const user=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if (!user) return;
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
-  setEl('display-user-name',user.name); setEl('display-user-dept',user.dept||'솔루션빌더스');
+  setEl('display-user-name', user.name||'사용자');
+  setEl('display-user-dept', user.isAdmin ? '시스템 관리자' : ((user.dept||'소속 미입력') + (user.approved ? '' : ' · 승인대기')));
   if(document.getElementById('set-user-name')){
-    document.getElementById('set-user-name').value=user.name;
-    document.getElementById('set-user-email').value=user.email;
+    document.getElementById('set-user-name').value=user.name||'';
+    document.getElementById('set-user-email').value=user.email||'';
     document.getElementById('set-user-dept').value=user.dept||'';
+    document.getElementById('set-user-phone').value=user.phone||'';
     document.getElementById('set-api-key').value=user.apiKey||'';
+    ['set-current-pw','set-new-pw','set-confirm-pw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   }
+  var roleBadge=document.getElementById('user-role-badge');
+  if(roleBadge){
+    roleBadge.textContent = user.isAdmin ? '관리자 계정' : '일반 사용자';
+    roleBadge.className = 'status-badge ' + (user.isAdmin ? 'admin' : 'soft');
+  }
+  var approvalBadge=document.getElementById('user-approval-badge');
+  if(approvalBadge){
+    var approved = !!(user.approved || user.isAdmin);
+    approvalBadge.textContent = user.isAdmin ? '관리자 승인 완료' : (approved ? '승인 완료' : '승인 대기');
+    approvalBadge.className = 'status-badge ' + (approved ? 'success' : 'warning');
+  }
+  var adminPanel=document.getElementById('admin-settings-panel');
+  if(adminPanel) adminPanel.style.display = user.isAdmin ? 'block' : 'none';
+  if(user.isAdmin) renderAdminApprovalList();
 }
-function updateUserDB(u){let users=JSON.parse(localStorage.getItem(DB_USERS));const i=users.findIndex(x=>x.email===u.email);users[i]=u;localStorage.setItem(DB_USERS,JSON.stringify(users));localStorage.setItem(DB_SESSION,JSON.stringify(u));loadUserProfile();}
-window.saveProfileSettings=function(){let s=JSON.parse(localStorage.getItem(DB_SESSION));s.name=document.getElementById('set-user-name').value;s.dept=document.getElementById('set-user-dept').value;updateUserDB(s);alert('저장되었음.');};
-window.saveApiSettings=function(){let s=JSON.parse(localStorage.getItem(DB_SESSION));s.apiKey=document.getElementById('set-api-key').value;updateUserDB(s);alert('API 키가 저장되었음.');};
+function updateUserDB(u, prevEmail){
+  let users=getUsers();
+  const lookup = prevEmail || u.email;
+  const i=users.findIndex(function(x){ return x.email===lookup; });
+  if(i<0){ alert('사용자 정보를 찾지 못했음. 다시 로그인해 주세요.'); return false; }
+  users[i]=normalizeUser(u);
+  saveUsers(users);
+  localStorage.setItem(DB_SESSION, JSON.stringify(users[i]));
+  loadUserProfile();
+  return true;
+}
+window.saveProfileSettings=function(){
+  let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
+  const prevEmail=s.email;
+  const nextEmail=(document.getElementById('set-user-email').value||'').trim();
+  const users=getUsers();
+  if(!nextEmail){ alert('이메일은 필수 입력 항목임.'); return; }
+  if(nextEmail!==prevEmail && users.some(function(u){ return u.email===nextEmail; })){ alert('이미 사용 중인 이메일임.'); return; }
+  s.name=(document.getElementById('set-user-name').value||'').trim();
+  s.dept=(document.getElementById('set-user-dept').value||'').trim();
+  s.phone=(document.getElementById('set-user-phone').value||'').trim();
+  s.email=nextEmail;
+  if(updateUserDB(s, prevEmail)) alert('계정 정보가 저장되었음.');
+};
+window.savePasswordSettings=function(){
+  let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
+  const currentPw=(document.getElementById('set-current-pw').value||'').trim();
+  const nextPw=(document.getElementById('set-new-pw').value||'').trim();
+  const confirmPw=(document.getElementById('set-confirm-pw').value||'').trim();
+  if(!currentPw||!nextPw||!confirmPw){ alert('비밀번호 변경 항목을 모두 입력해주세요.'); return; }
+  if(currentPw!==s.pw){ alert('현재 비밀번호가 일치하지 않음.'); return; }
+  if(nextPw.length<4){ alert('새 비밀번호는 4자 이상으로 입력해주세요.'); return; }
+  if(nextPw!==confirmPw){ alert('새 비밀번호 확인이 일치하지 않음.'); return; }
+  s.pw=nextPw;
+  if(updateUserDB(s)){
+    ['set-current-pw','set-new-pw','set-confirm-pw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    alert('비밀번호가 변경되었음.');
+  }
+};
+window.saveApiSettings=function(){
+  let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
+  s.apiKey=document.getElementById('set-api-key').value||'';
+  if(updateUserDB(s)) alert('API 키가 저장되었음.');
+};
+function renderAdminApprovalList(){
+  const panel=document.getElementById('admin-settings-panel');
+  const listEl=document.getElementById('admin-pending-list');
+  const countEl=document.getElementById('admin-pending-count');
+  const session=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null'));
+  if(!panel||!listEl||!countEl) return;
+  if(!session||!session.isAdmin){ panel.style.display='none'; return; }
+  panel.style.display='block';
+  const pending=getUsers().filter(function(u){ return !u.isAdmin && !u.approved; });
+  countEl.textContent='승인 대기 ' + pending.length + '명';
+  if(!pending.length){
+    listEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">✅</div><div class="empty-state-title">승인 대기 중인 사용자가 없음.</div><div class="empty-state-desc">새 회원가입이 들어오면 이 영역에서 바로 승인할 수 있음.</div></div>';
+    return;
+  }
+  listEl.innerHTML=pending.map(function(u){
+    return '<div class="admin-user-card">'
+      + '<div class="admin-user-head">'
+      +   '<div>'
+      +     '<div class="admin-user-name">'+(u.name||'이름 미입력')+'</div>'
+      +     '<div class="admin-user-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'</div>'
+      +   '</div>'
+      +   '<span class="status-badge warning">승인 대기</span>'
+      + '</div>'
+      + '<div class="admin-user-actions">'
+      +   '<button class="btn-primary" style="padding:8px 14px;font-size:13px;" onclick="approveUser(\''+u.email+'\')">승인</button>'
+      +   '<button class="btn-delete" onclick="rejectUser(\''+u.email+'\')">삭제</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+window.approveUser=function(email){
+  let users=getUsers();
+  const idx=users.findIndex(function(u){ return u.email===email; });
+  if(idx<0){ alert('대상 사용자를 찾지 못했음.'); return; }
+  users[idx].approved=true;
+  users[idx].approvedAt=new Date().toISOString();
+  saveUsers(users);
+  renderAdminApprovalList();
+  alert('사용자 승인이 완료되었음.');
+};
+window.rejectUser=function(email){
+  if(!confirm('승인 대기 사용자를 삭제하시겠습니까?')) return;
+  let users=getUsers().filter(function(u){ return u.email!==email; });
+  saveUsers(users);
+  renderAdminApprovalList();
+  alert('승인 대기 사용자가 삭제되었음.');
+};
 
 // ===========================
 // ★ 탭 이동

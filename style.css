@@ -4,12 +4,26 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 
 /* ===== 인증 ===== */
 .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0E162D; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.auth-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; }
+.auth-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; }
 .auth-logo { font-size: 24px; font-weight: bold; color: #0E162D; margin-bottom: 30px; }
 .auth-box h2 { font-size: 20px; margin-bottom: 20px; color: #334155; }
+.auth-box .grid-2 { gap: 12px; }
+.auth-note { font-size: 12px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 8px; margin-bottom: 16px; text-align: left; line-height: 1.6; }
 .auth-btn { width: 100%; padding: 14px; margin-top: 10px; font-size: 16px; }
 .auth-footer { margin-top: 20px; font-size: 14px; color: #64748b; }
 .auth-footer span { color: #3b82f6; font-weight: bold; cursor: pointer; margin-left: 5px; }
+.settings-status-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.status-badge { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1; }
+.status-badge.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.status-badge.warning { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+.status-badge.admin { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+.status-badge.soft { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+.admin-approval-list { display: grid; gap: 12px; }
+.admin-user-card { border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; padding: 14px 16px; }
+.admin-user-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.admin-user-name { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.admin-user-meta { font-size: 12px; color: #64748b; line-height: 1.5; }
+.admin-user-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ===== 사이드바 ===== */
 .sidebar { width: 250px; background-color: #0E162D; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -157,6 +171,11 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 @media (max-width: 640px) {
     .quick-guide-row { align-items: flex-start; }
     .quick-guide-arrow { display: none; }
+    .auth-box .grid-2,
+    .admin-user-head { grid-template-columns: 1fr; }
+    .admin-user-head,
+    .admin-user-actions,
+    .settings-status-row { flex-direction: column; align-items: stretch; }
 }
 
 /* ====================================================

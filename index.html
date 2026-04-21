@@ -15,18 +15,23 @@
         <div class="auth-logo">🏢 BizConsult</div>
         <div id="login-form-area">
             <h2>로그인</h2>
+            <div class="auth-note">회원가입 후 관리자 승인까지 완료된 계정만 로그인할 수 있습니다.</div>
             <div class="form-group"><label>이메일</label><input type="email" id="login-email" placeholder="email@example.com"></div>
             <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="••••••••"></div>
             <button class="btn-primary auth-btn" onclick="handleLogin()">로그인</button>
-            <button class="btn-outline auth-btn" onclick="devBypassLogin()" style="margin-top:10px;font-size:13px;">🛠️ 테스트 계정으로 바로 접속</button>
             <p class="auth-footer">계정이 없으신가요? <span onclick="toggleAuthMode('signup')">회원가입</span></p>
         </div>
         <div id="signup-form-area" style="display:none;">
             <h2>회원가입</h2>
+            <div class="auth-note">가입 신청 후 관리자가 승인하면 서비스를 사용할 수 있습니다.</div>
             <div class="form-group"><label>이메일</label><input type="email" id="signup-email" placeholder="email@example.com"></div>
             <div class="form-group"><label>비밀번호</label><input type="password" id="signup-pw" placeholder="••••••••"></div>
-            <div class="form-group"><label>이름</label><input type="text" id="signup-name" placeholder="실명을 입력하세요"></div>
-            <button class="btn-primary auth-btn" onclick="handleSignup()">가입하기</button>
+            <div class="form-group"><label>사용자명</label><input type="text" id="signup-name" placeholder="실명을 입력하세요"></div>
+            <div class="grid-2">
+                <div class="form-group"><label>소속명</label><input type="text" id="signup-dept" placeholder="소속 또는 회사명"></div>
+                <div class="form-group"><label>연락처</label><input type="text" id="signup-phone" placeholder="010-0000-0000"></div>
+            </div>
+            <button class="btn-primary auth-btn" onclick="handleSignup()">가입 신청</button>
             <p class="auth-footer">이미 계정이 있으신가요? <span onclick="toggleAuthMode('login')">로그인</span></p>
         </div>
     </div>
@@ -585,15 +590,47 @@
         <section id="settings" class="tab-content">
             <div class="max-width-wrapper">
                 <div class="page-header"><h2 class="page-title-lg">플랫폼 설정</h2></div>
-                <div class="fund-card" style="margin-bottom:30px;">
-                    <h3 style="margin-bottom:20px;font-size:16px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">👤 사용자 프로필</h3>
-                    <div class="grid-2"><div class="form-group"><label>사용자 성명</label><input type="text" id="set-user-name"></div><div class="form-group"><label>이메일 주소</label><input type="email" id="set-user-email" readonly style="background:#f1f5f9;"></div><div class="form-group"><label>소속명</label><input type="text" id="set-user-dept"></div></div>
-                    <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;" onclick="saveProfileSettings()">프로필 저장</button></div>
+
+                <div class="fund-card" style="margin-bottom:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+                        <h3 style="margin:0;font-size:16px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">👤 계정 설정</h3>
+                        <div class="settings-status-row">
+                            <span class="status-badge soft" id="user-role-badge">일반 사용자</span>
+                            <span class="status-badge soft" id="user-approval-badge">상태 확인 중</span>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group"><label>사용자명</label><input type="text" id="set-user-name"></div>
+                        <div class="form-group"><label>소속명</label><input type="text" id="set-user-dept"></div>
+                        <div class="form-group"><label>연락처</label><input type="text" id="set-user-phone" placeholder="010-0000-0000"></div>
+                        <div class="form-group"><label>이메일</label><input type="email" id="set-user-email" placeholder="email@example.com"></div>
+                    </div>
+                    <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;" onclick="saveProfileSettings()">계정 정보 저장</button></div>
                 </div>
-                <div class="fund-card" style="border-top:4px solid #ea580c;">
+
+                <div class="fund-card" style="margin-bottom:24px;border-top:4px solid #475569;">
+                    <h3 style="margin-bottom:14px;font-size:16px;">🔒 비밀번호 수정</h3>
+                    <div class="grid-2">
+                        <div class="form-group"><label>현재 비밀번호</label><input type="password" id="set-current-pw" placeholder="현재 비밀번호"></div>
+                        <div class="form-group"><label>새 비밀번호</label><input type="password" id="set-new-pw" placeholder="새 비밀번호"></div>
+                    </div>
+                    <div class="form-group"><label>새 비밀번호 확인</label><input type="password" id="set-confirm-pw" placeholder="새 비밀번호를 다시 입력"></div>
+                    <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;background:#475569;" onclick="savePasswordSettings()">비밀번호 변경</button></div>
+                </div>
+
+                <div class="fund-card" style="margin-bottom:24px;border-top:4px solid #ea580c;">
                     <h3 style="margin-bottom:10px;font-size:16px;">🔑 AI 서비스 설정 (Google Gemini)</h3>
                     <div class="form-group"><label>Gemini API Key</label><input type="password" id="set-api-key" placeholder="AIzaSy..."></div>
                     <div style="text-align:right;margin-top:15px;"><button class="btn-primary" style="padding:10px 20px;font-size:13px;background:#ea580c;" onclick="saveApiSettings()">API 키 저장</button></div>
+                </div>
+
+                <div class="fund-card" id="admin-settings-panel" style="display:none;border-top:4px solid #2563eb;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                        <h3 style="margin:0;font-size:16px;">🛡️ 관리자 승인 관리</h3>
+                        <span class="status-badge admin" id="admin-pending-count">승인 대기 0명</span>
+                    </div>
+                    <p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:14px;">회원가입 완료 후 승인 대기 중인 사용자를 검토하고 승인할 수 있습니다.</p>
+                    <div id="admin-pending-list" class="admin-approval-list"></div>
                 </div>
             </div>
         </section>
