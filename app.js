@@ -828,6 +828,7 @@ function tplStyle(color, orientation) {
 
   // ── 페이지 (A4 landscape 기준) ──
   + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
+  + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; display:flex; flex-direction:column; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
@@ -1366,8 +1367,8 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   // ── CAT5: 가점추천 ──────────────────────────
   var totalC2 = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
   var cat5 = cat(5,'가점추천','인증 취득으로 정책자금 한도 최대화',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'
-    +'<div>'
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;align-items:stretch">'
+    +'<div style="display:flex;flex-direction:column">'
     +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
     +certs.map(function(c,i){
       return '<div style="display:flex;align-items:flex-start;gap:10px;background:white;border:1px solid #e2e8f0;border-radius:9px;padding:11px 13px;margin-bottom:9px">'
@@ -1377,8 +1378,10 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
         +'</div>';
     }).join('')
     +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div style="display:flex;flex-direction:column;gap:10px;flex:1">'
     +'<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center">'
+    +'<div style="flex:1">'
+    +'</div>'
     +'<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:5px">인증 완료 시 총 추가 조달 가능 한도</div>'
     +'<div style="font-size:28px;font-weight:900;color:'+C+';line-height:1.2">최대 +'+(totalC2>0?totalC2+'억원':'6.5억원')+'</div>'
     +'<div style="font-size:12px;color:#64748b;margin-top:5px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
@@ -1712,6 +1715,17 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
         +'</div>';
     }).join('')
     +'</div>'
+    +'</div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="rp-cat" style="background:#fffbeb;border:2px solid #f59e0b;page-break-before:always">'
+    +'<div class="rp-ph">'
+    +'<div class="rp-pnum" style="background:#fef3c7;color:#d97706">🔒</div>'
+    +'<span class="rp-ptitle">컨설턴트 실질 조언 (계속)</span>'
+    +'<span class="rp-psub" style="color:#dc2626;font-weight:600">내부 전용 — 대외비</span>'
+    +'</div>'
+    +'<div class="rp-body">'
+    +'<div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">'
     +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
     +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">💰 정책자금 신청 전략</div>'
     +(d.consultant_funds||[
@@ -2002,7 +2016,10 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     ], color))
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover
+    + p1.replace('class="rp-page"','class="rp-page-auto"')
+    + p2.replace('class="rp-page"','class="rp-page-auto"')
+    + '</div>';
 }
 
 // ===========================
@@ -2112,23 +2129,23 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     '<div style="display:flex;flex-direction:column;gap:14px">'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
     +rpSec('채널별 예상 효과 (점수/100)', color, channels.map(scoreBar).join(''))
-    +rpSec('핵심 마케팅 전략', color, rpLst(strategies, color))
+    +'<div class="rp-section" style="display:flex;flex-direction:column;align-items:center;justify-content:center">'
+    +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;align-self:flex-start">월 예산 배분 ('+budgetTotal+')</div>'
+    +'<div class="rp-ch" style="width:180px;height:180px;flex-shrink:0;padding:6px;border:none;background:transparent"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin-top:10px">'
+    +budget.map(function(b,i){
+      return '<div style="display:flex;align-items:center;gap:6px">'
+        +'<div style="width:10px;height:10px;border-radius:50%;background:'+(bColors[i]||color)+';flex-shrink:0"></div>'
+        +'<div style="font-size:11px;color:#64748b;line-height:1.35">'+b.ratio+'% '+b.name+'</div>'
+        +'</div>';
+    }).join('')
     +'</div>'
-    +rpSec('월 예산 배분 ('+budgetTotal+')', color,
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">'
-      +budget.map(function(b,i){
-        return '<div style="text-align:center">'
-          +'<div style="font-size:18px;font-weight:900;color:#3f3f46;line-height:1">'+b.ratio+'%</div>'
-          +'<div style="font-size:11px;color:#64748b;margin:6px 0 4px;line-height:1.35;min-height:30px">'+b.name+'</div>'
-          +'<div style="width:10px;height:10px;border-radius:50%;background:'+(bColors[i]||color)+';margin:0 auto"></div>'
-          +'</div>';
-      }).join('')
-      +'</div>'
-      +'<div style="display:flex;justify-content:center;align-items:center;padding:8px 0 2px">'
-      +'<div class="rp-ch" style="width:170px;height:170px;flex-shrink:0;padding:6px;border:none;background:transparent"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
-      +'</div>'
-    )
+    +'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
+    +rpSec('핵심 마케팅 전략', color, rpLst(strategies, color))
     +rpSec('예산 운영 원칙', color, rpLst(principles, color))
+    +'</div>'
     +'</div>'
   );
 
@@ -2191,28 +2208,24 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var otherFunds = funds.slice(3);
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
-    '<div class="rp-2col">'
-    + '<div class="rp-col35">'
-    +   '<div class="rp-section" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa">'
-    +     '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:6px">신청 가능성 종합 점수</div>'
-    +     '<svg viewBox="0 0 110 62" width="110" height="62" style="display:block;margin:2px auto 6px">'
-    +       '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="#e2e8f0" stroke-width="13"/>'
-    +       '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="'+color+'" stroke-width="13" stroke-dasharray="'+(Math.round((score/100)*128))+' '+(128-Math.round((score/100)*128))+'" stroke-linecap="round"/>'
-    +       '<text x="55" y="48" text-anchor="middle" font-size="20" font-weight="700" fill="#1e293b">'+score+'</text>'
-    +     '</svg>'
-    +     '<div style="font-size:15px;font-weight:800;color:'+color+';line-height:1.2">'+(d.score_desc||'신청 가능')+'</div>'
-    +     '<div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.5">'+(d.match_count||5)+'개 기관 매칭 완료<br>예상 조달 범위 '+totalRange+'</div>'
-    +   '</div>'
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">'
+    + '<div class="rp-section" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa;padding:18px">'
+    +   '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:10px">신청 가능성 종합 점수</div>'
+    +   '<svg viewBox="0 0 110 62" width="130" height="74" style="display:block;margin:4px auto 10px">'
+    +     '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="#e2e8f0" stroke-width="13"/>'
+    +     '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="'+color+'" stroke-width="13" stroke-dasharray="'+(Math.round((score/100)*128))+' '+(128-Math.round((score/100)*128))+'" stroke-linecap="round"/>'
+    +     '<text x="55" y="48" text-anchor="middle" font-size="20" font-weight="700" fill="#1e293b">'+score+'</text>'
+    +   '</svg>'
+    +   '<div style="font-size:16px;font-weight:800;color:'+color+';line-height:1.2;margin-bottom:8px">'+(d.score_desc||'신청 가능')+'</div>'
+    +   '<div style="font-size:11px;color:#64748b;line-height:1.7">'+(d.match_count||5)+'개 기관 매칭 완료<br>예상 조달 범위 '+totalRange+'</div>'
     + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('기본 자격 체크리스트', color,
+    + rpSec('기본 자격 체크리스트', color,
           checks.map(function(c){ var s=chkS(c.status); return '<div class="rp-chk"><div class="rp-chi" style="background:'+s.bg+';color:'+s.tc+'">'+s.ic+'</div><div class="rp-cht">'+c.text+'</div><span class="rp-chb" style="background:'+s.bbc+';color:'+s.btc+'">'+s.bl+'</span></div>'; }).join('')
         )
-    +   '<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px">'
-    +     '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">자격 분석 종합</div>'
-    +     rpLst(scoreItems, color)
-    +   '</div>'
     + '</div>'
+    + '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px">'
+    +   '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">자격 분석 종합</div>'
+    +   rpLst(scoreItems, color)
     + '</div>'
   );
 
@@ -2569,10 +2582,13 @@ function initReportCharts(rev) {
     if(fg) {
       safeDestroyChart(fg);
       try {
-        var gd = fg.dataset || {};
-        var growthData = [+(gd.y1||0), +(gd.y2||0), +(gd.y3||0)];
+        var gd = fg.dataset || {};        var growthData = [+(gd.y1||0), +(gd.y2||0), +(gd.y3||0)];
         if (!growthData[0] && !growthData[1] && !growthData[2]) growthData = [140000,240000,350000];
-        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026','2027','2028'],datasets:[{data:growthData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:6,pointHoverRadius:7,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}});
+        var gRange=Math.max(growthData[2]-growthData[0], growthData[0]*0.5, 50000);
+        var gMid1=Math.round(growthData[0]+gRange*0.32);
+        var gMid2=Math.round(growthData[1]+gRange*0.15);
+        var expandedData=[growthData[0], gMid1, growthData[1], gMid2, growthData[2]];
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026 초','2026 말','2027 초','2027 말','2028'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.45,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}});
       } catch(e){}
     }
     // ─ 상권 레이더
