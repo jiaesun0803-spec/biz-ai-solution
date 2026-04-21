@@ -808,6 +808,7 @@ function tplStyle(color, orientation) {
   + '.rp-2col  { display:flex; gap:16px; flex:1; }'
   + '.rp-col38 { width:38%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col40 { width:40%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
+  + '.rp-col35 { width:35%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col45 { width:45%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col50 { width:50%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-colF  { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }'
@@ -2160,28 +2161,26 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
     '<div class="rp-2col">'
-    + '<div class="rp-col45">'
+    + '<div class="rp-col35">'
     +   '<div class="rp-section" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa">'
-    +     '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px">신청 가능성 종합 점수</div>'
-    +     '<svg viewBox="0 0 130 72" width="138" height="76" style="display:block;margin:4px auto 10px">'
-    +       '<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="#e2e8f0" stroke-width="16"/>'
-    +       '<path d="M14,62 A52,52 0 0,1 116,62" fill="none" stroke="'+color+'" stroke-width="16" stroke-dasharray="'+gda+' '+(151-gda)+'" stroke-linecap="round"/>'
-    +       '<text x="65" y="57" text-anchor="middle" font-size="24" font-weight="700" fill="#1e293b">'+score+'</text>'
+    +     '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:6px">신청 가능성 종합 점수</div>'
+    +     '<svg viewBox="0 0 110 62" width="110" height="62" style="display:block;margin:2px auto 6px">'
+    +       '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="#e2e8f0" stroke-width="13"/>'
+    +       '<path d="M12,52 A44,44 0 0,1 98,52" fill="none" stroke="'+color+'" stroke-width="13" stroke-dasharray="'+(Math.round((score/100)*128))+' '+(128-Math.round((score/100)*128))+'" stroke-linecap="round"/>'
+    +       '<text x="55" y="48" text-anchor="middle" font-size="20" font-weight="700" fill="#1e293b">'+score+'</text>'
     +     '</svg>'
-    +     '<div style="font-size:18px;font-weight:800;color:'+color+';line-height:1.2">'+(d.score_desc||'신청 가능')+'</div>'
-    +     '<div style="font-size:13px;color:#64748b;margin-top:6px">'+(d.match_count||5)+'개 기관 매칭 완료 · 예상 조달 범위 '+totalRange+'</div>'
-    +     '<div class="rp-g3" style="width:100%;margin-top:14px">'
-    +       + rpMC('우선 검토', (topFunds[0]&&topFunds[0].name)||'중진공', '즉시 신청 권장', color)
-    +       + rpMC('최대 한도', (topFunds[1]&&topFunds[1].limit)||'3억', '단일 기관 기준', '#ea580c')
-    +       + rpMC('추가 레버리지', '인증 취득', '벤처·이노비즈 연계', '#7c3aed')
-    +     '</div>'
+    +     '<div style="font-size:15px;font-weight:800;color:'+color+';line-height:1.2">'+(d.score_desc||'신청 가능')+'</div>'
+    +     '<div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.5">'+(d.match_count||5)+'개 기관 매칭 완료<br>예상 조달 범위 '+totalRange+'</div>'
     +   '</div>'
     + '</div>'
     + '<div class="rp-colF">'
     +   rpSec('기본 자격 체크리스트', color,
           checks.map(function(c){ var s=chkS(c.status); return '<div class="rp-chk"><div class="rp-chi" style="background:'+s.bg+';color:'+s.tc+'">'+s.ic+'</div><div class="rp-cht">'+c.text+'</div><span class="rp-chb" style="background:'+s.bbc+';color:'+s.btc+'">'+s.bl+'</span></div>'; }).join('')
         )
-    +   rpSec('자격 분석 종합', color, rpLst(scoreItems, color))
+    +   '<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px">'
+    +     '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">자격 분석 종합</div>'
+    +     rpLst(scoreItems, color)
+    +   '</div>'
     + '</div>'
     + '</div>'
   );
@@ -2196,8 +2195,8 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + '<div class="rp-g3" style="margin-bottom:12px">'
     + topFunds.map(function(f,i){
         return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[i]+';min-height:150px">'
-          + '<div class="rp-rh"><div class="rp-rn" style="background:'+rColors[i]+'">'+f.rank+'</div><span class="rp-rnm">'+f.name+'</span><span class="rp-rlm" style="color:'+rColors[i]+'">'+f.limit+'</span></div>'
-          + '<div style="font-size:13px;color:#64748b;line-height:1.55;margin-bottom:10px">우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함</div>'
+          + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+rColors[i]+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div><div style="font-size:15px;font-weight:900;color:'+rColors[i]+';margin-top:2px">'+f.limit+'</div></div></div>'
+          + '<div style="font-size:12px;color:#64748b;line-height:1.55;margin-bottom:10px">우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함</div>'
           + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+'">'+t+'</span>'; }).join('')+'</div>'
           + '</div>';
       }).join('')
@@ -2226,38 +2225,44 @@ function buildFundHTML(d, cData, rev, dateStr) {
   );
 
   var s3 = fundCat('기관 비교 및 서류 준비','비교표 · 준비 현황 · 실행 체크',
-    '<div class="rp-2col">'
+    '<div class="rp-2col" style="margin-bottom:14px">'
     + '<div class="rp-col50">'
-    +   rpSec('기관별 조건 비교표', color,
-          '<table class="rp-cmpt"><thead><tr style="background:#fff7ed"><th style="color:'+color+'">기관</th><th style="color:'+color+'">한도</th><th style="color:'+color+'">금리/보증료</th><th style="color:'+color+'">기간</th><th style="color:'+color+'">난이도</th></tr></thead><tbody>'
-          + comp.map(function(c,i){ var dm=dMap[c.diff]||dMap.easy; return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+c.org+'</td><td>'+c.limit+'</td><td style="color:#16a34a;font-weight:700">'+c.rate+'</td><td>'+c.period+'</td><td><span style="background:'+dm.bg+';color:'+dm.tc+';padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">'+dm.l+'</span></td></tr>'; }).join('')
-          + '</tbody></table>'
-        )
-    +   '<div class="rp-g2" style="margin-top:10px">'
-    +     '<div class="rp-section" style="background:#fff7ed;border-color:#fed7aa"><h4 style="color:'+color+'">핵심 비교 포인트</h4>'+rpLst([
-            '중진공·소진공은 상대적으로 접근성이 높아 초기 확보용 자금으로 적합함',
-            '기보·신보는 보증 구조상 한도가 크지만 기술성과 자료 완성도가 중요함'
-          ], color)+'</div>'
-    +     '<div class="rp-section" style="background:#fffbeb;border-color:#fde68a"><h4 style="color:#ca8a04">심사 대응 팁</h4>'+rpLst([
-            '최근 매출 흐름과 자금 사용계획을 연결해 상환 가능성을 수치 중심으로 설명함',
-            '대표자 신용·세금·4대보험 이슈를 사전에 점검해 서류 보완 발생을 최소화함'
-          ], '#ca8a04')+'</div>'
+    +   '<div style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px 18px;height:100%">'
+    +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #dcfce7">✅ 준비 완료 서류</div>'
+    +     cReady.map(function(t){ return '<div class="rp-chk" style="padding:8px 0;border-bottom:1px solid #f1f5f9"><div class="rp-chi" style="background:#dcfce7;color:#16a34a">✓</div><div class="rp-cht" style="font-size:13px">'+t+'</div></div>'; }).join('')
     +   '</div>'
     + '</div>'
     + '<div class="rp-colF">'
-    +   rpSec('신청 준비 서류 체크리스트', color,
-          '<div style="margin-bottom:8px;font-size:13px;font-weight:700;color:#15803d">✅ 준비 완료 서류</div>'
-          + cReady.map(function(t){ return '<div class="rp-chk"><div class="rp-chi" style="background:#dcfce7;color:#16a34a">✓</div><div class="rp-cht">'+t+'</div></div>'; }).join('')
-          + '<div style="margin:14px 0 8px;font-size:13px;font-weight:700;color:#dc2626">❌ 추가 준비 필요 서류</div>'
-          + cNeed.map(function(t){ return '<div class="rp-chk"><div class="rp-chi" style="background:#fee2e2;color:#dc2626">✗</div><div class="rp-cht">'+t+'</div></div>'; }).join('')
-        )
-    +   rpSec('권장 실행 순서', color, rpLst([
-          '이번 주: 신청 대상 1·2순위 확정 및 제출용 기본 서류 취합',
-          '2주 내: 자금 사용계획서·사업계획서 보완 후 중진공 또는 소진공 접수',
-          '1개월 내: 기술보증용 특허·기술설명 자료 보강 및 기보 상담 진행',
-          '분기 내: 벤처·이노비즈 인증 로드맵 착수 후 추가 보증 한도 확보'
-        ], color))
+    +   '<div style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px 18px;height:100%">'
+    +     '<div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fee2e2">❌ 추가 준비 필요 서류</div>'
+    +     cNeed.map(function(t){ return '<div class="rp-chk" style="padding:8px 0;border-bottom:1px solid #f1f5f9"><div class="rp-chi" style="background:#fee2e2;color:#dc2626">✗</div><div class="rp-cht" style="font-size:13px">'+t+'</div></div>'; }).join('')
+    +   '</div>'
     + '</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'
+    +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 15px">'
+    +     '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fed7aa">핵심 비교 포인트</div>'
+    +     rpLst([
+              '중진공·소진공은 상대적으로 접근성이 높아 초기 확보용 자금으로 적합함',
+              '기보·신보는 보증 구조상 한도가 크지만 기술성과 자료 완성도가 중요함'
+            ], color)
+    +   '</div>'
+    +   '<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px 15px">'
+    +     '<div style="font-size:13px;font-weight:700;color:#ca8a04;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fde68a">심사 대응 팁</div>'
+    +     rpLst([
+              '최근 매출 흐름과 자금 사용계획을 연결해 상환 가능성을 수치 중심으로 설명함',
+              '대표자 신용·세금·4대보험 이슈를 사전에 점검해 서류 보완 발생을 최소화함'
+            ], '#ca8a04')
+    +   '</div>'
+    +   '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 15px">'
+    +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #86efac">권장 실행 순서</div>'
+    +     rpLst([
+              '이번 주: 신청 대상 1·2순위 확정 및 제출용 기본 서류 취합',
+              '2주 내: 자금 사용계획서·사업계획서 보완 후 중진공 또는 소진공 접수',
+              '1개월 내: 기술보증용 특허·기술설명 자료 보강 및 기보 상담 진행',
+              '분기 내: 벤처·이노비즈 인증 로드맵 착수 후 추가 보증 한도 확보'
+            ], '#15803d')
+    +   '</div>'
     + '</div>'
   );
 
