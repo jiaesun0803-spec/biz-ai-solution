@@ -61,7 +61,7 @@
                 <li onclick="showTab('company')" id="menu-company"><span>🏢</span> 업체 관리</li>
                 <li onclick="showTab('reportList')" id="menu-reportList"><span>📋</span> 보고서 목록</li>
                 <li onclick="showTab('report')" id="menu-report"><span>📈</span> 경영진단보고서</li>
-                <li onclick="showTab('finance')" id="menu-finance"><span>💰</span> 상세 재무진단</li>
+                <li onclick="showTab('finance')" id="menu-finance"><span>💰</span> 재무제표 분석</li>
                 <li onclick="showTab('aiBiz')" id="menu-aiBiz"><span>💡</span> AI 사업계획서</li>
                 <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> AI 정책자금매칭</li>
                 <li onclick="showTab('aiTrade')" id="menu-aiTrade"><span>🏪</span> AI 상권분석</li>
@@ -418,7 +418,7 @@
                             <select id="filter-type" onchange="renderFullReports()">
                                 <option value="">전체</option>
                                 <option value="경영진단">경영진단</option>
-                                <option value="재무진단">재무진단</option>
+                                <option value="재무진단">재무제표 분석</option>
                                 <option value="사업계획서">사업계획서</option>
                                 <option value="정책자금매칭">정책자금매칭</option>
                                 <option value="상권분석">상권분석</option>
@@ -499,14 +499,14 @@
             </div>
         </section>
 
-        <!-- 상세 재무진단 -->
+        <!-- 재무제표 분석 -->
         <section id="finance" class="tab-content">
             <div class="max-width-wrapper">
                 <div id="finance-input-step">
-                    <div class="page-header report-tab-header"><h2 class="page-title-lg">상세 재무진단 생성</h2></div>
-                    <div class="blue-banner"><h3>◎ AI 상세 재무진단 리포트</h3><p>재무제표 데이터를 기반으로 수익성·안정성·성장성을 심층 분석합니다.</p></div>
-                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">📊 재무진단 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 재무 개요 및 요약</li><li>3. 안정성 분석</li><li>5. 재무 개선 방향</li></ul><ul class="info-list"><li>2. 수익성 분석</li><li>4. 성장성 분석</li></ul></div></div>
-                    <div class="fund-split-layout report-control-layout"><div class="fund-left report-control-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="finance-company-select"><option value="">기업을 선택하세요</option></select><div class="report-generate-actions report-left-actions"><button class="btn-report-blue report-generate-btn" onclick="generateAnyReport('finance','client',event)">◎ 상세 재무진단 생성</button></div></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">분석 중점 항목</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>매출 성장률 및 수익성</strong><div class="criteria-desc">연도별 매출 추이, 성장률</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>현금 흐름 및 유동성</strong><div class="criteria-desc">운전자금 충분성 평가</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot green"></div><div><strong>부채 구조 및 안정성</strong><div class="criteria-desc">기관별 분류, 상환 리스크</div></div></div><div class="criteria-item"><div class="dot purple"></div><div><strong>재무 개선 전략</strong><div class="criteria-desc">단기·중기 재무 액션 플랜</div></div></div></div></div></div></div>
+                    <div class="page-header report-tab-header"><h2 class="page-title-lg">재무제표 분석 생성</h2></div>
+                    <div class="blue-banner"><h3>◎ AI 재무제표 분석 리포트</h3><p>실제 재무제표 입력 데이터를 기반으로 수익성·안정성·성장성을 심층 분석합니다.</p></div>
+                    <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">📊 재무제표 분석 구성 (5개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 재무 개요 및 요약</li><li>3. 안정성 분석</li><li>5. 재무 개선 방향</li></ul><ul class="info-list"><li>2. 수익성 분석</li><li>4. 성장성 분석</li></ul></div></div>
+                    <div class="fund-split-layout report-control-layout"><div class="fund-left report-control-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="finance-company-select"><option value="">기업을 선택하세요</option></select><div class="report-generate-actions report-left-actions"><button class="btn-report-blue report-generate-btn" onclick="generateAnyReport('finance','client',event)">◎ 재무제표 분석 생성</button></div></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">분석 중점 항목</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>매출 성장률 및 수익성</strong><div class="criteria-desc">연도별 매출 추이, 성장률</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>현금 흐름 및 유동성</strong><div class="criteria-desc">운전자금 충분성 평가</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot green"></div><div><strong>부채 구조 및 안정성</strong><div class="criteria-desc">기관별 분류, 상환 리스크</div></div></div><div class="criteria-item"><div class="dot purple"></div><div><strong>재무 개선 전략</strong><div class="criteria-desc">단기·중기 재무 액션 플랜</div></div></div></div></div></div></div>
                 </div>
                 <div id="finance-result-step" style="display:none;"><div class="report-view-portrait"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('finance')">← 목록으로</button><div class="header-btns"><button class="btn-primary" onclick="printReport()">PDF 다운로드</button></div></div><div id="finance-content-area" class="report-paper-portrait"></div></div></div>
             </div>

@@ -622,7 +622,7 @@ function updateDashboardReports() {
   setText('dashboard-support-count', `${supportDocs.length}건`);
   setText('dashboard-notice-count', `${notices.length}건`);
 
-  const typeIcon=t=>({'경영진단':'📈','재무진단':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
+  const typeIcon=t=>({'경영진단':'📈','재무제표 분석':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
 
   if (!reports.length) {
     listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없음.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
@@ -1765,7 +1765,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
 
 
 // ===========================
-// ★ 상세 재무진단 (표지+3P)
+// ★ 재무제표 분석 (표지+3P)
 // ===========================
 function buildFinanceHTML(d, cData, rev, dateStr) {
   var color = '#2563eb';
@@ -1808,7 +1808,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
       +'<div style="padding-top:34px">'
       +'<div style="height:8px;background:'+color+';border-radius:0;margin:0 0 88px 0"></div>'
       +'<div style="text-align:center;padding:0 34px">'
-      +'<div style="font-size:56px;font-weight:900;color:#3f3f46;letter-spacing:-2.1px;line-height:1.08;margin-bottom:28px">상세 재무진단</div>'
+      +'<div style="font-size:56px;font-weight:900;color:#3f3f46;letter-spacing:-2.1px;line-height:1.08;margin-bottom:28px">재무제표 분석</div>'
       +'<div style="width:64%;height:1px;background:#d1d5db;margin:0 auto 30px"></div>'
       +'<div style="font-size:28px;font-weight:800;color:#111827;line-height:1.4">'+companyName+'</div>'
       +'</div>'
@@ -2915,7 +2915,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
 // ★ REPORT_CONFIGS
 // ===========================
 var REPORT_CONFIGS = {
-  finance:     {typeLabel:'재무진단',    title:'재무진단',              contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
+  finance:     {typeLabel:'재무제표 분석',    title:'재무제표 분석',              contentAreaId:'finance-content-area',    landscape:false, buildPrompt:buildFinancePrompt,   buildHTML:buildFinanceHTML},
   aiTrade:     {typeLabel:'상권분석',    title:'AI 상권분석',           contentAreaId:'aiTrade-content-area',    landscape:false, buildPrompt:buildTradePrompt,     buildHTML:buildTradeHTML},
   aiMarketing: {typeLabel:'마케팅제안',  title:'마케팅제안',            contentAreaId:'aiMarketing-content-area',landscape:false, buildPrompt:buildMarketingPrompt, buildHTML:buildMarketingHTML},
   aiFund:      {typeLabel:'정책자금매칭',title:'AI 정책자금매칭',      contentAreaId:'aiFund-content-area',     landscape:false, buildPrompt:buildFundPrompt,      buildHTML:buildFundHTML},
@@ -3031,7 +3031,7 @@ window.generateAnyReport = async function(type, version, event) {
     overlay.style.display = 'flex';
     var tt = document.getElementById('loading-title-text');
     var td = document.getElementById('loading-desc-text');
-    var typeNames = {finance:'상세 재무진단', aiTrade:'상권분석 리포트', aiMarketing:'마케팅 제안서', aiFund:'정책자금매칭', aiBiz:'AI 사업계획서'};
+    var typeNames = {finance:'재무제표 분석', aiTrade:'상권분석 리포트', aiMarketing:'마케팅 제안서', aiFund:'정책자금매칭', aiBiz:'AI 사업계획서'};
     if(tt) tt.textContent = (typeNames[type]||'보고서') + ' 생성 중...';
     var waitSec = type==='aiBiz' ? '최대 <b style="color:#3b82f6">90초</b>' : '최대 <b style="color:#3b82f6">60초</b>';
     if(td) td.innerHTML = cData.name + ' 기업 데이터를 분석하여<br>맞춤형 ' + (typeNames[type]||'보고서') + '를 작성하고 있음.<br>' + waitSec + '가 소요될 수 있음.';
