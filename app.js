@@ -2742,20 +2742,24 @@ function buildBizPlanPrompt(cData, fRev) {
 function getIndustryCerts(ind, nm, itm) {
   var certs = [];
   var funds = [];
-  var isFood = ind.includes('식품') || ind.includes('외식') || ind.includes('음식');
+  var isFood = ind.includes('식품') || ind.includes('외식') || ind.includes('음식') || ind.includes('농림') || ind.includes('수산');
   var isManu = ind.includes('제조');
   var isRetail = ind.includes('도소매') || ind.includes('유통');
-  var isService = ind.includes('서비스') || ind.includes('관광') || ind.includes('물류');
+  var isService = ind.includes('서비스') || ind.includes('물류');
   var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
   var isRoot = ind.includes('주조') || ind.includes('금형') || ind.includes('소성가공') || ind.includes('용접') || ind.includes('표면처리') || ind.includes('열처리');
   var isMaterial = ind.includes('소재') || ind.includes('부품') || ind.includes('장비') || ind.includes('전기전자') || ind.includes('자동차') || ind.includes('기계') || ind.includes('금속') || ind.includes('화학');
+  var isExport = ind.includes('수출') || ind.includes('무역');
+  var isEco = ind.includes('환경') || ind.includes('에너지') || ind.includes('재활용');
+  var isSports = ind.includes('스포츠') || ind.includes('체육') || ind.includes('헬스');
+  var isTour = ind.includes('관광') || ind.includes('숙박') || ind.includes('여행');
 
   // 공통 인증 (벤처기업)
   certs.push({name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'});
 
-  if (isManu || isIT || ind.includes('바이오') || ind.includes('환경')) {
+  if (isManu || isIT || ind.includes('바이오') || isEco) {
     certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
-  } else if (isService || isRetail) {
+  } else if (isService || isRetail || isTour) {
     certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 마케팅, 판로 개척 및 금융권 대출 금리 우대',amount:'+2억',period:'1년 내'});
   } else {
     certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
@@ -2779,7 +2783,47 @@ function getIndustryCerts(ind, nm, itm) {
   }
 
   // 자금 추천
-  if (isRetail || isService) {
+  if (isFood) {
+    funds = [
+      {rank:1,name:'농림수산업자신용보증기금(농신보)',limit:'3억',tags:['농어업인 우대','식품가공 특화','보증료 우대']},
+      {rank:2,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']},
+      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
+      {rank:4,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+    ];
+  } else if (isExport) {
+    funds = [
+      {rank:1,name:'한국무역보험공사(K-SURE)',limit:'5억',tags:['수출기업 특화','수출채권 현금화','보증료 우대']},
+      {rank:2,name:'중진공 수출기업지원자금',limit:'3억',tags:['수출실적 우대','글로벌 진출','금리 우대']},
+      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
+      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+    ];
+  } else if (isEco) {
+    funds = [
+      {rank:1,name:'한국환경산업기술원/에너지공단',limit:'5억',tags:['친환경 설비','ESCO 사업','금리 우대']},
+      {rank:2,name:'중진공 신성장기반자금',limit:'3억',tags:['시설자금 우대','저탄소 인증','장기 대출']},
+      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
+      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+    ];
+  } else if (isSports) {
+    funds = [
+      {rank:1,name:'국민체육진흥공단(KSPO) 튼튼론',limit:'1억',tags:['스포츠/체육 특화','금리 우대','시설/운전 자금']},
+      {rank:2,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']},
+      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+      {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
+    ];
+  } else if (isTour) {
+    funds = [
+      {rank:1,name:'관광진흥개발기금',limit:'5억',tags:['관광/숙박 특화','시설 개보수','장기 저리']},
+      {rank:2,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']},
+      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+      {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
+    ];
+  } else if (isRetail || isService) {
     funds = [
       {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
       {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
@@ -2796,7 +2840,6 @@ function getIndustryCerts(ind, nm, itm) {
       {rank:5,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']}
     ];
   }
-
   return { certs: certs, funds: funds };
 }
 
