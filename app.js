@@ -1368,7 +1368,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var totalC2 = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
   var cat5 = cat(5,'가점추천','인증 취득으로 정책자금 한도 최대화',
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;align-items:stretch">'
-    +'<div style="display:flex;flex-direction:column">'
+    +'<div style="display:flex;flex-direction:column;height:100%">'
     +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
     +certs.map(function(c,i){
       return '<div style="display:flex;align-items:flex-start;gap:10px;background:white;border:1px solid #e2e8f0;border-radius:9px;padding:11px 13px;margin-bottom:9px">'
@@ -1378,7 +1378,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
         +'</div>';
     }).join('')
     +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px;flex:1">'
+    +'<div style="display:flex;flex-direction:column;gap:10px;flex:1;height:100%">'
     +'<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center">'
     +'<div style="flex:1">'
     +'</div>'
@@ -1718,7 +1718,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>'
     +'</div>'
-    +'<div class="rp-cat" style="background:#fffbeb;border:2px solid #f59e0b;page-break-before:always">'
+    +'<div class="rp-cat" style="background:#fffbeb;border:2px solid #f59e0b;page-break-before:always;break-before:page">'
     +'<div class="rp-ph">'
     +'<div class="rp-pnum" style="background:#fef3c7;color:#d97706">🔒</div>'
     +'<span class="rp-ptitle">컨설턴트 실질 조언 (계속)</span>'
@@ -2017,8 +2017,8 @@ function buildTradeHTML(d, cData, rev, dateStr) {
   );
 
   return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover
-    + p1.replace('class="rp-page"','class="rp-page-auto"')
-    + p2.replace('class="rp-page"','class="rp-page-auto"')
+    + p1.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto')
+    + p2.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto')
     + '</div>';
 }
 
@@ -2128,17 +2128,19 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
   var p1 = rpPage(1,'채널별 마케팅 전략 및 예산','채널 효과 분석 · 예산 배분',color,
     '<div style="display:flex;flex-direction:column;gap:14px">'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
-    +rpSec('채널별 예상 효과 (점수/100)', color, channels.map(scoreBar).join(''))
-    +'<div class="rp-section" style="display:flex;flex-direction:column;align-items:center;justify-content:center">'
+    +rpSec('채널별 예상 효과 (점수/100)', color, channels.map(function(ch,idx){return scoreBar(ch,idx);}).join(''))
+    +'<div class="rp-section" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px">'
     +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;align-self:flex-start">월 예산 배분 ('+budgetTotal+')</div>'
-    +'<div class="rp-ch" style="width:180px;height:180px;flex-shrink:0;padding:6px;border:none;background:transparent"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin-top:10px">'
+    +'<div style="display:flex;align-items:center;justify-content:center;gap:16px;width:100%">'
+    +'<div class="rp-ch" style="width:160px;height:160px;flex-shrink:0;border:none;background:transparent"><canvas id="mp-donut" data-names="'+budget.map(function(b){return b.name;}).join('|')+'" data-ratios="'+budget.map(function(b){return b.ratio;}).join(',')+'" style="width:100%;height:100%"></canvas></div>'
+    +'<div style="display:flex;flex-direction:column;gap:7px">'
     +budget.map(function(b,i){
-      return '<div style="display:flex;align-items:center;gap:6px">'
+      return '<div style="display:flex;align-items:center;gap:7px">'
         +'<div style="width:10px;height:10px;border-radius:50%;background:'+(bColors[i]||color)+';flex-shrink:0"></div>'
-        +'<div style="font-size:11px;color:#64748b;line-height:1.35">'+b.ratio+'% '+b.name+'</div>'
+        +'<div style="font-size:11px;color:#64748b;line-height:1.35;white-space:nowrap">'+b.ratio+'% '+b.name+'</div>'
         +'</div>';
     }).join('')
+    +'</div>'
     +'</div>'
     +'</div>'
     +'</div>'
@@ -2208,7 +2210,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var otherFunds = funds.slice(3);
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">'
+    '<div style="display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:12px;align-items:stretch">'
     + '<div class="rp-section" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa;padding:18px">'
     +   '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:10px">신청 가능성 종합 점수</div>'
     +   '<svg viewBox="0 0 110 62" width="130" height="74" style="display:block;margin:4px auto 10px">'
@@ -2585,10 +2587,11 @@ function initReportCharts(rev) {
         var gd = fg.dataset || {};        var growthData = [+(gd.y1||0), +(gd.y2||0), +(gd.y3||0)];
         if (!growthData[0] && !growthData[1] && !growthData[2]) growthData = [140000,240000,350000];
         var gRange=Math.max(growthData[2]-growthData[0], growthData[0]*0.5, 50000);
-        var gMid1=Math.round(growthData[0]+gRange*0.32);
-        var gMid2=Math.round(growthData[1]+gRange*0.15);
-        var expandedData=[growthData[0], gMid1, growthData[1], gMid2, growthData[2]];
-        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026 초','2026 말','2027 초','2027 말','2028'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.45,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}});
+        var gMid1=Math.round(growthData[0]+gRange*0.30);
+        var gMid2=Math.round(growthData[0]+gRange*0.60);
+        var gMid3=Math.round(growthData[1]+gRange*0.18);
+        var expandedData=[growthData[0], gMid1, gMid2, growthData[1], gMid3, growthData[2]];
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026 초','2026 중','2026 말','2027 초','2027 말','2028'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}});
       } catch(e){}
     }
     // ─ 상권 레이더
@@ -2959,4 +2962,5 @@ window.viewReport = function(id) {
 window.backToInput = function(tab) {
   document.getElementById(tab+'-input-step').style.display='block';
   document.getElementById(tab+'-result-step').style.display='none';
+  showTab('reportList');
 };
