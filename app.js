@@ -1453,34 +1453,37 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   // ── CAT5: 가점추천 ──────────────────────────
   var totalC2 = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
   var cat5 = cat(5,'가점추천','인증 취득으로 정책자금 한도 최대화',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;align-items:stretch">'
-    +'<div style="display:flex;flex-direction:column;height:100%">'
-    +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
+    // 인증 카드 2열 그리드 (상단)
+    '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
     +certs.map(function(c,i){
-      return '<div style="display:flex;align-items:flex-start;gap:10px;background:white;border:1px solid #e2e8f0;border-radius:9px;padding:11px 13px;margin-bottom:9px">'
+      return '<div style="display:flex;align-items:flex-start;gap:10px;background:white;border:1px solid #e2e8f0;border-radius:9px;padding:11px 13px">'
         +'<div style="width:32px;height:32px;border-radius:7px;background:'+certBgs[i%4]+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+certIcons[i%4]+'</div>'
-        +'<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px">'+c.name+'</div><div style="font-size:12px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
-        +'<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:13px;font-weight:800;color:'+C+'">'+c.amount+'</div><div style="font-size:11px;color:#94a3b8">'+c.period+'</div></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px">'+c.name+'</div><div style="font-size:11px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
+        +'<div style="text-align:right;flex-shrink:0;margin-left:6px"><div style="font-size:13px;font-weight:800;color:'+C+'">'+c.amount+'</div><div style="font-size:11px;color:#94a3b8;white-space:nowrap">'+c.period+'</div></div>'
         +'</div>';
     }).join('')
     +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px;flex:1;height:100%">'
-    +'<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center">'
-    +'<div style="flex:1">'
+    // 최대 한도 강조 박스 (중앙 전체 너비)
+    +'<div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">'
+    +'<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:6px">인증 완료 시 총 추가 조달 가능 한도</div>'
+    +'<div style="font-size:36px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">최대 +'+(totalC2>0?totalC2+'억원':'6.5억원')+'</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:6px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
     +'</div>'
-    +'<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:5px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +'<div style="font-size:28px;font-weight:900;color:'+C+';line-height:1.2">최대 +'+(totalC2>0?totalC2+'억원':'6.5억원')+'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-top:5px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
-    +'</div>'
-    + mgmtSec('취득 우선순위 전략','🗓',C,[
+    // 취득 우선순위 전략 (하단 2열)
+    +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px">'
+    +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #e2e8f0">🗓 취득 우선순위 전략</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +[
         '1순위: 벤처인증 (약 6개월) — 즉각적 자금 한도 확대 효과 최대, 준비 난이도 낮음. 현재 매출로 충분히 취득 가능',
         '2순위: 이노비즈 (1년 내) — 벤처인증 후 연속 추진. 중진공 기술개발자금 자격 + 기보 우대보증 동시 적용',
         '3순위: 기업부설연구소 (중기) — 이노비즈와 병행, R&D 세액공제 25% 절세 효과 극대화 전략으로 추진',
         '4순위: HACCP (장기) — 대형마트·단체급식 채널 확보 후 안정적 B2B 매출 기반 마련 및 신뢰도 강화',
         '인증 준비는 사업계획서 작성과 병행하여 시너지를 극대화하고 컨설턴트와 일정 조율 강력 권고',
         '인증별 담당 기관 사전 접촉 및 예비 상담을 통해 요건 충족 여부를 조기에 점검하고 준비 착수 필요'
-      ])
-    +'</div></div>'
+      ].map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+C+'"></div><span>'+t+'</span></div>';}).join('')
+    +'</div>'
+    +'</div>'
   );
 
   // ── CAT6: 성장 로드맵 ───────────────────────
@@ -2230,8 +2233,22 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
-    +rpSec('핵심 마케팅 전략', color, rpLst(strategies, color))
-    +rpSec('예산 운영 원칙', color, rpLst(principles, color))
+    +rpSec('핵심 마케팅 전략', color,
+      strategies.map(function(t){
+        return '<div style="display:flex;align-items:flex-start;gap:8px;background:#fff0f6;border:1px solid #fce7f3;border-radius:8px;padding:10px 12px;margin-bottom:7px">'
+          +'<div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;background:'+color+'"></div>'
+          +'<span style="font-size:12px;color:#3f3f46;line-height:1.6">'+t+'</span>'
+          +'</div>';
+      }).join('')
+    )
+    +rpSec('예산 운영 원칙', color,
+      principles.map(function(t){
+        return '<div style="display:flex;align-items:flex-start;gap:8px;background:#fff0f6;border:1px solid #fce7f3;border-radius:8px;padding:10px 12px;margin-bottom:7px">'
+          +'<div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;background:'+color+'"></div>'
+          +'<span style="font-size:12px;color:#3f3f46;line-height:1.6">'+t+'</span>'
+          +'</div>';
+      }).join('')
+    )
     +'</div>'
     +'</div>'
   );
