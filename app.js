@@ -1194,12 +1194,9 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var nm = cData.name;
   var gradeVal = (d.grade||'A-').replace(/등급/g,'').trim();
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
-  var certs = d.certs||[
-    {name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'},
-    {name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'},
-    {name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'},
-    {name:'HACCP 인증',effect:nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결',amount:'채널↑',period:'매출 확대'}
-  ];
+  var ind = cData.industry||'제조업';
+  var itm = cData.coreItem||'주력제품';
+  var certs = d.certs||getIndustryCerts(ind, nm, itm).certs;
   var certBgs=['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
   var certIcons=['🏆','📜','🔬','✅'];
   var totalC = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
@@ -1437,10 +1434,9 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var nm = cData.name;
   var gradeVal = (d.grade||'A-').replace(/등급/g,'').trim();
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
-  var certs = d.certs||[
-    {name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'4개월 내'},
-    {name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'}
-  ];
+  var ind = cData.industry||'제조업';
+  var itm = cData.coreItem||'주력제품';
+  var certs = d.certs||getIndustryCerts(ind, nm, itm).certs.slice(0, 2);
 
   var cover = mgmtCover(cData, rev, exp, dateStr, 'consultant');
 
@@ -2177,7 +2173,9 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var checks = d.checks||[{text:'중소기업 해당 여부 확인',status:'pass'},{text:'국세·지방세 체납 없음',status:'pass'},{text:'금융 연체 이력 없음',status:'pass'},{text:'사업자 등록 유효',status:'pass'},{text:'업력 2년 이상 충족',status:'cond'},{text:'벤처·이노비즈 인증 보유',status:'fail'}];
   var score  = d.score||78;
   var gda    = Math.round((score/100)*151);
-  var funds  = d.funds||[{rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']},{rank:2,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},{rank:3,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']},{rank:4,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},{rank:5,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']}];
+  var ind = cData.industry||'제조업';
+  var itm = cData.coreItem||'주력제품';
+  var funds  = d.funds||getIndustryCerts(ind, cData.name, itm).funds;
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'중진공',limit:'1억',rate:'2.5%',period:'5년',diff:'easy'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'mid'},{org:'소진공',limit:'1억',rate:'3.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
@@ -2328,7 +2326,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var diffs = d.s5_items||[{title:'기술 차별화',text:'돈육 사골 농축 압축 기술 특허 보유 — 경쟁사의 동일 제품 제조를 원천 차단하는 진입 장벽 구축',color:'#16a34a'},{title:'제품 차별화',text:'1회 분량 개별 포장으로 위생·편의성·보관성을 동시에 충족 — 소비자 불편을 해소한 혁신 제품',color:'#2563eb'},{title:'시장 포지셔닝',text:'HMR 내 돈육 특화 세그먼트 선점 — 틈새 독점 포지션 구축으로 경쟁 압력을 원천 최소화',color:'#7c3aed'},{title:'성장 증명력',text:'창업 1년 만에 11억 달성 — 투자·자금 심사 기관이 가장 신뢰하는 시장성 검증 완료 상태',color:'#ea580c'}];
   var bgMap = {'#16a34a':'#f0fdf4','#2563eb':'#eff6ff','#7c3aed':'#fdf4ff','#ea580c':'#fff7ed'};
   var bdMap = {'#16a34a':'#86efac','#2563eb':'#93c5fd','#7c3aed':'#d8b4fe','#ea580c':'#fdba74'};
-  var bpCerts = d.s6_certs||[{name:'벤처기업 인증',effect:'중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능',amount:'+2억',period:'6개월 내'},{name:'이노비즈 인증',effect:'기술혁신형 중소기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'},{name:'기업부설연구소',effect:'R&D 세액공제 25% 적용 및 기보 기술보증 우대 적용 동시 가능',amount:'+1.5억',period:'세액공제 병행'},{name:'HACCP 인증',effect:'대형마트·단체급식 납품 채널 확대 — 매출 직접 연결 효과 확인',amount:'채널↑',period:'매출 확대'}];
+  var ind = cData.industry||'제조업';
+  var itm = cData.coreItem||'주력제품';
+  var bpCerts = d.s6_certs||getIndustryCerts(ind, cData.name, itm).certs;
   var bpIcons = ['🏆','📜','🔬','✅'];
   var bpBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
   var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(String(c.amount||'').replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
@@ -2658,39 +2658,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'"hr":["'+nm+' 인사조직 5개 각60자이상"],'
     +'"ops":["'+nm+' 운영생산 5개 각60자이상"],'
     +'"it":["'+nm+' IT디지털 5개 각60자이상"],'
-    +'"certs":['
-      +'{"name":"벤처기업 인증","effect":"'+nm+'의 '+itm+' 기술력 인정으로 중진공·기보 우대금리 적용 — 추가 자금 한도 최대 2억원 확보 가능","amount":"+2억","period":"6개월 내"},'
-      +'{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신형 기업 인증으로 중진공 기술개발자금 신청 자격 부여 및 기보 우대 보증 적용","amount":"+3억","period":"1년 내"},'
-      +'{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% 적용 및 기보 기술보증 우대 — 절세+보증 시너지 효과 동시 달성","amount":"+1.5억","period":"세액공제 병행"},'
-      +'{"name":"HACCP 인증","effect":"'+nm+' '+itm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결 — B2B 매출 신규 확보","amount":"채널↑","period":"매출 확대"}'
-    +'],'
-    +'"roadmap_short":["'+nm+' 단기실행 6개 각35자이상"],'
-    +'"roadmap_mid":["'+nm+' 중기실행 6개 각35자이상"],'
-    +'"roadmap_long":["'+nm+' 장기실행 6개 각35자이상"],'
-    +'"summary":["'+nm+' 종합의견 3개 각80자이상"],'
-
-    // ── 컨설턴트 전용 데이터 ──
-    +'"key_risks":["'+nm+' 핵심리스크 4개 각70자이상 솔직하게"],'
-    +'"fb_finance":["재무 컨설턴트피드백 3개 각70자이상 날카롭게"],'
-    +'"fb_marketing":["마케팅 컨설턴트피드백 3개 각70자이상 날카롭게"],'
-    +'"fb_hr_ops":["인사운영 컨설턴트피드백 3개 각70자이상 날카롭게"],'
-    +'"fb_it":["IT 컨설턴트피드백 3개 각70자이상 날카롭게"],'
-    +'"fb_roadmap":["로드맵 컨설턴트피드백 2개 각70자이상 날카롭게"],'
-    +'"consultant_issues":["'+nm+' 시급이슈TOP3 각80자이상 매우구체적으로"],'
-    +'"consultant_funds":["'+nm+' 정책자금신청전략 4개 각70자이상"],'
-    +'"consultant_certs":["인증취득전략 3개 각60자이상"],'
-    +'"consultant_marketing":["마케팅개선 3개 각60자이상"],'
-    +'"consultant_credit":["신용개선 2개 각50자이상"]'
-    +'}'
-    +'\n\n[기업 데이터] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 대표:'+rep
-    +', 전년매출:'+r25+', 전전년:'+r24+', 금년예상:'+rExp+', 금년현재:'+rCur;
-}
-
-function buildFinancePrompt(cData, fRev) {
-  var nm=cData.name, ind=cData.industry||'제조업';
-  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
-  return '재무전문 컨설턴트. \''+nm+'\' 재무진단. 기업명과 실제 수치 반드시 포함. JSON만.\n\n'
-    +'{"scores":{"profit":수익성점수,"stable":안정성점수,"growth":성장성점수},'
+    +'"certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm).certs) + ','
     +'"score_descs":{"profit":"'+nm+' 수익성 10자","stable":"'+nm+' 안정성 10자","growth":"'+nm+' 성장성 10자"},'
     +'"profit_bars":[{"label":"매출 성장률(YoY)","value":80,"display":"+21%"},{"label":"매출이익률","value":62,"display":"38%"},{"label":"영업이익률","value":45,"display":"23%"},{"label":"현금흐름 안정성","value":70,"display":"양호"}],'
     +'"debt":[{"name":"중진공","ratio":54},{"name":"기보","ratio":27},{"name":"재단","ratio":19}],'
@@ -2756,7 +2724,7 @@ function buildBizPlanPrompt(cData, fRev) {
     +'"s4_items":["'+nm+'의 '+itm+' 경쟁력 4개 70자이상"],'
     +'"s4_competitor":[{"item":"제품경쟁력","self":"★★★★★","a":"★★★★","b":"★★★"},{"item":"기술력(특허)","self":"★★★★★","a":"★★★","b":"★★★"},{"item":"가격경쟁력","self":"★★★★","a":"★★★★★","b":"★★★★"},{"item":"유통망","self":"★★★","a":"★★★★★","b":"★★★★"},{"item":"성장성","self":"★★★★★","a":"★★★","b":"★★★"}],'
     +'"s5_items":[{"title":"기술 차별화","text":"'+nm+'의 '+itm+' 기술특허 보유로 70자이상","color":"#16a34a"},{"title":"제품 차별화","text":"'+nm+' 제품 독창적 특징 70자이상","color":"#2563eb"},{"title":"시장 포지셔닝","text":"'+nm+'의 '+ind+' 시장 내 포지션 70자이상","color":"#7c3aed"},{"title":"성장 증명력","text":"'+nm+'의 '+r25+' 매출 달성으로 70자이상","color":"#ea580c"}],'
-    +'"s6_certs":[{"name":"벤처기업 인증","effect":"'+nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 한도 2억","amount":"+2억","period":"6개월 내"},{"name":"이노비즈 인증","effect":"'+nm+'의 기술혁신기업 인증 — 중진공 기술개발자금 신청 자격","amount":"+3억","period":"1년 내"},{"name":"기업부설연구소","effect":"'+nm+'의 R&D 세액공제 25% + 기보 기술보증 우대","amount":"+1.5억","period":"세액공제 병행"},{"name":"HACCP 인증","effect":"'+nm+' '+itm+'의 대형마트·급식 납품 채널 확대","amount":"채널↑","period":"매출 확대"}],'
+    +'"s6_certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm).certs) + ','
     +'"s7_rows":[{"item":"원재료 구입","amount":"1억5천만원","ratio":"37.5%","purpose":"'+nm+'의 핵심 원재료 선매입 및 안정적 재고 확보"},{"item":"생산 설비 투자","amount":"1억원","ratio":"25%","purpose":"'+nm+'의 생산 자동화로 원가율 20% 절감"},{"item":"마케팅·채널","amount":"7천만원","ratio":"17.5%","purpose":"'+nm+'의 SNS·쿠팡 입점·브랜드 마케팅 집행"},{"item":"운전자금","amount":"8천만원","ratio":"20%","purpose":"'+nm+'의 인건비·고정비 등 운영 비용"}],'
     +'"s7_strategy":["'+nm+' 자금 집행 전략 5개 50자이상"],'
     +'"s8_short":["'+nm+' 단기 4개 35자이상"],"s8_mid":["'+nm+' 중기 4개"],"s8_long":["'+nm+' 장기 4개"],'
@@ -2765,6 +2733,71 @@ function buildBizPlanPrompt(cData, fRev) {
     +'"s9_roadmap":[{"year":"2026","tasks":["'+nm+' 3개 계획"]},{"year":"2027","tasks":["'+nm+' 3개 계획"]},{"year":"2028","tasks":["3개 계획"]},{"year":"2029~","tasks":["3개 계획"]}],'
     +'"s10_conclusion":"'+nm+'는 '+itm+'을 통해 5문장이상 종합의견(~있음으로끝)"}\n\n'
     +'[기업] 기업명:'+nm+', 대표:'+rep+', 업종:'+ind+', 핵심아이템:'+itm+', 상시근로자:'+emp+'명, 전년매출:'+r25+', 전전년:'+r24+', 금년예상:'+rExp+', 필요자금:'+nf;
+}
+
+
+// ===========================
+// ★ 업종별 인증 및 자금 추천 로직
+// ===========================
+function getIndustryCerts(ind, nm, itm) {
+  var certs = [];
+  var funds = [];
+  var isFood = ind.includes('식품') || ind.includes('외식') || ind.includes('음식');
+  var isManu = ind.includes('제조');
+  var isRetail = ind.includes('도소매') || ind.includes('유통');
+  var isService = ind.includes('서비스') || ind.includes('관광') || ind.includes('물류');
+  var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
+  var isRoot = ind.includes('주조') || ind.includes('금형') || ind.includes('소성가공') || ind.includes('용접') || ind.includes('표면처리') || ind.includes('열처리');
+  var isMaterial = ind.includes('소재') || ind.includes('부품') || ind.includes('장비') || ind.includes('전기전자') || ind.includes('자동차') || ind.includes('기계') || ind.includes('금속') || ind.includes('화학');
+
+  // 공통 인증 (벤처기업)
+  certs.push({name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'});
+
+  if (isManu || isIT || ind.includes('바이오') || ind.includes('환경')) {
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
+  } else if (isService || isRetail) {
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 마케팅, 판로 개척 및 금융권 대출 금리 우대',amount:'+2억',period:'1년 내'});
+  } else {
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
+  }
+
+  if (isFood) {
+    certs.push({name:'HACCP 인증',effect:nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결',amount:'채널↑',period:'매출 확대'});
+    certs.push({name:'ISO 22000',effect:nm+'의 글로벌 식품 안전 표준 경영 체계 구축 — 해외 수출 신뢰도 확보',amount:'수출↑',period:'1년 내'});
+  } else if (isRoot) {
+    certs.push({name:'뿌리기업 확인',effect:nm+'의 핵심뿌리기술 인정 — 외국인 근로자 고용 한도 확대 및 기술개발 사업 우선 선정',amount:'가점↑',period:'6개월 내'});
+    certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
+  } else if (isMaterial) {
+    certs.push({name:'소부장 전문기업',effect:nm+'의 소재·부품·장비 기술력 입증 — 특화 R&D 자금 및 산업은행 금융 지원',amount:'+5억',period:'1년 내'});
+    certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
+  } else if (isIT) {
+    certs.push({name:'성능인증(EPC)',effect:nm+'의 우수 기술 제품 인증 — 공공기관 수의계약 및 의무구매 비중 적용',amount:'매출↑',period:'1년 내'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'});
+  } else {
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'});
+    certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
+  }
+
+  // 자금 추천
+  if (isRetail || isService) {
+    funds = [
+      {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
+      {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+      {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+      {rank:4,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']},
+      {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
+    ];
+  } else {
+    funds = [
+      {rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']},
+      {rank:2,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
+      {rank:3,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']},
+      {rank:4,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+      {rank:5,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']}
+    ];
+  }
+
+  return { certs: certs, funds: funds };
 }
 
 // ===========================
