@@ -3136,8 +3136,17 @@ window.saveFsData = function() {
     if (el) fsData[f] = el.value.replace(/[^0-9\-]/g,'');
   });
   cs[idx].fsData = fsData;
+  // 매출액 → revenueData 연동 (업체관리 매출 데이터 자동 반영)
+  var _rv23 = parseInt(fsData.rev_y23) || 0;
+  var _rv24 = parseInt(fsData.rev_y24) || 0;
+  if (!cs[idx].revenueData) cs[idx].revenueData = {cur:0,y25:0,y24:0,y23:0};
+  if (_rv23 > 0) cs[idx].revenueData.y23 = _rv23;
+  if (_rv24 > 0) {
+    cs[idx].revenueData.y24 = _rv24;
+    cs[idx].revenueData.y25 = _rv24;
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
-  alert('재무 데이터가 저장되었습니다.');
+  alert('재무 데이터가 저장되었습니다.\n업체관리 매출 데이터도 함께 업데이트되었습니다.');
 };
 
 window.generateFinanceReport = async function(event) {
