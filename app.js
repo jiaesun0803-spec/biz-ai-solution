@@ -2699,17 +2699,26 @@ function buildMarketingPrompt(cData, fRev) {
 }
 
 function buildFundPrompt(cData, fRev) {
-  var nm=cData.name, ind=cData.industry||'제조업';
+  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'';
   var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
+  var indData = getIndustryCerts(ind, nm, itm);
+  var indFunds = indData.funds;
+  var top1 = indFunds[0]||{};
+  var compOrg = (top1.name||'중진공').split('(')[0].trim()
+    .replace('농림수산업자신용보증기금','농신보')
+    .replace('한국무역보험공사','K-SURE')
+    .replace('한국환경산업기술원/에너지공단','환경/에너지공단')
+    .replace('국민체육진흥공단','KSPO')
+    .replace('관광진흥개발기금','관광기금');
   return '정책자금 전문 컨설턴트. \''+nm+'\' 정책자금 매칭. 기업명 반드시 반영. JSON만.\n\n'
     +'{"checks":[{"text":"중소기업 해당 여부","status":"pass"},{"text":"국세·지방세 체납 없음","status":"pass"},{"text":"금융 연체 이력 없음","status":"pass"},{"text":"사업자 등록 유효","status":"pass"},{"text":"업력 조건 충족","status":"cond"},{"text":"벤처·이노비즈 인증","status":"fail"}],'
     +'"score":78,"score_desc":"'+nm+' 신청 가능","match_count":5,'
     +'"score_items":["'+nm+'는 기본요건 4개 충족 3개 60자이상"],'
-    +'"funds":[{"rank":1,"name":"중진공 소공인 특화자금","limit":"1억","tags":["금리 2.5%","즉시신청가능","'+ind+' 우대"]},{"rank":2,"name":"기보 기술보증(특허우대)","limit":"3억","tags":["보증료 0.5%","특허 1건 우대","90% 보증"]},{"rank":3,"name":"소진공 성장촉진자금","limit":"1억","tags":["금리 3.0%","창업3년이내","온라인신청"]},{"rank":4,"name":"지역신보 소액보증","limit":"5천만","tags":["보증료 0.8%","지역맞춤","빠른처리"]},{"rank":5,"name":"신보 창업기업 특례보증","limit":"2억","tags":["보증료 0.5%","벤처인증조건부","95% 보증"]}],'
-    +'"comparison":[{"org":"중진공","limit":"1억","rate":"2.5%","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
+    +'"funds":'+JSON.stringify(indFunds)+','
+    +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'","rate":"'+(top1.tags&&top1.tags[0]||'우대금리')+'","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
-    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\n\n'
+    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\'\n\n'
     +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp;
 }
 
