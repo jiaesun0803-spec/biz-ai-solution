@@ -187,6 +187,7 @@ window.onload = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+  migrateRevenueToWon();
   initFinanceTab();
   ensureAdminAccount();
   checkAuth();
@@ -715,7 +716,7 @@ window.saveCompanyData=function(){
 window.toggleExportInputs=function(){const isExp=[...document.getElementsByName('export')].some(r=>r.checked&&r.value==='수출중');document.querySelectorAll('.export-money').forEach(i=>{i.disabled=!isExp;if(!isExp)i.value='';});};
 window.toggleCorpNumber=function(){const isC=[...document.getElementsByName('biz_type')].some(r=>r.checked&&r.value==='법인');const el=document.getElementById('corp_number');if(el){el.disabled=!isC;if(!isC)el.value='';}};
 window.toggleRentInputs=function(){const isR=[...document.getElementsByName('rent_type')].some(r=>r.checked&&r.value==='임대');['rent_deposit','rent_monthly'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=!isR;if(!isR)el.value='';}});};
-window.calculateTotalDebt=function(){let tot=0;document.querySelectorAll('.debt-input').forEach(i=>{let v=i.value.replace(/[^0-9]/g,'');if(v)tot+=parseInt(v);});const el=document.getElementById('total-debt');if(el)el.innerText=tot.toLocaleString('ko-KR');};
+window.calculateTotalDebt=function(){let tot=0;document.querySelectorAll('.debt-input').forEach(i=>{let v=i.value.replace(/[^0-9]/g,'');if(v)tot+=parseInt(v);});const el=document.getElementById('total-debt');if(el)el.innerText=tot.toLocaleString('ko-KR')+'원 ('+fKRW(tot)+')';};
 
 // ===========================
 // ★ 입력 포매터
@@ -732,7 +733,89 @@ function initInputHandlers(){
 // ★ 유틸리티
 
 // ===========================
-function fKRW(n){const num=parseInt(n,10);if(!num||isNaN(num))return'0원';const uk=Math.floor(num/10000),man=num%10000;if(uk>0)return uk.toLocaleString('ko-KR')+'억'+(man>0?' '+man.toLocaleString('ko-KR')+'만원':'원');return man.toLocaleString('ko-KR')+'만원';}
+function fKRW(n){
+  var num = parseInt(n, 10);
+  if (!num || isNaN(num)) return '0원';
+  var eok  = Math.floor(num / 100000000);          // 억
+  var rem  = num % 100000000;
+  var chun = Math.floor(rem / 10000000);            // 천만
+  var man  = Math.floor((rem % 10000000) / 10000); // 만
+  var won  = rem % 10000;                           // 원
+  var result = '';
+  if (eok  > 0) result += eok + '억';
+  if (chun > 0) result += ' ' + chun + '천만';
+  else if (man > 0 && eok > 0) result += ' ';
+  if (man  > 0) result += man + '만';
+  if (won  > 0 && eok === 0 && chun === 0 && man === 0) result += won.toLocaleString('ko-KR');
+  return result.trim() + '원';
+}
+
+// ===========================
+// ★ 기존 만원 단위 데이터 → 원 단위 마이그레이션
+// ===========================
+function migrateRevenueToWon() {
+  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var changed = false;
+  cs.forEach(function(c) {
+    // 마이그레이션 플래그가 없고, 매출 데이터가 만원 단위로 보이는 경우 변환
+    // 기준: y24 값이 0보다 크고 100,000 미만이면 만원 단위로 판단 (1억 = 10000만원)
+    if (!c._wonMigrated && c.revenueData) {
+      var rv = c.revenueData;
+      var maxVal = Math.max(rv.cur||0, rv.y25||0, rv.y24||0, rv.y23||0);
+      if (maxVal > 0 && maxVal < 100000) {
+        // 만원 단위 → 원 단위 변환 (×10000)
+        if (rv.cur) rv.cur = rv.cur * 10000;
+        if (rv.y25) rv.y25 = rv.y25 * 10000;
+        if (rv.y24) rv.y24 = rv.y24 * 10000;
+        if (rv.y23) rv.y23 = rv.y23 * 10000;
+        c._wonMigrated = true;
+        changed = true;
+      } else {
+        c._wonMigrated = true; // 이미 원 단위이거나 데이터 없음
+      }
+    }
+    // 부채 데이터 마이그레이션
+    if (!c._debtMigrated) {
+      var maxDebt = Math.max(c.debtKibo||0, c.debtShinbo||0, c.debtJjg||0, c.debtSjg||0);
+      if (maxDebt > 0 && maxDebt < 100000) {
+        if (c.debtKibo)   c.debtKibo   = c.debtKibo   * 10000;
+        if (c.debtShinbo) c.debtShinbo = c.debtShinbo * 10000;
+        if (c.debtJjg)    c.debtJjg    = c.debtJjg    * 10000;
+        if (c.debtSjg)    c.debtSjg    = c.debtSjg    * 10000;
+        changed = true;
+      }
+      c._debtMigrated = true;
+    }
+    // needFund 마이그레이션
+    if (!c._fundMigrated && c.needFund > 0 && c.needFund < 100000) {
+      c.needFund = c.needFund * 10000;
+      c._fundMigrated = true;
+      changed = true;
+    } else {
+      c._fundMigrated = true;
+    }
+    // fsData 마이그레이션 (재무제표 입력 데이터)
+    if (!c._fsMigrated && c.fsData) {
+      var fsFields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
+                      'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
+      var maxFs = 0;
+      fsFields.forEach(function(f){ var v=parseInt(c.fsData[f])||0; if(v>maxFs) maxFs=v; });
+      if (maxFs > 0 && maxFs < 100000) {
+        fsFields.forEach(function(f){
+          var v = parseInt(c.fsData[f])||0;
+          if (v > 0) c.fsData[f] = String(v * 10000);
+        });
+        changed = true;
+      }
+      c._fsMigrated = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
+    console.log('[Migration] 만원→원 단위 변환 완료');
+  }
+}
+
 function fRevAI(cData,rev){const regMonth=parseInt((cData.date||'').split('-')[1])||1;const months=Math.max(regMonth-1,1);const expectedCur=Math.round(((rev.cur||0)/months)*12);return{금년매출_전월말기준:fKRW(rev.cur),금년예상연간매출:fKRW(expectedCur)+` (${months}개월 연간환산)`,매출_2025년:fKRW(rev.y25),매출_2024년:fKRW(rev.y24),매출_2023년:fKRW(rev.y23),_raw:rev,_expected:expectedCur,_months:months};}
 function calcExpected(cData,rev){const regMonth=parseInt((cData.date||'').split('-')[1])||1;const months=Math.max(regMonth-1,1);return Math.round(((rev.cur||0)/months)*12);}
 function tpList(items,color='#3b82f6'){return`<div class="tp-list">${items.map(i=>`<div class="tp-li"><div class="tp-dot" style="background:${color}"></div><span>${i}</span></div>`).join('')}</div>`;}
@@ -2577,7 +2660,7 @@ function initReportCharts(rev) {
     var li = document.getElementById('rp-linechart');
     if(li && li.dataset && li.dataset.y23 !== undefined) {
       safeDestroyChart(li);
-      try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}); } catch(e){console.error('라인 오류:',e);}
+      try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
     }
     // ─ 재무 도넛
     var de = document.getElementById('fp-donut');
@@ -2597,7 +2680,7 @@ function initReportCharts(rev) {
         var gMid2=Math.round(growthData[0]+gRange*0.60);
         var gMid3=Math.round(growthData[1]+gRange*0.18);
         var expandedData=[growthData[0], gMid1, gMid2, growthData[1], gMid3, growthData[2]];
-        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['26.1Q','26.2Q','26.3Q','27.1Q','27.3Q','28'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var u=['\ub9cc','\uc5b5'];return v>=10000?Math.floor(v/10000)+u[1]:v.toLocaleString()+u[0];}}}}}});;
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['26.1Q','26.2Q','26.3Q','27.1Q','27.3Q','28'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}});;
       } catch(e){}
     }
     // ─ 상권 레이더
@@ -2630,7 +2713,7 @@ function initReportCharts(rev) {
         var avgM=sr.cur&&curM>0?Math.round(sr.cur/curM):sr.y25?Math.round(sr.y25/12):3000;
         var ac=[],fc=[];
         for(var i=0;i<12;i++){if(i<curM){ac.push(Math.round(avgM*(0.9+i*0.02)));fc.push(null);}else{ac.push(null);fc.push(Math.round(avgM*Math.pow(1.06,i-curM+1)));}}
-        new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:5},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.55)',borderColor:'#3b82f6',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':Math.round(v/1000)+'천';}}}}}}); } catch(e){}
+        new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:5},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.55)',borderColor:'#3b82f6',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){}
     }
   }, 400);
 }
@@ -2774,12 +2857,12 @@ function buildFinancePrompt(cData, fRev) {
     +'"profit_bars":[{"label":"매출 성장률(YoY)","value":'+Math.min(100,Math.max(0,50+revGrowth))+',"display":"'+revGrowth+'%"},{"label":"매출총이익률","value":'+Math.min(100,grossMargin)+',"display":"'+grossMargin+'%"},{"label":"영업이익률","value":'+Math.min(100,Math.max(0,opMargin*2))+',"display":"'+opMargin+'%"},{"label":"이자보상배율","value":'+Math.min(100,icr*10)+',"display":"'+icr+'배"}],'
     +'"stable_metrics":[{"label":"부채비율","value":"'+debtRatio+'%","desc":"'+(debtRatio<200?"양호":"주의 필요")+'"},{"label":"유동비율","value":"'+curRatio+'%","desc":"'+(curRatio>100?"안전":"개선 필요")+'"},{"label":"자기자본비율","value":"'+equityRatio+'%","desc":"'+(equityRatio>30?"건전":"점검 필요")+'"},{"label":"이자보상배율","value":"'+icr+'배","desc":"'+(icr>1.5?"안전":"위험")+'"}],'
     +'"debt":[{"name":"유동부채","ratio":'+Math.round(curLiab/(totLiab||1)*100)+'},{"name":"비유동부채","ratio":'+Math.round(fixLiab/(totLiab||1)*100)+'}],'
-    +'"growth_targets":['+Math.round(revY24/10000)+','+Math.round(revY24/10000*1.3)+','+Math.round(revY24/10000*1.65)+'],'
-    +'"growth_items":["'+nm+'의 전년 매출은 '+Math.round(revY24/10000)+'만원으로 전년 대비 '+revGrowth+'% 성장하였으며, 영업이익률 '+opMargin+'%를 기록함","부채비율 '+debtRatio+'%로 '+(debtRatio<200?"정책자금 심사 기준 충족":"개선 필요")+'하며 유동비율 '+curRatio+'%로 단기 상환 능력 '+(curRatio>100?"양호":"점검 필요")+'"],'
+    +'"growth_targets":['+revY24+','+Math.round(revY24*1.3)+','+Math.round(revY24*1.65)+'],'
+    +'"growth_items":["'+nm+'의 전년 매출은 '+fKRW(revY24)+'으로 전년 대비 '+revGrowth+'% 성장하였으며, 영업이익률 '+opMargin+'%를 기록함","부채비율 '+debtRatio+'%로 '+(debtRatio<200?"정책자금 심사 기준 충족":"개선 필요")+'하며 유동비율 '+curRatio+'%로 단기 상환 능력 '+(curRatio>100?"양호":"점검 필요")+'"],'
     +'"action_short":"'+nm+' 단기 재무 개선: '+(debtRatio>200?"고금리 단기차입금 정책자금 대환 우선":"유동성 확보 및 매출채권 회수 기일 단축")+'\n영업이익률 '+opMargin+'% → 원가 절감 및 판관비 효율화 추진\n이자보상배율 '+icr+'배 → '+(icr<1.5?"이자 부담 경감 위한 금리 우대 정책자금 전환":"현 수준 유지 및 추가 여신 검토 가능")+'","action_mid":"'+nm+' 중장기 재무 전략: 이익잉여금 누적을 통한 자기자본 강화\n부채비율 목표 200% 이하 달성 계획 수립\n설비투자 시 정책자금(중진공 시설자금) 활용으로 재무 부담 최소화"}'
     +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp
     +'\n[재무지표] 영업이익률:'+opMargin+'%, 부채비율:'+debtRatio+'%, 유동비율:'+curRatio+'%, 이자보상배율:'+icr+'배, 매출성장률:'+revGrowth+'%'
-    +'\n[재무상태] 자산총계:'+Math.round(totAsset/10000)+'만원, 부채총계:'+Math.round(totLiab/10000)+'만원, 자본총계:'+Math.round(totEquity/10000)+'만원';
+    +'\n[재무상태] 자산총계:'+fKRW(totAsset)+', 부채총계:'+fKRW(totLiab)+', 자본총계:'+fKRW(totEquity)+'';
 }
 function buildBizPlanPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
@@ -3136,8 +3219,17 @@ window.saveFsData = function() {
     if (el) fsData[f] = el.value.replace(/[^0-9\-]/g,'');
   });
   cs[idx].fsData = fsData;
+  // 매출액 → revenueData 연동 (업체관리 매출 데이터 자동 반영)
+  var _rv23 = parseInt(fsData.rev_y23) || 0;
+  var _rv24 = parseInt(fsData.rev_y24) || 0;
+  if (!cs[idx].revenueData) cs[idx].revenueData = {cur:0,y25:0,y24:0,y23:0};
+  if (_rv23 > 0) cs[idx].revenueData.y23 = _rv23;
+  if (_rv24 > 0) {
+    cs[idx].revenueData.y24 = _rv24;
+    cs[idx].revenueData.y25 = _rv24;
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
-  alert('재무 데이터가 저장되었습니다.');
+  alert('재무 데이터가 저장되었습니다.\n업체관리 매출 데이터도 함께 업데이트되었습니다.');
 };
 
 window.generateFinanceReport = async function(event) {
