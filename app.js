@@ -790,6 +790,7 @@ function initInputHandlers(){
   document.querySelectorAll('.number-only').forEach(i=>i.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'');}));
   document.querySelectorAll('.money-format').forEach(i=>i.addEventListener('input',function(){let v=this.value.replace(/[^0-9\-]/g,'');this.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,',');}));
   document.querySelectorAll('.debt-input').forEach(i=>i.addEventListener('input',calculateTotalDebt));
+  document.querySelectorAll('.fs-input').forEach(i=>i.addEventListener('input',function(){let v=this.value.replace(/[^0-9\-]/g,'');this.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,',');calcFsRatios();}));
   [['biz_number','biz'],['corp_number','corp'],['biz_date','date'],['rep_birth','date'],['write_date','date']].forEach(([id,fmt])=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){let v=this.value.replace(/[^0-9]/g,'');if(fmt==='corp'){this.value=v.length<7?v:v.slice(0,6)+'-'+v.slice(6,13);}else if(fmt==='biz'){if(v.length<4)this.value=v;else if(v.length<6)this.value=v.slice(0,3)+'-'+v.slice(3);else this.value=v.slice(0,3)+'-'+v.slice(3,5)+'-'+v.slice(5,10);}else{if(v.length<5)this.value=v;else if(v.length<7)this.value=v.slice(0,4)+'-'+v.slice(4);else this.value=v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);}});});
   ['biz_phone','rep_phone'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){let v=this.value.replace(/[^0-9]/g,'');if(v.startsWith('02')){if(v.length<3)this.value=v;else if(v.length<6)this.value=v.slice(0,2)+'-'+v.slice(2);else if(v.length<10)this.value=v.slice(0,2)+'-'+v.slice(2,5)+'-'+v.slice(5);else this.value=v.slice(0,2)+'-'+v.slice(2,6)+'-'+v.slice(6,10);}else{if(v.length<4)this.value=v;else if(v.length<7)this.value=v.slice(0,3)+'-'+v.slice(3);else if(v.length<11)this.value=v.slice(0,3)+'-'+v.slice(3,6)+'-'+v.slice(6);else this.value=v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);}});});
 }
@@ -2907,8 +2908,19 @@ function buildFinancePrompt(cData, fRev) {
   var r25 = fRev.매출_2025년||'0원', rExp = fRev.금년예상연간매출||'0원';
   // 재무제표 입력 데이터 (fsData에 저장된 값 우선, 없으면 기존 revenueData 활용)
   var fs  = cData.fsData || {};
-  var revY24   = parseInt(fs.rev_y24)    || parseInt((cData.revenueData||{}).y24||0) * 10000 || 0;
-  var revY23   = parseInt(fs.rev_y23)    || parseInt((cData.revenueData||{}).y23||0) * 10000 || 0;
+  // revenueData는 원 단위로 저장됨 (만원 곱하기 제거)
+  var revY24   = parseInt(fs.rev_y24)    || parseInt((cData.revenueData||{}).y24||0) || 0;
+  var revY23   = parseInt(fs.rev_y23)    || parseInt((cData.revenueData||{}).y23||0) || 0;
+  // 업체 등록 부채 현황 (정책자금 부채 합계)
+  var dKibo   = parseInt(cData.debtKibo)   || 0;
+  var dShinbo = parseInt(cData.debtShinbo) || 0;
+  var dJjg    = parseInt(cData.debtJjg)    || 0;
+  var dSjg    = parseInt(cData.debtSjg)    || 0;
+  var dJaidan = parseInt(cData.debtJaidan) || 0;
+  var dCorpCol= parseInt(cData.debtCorpCollateral) || 0;
+  var dRepCr  = parseInt(cData.debtRepCredit) || 0;
+  var dRepCol = parseInt(cData.debtRepCollateral) || 0;
+  var totalRegisteredDebt = dKibo + dShinbo + dJjg + dSjg + dJaidan + dCorpCol + dRepCr + dRepCol;
   var opY24    = parseInt(fs.op_y24)     || 0;
   var netY24   = parseInt(fs.net_y24)    || 0;
   var intY24   = parseInt(fs.int_y24)    || 0;
@@ -2919,7 +2931,8 @@ function buildFinancePrompt(cData, fRev) {
   var totAsset = parseInt(fs.total_asset)|| (curAsset + fixAsset) || 0;
   var curLiab  = parseInt(fs.cur_liab)   || 0;
   var fixLiab  = parseInt(fs.fix_liab)   || 0;
-  var totLiab  = parseInt(fs.total_liab) || (curLiab + fixLiab) || 0;
+  // 부채총계: 재무상태표 입력값 우선, 없으면 업체 등록 부채 합계로 fallback
+  var totLiab  = parseInt(fs.total_liab) || (curLiab + fixLiab) || totalRegisteredDebt || 0;
   var cap      = parseInt(fs.cap)        || 0;
   var totEquity= parseInt(fs.total_equity)|| (totAsset - totLiab) || 0;
   // 재무비율 계산
@@ -2942,9 +2955,10 @@ function buildFinancePrompt(cData, fRev) {
     +'"growth_targets":['+revY24+','+Math.round(revY24*1.3)+','+Math.round(revY24*1.65)+'],'
     +'"growth_items":["'+nm+'의 전년 매출은 '+fKRW(revY24)+'으로 전년 대비 '+revGrowth+'% 성장하였으며, 영업이익률 '+opMargin+'%를 기록함","부채비율 '+debtRatio+'%로 '+(debtRatio<200?"정책자금 심사 기준 충족":"개선 필요")+'하며 유동비율 '+curRatio+'%로 단기 상환 능력 '+(curRatio>100?"양호":"점검 필요")+'"],'
     +'"action_short":"'+nm+' 단기 재무 개선: '+(debtRatio>200?"고금리 단기차입금 정책자금 대환 우선":"유동성 확보 및 매출채권 회수 기일 단축")+'\n영업이익률 '+opMargin+'% → 원가 절감 및 판관비 효율화 추진\n이자보상배율 '+icr+'배 → '+(icr<1.5?"이자 부담 경감 위한 금리 우대 정책자금 전환":"현 수준 유지 및 추가 여신 검토 가능")+'","action_mid":"'+nm+' 중장기 재무 전략: 이익잉여금 누적을 통한 자기자본 강화\n부채비율 목표 200% 이하 달성 계획 수립\n설비투자 시 정책자금(중진공 시설자금) 활용으로 재무 부담 최소화"}'
-    +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp
+     +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp
     +'\n[재무지표] 영업이익률:'+opMargin+'%, 부채비율:'+debtRatio+'%, 유동비율:'+curRatio+'%, 이자보상배율:'+icr+'배, 매출성장률:'+revGrowth+'%'
-    +'\n[재무상태] 자산총계:'+fKRW(totAsset)+', 부채총계:'+fKRW(totLiab)+', 자본총계:'+fKRW(totEquity)+'';
+    +'\n[재무상태] 자산총계:'+fKRW(totAsset)+', 부채총계:'+fKRW(totLiab)+', 자본총계:'+fKRW(totEquity)
+    +(totalRegisteredDebt > 0 ? '\n[업체등록 부채현황] 기보:'+fKRW(dKibo)+', 신보:'+fKRW(dShinbo)+', 중진공:'+fKRW(dJjg)+', 소진공:'+fKRW(dSjg)+', 재단:'+fKRW(dJaidan)+', 회사담보:'+fKRW(dCorpCol)+', 대표신용:'+fKRW(dRepCr)+', 대표담보:'+fKRW(dRepCol)+', 합계:'+fKRW(totalRegisteredDebt) : '');;
 }
 function buildBizPlanPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
@@ -3230,41 +3244,89 @@ window.generateReport = async function(type, version, event) {
 // ===========================
 // ★ 재무제표 탭 — 기업 선택 이벤트, 저장, 비율 계산, 보고서 생성
 // ===========================
+// 숫자 → 콤마 포맷 변환 유틸
+function fmtComma(n) { var v = parseInt(n)||0; return v > 0 ? v.toLocaleString('ko-KR') : ''; }
+
 window.initFinanceTab = function() {
   var sel = document.getElementById('finance-company-select');
   if (!sel) return;
   sel.addEventListener('change', function() {
     var nm = sel.value;
     var form = document.getElementById('finance-fs-form');
-    if (!nm) { if(form) form.style.display='none'; return; }
+    var debtInfo = document.getElementById('finance-debt-info');
+    var debtSummary = document.getElementById('finance-debt-summary');
+    if (!nm) {
+      if(form) form.style.display='none';
+      if(debtInfo) debtInfo.style.display='none';
+      return;
+    }
     if(form) form.style.display='block';
-    // 저장된 fsData 불러오기
+    // 저장된 데이터 불러오기
     var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
     var cData = cs.find(function(c){return c.name===nm;});
+    // ① 업체 등록 부채 현황 표시
+    var dKibo   = parseInt(cData && cData.debtKibo)   || 0;
+    var dShinbo = parseInt(cData && cData.debtShinbo) || 0;
+    var dJjg    = parseInt(cData && cData.debtJjg)    || 0;
+    var dSjg    = parseInt(cData && cData.debtSjg)    || 0;
+    var dJaidan = parseInt(cData && cData.debtJaidan) || 0;
+    var dCorpCol= parseInt(cData && cData.debtCorpCollateral) || 0;
+    var dRepCr  = parseInt(cData && cData.debtRepCredit) || 0;
+    var dRepCol = parseInt(cData && cData.debtRepCollateral) || 0;
+    var totalRegisteredDebt = dKibo + dShinbo + dJjg + dSjg + dJaidan + dCorpCol + dRepCr + dRepCol;
+    if (debtInfo && debtSummary) {
+      if (totalRegisteredDebt > 0) {
+        var parts = [];
+        if (dKibo   > 0) parts.push('기보 ' + fKRW(dKibo));
+        if (dShinbo > 0) parts.push('신보 ' + fKRW(dShinbo));
+        if (dJjg    > 0) parts.push('중진공 ' + fKRW(dJjg));
+        if (dSjg    > 0) parts.push('소진공 ' + fKRW(dSjg));
+        if (dJaidan > 0) parts.push('재단 ' + fKRW(dJaidan));
+        if (dCorpCol> 0) parts.push('회사담보 ' + fKRW(dCorpCol));
+        if (dRepCr  > 0) parts.push('대표신용 ' + fKRW(dRepCr));
+        if (dRepCol > 0) parts.push('대표담보 ' + fKRW(dRepCol));
+        debtSummary.textContent = parts.join(' / ') + ' (합계: ' + fKRW(totalRegisteredDebt) + ')';
+        debtInfo.style.display = 'block';
+      } else {
+        debtInfo.style.display = 'none';
+      }
+    }
+    // ② 재무제표 입력 데이터 불러오기
+    var fields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
+                  'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
     if (cData && cData.fsData) {
       var fs = cData.fsData;
-      var fields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
-                    'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
       fields.forEach(function(f) {
         var el = document.getElementById('fs_'+f);
-        if (el && fs[f] !== undefined) el.value = fs[f];
+        if (el) el.value = fs[f] ? fmtComma(fs[f]) : '';
       });
-      calcFsRatios();
     } else {
-      // 기존 revenueData로 매출액 자동 채우기
+      // 저장된 fsData 없으면 모든 필드 초기화 후 매출/부채만 자동 채우기
+      fields.forEach(function(f) {
+        var el = document.getElementById('fs_'+f);
+        if (el) el.value = '';
+      });
+      // 기존 revenueData로 매출액 자동 채우기 (원 단위 그대로 사용)
       if (cData && cData.revenueData) {
         var rev = cData.revenueData;
         var el23 = document.getElementById('fs_rev_y23');
         var el24 = document.getElementById('fs_rev_y24');
-        if (el23 && rev.y23) el23.value = Math.round(rev.y23 * 10000);
-        if (el24 && rev.y24) el24.value = Math.round(rev.y24 * 10000);
+        if (el23 && rev.y23 > 0) el23.value = fmtComma(rev.y23);
+        if (el24 && rev.y24 > 0) el24.value = fmtComma(rev.y24);
+      }
+      // 업체 등록 부채 합계를 부채총계에 자동 채우기 (재무상태표 미입력 시 활용)
+      if (totalRegisteredDebt > 0) {
+        var elTotLiab = document.getElementById('fs_total_liab');
+        if (elTotLiab && !elTotLiab.value) elTotLiab.value = fmtComma(totalRegisteredDebt);
       }
     }
+    calcFsRatios();
   });
 };
 
 window.calcFsRatios = function() {
-  var _v = function(id) { return parseInt((document.getElementById(id)||{}).value||'0') || 0; };
+  // 콤마 포함 값도 정확히 파싱
+  var _v = function(id) { var el = document.getElementById(id); if(!el) return 0; return parseInt((el.value||'0').replace(/,/g,'')) || 0; };
   var rev   = _v('fs_rev_y24');
   var op    = _v('fs_op_y24');
   var int_  = _v('fs_int_y24');
