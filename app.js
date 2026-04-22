@@ -698,7 +698,12 @@ window.saveCompanyData=function(){
   const rev={cur:parseInt(document.getElementById('rev_cur')?.value?.replace(/,/g,'')||0),y25:parseInt(document.getElementById('rev_25')?.value?.replace(/,/g,'')||0),y24:parseInt(document.getElementById('rev_24')?.value?.replace(/,/g,'')||0),y23:parseInt(document.getElementById('rev_23')?.value?.replace(/,/g,'')||0)};
   const needFund=parseInt(document.getElementById('need_fund')?.value?.replace(/,/g,'')||0)||0;
   const fundPlan=document.getElementById('fund_plan')?.value||'';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const _pInt=id=>{const el=document.getElementById(id);return parseInt((el?.value||'0').replace(/[^0-9]/g,''))||0;};
+  const debtKibo=_pInt('debt_kibo');
+  const debtShinbo=_pInt('debt_shinbo');
+  const debtJjg=_pInt('debt_jjg');
+  const debtSjg=_pInt('debt_sjg');
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
   const idx=companies.findIndex(c=>c.name===name);
   if(idx>-1) companies[idx]=newC; else companies.push(newC);
@@ -1196,7 +1201,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
-  var certs = d.certs||getIndustryCerts(ind, nm, itm).certs;
+  var certs = d.certs||getIndustryCerts(ind, nm, itm, cData).certs;
   var certBgs=['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
   var certIcons=['🏆','📜','🔬','✅'];
   var totalC = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
@@ -1436,7 +1441,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
-  var certs = d.certs||getIndustryCerts(ind, nm, itm).certs.slice(0, 2);
+  var certs = d.certs||getIndustryCerts(ind, nm, itm, cData).certs.slice(0, 2);
 
   var cover = mgmtCover(cData, rev, exp, dateStr, 'consultant');
 
@@ -2328,7 +2333,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var bdMap = {'#16a34a':'#86efac','#2563eb':'#93c5fd','#7c3aed':'#d8b4fe','#ea580c':'#fdba74'};
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
-  var bpCerts = d.s6_certs||getIndustryCerts(ind, cData.name, itm).certs;
+  var bpCerts = d.s6_certs||getIndustryCerts(ind, cData.name, itm, cData).certs;
   var bpIcons = ['🏆','📜','🔬','✅'];
   var bpBgs   = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
   var totalBp = bpCerts.reduce(function(s,c){var n=parseFloat(String(c.amount||'').replace(/[^0-9.]/g,'')); return s+(isNaN(n)?0:n);}, 0);
@@ -2658,7 +2663,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'"hr":["'+nm+' 인사조직 5개 각60자이상"],'
     +'"ops":["'+nm+' 운영생산 5개 각60자이상"],'
     +'"it":["'+nm+' IT디지털 5개 각60자이상"],'
-    +'"certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm).certs) + ','
+    +'"certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm, cData).certs) + ','
     +'"score_descs":{"profit":"'+nm+' 수익성 10자","stable":"'+nm+' 안정성 10자","growth":"'+nm+' 성장성 10자"},'
     +'"profit_bars":[{"label":"매출 성장률(YoY)","value":80,"display":"+21%"},{"label":"매출이익률","value":62,"display":"38%"},{"label":"영업이익률","value":45,"display":"23%"},{"label":"현금흐름 안정성","value":70,"display":"양호"}],'
     +'"debt":[{"name":"중진공","ratio":54},{"name":"기보","ratio":27},{"name":"재단","ratio":19}],'
@@ -2702,9 +2707,18 @@ function buildFundPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'';
   var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
-  var indData = getIndustryCerts(ind, nm, itm);
+  var indData = getIndustryCerts(ind, nm, itm, cData);
   var indFunds = indData.funds;
   var top1 = indFunds[0]||{};
+  // 기존 대출 기관 조건 판단
+  var _dKibo   = parseInt(cData.debtKibo)   || 0;
+  var _dShinbo = parseInt(cData.debtShinbo) || 0;
+  var _dJjg    = parseInt(cData.debtJjg)    || 0;
+  var loanNote = '';
+  if (_dKibo > 0 && _dShinbo === 0)      loanNote = '기보 기존 대출 있음 → 기보 위주 추천, 신보 중복 제외';
+  else if (_dShinbo > 0 && _dKibo === 0) loanNote = '신보 기존 대출 있음 → 신보 위주 추천, 기보 중복 제외';
+  else if (_dKibo > 0 && _dShinbo > 0)  loanNote = '기보·신보 모두 대출 있음 → 잔액 큰 기관 위주 추천';
+  else                                   loanNote = '기보·신보 기존 대출 없음 → 업종 기준 최적 기관 추천';
   var compOrg = (top1.name||'중진공').split('(')[0].trim()
     .replace('농림수산업자신용보증기금','농신보')
     .replace('한국무역보험공사','K-SURE')
@@ -2719,7 +2733,7 @@ function buildFundPrompt(cData, fRev) {
     +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'","rate":"'+(top1.tags&&top1.tags[0]||'우대금리')+'","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
     +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\'\n\n'
-    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp;
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote;
 }
 
 function buildBizPlanPrompt(cData, fRev) {
@@ -2733,7 +2747,7 @@ function buildBizPlanPrompt(cData, fRev) {
     +'"s4_items":["'+nm+'의 '+itm+' 경쟁력 4개 70자이상"],'
     +'"s4_competitor":[{"item":"제품경쟁력","self":"★★★★★","a":"★★★★","b":"★★★"},{"item":"기술력(특허)","self":"★★★★★","a":"★★★","b":"★★★"},{"item":"가격경쟁력","self":"★★★★","a":"★★★★★","b":"★★★★"},{"item":"유통망","self":"★★★","a":"★★★★★","b":"★★★★"},{"item":"성장성","self":"★★★★★","a":"★★★","b":"★★★"}],'
     +'"s5_items":[{"title":"기술 차별화","text":"'+nm+'의 '+itm+' 기술특허 보유로 70자이상","color":"#16a34a"},{"title":"제품 차별화","text":"'+nm+' 제품 독창적 특징 70자이상","color":"#2563eb"},{"title":"시장 포지셔닝","text":"'+nm+'의 '+ind+' 시장 내 포지션 70자이상","color":"#7c3aed"},{"title":"성장 증명력","text":"'+nm+'의 '+r25+' 매출 달성으로 70자이상","color":"#ea580c"}],'
-    +'"s6_certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm).certs) + ','
+    +'"s6_certs":' + JSON.stringify(getIndustryCerts(ind, nm, itm, cData).certs) + ','
     +'"s7_rows":[{"item":"원재료 구입","amount":"1억5천만원","ratio":"37.5%","purpose":"'+nm+'의 핵심 원재료 선매입 및 안정적 재고 확보"},{"item":"생산 설비 투자","amount":"1억원","ratio":"25%","purpose":"'+nm+'의 생산 자동화로 원가율 20% 절감"},{"item":"마케팅·채널","amount":"7천만원","ratio":"17.5%","purpose":"'+nm+'의 SNS·쿠팡 입점·브랜드 마케팅 집행"},{"item":"운전자금","amount":"8천만원","ratio":"20%","purpose":"'+nm+'의 인건비·고정비 등 운영 비용"}],'
     +'"s7_strategy":["'+nm+' 자금 집행 전략 5개 50자이상"],'
     +'"s8_short":["'+nm+' 단기 4개 35자이상"],"s8_mid":["'+nm+' 중기 4개"],"s8_long":["'+nm+' 장기 4개"],'
@@ -2748,11 +2762,26 @@ function buildBizPlanPrompt(cData, fRev) {
 // ===========================
 // ★ 업종별 인증 및 자금 추천 로직
 // ===========================
-function getIndustryCerts(ind, nm, itm) {
+function getIndustryCerts(ind, nm, itm, cData) {
+  cData = cData || {};
   var certs = [];
   var funds = [];
   var isFood = ind.includes('식품') || ind.includes('외식') || ind.includes('음식') || ind.includes('농림') || ind.includes('수산');
   var isManu = ind.includes('제조');
+  // 기존 대출 기관 판단
+  var debtKibo   = parseInt(cData.debtKibo)   || 0;
+  var debtShinbo = parseInt(cData.debtShinbo) || 0;
+  var debtJjg    = parseInt(cData.debtJjg)    || 0;
+  var hasKiboLoan   = debtKibo   > 0;
+  var hasShinboLoan = debtShinbo > 0;
+  var hasJjgLoan    = debtJjg    > 0;
+  // 매출 및 직원 수 조건
+  var revY24 = parseInt((cData.revenueData && cData.revenueData.y24) || 0);
+  var revY25 = parseInt((cData.revenueData && cData.revenueData.y25) || 0);
+  var prevRev = revY25 || revY24 || 0;
+  var prevRevBillion = prevRev / 10000;
+  var empNum = parseInt(cData.empCount) || 0;
+  var isLargeScale = prevRevBillion >= 50 || empNum >= 5;
   var isRetail = ind.includes('도소매') || ind.includes('유통');
   var isService = ind.includes('서비스') || ind.includes('물류');
   var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
@@ -2841,13 +2870,43 @@ function getIndustryCerts(ind, nm, itm) {
       {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
     ];
   } else {
-    funds = [
-      {rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']},
-      {rank:2,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
-      {rank:3,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']},
-      {rank:4,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-      {rank:5,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']}
-    ];
+    // 제조/IT/기타 기본 케이스: 기보/신보/중진공 조건 적용
+    var _f = [];
+    // 중진공: 제조/IT이면 무조건, 그 외는 매출 50억↑ 또는 직원 5명↑ 조건
+    if (isManu || isIT) {
+      _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']});
+    } else if (isLargeScale) {
+      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
+    }
+    // 기보: 제조/IT 업종만 추천
+    if (isManu || isIT) {
+      if (!hasShinboLoan) { // 신보 대출 없을 때만 기보 추천 (중복 방지)
+        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']});
+      } else {
+        // 신보 대출 있으면 신보 우선 추천
+        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+      }
+    }
+    // 기보 대출 있으면 기보 우선 (신보 제외)
+    if (hasKiboLoan && !hasShinboLoan) {
+      _f = _f.filter(function(x){return !x.name.includes('신보');});
+      if (!_f.some(function(x){return x.name.includes('기보');})) {
+        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
+      }
+    }
+    // 신보 대출 있으면 신보 우선 (기보 제외)
+    if (hasShinboLoan && !hasKiboLoan) {
+      _f = _f.filter(function(x){return !x.name.includes('기보');});
+      if (!_f.some(function(x){return x.name.includes('신보');})) {
+        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+      }
+    }
+    // 소진공, 지역신보는 공통 추가
+    _f.push({rank:_f.length+1,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']});
+    _f.push({rank:_f.length+1,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']});
+    // 순위 재정렬
+    _f.forEach(function(x,i){x.rank=i+1;});
+    funds = _f.slice(0,5);
   }
   return { certs: certs, funds: funds };
 }
