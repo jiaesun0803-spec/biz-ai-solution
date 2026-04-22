@@ -187,6 +187,7 @@ window.onload = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+  initFinanceTab();
   ensureAdminAccount();
   checkAuth();
   const urlParams = new URLSearchParams(window.location.search);
@@ -2736,6 +2737,50 @@ function buildFundPrompt(cData, fRev) {
     +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote;
 }
 
+function buildFinancePrompt(cData, fRev) {
+  var nm  = cData.name, ind = cData.industry||'제조업';
+  var r25 = fRev.매출_2025년||'0원', rExp = fRev.금년예상연간매출||'0원';
+  // 재무제표 입력 데이터 (fsData에 저장된 값 우선, 없으면 기존 revenueData 활용)
+  var fs  = cData.fsData || {};
+  var revY24   = parseInt(fs.rev_y24)    || parseInt((cData.revenueData||{}).y24||0) * 10000 || 0;
+  var revY23   = parseInt(fs.rev_y23)    || parseInt((cData.revenueData||{}).y23||0) * 10000 || 0;
+  var opY24    = parseInt(fs.op_y24)     || 0;
+  var netY24   = parseInt(fs.net_y24)    || 0;
+  var intY24   = parseInt(fs.int_y24)    || 0;
+  var cogsY24  = parseInt(fs.cogs_y24)   || 0;
+  var sgaY24   = parseInt(fs.sga_y24)    || 0;
+  var curAsset = parseInt(fs.cur_asset)  || 0;
+  var fixAsset = parseInt(fs.fix_asset)  || 0;
+  var totAsset = parseInt(fs.total_asset)|| (curAsset + fixAsset) || 0;
+  var curLiab  = parseInt(fs.cur_liab)   || 0;
+  var fixLiab  = parseInt(fs.fix_liab)   || 0;
+  var totLiab  = parseInt(fs.total_liab) || (curLiab + fixLiab) || 0;
+  var cap      = parseInt(fs.cap)        || 0;
+  var totEquity= parseInt(fs.total_equity)|| (totAsset - totLiab) || 0;
+  // 재무비율 계산
+  var opMargin  = revY24 > 0 ? Math.round((opY24  / revY24) * 1000) / 10 : 0;
+  var netMargin = revY24 > 0 ? Math.round((netY24 / revY24) * 1000) / 10 : 0;
+  var grossMargin = (revY24 > 0 && cogsY24 > 0) ? Math.round(((revY24-cogsY24)/revY24)*1000)/10 : 0;
+  var debtRatio = totEquity > 0 ? Math.round((totLiab / totEquity) * 1000) / 10 : 0;
+  var curRatio  = curLiab  > 0 ? Math.round((curAsset / curLiab) * 1000) / 10 : 0;
+  var equityRatio = totAsset > 0 ? Math.round((totEquity / totAsset) * 1000) / 10 : 0;
+  var icr       = intY24   > 0 ? Math.round((opY24 / intY24) * 10) / 10 : 0;
+  var assetTurn = totAsset > 0 ? Math.round((revY24 / totAsset) * 100) / 100 : 0;
+  var revGrowth = revY23   > 0 ? Math.round(((revY24-revY23)/revY23)*1000)/10 : 0;
+  var opGrowth  = 0; // 전전년 영업이익 미입력 시 0
+  return '재무제표 분석 전문가. \''+nm+'\' 기업 재무제표 분석 리포트. 기업명 반드시 반영. JSON만.\n\n'
+    +'{"scores":{"profit":'+Math.min(100,Math.max(0,Math.round(50+(opMargin-5)*2)))+',"stable":'+Math.min(100,Math.max(0,Math.round(80-(debtRatio-100)*0.1)))+',"growth":'+Math.min(100,Math.max(0,Math.round(50+revGrowth*1.5)))+'},'
+    +'"score_descs":{"profit":"영업이익률 '+opMargin+'%","stable":"부채비율 '+debtRatio+'%","growth":"매출성장률 '+revGrowth+'%"},'
+    +'"profit_bars":[{"label":"매출 성장률(YoY)","value":'+Math.min(100,Math.max(0,50+revGrowth))+',"display":"'+revGrowth+'%"},{"label":"매출총이익률","value":'+Math.min(100,grossMargin)+',"display":"'+grossMargin+'%"},{"label":"영업이익률","value":'+Math.min(100,Math.max(0,opMargin*2))+',"display":"'+opMargin+'%"},{"label":"이자보상배율","value":'+Math.min(100,icr*10)+',"display":"'+icr+'배"}],'
+    +'"stable_metrics":[{"label":"부채비율","value":"'+debtRatio+'%","desc":"'+(debtRatio<200?"양호":"주의 필요")+'"},{"label":"유동비율","value":"'+curRatio+'%","desc":"'+(curRatio>100?"안전":"개선 필요")+'"},{"label":"자기자본비율","value":"'+equityRatio+'%","desc":"'+(equityRatio>30?"건전":"점검 필요")+'"},{"label":"이자보상배율","value":"'+icr+'배","desc":"'+(icr>1.5?"안전":"위험")+'"}],'
+    +'"debt":[{"name":"유동부채","ratio":'+Math.round(curLiab/(totLiab||1)*100)+'},{"name":"비유동부채","ratio":'+Math.round(fixLiab/(totLiab||1)*100)+'}],'
+    +'"growth_targets":['+Math.round(revY24/10000)+','+Math.round(revY24/10000*1.3)+','+Math.round(revY24/10000*1.65)+'],'
+    +'"growth_items":["'+nm+'의 전년 매출은 '+Math.round(revY24/10000)+'만원으로 전년 대비 '+revGrowth+'% 성장하였으며, 영업이익률 '+opMargin+'%를 기록함","부채비율 '+debtRatio+'%로 '+(debtRatio<200?"정책자금 심사 기준 충족":"개선 필요")+'하며 유동비율 '+curRatio+'%로 단기 상환 능력 '+(curRatio>100?"양호":"점검 필요")+'"],'
+    +'"action_short":"'+nm+' 단기 재무 개선: '+(debtRatio>200?"고금리 단기차입금 정책자금 대환 우선":"유동성 확보 및 매출채권 회수 기일 단축")+'\n영업이익률 '+opMargin+'% → 원가 절감 및 판관비 효율화 추진\n이자보상배율 '+icr+'배 → '+(icr<1.5?"이자 부담 경감 위한 금리 우대 정책자금 전환":"현 수준 유지 및 추가 여신 검토 가능")+'","action_mid":"'+nm+' 중장기 재무 전략: 이익잉여금 누적을 통한 자기자본 강화\n부채비율 목표 200% 이하 달성 계획 수립\n설비투자 시 정책자금(중진공 시설자금) 활용으로 재무 부담 최소화"}'
+    +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp
+    +'\n[재무지표] 영업이익률:'+opMargin+'%, 부채비율:'+debtRatio+'%, 유동비율:'+curRatio+'%, 이자보상배율:'+icr+'배, 매출성장률:'+revGrowth+'%'
+    +'\n[재무상태] 자산총계:'+Math.round(totAsset/10000)+'만원, 부채총계:'+Math.round(totLiab/10000)+'만원, 자본총계:'+Math.round(totEquity/10000)+'만원';
+}
 function buildBizPlanPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
   var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원', r24=fRev.매출_2024년||'0원';
@@ -3016,6 +3061,135 @@ window.generateReport = async function(type, version, event) {
 // ===========================
 // ★ 기타 보고서 생성 — try/finally 오버레이 보장
 // ===========================
+
+// ===========================
+// ★ 재무제표 탭 — 기업 선택 이벤트, 저장, 비율 계산, 보고서 생성
+// ===========================
+window.initFinanceTab = function() {
+  var sel = document.getElementById('finance-company-select');
+  if (!sel) return;
+  sel.addEventListener('change', function() {
+    var nm = sel.value;
+    var form = document.getElementById('finance-fs-form');
+    if (!nm) { if(form) form.style.display='none'; return; }
+    if(form) form.style.display='block';
+    // 저장된 fsData 불러오기
+    var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var cData = cs.find(function(c){return c.name===nm;});
+    if (cData && cData.fsData) {
+      var fs = cData.fsData;
+      var fields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
+                    'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
+      fields.forEach(function(f) {
+        var el = document.getElementById('fs_'+f);
+        if (el && fs[f] !== undefined) el.value = fs[f];
+      });
+      calcFsRatios();
+    } else {
+      // 기존 revenueData로 매출액 자동 채우기
+      if (cData && cData.revenueData) {
+        var rev = cData.revenueData;
+        var el23 = document.getElementById('fs_rev_y23');
+        var el24 = document.getElementById('fs_rev_y24');
+        if (el23 && rev.y23) el23.value = Math.round(rev.y23 * 10000);
+        if (el24 && rev.y24) el24.value = Math.round(rev.y24 * 10000);
+      }
+    }
+  });
+};
+
+window.calcFsRatios = function() {
+  var _v = function(id) { return parseInt((document.getElementById(id)||{}).value||'0') || 0; };
+  var rev   = _v('fs_rev_y24');
+  var op    = _v('fs_op_y24');
+  var int_  = _v('fs_int_y24');
+  var curA  = _v('fs_cur_asset');
+  var curL  = _v('fs_cur_liab');
+  var totL  = _v('fs_total_liab');
+  var totE  = _v('fs_total_equity');
+  var opM   = rev  > 0 ? (op/rev*100).toFixed(1)+'%' : '—';
+  var debtR = totE > 0 ? (totL/totE*100).toFixed(1)+'%' : '—';
+  var curR  = curL > 0 ? (curA/curL*100).toFixed(1)+'%' : '—';
+  var icr   = int_ > 0 ? (op/int_).toFixed(1)+'배' : '—';
+  var _set = function(id, val, warn) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = val; el.style.color = warn ? '#ef4444' : (val==='—'?'#94a3b8':'inherit'); }
+  };
+  _set('fs_ratio_op',   opM,   false);
+  _set('fs_ratio_debt', debtR, parseFloat(debtR)>300);
+  _set('fs_ratio_cur',  curR,  parseFloat(curR)<100);
+  _set('fs_ratio_icr',  icr,   parseFloat(icr)<1);
+};
+
+window.saveFsData = function() {
+  var sel = document.getElementById('finance-company-select');
+  if (!sel || !sel.value) { alert('기업을 먼저 선택해주세요.'); return; }
+  var nm = sel.value;
+  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var idx = cs.findIndex(function(c){return c.name===nm;});
+  if (idx < 0) { alert('기업 정보를 찾을 수 없음.'); return; }
+  var fields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
+                'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
+  var fsData = {};
+  fields.forEach(function(f) {
+    var el = document.getElementById('fs_'+f);
+    if (el) fsData[f] = el.value.replace(/[^0-9\-]/g,'');
+  });
+  cs[idx].fsData = fsData;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
+  alert('재무 데이터가 저장되었습니다.');
+};
+
+window.generateFinanceReport = async function(event) {
+  var sel = document.getElementById('finance-company-select');
+  if (!sel || !sel.value) { alert('기업을 선택해주세요.'); return; }
+  var nm = sel.value;
+  // 저장 먼저 실행
+  saveFsData();
+  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cData = cs.find(function(c){return c.name===nm;});
+  if (!cData) { alert('기업 정보를 찾을 수 없음.'); return; }
+  var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
+  var fRev = fRevAI(cData, rev);
+  var overlay = document.getElementById('ai-loading-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    var tt = document.getElementById('loading-title-text');
+    var td = document.getElementById('loading-desc-text');
+    if(tt) tt.textContent = '재무제표 분석 생성 중...';
+    if(td) td.innerHTML = cData.name + ' 재무 데이터를 분석하여<br>맞춤형 재무제표 분석 리포트를 작성하고 있음.<br>최대 <b style="color:#3b82f6">60초</b>가 소요될 수 있음.';
+  }
+  var data = null;
+  try {
+    data = await callGeminiJSON(buildFinancePrompt(cData, fRev), 8192);
+  } catch(e) {
+    console.error('재무제표 분석 오류:', e);
+    alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
+  } finally {
+    if (overlay) overlay.style.display = 'none';
+  }
+  if (!data) return;
+  var today = new Date().toISOString().split('T')[0];
+  var rptTitle = cData.name+'_재무제표 분석';
+  var rpt = {id:'rep_'+Date.now(),type:'재무제표 분석',company:cData.name,title:rptTitle,date:today,content:JSON.stringify(data),version:'client',revenueData:rev,reportType:'finance',contentAreaId:'finance-content-area'};
+  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
+  localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
+  var tab = document.getElementById('finance');
+  if (tab) {
+    var inputStep = document.getElementById('finance-input-step');
+    var resultStep = document.getElementById('finance-result-step');
+    if(inputStep) inputStep.style.display = 'none';
+    if(resultStep) resultStep.style.display = 'block';
+  }
+  var ca = document.getElementById('finance-content-area');
+  if (ca) {
+    resetContentArea(ca);
+    ca.innerHTML = buildFinanceHTML(data, cData, rev, today);
+  }
+  _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
+  initReportCharts(rev);
+};
+
 window.generateAnyReport = async function(type, version, event) {
   var overlay = document.getElementById('ai-loading-overlay');
   var tab = event.target.closest('.tab-content');
