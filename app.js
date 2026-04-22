@@ -320,18 +320,30 @@ function updateUserDB(u, prevEmail){
   loadUserProfile();
   return true;
 }
-window.saveProfileSettings=function(){
+window.saveProfileSettings=async function(){
   let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
-  const prevEmail=s.email;
-  const nextEmail=(document.getElementById('set-user-email').value||'').trim();
+  const name=(document.getElementById('set-user-name').value||'').trim();
+  const dept=(document.getElementById('set-user-dept').value||'').trim();
+  const phone=(document.getElementById('set-user-phone').value||'').trim();
+  const emailEl=document.getElementById('set-user-email');
+  const email=emailEl?(emailEl.value||'').trim():s.email;
+  if(!email){ alert('이메일은 필수 입력 항목임.'); return; }
+  try {
+    // 서버 API로 프로필 업데이트
+    await apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ name, dept, phone, email }) });
+  } catch(e) {
+    // 서버 오류 시 로컬만 업데이트 (오프라인 fallback)
+    console.warn('서버 프로필 저장 실패, 로컬만 업데이트:', e.message);
+  }
+  // 로컬 세션 항상 업데이트
+  s.name=name; s.dept=dept; s.phone=phone; s.email=email;
+  localStorage.setItem(DB_SESSION, JSON.stringify(s));
+  // 로컬 users DB도 동기화
   const users=getUsers();
-  if(!nextEmail){ alert('이메일은 필수 입력 항목임.'); return; }
-  if(nextEmail!==prevEmail && users.some(function(u){ return u.email===nextEmail; })){ alert('이미 사용 중인 이메일임.'); return; }
-  s.name=(document.getElementById('set-user-name').value||'').trim();
-  s.dept=(document.getElementById('set-user-dept').value||'').trim();
-  s.phone=(document.getElementById('set-user-phone').value||'').trim();
-  s.email=nextEmail;
-  if(updateUserDB(s, prevEmail)) alert('계정 정보가 저장되었음.');
+  const idx=users.findIndex(function(x){ return x.email===email || (s._id && x._id===s._id); });
+  if(idx>=0){ users[idx]=normalizeUser(s); saveUsers(users); }
+  loadUserProfile();
+  alert('계정 정보가 저장되었음.');
 };
 window.savePasswordSettings=async function(){
   const currentPw=(document.getElementById('set-current-pw').value||'').trim();
