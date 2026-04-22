@@ -2591,7 +2591,7 @@ function initReportCharts(rev) {
         var gMid2=Math.round(growthData[0]+gRange*0.60);
         var gMid3=Math.round(growthData[1]+gRange*0.18);
         var expandedData=[growthData[0], gMid1, gMid2, growthData[1], gMid3, growthData[2]];
-        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['2026 초','2026 중','2026 말','2027 초','2027 말','2028'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v>=10000?Math.floor(v/10000)+'억':v.toLocaleString()+'만';}}}}}}});
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['26.1Q','26.2Q','26.3Q','27.1Q','27.3Q','28'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var u=['\ub9cc','\uc5b5'];return v>=10000?Math.floor(v/10000)+u[1]:v.toLocaleString()+u[0];}}}}}});;
       } catch(e){}
     }
     // ─ 상권 레이더
