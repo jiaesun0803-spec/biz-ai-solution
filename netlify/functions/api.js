@@ -169,6 +169,100 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
   });
 });
 
+
+// ===== 업체 데이터 API (사용자별 서버 저장) =====
+// 업체 목록 조회
+app.get('/api/companies', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('updated_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// 업체 단건 조회
+app.get('/api/companies/:id', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id)
+    .single();
+  if (error) return res.status(404).json({ error: '업체를 찾을 수 없습니다.' });
+  res.json(data);
+});
+
+// 업체 등록
+app.post('/api/companies', authMiddleware, async (req, res) => {
+  const payload = { ...req.body, user_id: req.user.id, updated_at: new Date().toISOString() };
+  // name 중복 체크 (같은 사용자 내)
+  const { data: existing } = await supabase
+    .from('companies')
+    .select('id')
+    .eq('user_id', req.user.id)
+    .eq('name', payload.name)
+    .single();
+  if (existing) return res.status(409).json({ error: '이미 등록된 업체명입니다.' });
+  const { data, error } = await supabase.from('companies').insert(payload).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+// 업체 수정 (name 기준 upsert)
+app.put('/api/companies/:id', authMiddleware, async (req, res) => {
+  const payload = { ...req.body, updated_at: new Date().toISOString() };
+  delete payload.id;
+  delete payload.user_id;
+  const { data, error } = await supabase
+    .from('companies')
+    .update(payload)
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 업체 삭제
+app.delete('/api/companies/:id', authMiddleware, async (req, res) => {
+  const { error } = await supabase
+    .from('companies')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('user_id', req.user.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ message: '삭제되었습니다.' });
+});
+
+// 업체 전체 동기화 (로컬 → 서버 일괄 업로드용)
+app.post('/api/companies/sync', authMiddleware, async (req, res) => {
+  const { companies } = req.body;
+  if (!Array.isArray(companies)) return res.status(400).json({ error: 'companies 배열이 필요합니다.' });
+  const results = [];
+  for (const c of companies) {
+    const payload = { ...c, user_id: req.user.id, updated_at: new Date().toISOString() };
+    delete payload.id;
+    // name 기준 upsert
+    const { data: existing } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('name', c.name)
+      .single();
+    if (existing) {
+      const { data } = await supabase.from('companies').update(payload).eq('id', existing.id).select().single();
+      results.push(data);
+    } else {
+      const { data } = await supabase.from('companies').insert(payload).select().single();
+      results.push(data);
+    }
+  }
+  res.json(results);
+});
+
 // 헬스체크
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
