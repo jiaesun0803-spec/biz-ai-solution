@@ -1107,7 +1107,7 @@ function tplStyle(color, orientation) {
 
   // ── 페이지 (A4 landscape 기준) ──
   + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
-  + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; display:flex; flex-direction:column; }'
+  + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; display:flex; flex-direction:column; page-break-inside:avoid; break-inside:avoid; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
@@ -2712,7 +2712,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
       + '</div>';
   }
 
-  var p1 = rpPage(1,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
+  var p1 = rpPage(3,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   rpSec('기업 기본 정보', color,
@@ -2741,38 +2741,45 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  // ── 목차 페이지 (2P) ──
+  // ── 목차 페이지 (2P) - 2열 레이아웃 ──
   var tocItems = [
-    {no:'1', title:'사업개요 및 핵심지표', sub:'기업 정보 · 실행 배경 · 핵심 강점'},
-    {no:'3', title:'시장기회 및 SWOT 분석', sub:'시장 성장성 · 외부환경 · 리스크 구조'},
-    {no:'4', title:'경쟁환경 및 차별화 전략', sub:'비교표 · 포지셔닝 · 핵심 우위'},
-    {no:'5', title:'인증·조달 레버리지 전략', sub:'가점 확보 · 정책자금 확장 · 실행 우선순위'},
-    {no:'6', title:'자금 조달 및 사용 계획', sub:'필요 자금 · 집행 구조 · 기대 효과'},
-    {no:'7', title:'매출 전망 및 실행 로드맵', sub:'1년 시뮬레이션 · 단계별 확장 계획'},
-    {no:'8', title:'종합 제언', sub:'최종 평가 · 컨설턴트 의견 · 실행 권고'}
+    {no:'3', title:'사업개요 및 핵심지표', sub:'기업 정보 · 실행 배경 · 핵심 강점'},
+    {no:'4', title:'시장기회 분석', sub:'시장 성장성 · 트렌드 · 외부환경'},
+    {no:'5', title:'SWOT 분석', sub:'강점 · 약점 · 기회 · 위협 구조'},
+    {no:'6', title:'경쟁환경 및 차별화 전략', sub:'비교표 · 포지셔닝 · 핵심 우위'},
+    {no:'7', title:'인증·조달 레버리지 전략', sub:'가점 확보 · 정책자금 확장 · 실행 우선순위'},
+    {no:'8', title:'자금 조달 및 사용 계획', sub:'필요 자금 · 집행 구조 · 기대 효과'},
+    {no:'9', title:'매출 전망 및 실행 로드맵', sub:'1년 시뮬레이션 · 단계별 확장 계획'},
+    {no:'10', title:'종합 제언', sub:'최종 평가 · 컨설턴트 의견 · 실행 권고'}
   ];
+  var tocLeft  = tocItems.slice(0,4);
+  var tocRight = tocItems.slice(4);
+  function tocRow(t) {
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:white;border-radius:6px;margin-bottom:7px;border-left:4px solid '+color+';border:1px solid #e2e8f0;border-left:4px solid '+color+'">'
+      + '<div style="font-size:20px;font-weight:900;color:'+color+';min-width:26px;text-align:center">'+t.no+'</div>'
+      + '<div><div style="font-size:13px;font-weight:800;color:#1e293b">'+t.title+'</div>'
+      + '<div style="font-size:11px;color:#64748b;margin-top:2px">'+t.sub+'</div></div>'
+      + '</div>';
+  }
   var p2 = rpPage(2,'목차','Contents',color,
-    '<div style="padding:8px 0">'
-    + '<div style="font-size:13px;color:#64748b;margin-bottom:18px;font-weight:600;border-bottom:2px solid '+color+';padding-bottom:8px">AI 사업계획서 구성</div>'
-    + tocItems.map(function(t,i){
-        var bg = i%2===0 ? '#f8fafc' : 'white';
-        return '<div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:'+bg+';border-radius:6px;margin-bottom:6px;border-left:4px solid '+color+'">'
-          + '<div style="font-size:22px;font-weight:900;color:'+color+';min-width:28px;text-align:center">'+t.no+'</div>'
-          + '<div><div style="font-size:14px;font-weight:800;color:#1e293b">'+t.title+'</div>'
-          + '<div style="font-size:12px;color:#64748b;margin-top:2px">'+t.sub+'</div></div>'
-          + '</div>';
-      }).join('')
+    '<div style="padding:4px 0">'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:14px;font-weight:600;border-bottom:2px solid '+color+';padding-bottom:8px">AI 사업계획서 구성</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    + '<div>'+tocLeft.map(tocRow).join('')+'</div>'
+    + '<div>'+tocRight.map(tocRow).join('')+'</div>'
+    + '</div>'
     + '</div>'
   );
-  var p3_swot = rpPage(3,'시장기회 및 SWOT','시장 성장성 · 외부환경 · 리스크 구조',color,
-    '<div class="rp-2col">'
+  // ── 4P: 시장기회 분석 ──
+  var p3_swot = rpPage(4,'시장기회 분석','시장 성장성 · 트렌드 · 외부환경',color,
+    '<div class="rp-2col" style="margin-bottom:12px">'
     + '<div class="rp-col45">'
     +   '<div class="rp-g3" style="margin-bottom:10px">'
     +     rpMC('HMR 시장', '7조원', '2022년 기준', color)
     +     rpMC('연평균 성장률', '18%', '육수·국물 세그먼트', '#2563eb')
     +     rpMC('핵심 소비층', '1~2인 가구 61%', '구조적 성장', '#7c3aed')
     +   '</div>'
-    +   rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:196px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
+    +   rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:220px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
     + '</div>'
     + '<div class="rp-colF">'
     +   rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
@@ -2784,15 +2791,19 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
         ], color))
     + '</div>'
     + '</div>'
-    + '<div class="rp-swot" style="margin-top:12px">'
-    +   '<div class="rp-sws rp-sw"><div class="rp-swl">강점 Strength</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-sww rp-sw"><div class="rp-swl">약점 Weakness</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-swo rp-sw"><div class="rp-swl">기회 Opportunity</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-swt rp-sw"><div class="rp-swl">위협 Threat</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+  );
+
+  // ── 5P: SWOT 분석 ──
+  var p3b_swot = rpPage(5,'SWOT 분석','강점 · 약점 · 기회 · 위협 구조',color,
+    '<div class="rp-swot" style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;margin-top:4px">'
+    +   '<div class="rp-sws rp-sw" style="margin:0;min-height:180px"><div class="rp-swl">강점 Strength</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-sww rp-sw" style="margin:0;min-height:180px"><div class="rp-swl">약점 Weakness</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swo rp-sw" style="margin:0;min-height:180px"><div class="rp-swl">기회 Opportunity</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swt rp-sw" style="margin:0;min-height:180px"><div class="rp-swl">위협 Threat</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
     + '</div>'
   );
 
-  var p4_comp = rpPage(4,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
+  var p4_comp = rpPage(6,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('경쟁사 비교표', color,
@@ -2813,7 +2824,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '<div class="rp-g2" style="margin-top:12px">'+(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,4).map(diffCard).join('')+'</div>'
   );
 
-  var p5_cert = rpPage(5,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
+  var p5_cert = rpPage(7,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
     // ── 상단: 인증 2x2 그리드 ──
     '<div style="margin-bottom:4px;font-size:13px;font-weight:700;color:#374151">추천 인증 항목</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px">'
@@ -2851,7 +2862,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p6_fund = rpPage(6,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
+  var p6_fund = rpPage(8,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('자금 집행 계획표', color,
@@ -2880,7 +2891,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p7_road = rpPage(7,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
+  var p7_road = rpPage(9,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:210px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
@@ -2909,7 +2920,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
       )
   );
 
-  var p8_conc = rpPage(8,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
+  var p8_conc = rpPage(10,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   '<div class="rp-cls" style="height:100%">'
@@ -2937,7 +2948,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   function toAuto(html) {
     return html.replace(/class="rp-page"/g, 'class="rp-page-auto"').replace(/min-height:[^;"]+/g, 'min-height:auto');
   }
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + toAuto(p1) + toAuto(p2) + toAuto(p3_swot) + toAuto(p4_comp) + toAuto(p5_cert) + toAuto(p6_fund) + toAuto(p7_road) + toAuto(p8_conc) + '</div>';
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + toAuto(p2) + toAuto(p1) + toAuto(p3_swot) + toAuto(p3b_swot) + toAuto(p4_comp) + toAuto(p5_cert) + toAuto(p6_fund) + toAuto(p7_road) + toAuto(p8_conc) + '</div>';
 }
 
 
