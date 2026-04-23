@@ -1108,14 +1108,14 @@ function tplStyle(color, orientation) {
   // ── 페이지 (A4 landscape 기준) ──
   + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
   + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; display:flex; flex-direction:column; page-break-inside:avoid; break-inside:avoid; }'
-  + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
+  + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding-bottom:8px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
   + '.rp-psub  { font-size:12px; color:#94a3b8; margin-left:auto; white-space:nowrap; }'
   + '.rp-body  { flex:1; display:flex; flex-direction:column; gap:12px; }'
 
   // ── 레이아웃 ──
-  + '.rp-2col  { display:flex; gap:16px; flex:1; }'
+  + '.rp-2col  { display:flex; gap:16px; flex:1; align-items:stretch; }'
   + '.rp-col38 { width:38%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col40 { width:40%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col35 { width:35%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
@@ -1195,9 +1195,9 @@ function tplStyle(color, orientation) {
   + '.rp-sws li::before{color:#15803d;} .rp-sww li::before{color:#dc2626;} .rp-swo li::before{color:#1d4ed8;} .rp-swt li::before{color:#ea580c;}'
 
   // ── 비교표 ──
-  + '.rp-ctb { width:100%; border-collapse:collapse; font-size:13px; }'
-  + '.rp-ctb th { background:#1e3a8a; color:white; padding:9px 10px; text-align:center; border:1px solid #1e40af; font-size:13px; font-weight:700; }'
-  + '.rp-ctb td { padding:8px 10px; text-align:center; border:1px solid #e2e8f0; color:#334155; font-size:13px; font-weight:400; }'
+  + '.rp-ctb { width:100%; border-collapse:collapse; font-size:12px; }'
+  + '.rp-ctb th { background:#1e3a8a; color:white; padding:6px 8px; text-align:center; border:1px solid #1e40af; font-size:12px; font-weight:700; }'
+  + '.rp-ctb td { padding:6px 8px; text-align:center; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:400; }'
   + '.rp-ctb td:first-child { text-align:left; font-weight:700; } .rp-ctb td:nth-child(2) { background:#f0fdf4; color:#15803d; font-weight:700; }'
   + '.rp-ctb tr:nth-child(even) td { background:#f8fafc; }'
 
@@ -2765,12 +2765,14 @@ function buildFundHTML(d, cData, rev, dateStr) {
 // ★ AI 사업계획서 (표지+12P) - 2026 신규 레이아웃
 // ===========================
 function buildBizPlanHTML(d, cData, rev, dateStr) {
+  _currentReport = { company: (cData&&cData.name)||'', type: 'aiBiz', contentAreaId: 'aiBiz-content-area', landscape: true };
   var color = '#16a34a';
   var exp   = calcExp(cData, rev);
   var cover = buildCoverHTML(cData, {title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',vLabel:'완성본',borderColor:color}, rev, dateStr);
 
   var swot = d.s2_swot||{strength:['창업 1년 만에 13억 8천만원 폭발적 매출 달성 — 시장성 검증 완료'],weakness:['상시근로자 4명의 소규모 인력으로 사업 확장 속도에 제약이 있음'],opportunity:['HMR 시장 연 18% 성장 — 돈육·육수 세그먼트 최우수 성장 구간'],threat:['대형 식품기업의 후발 진입 가능성 상시 존재 — 특허 방어 필수']};
-  var compRows = d.s4_competitor||[{item:'제품 경쟁력',self:'★★★★★',a:'★★★★',b:'★★★'},{item:'기술력(특허)',self:'★★★★★',a:'★★★',b:'★★★'},{item:'가격 경쟁력',self:'★★★★',a:'★★★★★',b:'★★★★'},{item:'유통망',self:'★★★',a:'★★★★★',b:'★★★★'},{item:'성장성',self:'★★★★★',a:'★★★',b:'★★★'}];
+  var compRows = d.s4_competitor||[{item:'제품 경쟁력',self:'★★★★★',a:'★★★★',b:'★★★'},{item:'기술력(특허)',self:'★★★★★',a:'★★★',b:'★★★'},{item:'가격 경쟁력',self:'★★★★',a:'★★★★★',b:'★★★★'},{item:'유통망',self:'★★★',a:'★★★★★',b:'★★★★'},{item:'성장성',self:'★★★★★',a:'★★★',b:'★★★'},{item:'브랜드 인지도',self:'★★★',a:'★★★★',b:'★★★★'},{item:'인증·자격',self:'★★★★',a:'★★★★★',b:'★★★★'}];
+  var compAnalysis = (d.s4_items||['특허 기술 보유로 동일 제품 제조가 불가능하여 직접적인 가격 경쟁에서 원천 차단됨','1회 개별 포장 스펙으로 경쟁사 제품과 직접 비교가 어려운 독자적 카테고리를 형성하고 있음','창업 초기에 검증된 시장 수요를 보유하여 경쟁사 대비 제품 신뢰도와 재구매율이 높음','초기 시장 선점 효과로 충성 고객 확보 속도가 빨라 경쟁사의 후발 진입을 어렵게 만들고 있음','소수 정예 4인 팀의 고효율 운영으로 경쟁사 대비 원가 구조 우위를 확보하고 있음']).slice(0,5);
   var diffs = d.s5_items||[{title:'기술 차별화',text:'돈육 사골 농축 압축 기술 특허 보유 — 경쟁사의 동일 제품 제조를 원천 차단하는 진입 장벽 구축',color:'#16a34a'},{title:'제품 차별화',text:'1회 분량 개별 포장으로 위생·편의성·보관성을 동시에 충족 — 소비자 불편을 해소한 혁신 제품',color:'#2563eb'},{title:'시장 포지셔닝',text:'HMR 내 돈육 특화 세그먼트 선점 — 틈새 독점 포지션 구축으로 경쟁 압력을 원천 최소화',color:'#7c3aed'},{title:'성장 증명력',text:'창업 1년 만에 11억 달성 — 투자·자금 심사 기관이 가장 신뢰하는 시장성 검증 완료 상태',color:'#ea580c'}];
   var bgMap = {'#16a34a':'#f0fdf4','#2563eb':'#eff6ff','#7c3aed':'#fdf4ff','#ea580c':'#fff7ed'};
   var bdMap = {'#16a34a':'#86efac','#2563eb':'#93c5fd','#7c3aed':'#d8b4fe','#ea580c':'#fdba74'};
@@ -2821,54 +2823,83 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var tocLeft  = tocItems.slice(0,5);
   var tocRight = tocItems.slice(5);
   function tocRow(t) {
-    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:white;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;border-left:4px solid '+color+';box-shadow:0 1px 3px rgba(0,0,0,0.04)">'
-      + '<div style="font-size:22px;font-weight:900;color:'+color+';min-width:28px;text-align:center">'+t.no+'</div>'
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:white;border-radius:8px;border:1px solid #e2e8f0;border-left:4px solid '+color+';box-shadow:0 1px 3px rgba(0,0,0,0.04);flex:1">'
+      + '<div style="font-size:24px;font-weight:900;color:'+color+';min-width:30px;text-align:center">'+t.no+'</div>'
       + '<div><div style="font-size:13px;font-weight:800;color:#1e293b">'+t.title+'</div>'
       + '<div style="font-size:11px;color:#64748b;margin-top:2px">'+t.sub+'</div></div>'
       + '</div>';
   }
   var p2 = rpPage(2,'목차','Contents',color,
-    '<div style="padding:4px 0">'
-    + '<div style="font-size:13px;color:#64748b;margin-bottom:14px;font-weight:600;border-bottom:2px solid '+color+';padding-bottom:8px">AI 사업계획서 구성 (총 12페이지)</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-    + '<div>'+tocLeft.map(tocRow).join('')+'</div>'
-    + '<div>'+tocRight.map(tocRow).join('')+'</div>'
+    '<div style="flex:1;display:flex;flex-direction:column;padding:4px 0;overflow:hidden">'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:10px;font-weight:600;border-bottom:2px solid '+color+';padding-bottom:8px;flex-shrink:0">AI 사업계획서 구성 (총 12페이지)</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;align-content:stretch">'
+    + '<div style="display:flex;flex-direction:column;justify-content:space-between">'+tocLeft.map(tocRow).join('')+'</div>'
+    + '<div style="display:flex;flex-direction:column;justify-content:space-between">'+tocRight.map(tocRow).join('')+'</div>'
     + '</div>'
     + '</div>'
   );
 
   // ── 3P: 사업개요 및 핵심지표 ──
   var p3_overview = rpPage(3,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col45">'
-    +   rpSec('기업 기본 정보', color,
-          '<table class="rp-ovt" style="border-top-color:'+color+'">'
-          + '<tr><th style="color:'+color+'">기업명</th><td colspan="3">'+cData.name+'</td></tr>'
-          + '<tr><th style="color:'+color+'">대표자</th><td>'+(cData.rep||'-')+'</td><th style="color:'+color+'">업종</th><td>'+(cData.industry||'-')+'</td></tr>'
-          + '<tr><th style="color:'+color+'">설립일</th><td>'+(cData.bizDate||'-')+'</td><th style="color:'+color+'">상시근로자</th><td>'+(cData.empCount||'-')+'명</td></tr>'
-          + '<tr><th style="color:'+color+'">핵심아이템</th><td colspan="3">'+(cData.coreItem||'-')+'</td></tr>'
-          + '<tr><th style="color:'+color+'">전년 매출</th><td>'+fKRW(rev.y25)+'</td><th style="color:'+color+'">금년 예상</th><td>'+fKRW(exp)+'</td></tr>'
-          + '<tr><th style="color:'+color+'">필요 자금</th><td colspan="3" style="font-weight:700;color:'+color+'">'+nf+'</td></tr>'
-          + '</table>'
-        )
-    +   '<div class="rp-g2" style="margin-top:10px">'
-    +     rpMC('업력', cData.bizDate?Math.max(1,Math.round((Date.now()-new Date(cData.bizDate))/31536000000))+'년':'2년', '초기 고성장 단계', color)
-    +     rpMC('매출 성장률', '+'+yoy+'%', '전년 대비', '#2563eb')
-    +     rpMC('필요 자금', nf, '조달 목표', '#7c3aed')
-    +     rpMC('핵심 경쟁력', '특허·제품력', '시장 진입장벽', '#ea580c')
+    '<div style="display:flex;flex-direction:column;flex:1;gap:10px;overflow:hidden">'
+    // 상단: 핵심 수치 4개 가로 배치
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;flex-shrink:0">'
+    +   '<div style="background:linear-gradient(135deg,'+color+',#15803d);border-radius:10px;padding:12px;text-align:center;color:white">'
+    +     '<div style="font-size:10px;opacity:0.85;margin-bottom:3px">전년 매출</div>'
+    +     '<div style="font-size:18px;font-weight:900;line-height:1.2">'+fKRW(rev.y25)+'</div>'
+    +     '<div style="font-size:10px;opacity:0.8;margin-top:3px">실적 검증 완료</div>'
+    +   '</div>'
+    +   '<div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:10px;padding:12px;text-align:center;color:white">'
+    +     '<div style="font-size:10px;opacity:0.85;margin-bottom:3px">매출 성장률</div>'
+    +     '<div style="font-size:18px;font-weight:900;line-height:1.2">+'+yoy+'%</div>'
+    +     '<div style="font-size:10px;opacity:0.8;margin-top:3px">전년 대비</div>'
+    +   '</div>'
+    +   '<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:10px;padding:12px;text-align:center;color:white">'
+    +     '<div style="font-size:10px;opacity:0.85;margin-bottom:3px">필요 자금</div>'
+    +     '<div style="font-size:18px;font-weight:900;line-height:1.2">'+nf+'</div>'
+    +     '<div style="font-size:10px;opacity:0.8;margin-top:3px">조달 목표</div>'
+    +   '</div>'
+    +   '<div style="background:linear-gradient(135deg,#ea580c,#c2410c);border-radius:10px;padding:12px;text-align:center;color:white">'
+    +     '<div style="font-size:10px;opacity:0.85;margin-bottom:3px">핵심 경쟁력</div>'
+    +     '<div style="font-size:18px;font-weight:900;line-height:1.2">특허보유</div>'
+    +     '<div style="font-size:10px;opacity:0.8;margin-top:3px">진입장벽 구축</div>'
     +   '</div>'
     + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('사업개요 및 추진 배경', color, rpLst(overviewItems, color))
-    +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;margin-top:10px">'
-    +     '<h4 style="color:'+color+';margin-bottom:8px">핵심 KPI 요약</h4>'
-    +     '<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +     '<thead><tr style="background:'+color+';color:white"><th style="padding:7px 10px;text-align:left">지표</th><th style="padding:7px 10px;text-align:center">현재</th><th style="padding:7px 10px;text-align:center">1년 목표</th><th style="padding:7px 10px;text-align:center">3년 목표</th></tr></thead>'
-    +     '<tbody>'
-    +     '<tr style="background:white"><td style="padding:6px 10px;font-weight:600">연간 매출</td><td style="padding:6px 10px;text-align:center">'+fKRW(rev.y25)+'</td><td style="padding:6px 10px;text-align:center;color:'+color+';font-weight:700">'+kpi9.y1+'</td><td style="padding:6px 10px;text-align:center;color:#2563eb;font-weight:700">'+kpi9.y2+'</td></tr>'
-    +     '<tr style="background:#f8fafc"><td style="padding:6px 10px;font-weight:600">유통 채널</td><td style="padding:6px 10px;text-align:center">'+(cData.channel||'온라인 중심')+'</td><td style="padding:6px 10px;text-align:center;color:'+color+';font-weight:700">'+kpi9.ch+'</td><td style="padding:6px 10px;text-align:center;color:#2563eb;font-weight:700">B2B+B2C</td></tr>'
-    +     '<tr style="background:white"><td style="padding:6px 10px;font-weight:600">상시 인력</td><td style="padding:6px 10px;text-align:center">'+(cData.empCount||'4')+'명</td><td style="padding:6px 10px;text-align:center;color:'+color+';font-weight:700">'+kpi9.emp+'</td><td style="padding:6px 10px;text-align:center;color:#2563eb;font-weight:700">20명↑</td></tr>'
-    +     '</tbody></table>'
+    // 중단: 좌우 2컬럼
+    + '<div style="display:flex;gap:14px;flex:1;overflow:hidden">'
+    +   '<div style="width:42%;flex-shrink:0;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+    +     rpSec('기업 기본 정보', color,
+            '<table class="rp-ovt" style="border-top-color:'+color+';font-size:11.5px">'
+            + '<tr><th style="color:'+color+';padding:5px 8px">기업명</th><td colspan="3" style="padding:5px 8px;font-weight:700">'+cData.name+'</td></tr>'
+            + '<tr><th style="color:'+color+';padding:5px 8px">대표자</th><td style="padding:5px 8px">'+(cData.rep||'-')+'</td><th style="color:'+color+';padding:5px 8px">업종</th><td style="padding:5px 8px">'+(cData.industry||'-')+'</td></tr>'
+            + '<tr><th style="color:'+color+';padding:5px 8px">설립일</th><td style="padding:5px 8px">'+(cData.bizDate||'-')+'</td><th style="color:'+color+';padding:5px 8px">상시근로자</th><td style="padding:5px 8px">'+(cData.empCount||'-')+'명</td></tr>'
+            + '<tr><th style="color:'+color+';padding:5px 8px">핵심아이템</th><td colspan="3" style="padding:5px 8px">'+(cData.coreItem||'-')+'</td></tr>'
+            + '<tr><th style="color:'+color+';padding:5px 8px">전년 매출</th><td style="padding:5px 8px">'+fKRW(rev.y25)+'</td><th style="color:'+color+';padding:5px 8px">금년 예상</th><td style="padding:5px 8px">'+fKRW(exp)+'</td></tr>'
+            + '<tr><th style="color:'+color+';padding:5px 8px">필요 자금</th><td colspan="3" style="font-weight:700;color:'+color+';padding:5px 8px">'+nf+'</td></tr>'
+            + '</table>'
+          )
+    +     '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;flex:1">'
+    +       '<h4 style="color:'+color+';margin-bottom:6px;font-size:12px">핵심 KPI 목표</h4>'
+    +       '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    +       '<thead><tr style="background:'+color+';color:white"><th style="padding:4px 7px;text-align:left">지표</th><th style="padding:4px 7px;text-align:center">현재</th><th style="padding:4px 7px;text-align:center">1년</th><th style="padding:4px 7px;text-align:center">3년</th></tr></thead>'
+    +       '<tbody>'
+    +       '<tr style="background:white"><td style="padding:4px 7px;font-weight:600">연간 매출</td><td style="padding:4px 7px;text-align:center">'+fKRW(rev.y25)+'</td><td style="padding:4px 7px;text-align:center;color:'+color+';font-weight:700">'+kpi9.y1+'</td><td style="padding:4px 7px;text-align:center;color:#2563eb;font-weight:700">'+kpi9.y2+'</td></tr>'
+    +       '<tr style="background:#f8fafc"><td style="padding:4px 7px;font-weight:600">유통 채널</td><td style="padding:4px 7px;text-align:center">'+(cData.channel||'온라인')+'</td><td style="padding:4px 7px;text-align:center;color:'+color+';font-weight:700">'+kpi9.ch+'</td><td style="padding:4px 7px;text-align:center;color:#2563eb;font-weight:700">B2B+B2C</td></tr>'
+    +       '<tr style="background:white"><td style="padding:4px 7px;font-weight:600">상시 인력</td><td style="padding:4px 7px;text-align:center">'+(cData.empCount||'4')+'명</td><td style="padding:4px 7px;text-align:center;color:'+color+';font-weight:700">'+kpi9.emp+'</td><td style="padding:4px 7px;text-align:center;color:#2563eb;font-weight:700">20명↑</td></tr>'
+    +       '</tbody></table>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+    +     '<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">'+rpSec('사업개요 및 추진 배경', color, rpLst(overviewItems, color))+'</div>'
+    +     '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 14px;flex-shrink:0">'
+    +       '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:6px">핵심 강점 요약</div>'
+    +       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+    +         '<div style="font-size:11px;color:#166534;line-height:1.6;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>특허 기술 기반 진입장벽 구축 완료</div>'
+    +         '<div style="font-size:11px;color:#166534;line-height:1.6;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>창업 1년 만에 시장성 검증 완료</div>'
+    +         '<div style="font-size:11px;color:#166534;line-height:1.6;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>HMR 돈육 특화 세그먼트 선점</div>'
+    +         '<div style="font-size:11px;color:#166534;line-height:1.6;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>소수 정예 고효율 운영 체계 확립</div>'
+    +       '</div>'
+    +     '</div>'
     +   '</div>'
     + '</div>'
     + '</div>'
@@ -2876,32 +2907,47 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
   // ── 4P: 시장기회 분석 ──
   var p4_market = rpPage(4,'시장기회 분석','시장 성장성 · 트렌드 · 외부환경',color,
-    '<div class="rp-2col" style="margin-bottom:12px">'
-    + '<div class="rp-col45">'
-    +   '<div class="rp-g2" style="margin-bottom:10px">'
+    '<div class="rp-2col" style="flex:1">'
+    + '<div class="rp-col45" style="display:flex;flex-direction:column;gap:8px">'
+    +   '<div class="rp-g2" style="flex-shrink:0">'
     +     rpMC('HMR 시장', '7조원', '2022년 기준', color)
     +     rpMC('연평균 성장률', '18%', '육수·국물 세그먼트', '#2563eb')
     +   '</div>'
-    +   rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:230px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
+    +   '<div style="flex-shrink:0">'+rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:150px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')+'</div>'
+    +   '<div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;overflow:hidden">'
+    +     '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0">PEST 외부환경 분석</div>'
+    +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+    +       '<div style="background:#eff6ff;border-radius:6px;padding:7px 9px"><div style="font-size:10px;font-weight:700;color:#2563eb;margin-bottom:3px">P 정치·정책</div><div style="font-size:10.5px;color:#374151;line-height:1.5">제조업 창업 정책자금 확대 기조 유지 — 소진공·중진공 지원 강화</div></div>'
+    +       '<div style="background:#f0fdf4;border-radius:6px;padding:7px 9px"><div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:3px">E 경제</div><div style="font-size:10.5px;color:#374151;line-height:1.5">HMR 시장 7조→15조 성장 전망 — 프리미엄 간편식 소비 증가</div></div>'
+    +       '<div style="background:#fdf4ff;border-radius:6px;padding:7px 9px"><div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:3px">S 사회·문화</div><div style="font-size:10.5px;color:#374151;line-height:1.5">1~2인 가구 61% — 건강·편의 간편식 수요 구조적 증가</div></div>'
+    +       '<div style="background:#fff7ed;border-radius:6px;padding:7px 9px"><div style="font-size:10px;font-weight:700;color:#ea580c;margin-bottom:3px">T 기술</div><div style="font-size:10.5px;color:#374151;line-height:1.5">식품 특허·HACCP 인증 기술 — 진입장벽 및 채널 확보 핵심</div></div>'
+    +     '</div>'
+    +   '</div>'
     + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
-          '1~2인 가구 비율 61%로 증가세 — 간편식 수요가 구조적으로 증가하며 HMR 시장 연 18% 성장 지속',
+    + '<div class="rp-colF" style="flex:1;display:flex;flex-direction:column;gap:8px">'
+    +   '<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">'+rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
+          'HMR 시장 2022년 7조원 → 2030년 15조원 돌파 예상 — 연평균 18% 성장률로 전체 식품 시장 중 최고 성장 구간',
+          '1~2인 가구 비율 61% 돌파 — 간편식 수요가 구조적으로 증가하며 HMR 시장 연 18% 성장 지속',
           '건강·프리미엄 간편식에 대한 소비자 선호도 급상승 — 고가 제품군의 성장이 업계 평균을 크게 상회',
           '쿠팡·마켓컬리 등 온라인 식품 채널 급성장 — 소규모 브랜드의 진입 장벽이 낮아져 성장 기회 확대됨',
           '육수·국물 세그먼트는 HMR 중 가장 빠른 성장 구간 — 대체 불가 필수 식품으로 소비 빈도가 높음',
           '식품 안전·품질 인증(HACCP 등)에 대한 소비자 요구 강화 — 인증 기업이 채널 확보에서 유리한 위치를 점함'
-        ], color))
-    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
-    +     '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;text-align:center">'
-    +       '<div style="font-size:11px;color:#374151;font-weight:600;margin-bottom:4px">핵심 소비층</div>'
-    +       '<div style="font-size:20px;font-weight:900;color:'+color+'">61%</div>'
-    +       '<div style="font-size:11px;color:#64748b">1~2인 가구 비율</div>'
+        ], color))+'</div>'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;flex-shrink:0">'
+    +     '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center">'
+    +       '<div style="font-size:10px;color:#374151;font-weight:600;margin-bottom:3px">핵심 소비층</div>'
+    +       '<div style="font-size:18px;font-weight:900;color:'+color+'">61%</div>'
+    +       '<div style="font-size:10px;color:#64748b">1~2인 가구 비율</div>'
     +     '</div>'
-    +     '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;text-align:center">'
-    +       '<div style="font-size:11px;color:#374151;font-weight:600;margin-bottom:4px">시장 성장 전망</div>'
-    +       '<div style="font-size:20px;font-weight:900;color:#2563eb">2030년</div>'
-    +       '<div style="font-size:11px;color:#64748b">15조원 돌파 예상</div>'
+    +     '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center">'
+    +       '<div style="font-size:10px;color:#374151;font-weight:600;margin-bottom:3px">시장 성장 전망</div>'
+    +       '<div style="font-size:18px;font-weight:900;color:#2563eb">2030년</div>'
+    +       '<div style="font-size:10px;color:#64748b">15조원 돌파 예상</div>'
+    +     '</div>'
+    +     '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px;text-align:center">'
+    +       '<div style="font-size:10px;color:#374151;font-weight:600;margin-bottom:3px">육수 세그먼트</div>'
+    +       '<div style="font-size:18px;font-weight:900;color:#ea580c">18%↑</div>'
+    +       '<div style="font-size:10px;color:#64748b">연평균 성장률</div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
@@ -2909,54 +2955,79 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   );
 
   // ── 5P: SWOT 분석 ──
+  var swotDefaults = {
+    strength: swot.strength&&swot.strength.length>=4?swot.strength:[
+      '창업 1년 만에 13억 8천만원 폭발적 매출 달성 — 시장성 검증 완료',
+      '돈육 사골 농축 압축 기술 특허 보유 — 경쟁사 진입 원천 차단',
+      '1회 분량 개별 포장 혁신 — 소비자 불편 해소 독창적 제품',
+      '소수 정예 4인 팀으로 인당 생산성 업종 평균 3배 초과',
+      'HACCP 인증 추진 중 — 대형 유통채널 진입 요건 충족 예정'
+    ],
+    weakness: swot.weakness&&swot.weakness.length>=4?swot.weakness:[
+      '상시근로자 4명의 소규모 인력으로 사업 확장 속도에 제약이 있음',
+      '생산 설비 노후화로 수주 증가 시 공급 병목 발생 가능성 존재',
+      '마케팅 채널 온라인 편중으로 B2B 납품 채널 다각화 필요',
+      '브랜드 인지도가 아직 낮아 신규 고객 유입 마케팅 비용 부담',
+      '단일 제품 의존도 높아 제품 라인업 다각화 필요'
+    ],
+    opportunity: swot.opportunity&&swot.opportunity.length>=4?swot.opportunity:[
+      'HMR 시장 연 18% 성장 — 돈육·육수 세그먼트 최우수 성장 구간',
+      '1~2인 가구 61% 돌파 — 간편식 구조적 수요 증가 지속',
+      '쿠팡·마켓컬리 온라인 식품 채널 급성장 — 소규모 브랜드 진입 기회',
+      '정부 정책자금 지원 확대 — 제조업 창업기업 우대 기조 유지',
+      '건강식·프리미엄 간편식 트렌드 — 고마진 제품군 성장 가속화',
+      'B2B 단체급식·대형마트 채널 진입 기회 — HACCP 취득 시 즉시 확대 가능'
+    ],
+    threat: swot.threat&&swot.threat.length>=4?swot.threat:[
+      '대형 식품기업의 후발 진입 가능성 상시 존재 — 특허 방어 필수',
+      '원재료(돈육) 가격 변동성 — 수익성 직결 리스크',
+      '식품 안전 규제 강화 — HACCP 등 인증 미취득 시 채널 진입 제한',
+      '온라인 플랫폼 수수료 인상 및 정책 변화 — 마진 압박 가능성',
+      '경쟁 브랜드의 유사 제품 출시 — 차별화 포지션 유지 필요'
+    ]
+  };
   var p5_swot = rpPage(5,'SWOT 분석','강점 · 약점 · 기회 · 위협 구조',color,
-    '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;margin-top:4px">'
-    +   '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:16px">'
-    +     '<div style="font-size:14px;font-weight:800;color:#15803d;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #86efac">💪 강점 Strength</div>'
-    +     '<ul style="margin:0;padding-left:16px">'+( swot.strength||[]).map(function(i){return '<li style="font-size:12px;color:#166534;line-height:1.7;margin-bottom:4px">'+i+'</li>';}).join('')+'</ul>'
+    '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px">'
+    +   '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 14px;overflow:hidden">'
+    +     '<div style="font-size:13px;font-weight:800;color:#15803d;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #86efac">💪 강점 Strength</div>'
+    +     '<ul style="margin:0;padding-left:14px">'+swotDefaults.strength.map(function(i){return '<li style="font-size:11.5px;color:#166534;line-height:1.65;margin-bottom:3px">'+i+'</li>';}).join('')+'</ul>'
     +   '</div>'
-    +   '<div style="background:#fff7ed;border:2px solid #fdba74;border-radius:10px;padding:16px">'
-    +     '<div style="font-size:14px;font-weight:800;color:#c2410c;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #fdba74">⚠️ 약점 Weakness</div>'
-    +     '<ul style="margin:0;padding-left:16px">'+( swot.weakness||[]).map(function(i){return '<li style="font-size:12px;color:#9a3412;line-height:1.7;margin-bottom:4px">'+i+'</li>';}).join('')+'</ul>'
+    +   '<div style="background:#fff7ed;border:2px solid #fdba74;border-radius:10px;padding:12px 14px;overflow:hidden">'
+    +     '<div style="font-size:13px;font-weight:800;color:#c2410c;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #fdba74">⚠️ 약점 Weakness</div>'
+    +     '<ul style="margin:0;padding-left:14px">'+swotDefaults.weakness.map(function(i){return '<li style="font-size:11.5px;color:#9a3412;line-height:1.65;margin-bottom:3px">'+i+'</li>';}).join('')+'</ul>'
     +   '</div>'
-    +   '<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:10px;padding:16px">'
-    +     '<div style="font-size:14px;font-weight:800;color:#1d4ed8;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #93c5fd">🚀 기회 Opportunity</div>'
-    +     '<ul style="margin:0;padding-left:16px">'+( swot.opportunity||[]).map(function(i){return '<li style="font-size:12px;color:#1e40af;line-height:1.7;margin-bottom:4px">'+i+'</li>';}).join('')+'</ul>'
+    +   '<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:10px;padding:12px 14px;overflow:hidden">'
+    +     '<div style="font-size:13px;font-weight:800;color:#1d4ed8;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #93c5fd">🚀 기회 Opportunity</div>'
+    +     '<ul style="margin:0;padding-left:14px">'+swotDefaults.opportunity.map(function(i){return '<li style="font-size:11.5px;color:#1e40af;line-height:1.65;margin-bottom:3px">'+i+'</li>';}).join('')+'</ul>'
     +   '</div>'
-    +   '<div style="background:#fdf4ff;border:2px solid #d8b4fe;border-radius:10px;padding:16px">'
-    +     '<div style="font-size:14px;font-weight:800;color:#7c3aed;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #d8b4fe">🛡️ 위협 Threat</div>'
-    +     '<ul style="margin:0;padding-left:16px">'+( swot.threat||[]).map(function(i){return '<li style="font-size:12px;color:#6d28d9;line-height:1.7;margin-bottom:4px">'+i+'</li>';}).join('')+'</ul>'
+    +   '<div style="background:#fdf4ff;border:2px solid #d8b4fe;border-radius:10px;padding:12px 14px;overflow:hidden">'
+    +     '<div style="font-size:13px;font-weight:800;color:#7c3aed;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #d8b4fe">🛡️ 위협 Threat</div>'
+    +     '<ul style="margin:0;padding-left:14px">'+swotDefaults.threat.map(function(i){return '<li style="font-size:11.5px;color:#6d28d9;line-height:1.65;margin-bottom:3px">'+i+'</li>';}).join('')+'</ul>'
     +   '</div>'
     + '</div>'
   );
 
   // ── 6P: 경쟁환경 분석 ──
-  var p6_comp = rpPage(6,'경쟁환경 분석','비교표 · 경쟁력 분석 · 포지셔닝 결론',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col50">'
-    +   rpSec('경쟁사 비교표', color,
-          '<table class="rp-ctb"><thead><tr><th style="text-align:left">비교 항목</th><th>'+cData.name+'</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead>'
-          + '<tbody>'+compRows.map(function(r,i){ return '<tr'+(i%2===0?'':' style="background:#f8fafc"')+'><td style="font-weight:600">'+r.item+'</td><td style="text-align:center;color:'+color+';font-weight:700">'+r.self+'</td><td style="text-align:center">'+r.a+'</td><td style="text-align:center">'+r.b+'</td></tr>'; }).join('')+'</tbody></table>'
-        )
+  var p6_compTableHTML = '<table class="rp-ctb"><thead><tr><th style="text-align:left">비교 항목</th><th>'+cData.name+'</th><th>경쟁사 A</th><th>경쟁사 B</th></tr></thead><tbody>'+compRows.map(function(r,i){ return '<tr'+(i%2===0?'':' style="background:#f8fafc"')+'><td style="font-weight:600">'+r.item+'</td><td style="text-align:center;color:'+color+';font-weight:700">'+r.self+'</td><td style="text-align:center">'+r.a+'</td><td style="text-align:center">'+r.b+'</td></tr>'; }).join('')+'</tbody></table>';
+  var p6_compContent = '<div style="display:flex;flex-direction:column;flex:1;gap:8px;min-height:0;overflow:hidden">'
+    + '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:3px">경쟁사 비교표</div>'
+    + p6_compTableHTML
+    + '<div style="display:flex;gap:14px;align-items:flex-start;margin-top:8px">'
+    + '<div style="flex:1;min-width:0">'
+    +   '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:3px">경쟁력 분석</div>'
+    +   rpLst(compAnalysis, color)
     + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('경쟁력 분석', color, rpLst(d.s4_items||[
-          '특허 기술 보유로 동일 제품 제조가 불가능하여 직접적인 가격 경쟁에서 원천 차단됨',
-          '1회 개별 포장 스펙으로 경쟁사 제품과 직접 비교가 어려운 독자적 카테고리를 형성하고 있음',
-          '창업 초기에 검증된 시장 수요를 보유하여 경쟁사 대비 제품 신뢰도와 재구매율이 높음',
-          '초기 시장 선점 효과로 충성 고객 확보 속도가 빨라 경쟁사의 후발 진입을 어렵게 만들고 있음'
-        ], color))
+    + '<div style="flex:1;min-width:0;background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:8px;padding:8px 10px">'
+    +   '<div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:4px">포지셔닝 결론</div>'
+    +   '<div style="font-size:11px;color:#5b21b6;line-height:1.6;font-weight:600">특허 기반 기술력과 세그먼트 특화 제품력이 결합되어 후발 경쟁사가 가격만으로 흔들기 어려운 구조를 형성하고 있음. 시장 선점 효과와 충성 고객 기반이 지속적인 경쟁 우위를 뒷받침하고 있음.</div>'
     + '</div>'
     + '</div>'
-    + '<div style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:14px 16px;margin-top:12px">'
-    +   '<div style="font-size:13px;font-weight:800;color:#7c3aed;margin-bottom:6px">포지셔닝 결론</div>'
-    +   '<div style="font-size:13px;color:#5b21b6;line-height:1.75;font-weight:600">특허 기반 기술력과 세그먼트 특화 제품력이 결합되어 후발 경쟁사가 가격만으로 흔들기 어려운 구조를 형성하고 있음. 시장 선점 효과와 충성 고객 기반이 지속적인 경쟁 우위를 뒷받침하고 있음.</div>'
-    + '</div>'
-  );
+    + '</div>';
+  var p6_comp = rpPage(6,'경쟁환경 분석','비교표 · 경쟁력 분석 · 포지셔닝 결론',color, p6_compContent);
 
   // ── 7P: 차별화 전략 ──
   var p7_diff = rpPage(7,'차별화 전략','기술·제품·시장·성장 4대 차별화 전략',color,
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px">'
+    '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;flex:1">'
     + (Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,4).map(function(it,i){
         var bg=bgMap[it.color]||'#f0fdf4', bd=bdMap[it.color]||'#86efac';
         var icons=['🔬','📦','🎯','📈'];
@@ -2969,7 +3040,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           + '</div>';
       }).join('')
     + '</div>'
-    + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-top:14px">'
+    + '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;flex-shrink:0">'
     +   '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">차별화 전략 종합 — 경쟁사 대비 핵심 우위 요약</div>'
     +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
     +     '<div style="font-size:12px;color:#374151;line-height:1.65;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">●</span>4대 차별화 요소가 상호 보완적으로 작동하여 단일 요소 모방만으로는 경쟁 우위 복제가 불가능한 구조임</div>'
@@ -2980,8 +3051,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
   // ── 8P: 인증·조달 레버리지 전략 ──
   var p8_cert = rpPage(8,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
-    '<div style="margin-bottom:6px;font-size:13px;font-weight:700;color:#374151">추천 인증 항목 (업종 맞춤)</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    '<div style="display:flex;flex-direction:column;flex:1;gap:12px">'
+    + '<div style="font-size:13px;font-weight:700;color:#374151">추천 인증 항목 (업종 맞춤)</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +   bpCerts.map(function(c,i){
           return '<div style="background:'+bpBgs[i%bpBgs.length]+';border:1.5px solid '+bpBds[i%bpBds.length]+';border-left:5px solid '+bpColors[i%4]+';border-radius:10px;padding:14px 16px">'
             + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
@@ -2994,7 +3066,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
             + '</div>';
         }).join('')
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;margin-bottom:14px;align-items:start">'
+    + '<div style="display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start">'
     +   '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;padding:14px 10px;text-align:center">'
     +     '<div style="font-size:10px;font-weight:700;color:#15803d;margin-bottom:5px;line-height:1.4">인증 완료 시 총 추가 조달 가능 한도</div>'
     +     '<div style="font-size:16px;font-weight:900;color:'+color+';line-height:1.2;white-space:nowrap">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
@@ -3017,12 +3089,14 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +     '<div style="font-size:12px;color:#374151;line-height:1.65;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:#2563eb;font-weight:700">●</span>사업계획서와 인증 로드맵을 하나의 성장 서사로 연결하면 기관별 심사에서 일관성을 확보할 수 있음</div>'
     +   '</div>'
     + '</div>'
+    + '</div>'
   );
 
   // ── 9P: 자금 조달 및 사용 계획 ──
   var p9_fund = rpPage(9,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
+    '<div style="display:flex;flex-direction:column;flex:1;gap:12px">'
     // 상단: 총 필요자금 요약 박스
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'
     +   '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:4px">총 필요 자금</div>'
     +     '<div style="font-size:20px;font-weight:900;color:'+color+'">'+nf+'</div>'
@@ -3073,7 +3147,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
         + '</tbody></table>'
       )
     // 하단: 기대 효과
-    + '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-top:12px">'
+    + '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px">'
     +   '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:8px">자금 집행 기대 효과</div>'
     +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
     +     '<div style="background:white;border-radius:6px;padding:10px 12px;text-align:center">'
@@ -3090,6 +3164,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +     '</div>'
     +   '</div>'
     + '</div>'
+    + '</div>'
   );
 
   // ── 10P: 매출 전망 ──
@@ -3102,9 +3177,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     '돈육 특화 세그먼트 내 독보적 포지션으로 경쟁사 후발 진입을 원체 차단하며 프리미엄 가격 정책으로 수익성과 브랜드 가치를 동시에 제고할 수 있음'
   ];
   var p10_sales = rpPage(10,'매출 전망','1년 시뮬레이션 · 핵심 성장 동력',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col50">'
-    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:220px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
+    '<div class="rp-2col" style="flex:1">'
+    + '<div class="rp-col50" style="justify-content:space-between">'
+    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:180px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
     +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
     +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid '+color+';border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">1년 후 매출</div><div style="font-size:18px;font-weight:900;color:'+color+'">'+kpi9.y1+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">단기 목표</div></div>'
     +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #2563eb;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">2년 후 매출</div><div style="font-size:18px;font-weight:900;color:#2563eb">'+kpi9.y2+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">중기 목표</div></div>'
@@ -3112,7 +3187,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #ea580c;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">목표 인력</div><div style="font-size:18px;font-weight:900;color:#ea580c">'+kpi9.emp+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">운영 확장</div></div>'
     +   '</div>'
     + '</div>'
-    + '<div class="rp-colF" style="display:flex;flex-direction:column;gap:10px">'
+    + '<div class="rp-colF" style="flex:1;justify-content:space-between">'
     +   rpSec('핵심 성장 동력', color, rpLst(s9itemsRich, color))
     +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px">'
     +     '<div style="font-size:13px;font-weight:700;color:#ea580c;margin-bottom:8px">매출 전망 근거</div>'
@@ -3129,8 +3204,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
   // ── 11P: 실행 로드맵 ──
   var p11_road = rpPage(11,'실행 로드맵','연차별 실행 계획 · 단계별 목표',color,
+    '<div style="display:flex;flex-direction:column;flex:1;gap:12px">'
     // 상단: 단기/중기/장기 전략
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'
     + '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px">'
     +   '<div style="font-size:13px;font-weight:800;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #bbf7d0">📌 단기 (1년)</div>'
     +   '<ul style="margin:0;padding-left:16px">'+( d.s8_short||['정책자금 4억 조달 완료','쿠팡·스마트스토어 입점','생산 설비 교체 가동','월 매출 1.5억 달성']).map(function(t){return '<li style="font-size:12px;color:#166534;line-height:1.7;margin-bottom:3px">'+t+'</li>';}).join('')+'</ul>'
@@ -3145,8 +3221,8 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
     + '</div>'
     // 하단: 연차별 로드맵 카드 (2x2)
-    + '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">연차별 실행 로드맵</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    + '<div style="font-size:13px;font-weight:700;color:#374151">연차별 실행 로드맵</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;flex:1">'
     + rmYears.map(function(r,i){
         return '<div style="background:'+rmBgs[i%4]+';border:1.5px solid '+rmBds[i%4]+';border-left:6px solid '+rmColors[i%4]+';border-radius:10px;padding:16px 18px">'
           + '<div style="font-size:15px;font-weight:900;color:'+rmColors[i%4]+';margin-bottom:10px">'+r.year+'</div>'
@@ -3154,27 +3230,31 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           + '</div>';
       }).join('')
     + '</div>'
+    + '</div>'
   );
 
   // ── 12P: 종합 제안 ──
   var conclusionRich = conclusion || (
-    cData.name+'는 창업 이후 단기간에 폭발적인 매출 성장을 달성하며 HMR 시장의 핵심 플레이어로 빠르게 부상하고 있음.\n\n'
-    +'돈육 사골 농축 압축 기술 특허와 1회 분량 개별 포장이라는 독창적 제품력은 경쟁사가 쉽게 모방할 수 없는 강력한 진입 장벽을 구축하고 있으며, 이는 자금 심사 기관에서도 가장 높이 평가하는 요소임.\n\n'
-    +'정책자금 4억원 조달 시 생산 설비 확충과 마케팅 채널 다각화를 통해 2년 내 매출 24억 달성이 충분히 가능한 성장 기반을 갖추고 있음.\n\n'
-    +'인증 취득 로드맵(벤처→이노비즈→HACCP)을 체계적으로 실행하면 추가 자금 최대 7.5억원 확보와 함께 중장기 매출 100억 목표 달성 가능성이 충분히 있음.\n\n'
-    +'본 사업계획서는 심사용 기본 문서로 즉시 활용 가능하며, 기관별 요구사항에 맞춰 세부 수치 보정 후 제출하면 높은 승인 가능성을 기대할 수 있음.'
+    cData.name+'는 창업 1년 만에 13억 8천만원이라는 폭발적인 매출을 달성하며 HMR 시장의 핵심 플레이어로 빠르게 부상하고 있음. 업종 내 최고 수준의 초고속 성장세를 기록 중이며, 이는 시장에서 실증된 수요와 제품 경쟁력을 동시에 증명하는 가장 강력한 지표임.\n\n'
+    +'돈육 사골 농축 압축 기술 특허와 1회 분량 개별 포장이라는 독창적 제품력은 경쟁사가 쉽게 모방할 수 없는 강력한 진입 장벽을 구축하고 있음. 이는 자금 심사 기관에서도 가장 높이 평가하는 요소이며, 소수 정예 4인 팀 운영으로 인당 생산성이 업종 평균을 크게 상회하는 탁월한 운영 효율성도 함께 확인됨.\n\n'
+    +'정책자금 4억원 조달 시 생산 설비 확충과 마케팅 체널 다각화를 통해 2년 내 매출 24억 달성이 충분히 가능한 성장 기반을 갖추고 있음. 시설 자금 2.5억으로 생산 능력을 현재의 2배 이상으로 확대하면 월 매출 1.5억 수준이 실현 가능한 수준임.\n\n'
+    +'인증 취득 로드맵(벤처→이노비즈→HACCP)을 체계적으로 실행하면 추가 정책자금 한도 최대 7.5억원 확보가 가능하며, 조달청 가점 확보로 심사 승인 확률도 동시에 높아짐. 특히 벤처기업 인증은 법인세 50% 감면 혜택과 함께 중진공 우대금리 적용이 가능하여 실질 이자 부담을 대폭 절감할 수 있음.\n\n'
+    +'쿠팡·마켓콜리·스마트스토어 동시 입점과 B2B 납품 체널 확보를 병행 추진하면 매출 안정성과 성장속도를 동시에 확보할 수 있음. 소비자 접점 다각화는 특정 플랫폼 의존도를 낙춰 현금흐름 리스크를 구조적으로 최소화하는 핵심 전략임.\n\n'
+    +'본 사업계획서는 심사용 기본 문서로 즉시 활용 가능하며, 기관별 요구사항에 맞춰 세부 수치 보정 후 제출하면 높은 승인 가능성을 기대할 수 있음. 소진공 월별 선착순 신청과 중진공 상반기 접수 시즈을 병행 활용하면 자금 조달 속도를 최대화할 수 있음.'
   );
-  var conclusionFormatted = conclusionRich.replace(/\n\n/g,'</p><p style="margin:0 0 10px 0;font-size:12.5px;color:#166534;line-height:1.85">').replace(/\n/g,'<br>');
-  var p12_conc = rpPage(12,'종합 제안','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col50">'
-    +   '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px;height:100%;box-sizing:border-box">'
+  var conclusionFormatted = conclusionRich
+    .replace(/\n\n/g,'</p><p style="margin:0 0 8px 0;font-size:12px;color:#166534;line-height:1.8">')
+    .replace(/\n/g,'<br>');
+  var p12_conc = rpPage(12,'종합 제안','최종 평가 · 콘설턴트 의견 · 실행 권고',color,
+    '<div class="rp-2col" style="flex:1">'
+    + '<div class="rp-col50" style="height:100%">'
+    +   '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px;flex:1;display:flex;flex-direction:column">'
     +     '<div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #86efac">'+cData.name+' 종합 의견</div>'
-    +     '<p style="margin:0 0 10px 0;font-size:12.5px;color:#166534;line-height:1.85">'+conclusionFormatted+'</p>'
+    +     '<p style="margin:0 0 8px 0;font-size:12px;color:#166534;line-height:1.8">'+conclusionFormatted+'</p>'
     +   '</div>'
     + '</div>'
-    + '<div class="rp-colF">'
-    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+    + '<div class="rp-colF" style="flex:1;justify-content:space-between">'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
     +     [{l:'시장성',v:'★★★★★',c:color},{l:'기술력',v:'★★★★★',c:'#2563eb'},{l:'성장성',v:'★★★★★',c:'#7c3aed'},{l:'실행력',v:'★★★★☆',c:'#ea580c'}].map(function(r){
             return '<div style="background:white;border:1.5px solid #e2e8f0;border-top:4px solid '+r.c+';border-radius:8px;padding:12px;text-align:center">'
               + '<div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">'+r.l+'</div>'
@@ -3189,7 +3269,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           '초기 고성장 구간인 만큼 운영체계와 현금흐름 관리까지 함께 설계해야 성장의 질을 유지할 수 있음',
           '본 사업계획서는 심사용 기본 문서로 활용 가능하며 기관별 요구사항에 맞춰 세부 수치만 보정하면 즉시 제출 수준임'
         ], color))
-    +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-top:10px">'
+    +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px 14px">'
     +     '<div style="font-size:12px;font-weight:700;color:#ea580c;margin-bottom:8px">즉시 실행 체크리스트</div>'
     +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">'
     +     ['정책자금 신청 서류 준비 (사업자등록증·부가세증명·완납증명)','기관별 신청 일정 확인 (소진공 매월 초 선착순)','인증 취득 로드맵 1순위 항목 착수','사업계획서 기관별 맞춤 수정 후 제출'].map(function(t){
@@ -3201,10 +3281,17 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  function toAuto(html) {
-    return html.replace(/class="rp-page"/g, 'class="rp-page-auto"').replace(/min-height:[^;"]+/g, 'min-height:auto');
-  }
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + toAuto(p2) + toAuto(p3_overview) + toAuto(p4_market) + toAuto(p5_swot) + toAuto(p6_comp) + toAuto(p7_diff) + toAuto(p8_cert) + toAuto(p9_fund) + toAuto(p10_sales) + toAuto(p11_road) + toAuto(p12_conc) + '</div>';
+  // 사업계획서 전용 CSS 오버라이드 - 박스 정렬 및 높이 맞춤
+  var bizplanCSS = '<style>'
+    + '.rp-page { height:194mm !important; min-height:194mm !important; overflow:hidden !important; }'
+    + '.rp-body { flex:1 !important; display:flex !important; flex-direction:column !important; gap:8px !important; min-height:0 !important; overflow:hidden !important; }'
+    + '.rp-2col { flex:1 !important; align-items:stretch !important; min-height:0 !important; overflow:hidden !important; }'
+    + '.rp-col45, .rp-col50, .rp-colF { display:flex !important; flex-direction:column !important; min-height:0 !important; overflow:hidden !important; }'
+    + '.rp-section { display:flex !important; flex-direction:column !important; overflow:hidden !important; }'
+    + '.rp-mc { padding:8px 6px !important; }'
+    + '.rp-mcv { font-size:18px !important; }'
+    + '</style>';
+  return tplStyle(color, 'landscape') + bizplanCSS + '<div class="rp-wrap">' + cover + p2 + p3_overview + p4_market + p5_swot + p6_comp + p7_diff + p8_cert + p9_fund + p10_sales + p11_road + p12_conc + '</div>';
 }
 
 function safeDestroyChart(canvas) {
