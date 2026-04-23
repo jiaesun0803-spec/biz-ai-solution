@@ -2933,7 +2933,11 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3_swot + p4_comp + p5_cert + p6_fund + p7_road + p8_conc + '</div>';
+  // 사업계획서: 모든 페이지를 rp-page-auto로 변환하여 공백 제거
+  function toAuto(html) {
+    return html.replace(/class="rp-page"/g, 'class="rp-page-auto"').replace(/min-height:[^;"]+/g, 'min-height:auto');
+  }
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + toAuto(p1) + toAuto(p2) + toAuto(p3_swot) + toAuto(p4_comp) + toAuto(p5_cert) + toAuto(p6_fund) + toAuto(p7_road) + toAuto(p8_conc) + '</div>';
 }
 
 
