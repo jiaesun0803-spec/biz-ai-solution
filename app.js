@@ -852,7 +852,10 @@ window.saveCompanyData=function(){
   const debtShinbo=_pInt('debt_shinbo');
   const debtJjg=_pInt('debt_jjg');
   const debtSjg=_pInt('debt_sjg');
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  // 사업장 주소 추출 (상세 주소 입력 필드)
+  const addrEl = document.querySelector('input[placeholder="상세 주소를 입력하세요"]');
+  const address = addrEl ? (addrEl.value || '-') : '-';
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
   const idx=companies.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? companies[idx]._serverId : null;
@@ -2562,7 +2565,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var otherFunds = funds.slice(3);
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
-    '<div style="display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:12px;align-items:stretch">'
+    '<div style="display:grid;grid-template-columns:240px 1fr;gap:14px;margin-bottom:12px;align-items:stretch">'
     + '<div class="rp-section" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fff7ed;border-color:#fed7aa;padding:18px">'
     +   '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:10px">신청 가능성 종합 점수</div>'
     +   '<svg viewBox="0 0 110 62" width="130" height="74" style="display:block;margin:4px auto 10px">'
@@ -2738,7 +2741,30 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p2 = rpPage(2,'시장기회 및 SWOT','시장 성장성 · 외부환경 · 리스크 구조',color,
+  // ── 목차 페이지 (2P) ──
+  var tocItems = [
+    {no:'1', title:'사업개요 및 핵심지표', sub:'기업 정보 · 실행 배경 · 핵심 강점'},
+    {no:'3', title:'시장기회 및 SWOT 분석', sub:'시장 성장성 · 외부환경 · 리스크 구조'},
+    {no:'4', title:'경쟁환경 및 차별화 전략', sub:'비교표 · 포지셔닝 · 핵심 우위'},
+    {no:'5', title:'인증·조달 레버리지 전략', sub:'가점 확보 · 정책자금 확장 · 실행 우선순위'},
+    {no:'6', title:'자금 조달 및 사용 계획', sub:'필요 자금 · 집행 구조 · 기대 효과'},
+    {no:'7', title:'매출 전망 및 실행 로드맵', sub:'1년 시뮬레이션 · 단계별 확장 계획'},
+    {no:'8', title:'종합 제언', sub:'최종 평가 · 컨설턴트 의견 · 실행 권고'}
+  ];
+  var p2 = rpPage(2,'목차','Contents',color,
+    '<div style="padding:8px 0">'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:18px;font-weight:600;border-bottom:2px solid '+color+';padding-bottom:8px">AI 사업계획서 구성</div>'
+    + tocItems.map(function(t,i){
+        var bg = i%2===0 ? '#f8fafc' : 'white';
+        return '<div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:'+bg+';border-radius:6px;margin-bottom:6px;border-left:4px solid '+color+'">'
+          + '<div style="font-size:22px;font-weight:900;color:'+color+';min-width:28px;text-align:center">'+t.no+'</div>'
+          + '<div><div style="font-size:14px;font-weight:800;color:#1e293b">'+t.title+'</div>'
+          + '<div style="font-size:12px;color:#64748b;margin-top:2px">'+t.sub+'</div></div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+  );
+  var p3_swot = rpPage(3,'시장기회 및 SWOT','시장 성장성 · 외부환경 · 리스크 구조',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   '<div class="rp-g3" style="margin-bottom:10px">'
@@ -2766,7 +2792,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p3 = rpPage(3,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
+  var p4_comp = rpPage(4,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('경쟁사 비교표', color,
@@ -2787,7 +2813,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '<div class="rp-g2" style="margin-top:12px">'+(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,4).map(diffCard).join('')+'</div>'
   );
 
-  var p4 = rpPage(4,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
+  var p5_cert = rpPage(5,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
     // ── 상단: 인증 2x2 그리드 ──
     '<div style="margin-bottom:4px;font-size:13px;font-weight:700;color:#374151">추천 인증 항목</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px">'
@@ -2825,7 +2851,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p5 = rpPage(5,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
+  var p6_fund = rpPage(6,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('자금 집행 계획표', color,
@@ -2854,7 +2880,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p6 = rpPage(6,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
+  var p7_road = rpPage(7,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:210px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
@@ -2883,7 +2909,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
       )
   );
 
-  var p7 = rpPage(7,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
+  var p8_conc = rpPage(8,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   '<div class="rp-cls" style="height:100%">'
@@ -2907,7 +2933,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3_swot + p4_comp + p5_cert + p6_fund + p7_road + p8_conc + '</div>';
 }
 
 
@@ -3452,6 +3478,23 @@ function fmtComma(n) { var v = parseInt(n)||0; return v > 0 ? v.toLocaleString('
 window.initFinanceTab = function() {
   var sel = document.getElementById('finance-company-select');
   if (!sel) return;
+  // 탭 진입 시 초기화: 기업 미선택 상태로 폼 숨김 + 모든 입력 필드 초기화
+  sel.value = '';
+  var formInit = document.getElementById('finance-fs-form');
+  var debtInfoInit = document.getElementById('finance-debt-info');
+  if (formInit) formInit.style.display = 'none';
+  if (debtInfoInit) debtInfoInit.style.display = 'none';
+  var allFsFields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
+                     'cur_asset','fix_asset','total_asset','cur_liab','fix_liab','total_liab','cap','total_equity'];
+  allFsFields.forEach(function(f) {
+    var el = document.getElementById('fs_'+f);
+    if (el) el.value = '';
+  });
+  var ratioIds = ['fs_ratio_op','fs_ratio_debt','fs_ratio_cur','fs_ratio_icr'];
+  ratioIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = '—'; el.style.color = '#94a3b8'; }
+  });
   sel.addEventListener('change', function() {
     var nm = sel.value;
     var form = document.getElementById('finance-fs-form');
@@ -3542,8 +3585,22 @@ window.calcFsRatios = function() {
   var curL  = _v('fs_cur_liab');
   var totL  = _v('fs_total_liab');
   var totE  = _v('fs_total_equity');
+  var totA  = _v('fs_total_asset');
   var opM   = rev  > 0 ? (op/rev*100).toFixed(1)+'%' : '—';
-  var debtR = totE > 0 ? (totL/totE*100).toFixed(1)+'%' : '—';
+  // 부채비율: 자본총계 있으면 부채/자본, 없으면 매출액+부채총계만으로도 계산 가능하게 표시
+  var debtR;
+  if (totE > 0) {
+    debtR = (totL/totE*100).toFixed(1)+'%';
+  } else if (totL > 0 && totA > 0 && totA > totL) {
+    // 자산총계-부채총계=자본으로 추정
+    var estEquity = totA - totL;
+    debtR = (totL/estEquity*100).toFixed(1)+'% (추정)';
+  } else if (totL > 0) {
+    // 매출액 대비 부채 비율로 표시 (간이)
+    debtR = totL > 0 ? '입력 필요' : '—';
+  } else {
+    debtR = '—';
+  }
   var curR  = curL > 0 ? (curA/curL*100).toFixed(1)+'%' : '—';
   var icr   = int_ > 0 ? (op/int_).toFixed(1)+'배' : '—';
   var _set = function(id, val, warn) {
