@@ -2667,7 +2667,97 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + '</div>';
+  // ===========================
+  // s4: 기관별 상세 안내 + 공통 부결사유
+  // ===========================
+  var db = FUND_INSTITUTION_DB;
+  var commonReject = db.common_reject || [];
+  // 추천 자금에 해당하는 DB 기관 매핑
+  function getInstDB(fname) {
+    if (!fname) return null;
+    if (fname.includes('중진공') || fname.includes('중소벤처')) return db.jjg;
+    if (fname.includes('기보') || fname.includes('기술보증')) return db.kibo;
+    if (fname.includes('신보') || fname.includes('신용보증기금')) return db.shinbo;
+    if (fname.includes('소진공') || fname.includes('소상공인시장')) return db.sjg;
+    if (fname.includes('지역신보') || fname.includes('지역신용보증')) return db.jiyeok;
+    return null;
+  }
+
+  // TOP 3 기관 상세 카드
+  var instCards = topFunds.map(function(f, i) {
+    var inst = getInstDB(f.name);
+    var cardColor = [color, '#f97316', '#fb923c'][i];
+    if (!inst) {
+      // DB에 없는 기관 (특화기관)
+      return '<div style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 16px;border-top:4px solid '+cardColor+';">'
+        + '<div style="font-size:13px;font-weight:800;color:'+cardColor+';margin-bottom:6px">' + (i+1) + '순위. ' + f.name + '</div>'
+        + '<div style="font-size:12px;color:#64748b;line-height:1.7">' + (f.detail || '특화 기관 전용 자금. 해당 업종 우대 지원.') + '</div>'
+        + '</div>';
+    }
+    return '<div style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 16px;border-top:4px solid '+cardColor+'">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      +   '<div style="background:'+cardColor+';color:white;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px">' + (i+1) + '순위</div>'
+      +   '<div style="font-size:13px;font-weight:800;color:#1e293b">' + inst.name + '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'
+      +   '<div style="background:#f8fafc;border-radius:6px;padding:7px 10px">'
+      +     '<div style="font-size:10px;color:#94a3b8;margin-bottom:2px">대상 업종</div>'
+      +     '<div style="font-size:11px;color:#334155;line-height:1.5">' + inst.industries + '</div>'
+      +   '</div>'
+      +   '<div style="background:#f8fafc;border-radius:6px;padding:7px 10px">'
+      +     '<div style="font-size:10px;color:#94a3b8;margin-bottom:2px">부채비율 기준</div>'
+      +     '<div style="font-size:11px;color:#334155;line-height:1.5">' + inst.debtNote + '</div>'
+      +   '</div>'
+      +   '<div style="background:#f8fafc;border-radius:6px;padding:7px 10px">'
+      +     '<div style="font-size:10px;color:#94a3b8;margin-bottom:2px">신용 기준</div>'
+      +     '<div style="font-size:11px;color:#334155;line-height:1.5">' + inst.creditNote + '</div>'
+      +   '</div>'
+      +   '<div style="background:#f8fafc;border-radius:6px;padding:7px 10px">'
+      +     '<div style="font-size:10px;color:#94a3b8;margin-bottom:2px">한도 / 금리</div>'
+      +     '<div style="font-size:11px;color:#334155;line-height:1.5">' + inst.limitOperation + ' / ' + inst.rate + '</div>'
+      +   '</div>'
+      + '</div>'
+      + '<div style="background:#fee2e2;border-radius:6px;padding:7px 10px;margin-bottom:6px">'
+      +   '<div style="font-size:10px;color:#dc2626;font-weight:700;margin-bottom:4px">❌ 주요 부결 사유</div>'
+      +   inst.rejectReasons.map(function(r){ return '<div style="font-size:11px;color:#7f1d1d;line-height:1.6">• ' + r + '</div>'; }).join('')
+      + '</div>'
+      + '<div style="background:#f0fdf4;border-radius:6px;padding:7px 10px">'
+      +   '<div style="font-size:10px;color:#16a34a;font-weight:700;margin-bottom:4px">✅ 신청 팁</div>'
+      +   '<div style="font-size:11px;color:#14532d;line-height:1.6">' + inst.tips + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  var s4 = fundCat('기관별 상세 안내 및 공통 부결사유','추천 기관 자격요건 · 부결사유 · 신청팁',
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">'
+    + instCards
+    + '</div>'
+    + '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px">'
+    +   '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #fed7aa">⚠️ 기관 공통 정책자금 신청 불가 사유 (각 기관 공통 적용)</div>'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +   commonReject.map(function(r, i) {
+          return '<div style="display:flex;gap:8px;align-items:flex-start;background:white;border-radius:6px;padding:8px 10px">'
+            + '<div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:800;padding:1px 6px;border-radius:8px;flex-shrink:0">' + (i+1) + '</div>'
+            + '<div style="font-size:11px;color:#374151;line-height:1.6">' + r + '</div>'
+            + '</div>';
+        }).join('')
+    +   '</div>'
+    +   '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #fed7aa;font-size:11px;color:#92400e;line-height:1.7">'
+    +     '★ <b>선착순 소진 주의</b>: 소진공은 2026년 매월 초(1~2주차) 접수 시작. 서류 미리 준비 필수 (사업자등록증, 부가세표준증명, 국세/지방세 완납증명). '
+    +     '중진공은 상반기 중 예산 소진되는 선착순 방식으로 운영되므로 2026년 상반기 내 신청하는 것이 가장 유리함.'
+    +   '</div>'
+    + '</div>'
+    + '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-top:12px">'
+    +   '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #bfdbfe">2026년 정책자금 활용 전략 팁</div>'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+    +   (db.tips_2026||[]).map(function(t) {
+          return '<div style="background:white;border-radius:6px;padding:10px 12px;font-size:11px;color:#1e40af;line-height:1.7">' + t + '</div>';
+        }).join('')
+    +   '</div>'
+    + '</div>'
+  );
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + s4 + '</div>';
 }
 
 // ===========================
@@ -3106,6 +3196,8 @@ function buildFundPrompt(cData, fRev) {
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
   var indData = getIndustryCerts(ind, nm, itm, cData);
   var indFunds = indData.funds;
+  var debtRatio = indData.debtRatio || 0;
+  var isSoSang = indData.isSoSang || false;
   var top1 = indFunds[0]||{};
   // 기존 대출 기관 조건 판단
   var _dKibo   = parseInt(cData.debtKibo)   || 0;
@@ -3116,21 +3208,29 @@ function buildFundPrompt(cData, fRev) {
   else if (_dShinbo > 0 && _dKibo === 0) loanNote = '신보 기존 대출 있음 → 신보 위주 추천, 기보 중복 제외';
   else if (_dKibo > 0 && _dShinbo > 0)  loanNote = '기보·신보 모두 대출 있음 → 잔액 큰 기관 위주 추천';
   else                                   loanNote = '기보·신보 기존 대출 없음 → 업종 기준 최적 기관 추천';
+  var debtNote = debtRatio > 0
+    ? '부채비율 '+debtRatio+'% → '
+      + (debtRatio >= 500 ? '중진공/신보 신청 불가 수준, 소진공/지역신보 우선 추천' : debtRatio >= 300 ? '중진공 신청 주의 필요, 소진공 병행 추천' : '부채비율 정상 범위, 전 기관 신청 가능')
+    : '부채비율 정보 없음';
+  var soSangNote = isSoSang ? '소상공인 해당 → 소진공 전용자금 우선 추천, 언제든지 신청 가능' : '소상공인 미해당 → 중진공/기보/신보 신청 가능';
   var compOrg = (top1.name||'중진공').split('(')[0].trim()
     .replace('농림수산업자신용보증기금','농신보')
     .replace('한국무역보험공사','K-SURE')
     .replace('한국환경산업기술원/에너지공단','환경/에너지공단')
     .replace('국민체육진흥공단','KSPO')
     .replace('관광진흥개발기금','관광기금');
-  return '정책자금 전문 컨설턴트. \''+nm+'\' 정책자금 매칭. 기업명 반드시 반영. JSON만.\n\n'
-    +'{"checks":[{"text":"중소기업 해당 여부","status":"pass"},{"text":"국세·지방세 체납 없음","status":"pass"},{"text":"금융 연체 이력 없음","status":"pass"},{"text":"사업자 등록 유효","status":"pass"},{"text":"업력 조건 충족","status":"cond"},{"text":"벤처·이노비즈 인증","status":"fail"}],'
+  return '정책자금 전문 컨설턴트. ''+nm+'' 정책자금 매칭. 기업명·업종·부채비율·소상공인여부 반드시 반영. JSON만.\n\n'
+    +'{"채크":[{"text":"중소기업 해당 여부","status":"pass"},{"text":"국세·지방세 체납 없음","status":"pass"},{"text":"금융 연체 이력 없음","status":"pass"},{"text":"사업자 등록 유효","status":"pass"},{"text":"업력 조건 충족","status":"cond"},{"text":"벤처·이노비즈 인증","status":"fail"}],'
     +'"score":78,"score_desc":"'+nm+' 신청 가능","match_count":5,'
-    +'"score_items":["'+nm+'는 기본요건 4개 충족 3개 60자이상"],'
+    +'"score_items":["'+nm+'는 기본요건 충족 상태 실제 업종/매출/부채비율 반영 60자이상","'+nm+' 소진공/지역신보 즉시 신청 가능한 상태 60자이상","'+nm+' 추가 인증 취득 시 확대 가능한 한도 60자이상"],'
     +'"funds":'+JSON.stringify(indFunds)+','
-    +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'","rate":"'+(top1.tags&&top1.tags[0]||'우대금리')+'","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
+    +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
-    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\'\n\n'
-    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote;
+    +'"checklist_need":["사업계획서 (기보 필수)","벤쳄인증서 (취득 후)"]}\'\n\n'
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp
+    +', [대출조건] '+loanNote
+    +', [부채비율] '+debtNote
+    +', [소상공인여부] '+soSangNote;
 }
 
 function buildFinancePrompt(cData, fRev) {
@@ -3214,6 +3314,106 @@ function buildBizPlanPrompt(cData, fRev) {
 
 
 // ===========================
+// ★ 정책자금 기관 DB (2026년 기준)
+// ===========================
+var FUND_INSTITUTION_DB = {
+  jjg: {
+    name: '중소벤처기업진흥공단(중진공)',
+    shortName: '중진공',
+    color: '#2563eb',
+    target: '업력 7년 미만 창업기업 또는 혁신성장 분야 중소기업',
+    industries: '제조업, IT/소프트웨어, 지식서비스, 물류(스마트), 핀테크·에듀테크, 프랜차이즈 본사',
+    debtLimit: 500,
+    debtNote: '부채비율 500% 초과 시 융자 제한 (제조업 400% 이내 권장). 업력 7년 미만 창업기업은 부채비율 제한 미적용',
+    creditNote: 'NICE/KCB 최하위 등급(9~10등급)만 아니면 신청 가능. 기술성 평가(특허·인증) 우수 시 신용점수 낮아도 승인 가능',
+    limitFacility: '시설자금 최대 100억원',
+    limitOperation: '운전자금 최대 15억원 (매출액의 1/3~1/4 내)',
+    rate: '정책금리 (연 2.0~3.5%)',
+    period: '시설 10년, 운전 5년',
+    rejectReasons: ['부채비율 500% 초과 (창업 7년 이상)', '2년 연속 이자보상배율 1 미만', '총 차입금이 연매출 초과', 'ESG 자가진단 미실시 (2026년 강화)'],
+    tips: '벤처·이노비즈 인증 보유 시 우대금리 적용. ESG 자가진단 실시 기업 우선 지원. 2026년 상반기 선착순 소진 방식으로 조기 신청 필수'
+  },
+  kibo: {
+    name: '기술보증기금(기보)',
+    shortName: '기보',
+    color: '#7c3aed',
+    target: '특허·신기술·소프트웨어 등 기술력 보유 기업 (업종 불문)',
+    industries: '제조업, IT/소프트웨어, 문화콘텐츠(게임·영화·애니), 전문서비스(건축설계·환경), 신재생에너지, 지식재산권 보유 기업',
+    debtLimit: 500,
+    debtNote: '부채비율 400~500%를 한계선으로 봄. 벤처기업 인증 또는 기술평가 우수 등급이면 600% 이상도 예외 승인 가능. 완전자본잠식 기업은 지원 불가 (창업 3년 이내 예외)',
+    creditNote: '기술평가 등급이 핵심. 신용점수보다 기술사업계획서와 특허·인증 여부가 더 중요함',
+    limitFacility: '기술평가 등급 기준 (보통 매출액의 1/4~1/3)',
+    limitOperation: '기술평가 우수 시 최대 1억~2억원 (매출 없어도 창업보증 가능)',
+    rate: '보증료 0.5~1.5% (기술등급 우수 시 0.5%)',
+    period: '보증기간 최대 7년',
+    rejectReasons: ['완전자본잠식 (자본총계 마이너스)', '기술사업계획서 미비 또는 기술 차별성 부족', '부채비율 600% 초과 (기술등급 낮은 경우)', '신보와 중복 보증 불가'],
+    tips: '비제조업도 IT 알고리즘·전용 솔루션·독창성 강조 시 지원 가능. 기술사업계획서가 핵심 서류. 신보와 중복 보증 불가 (둘 중 하나 선택)'
+  },
+  shinbo: {
+    name: '신용보증기금(신보)',
+    shortName: '신보',
+    color: '#0891b2',
+    target: '성장 가능성이 높은 일반 중소기업 및 소상공인',
+    industries: '도소매·유통, 온라인 쇼핑몰, 학원·음식점·숙박, 병의원, 수출입 기업, 일반 서비스업',
+    debtLimit: 250,
+    debtNote: '업종 평균 부채비율의 2배 초과 시 부채 과다 판정 (도소매업 평균 250% → 500% 초과 시 위험). 차입금 의존도 50% 이내 유지 권장',
+    creditNote: '신용점수와 재무제표를 균형 있게 평가. 대표자 개인 신용점수 KCB 750점 이하 시 승인 확률 급감',
+    limitFacility: '업종·신용등급에 따라 다름',
+    limitOperation: '최대 2억~5억원 (신용등급 및 매출 기준)',
+    rate: '보증료 0.5~1.0% (신용등급 기준)',
+    period: '보증기간 최대 7년',
+    rejectReasons: ['대표자 개인 신용점수 KCB 750점 미만', '차입금 의존도 50% 초과', '업종 평균 부채비율 2배 초과', '기보와 중복 보증 불가'],
+    tips: '도소매·일반 서비스업에 가장 적합. 대표자 개인신용 관리가 핵심. 기보와 중복 불가이므로 기보 이용 중이면 신보 신청 불가'
+  },
+  sjg: {
+    name: '소상공인시장진흥공단(소진공)',
+    shortName: '소진공',
+    color: '#16a34a',
+    target: '소상공인 (상시근로자 5인 미만, 제조·건설·운수업은 10인 미만)',
+    industries: '도소매, 음식점, 미용업, 세탁소 등 생활밀착형 업종 전체 (유흥·도박·성인용품 등 사행성 제외)',
+    debtLimit: 0,
+    debtNote: '부채비율 거의 보지 않음. 기존 소진공 대출 한도 초과 여부만 체크. 자본잠식이 심각하거나 연체 중인 경우만 제외',
+    creditNote: '신용 낮은 소상공인 전용 자금 별도 운영. NCB 839점 이하 전용 신용취약소상공인자금(한도 3천만원). 일반형은 신용 무관 신청 가능',
+    limitFacility: '대리대출 최대 7천만원',
+    limitOperation: '신용취약자 3천만원, 일반 7천만원, 대환대출(7% 이상 고금리 → 4.5% 전환)',
+    rate: '연 2.0~3.0% (고정금리)',
+    period: '5년 (거치 2년 포함)',
+    rejectReasons: ['상시근로자 5인 이상 (제조업 10인 이상)', '유흥·도박·사행성 업종', '전문직(변호사·회계사 등)', '국세·지방세 체납 중', '기존 소진공 대출 한도 초과'],
+    tips: '2026년 매월 초(1~2주차) 선착순 접수. 서류 미리 준비 필수 (사업자등록증, 부가세표준증명, 국세/지방세 완납증명). 매출 증빙 어려우면 통장거래내역·카드매출전표로 대체 가능'
+  },
+  jiyeok: {
+    name: '지역신용보증재단(지역신보)',
+    shortName: '지역신보',
+    color: '#ca8a04',
+    target: '해당 지역(시·도) 내 사업장을 둔 소상공인',
+    industries: '제조업, 지식기반 서비스업, 지역특화 산업 우대. 프랜차이즈 가맹점은 지역별 제한 가능',
+    debtLimit: 0,
+    debtNote: '별도 부채비율 기준 없음. 기존 보증잔액 1억원 초과 또는 신보·기보와 중복 보증 시 제한',
+    creditNote: '2026년 저신용자(NCB 800점대 이하) 전용 지역별 특례보증 활발 운영 중. 중위 수준 이상 신용 권장',
+    limitFacility: '특례보증 기준 3천만~5천만원',
+    limitOperation: '업체당 보통 3천만~5천만원 (특례보증 기준)',
+    rate: '보증료 0.5~1.0%',
+    period: '보증기간 3년',
+    rejectReasons: ['기존 보증잔액 1억원 초과', '신보·기보와 보증 중복', '해당 지역 외 사업장', '최근 3개월 이내 10일 이상 연체 3회 이상'],
+    tips: '담보 부족한 소상공인에게 가장 접근성 높은 보증. 지역별로 특례보증 운영 현황 다름. 초기 창업자는 청년창업자금 등 특례보증 이용 가능'
+  },
+  common_reject: [
+    '국세 또는 지방세 체납 중 (완납 후 신청 가능)',
+    '신용도판단정보 등록 또는 최근 3개월 내 10일 이상 연체 3회 이상',
+    '허위 서류 제출 또는 자금 용도 외 사용 적발 이력',
+    '신청일 현재 휴업 또는 폐업 중',
+    '최근 5년 이내 정책자금 이용 3~5회 초과 (졸업제 해당)',
+    '완전자본잠식 (자본총계 마이너스) 기업 — 창업 3년 이내 예외 적용',
+    '2년 연속 이자보상배율 1 미만 (번 돈으로 이자도 못 내는 상태) — 중진공 주의'
+  ],
+  tips_2026: [
+    '★ 2026년 특이사항: 수출 실적 1달러라도 있거나 친환경(ESG) 인증이 있는 기업은 부채비율이 다소 높더라도 우대 지원 추세',
+    '★ 부채비율 관리 전략: 결산 시기에 맞춰 가지급금 정리 또는 가수금 자본 전환으로 부채비율 최대한 300% 이내로 맞추는 것이 가산점 핵심',
+    '★ 매출액 대비 차입금: 연간 매출보다 은행 빚이 더 많다면 신규 자금보다는 기존 대출을 저금리로 바꾸는 대환대출 정책을 먼저 노려야 함'
+  ]
+};
+
+// ===========================
 // ★ 업종별 인증 및 자금 추천 로직
 // ===========================
 function getIndustryCerts(ind, nm, itm, cData) {
@@ -3235,6 +3435,12 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var prevRev = revY25 || revY24 || 0;
   var prevRevBillion = prevRev / 10000;
   var empNum = parseInt(cData.empCount) || 0;
+  // 부채비율 계산
+  var totalDebt = (parseInt(cData.debtJjg)||0)+(parseInt(cData.debtKibo)||0)+(parseInt(cData.debtShinbo)||0)+(parseInt(cData.debtSjg)||0)+(parseInt(cData.debtJaidan)||0)+(parseInt(cData.debtCorpCol)||0)+(parseInt(cData.debtRepCr)||0)+(parseInt(cData.debtRepCol)||0);
+  var debtRatio = prevRev > 0 ? Math.round((totalDebt / prevRev) * 100) : 0;
+  // 소상공인 여부 (5인 미만, 제조/건설/운수는 10인 미만)
+  var isManuOrConst = ind.includes('제조') || ind.includes('건설') || ind.includes('운수');
+  var isSoSang = isManuOrConst ? empNum < 10 : empNum < 5;
   var isLargeScale = prevRevBillion >= 50 || empNum >= 5;
   var isRetail = ind.includes('도소매') || ind.includes('유통');
   var isService = ind.includes('서비스') || ind.includes('물류');
@@ -3274,108 +3480,193 @@ function getIndustryCerts(ind, nm, itm, cData) {
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   }
 
-  // 자금 추천
+  // ===========================
+  // 자금 추천 (부채비율·소상공인 여부·기존대출 종합 반영)
+  // ===========================
+  // 부채비율 기반 기관 신청 가능 여부 판단
+  var canJjg    = debtRatio < 500; // 중진공: 500% 미만 (창업 7년 미만은 무조건 가능)
+  var canKibo   = debtRatio < 600; // 기보: 기술평가 우수 시 600% 미만
+  var canShinbo = debtRatio < 500; // 신보: 업종 평균 2배 이내 (보수적으로 500% 기준)
+
+  // 소상공인이면 소진공 전용 자금 우선
+  var sjgTag   = isSoSang ? ['금리 2.0%','소상공인 전용','온라인 신청'] : ['금리 2.5%','성장촉진자금','온라인 신청'];
+  var sjgLimit = isSoSang ? '7천만' : '1억';
+  var sjgName  = isSoSang ? '소진공 소상공인 정책자금' : '소진공 성장촉진자금';
+  var sjgDetail = isSoSang
+    ? '소상공인 전용 정책자금. 2026년 매월 초(1~2주차) 선착순 접수. 신용·부채비율 제한 거의 없음. NCB 839점 이하 전용 3천만원 별도 운영'
+    : '소진공 성장촉진자금. 창업 3년 이내 우대. 온라인 신청 가능';
+
   if (isFood) {
     funds = [
-      {rank:1,name:'농림수산업자신용보증기금(농신보)',limit:'3억',tags:['농어업인 우대','식품가공 특화','보증료 우대']},
-      {rank:2,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']},
-      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
-      {rank:4,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']},
-      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+      {rank:1,name:'농림수산업자신용보증기금(농신보)',limit:'3억',tags:['농어업인 우대','식품가공 특화','보증료 우대'],
+        detail:'식품·농림·수산 업종 특화 보증기관. 연매출 120억 이하 소기업 대상. 부채비율 제한 완화 적용'},
+      {rank:2,name:sjgName,limit:sjgLimit,tags:sjgTag,detail:sjgDetail},
+      {rank:3,name:canKibo?'기보 기술보증 (특허 우대)':'지역신보 소액보증',
+        limit:canKibo?'3억':'5천만',
+        tags:canKibo?['보증료 0.5%','특허 1건 우대','90% 보증']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canKibo?'기술력(특허·인증) 보유 시 신용 낮아도 보증 가능. 기술사업계획서 필수':'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'},
+      {rank:4,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청'],
+        detail:'창업 3년 이내 소상공인 성장 지원. 온라인 신청 가능'},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'}
     ];
   } else if (isExport) {
     funds = [
-      {rank:1,name:'한국무역보험공사(K-SURE)',limit:'5억',tags:['수출기업 특화','수출채권 현금화','보증료 우대']},
-      {rank:2,name:'중진공 수출기업지원자금',limit:'3억',tags:['수출실적 우대','글로벌 진출','금리 우대']},
-      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
-      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+      {rank:1,name:'한국무역보험공사(K-SURE)',limit:'5억',tags:['수출기업 특화','수출채권 현금화','보증료 우대'],
+        detail:'수출 실적 보유 기업 전용. 수출채권 현금화·보험으로 유동성 확보 가능'},
+      {rank:2,name:canJjg?'중진공 수출기업지원자금':sjgName,
+        limit:canJjg?'3억':sjgLimit,
+        tags:canJjg?['수출실적 우대','글로벌 진출','금리 우대']:sjgTag,
+        detail:canJjg?'수출 실적 기반 중진공 자금. 글로벌 진출 기업 우대. 부채비율 500% 미만 필수':sjgDetail},
+      {rank:3,name:canKibo&&!hasShinboLoan?'기보 기술보증 (특허 우대)':canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':'지역신보 소액보증',
+        limit:canKibo&&!hasShinboLoan?'3억':canShinbo&&!hasKiboLoan?'2억':'5천만',
+        tags:canKibo&&!hasShinboLoan?['보증료 0.5%','특허 1건 우대','90% 보증']:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canKibo&&!hasShinboLoan?'기술력 기반 보증. 기보-신보 중복 불가':canShinbo&&!hasKiboLoan?'신보 특례보증. 기보 이용 중이면 신청 불가':'소액 보증으로 빠른 처리 가능'},
+      {rank:4,name:canShinbo&&!hasKiboLoan&&!canKibo?'신보 창업기업 특례보증':'지역신보 소액보증',
+        limit:canShinbo&&!hasKiboLoan&&!canKibo?'2억':'5천만',
+        tags:canShinbo&&!hasKiboLoan&&!canKibo?['보증료 0.5%','벤처인증 조건부','95% 보증']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canShinbo&&!hasKiboLoan&&!canKibo?'기보 미이용 시 신보 특례보증 가능':'소액 보증으로 빠른 처리 가능'},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:'지역 내 소상공인 대상 소액보증'}
     ];
   } else if (isEco) {
     funds = [
-      {rank:1,name:'한국환경산업기술원/에너지공단',limit:'5억',tags:['친환경 설비','ESCO 사업','금리 우대']},
-      {rank:2,name:'중진공 신성장기반자금',limit:'3억',tags:['시설자금 우대','저탄소 인증','장기 대출']},
-      {rank:3,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']},
-      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']}
+      {rank:1,name:'한국환경산업기술원/에너지공단',limit:'5억',tags:['친환경 설비','ESCO 사업','금리 우대'],
+        detail:'친환경·에너지 절약 설비 투자 전용. ESCO 사업 연계 시 추가 지원 가능'},
+      {rank:2,name:canJjg?'중진공 신성장기반자금':sjgName,
+        limit:canJjg?'3억':sjgLimit,
+        tags:canJjg?['시설자금 우대','저탄소 인증','장기 대출']:sjgTag,
+        detail:canJjg?'저탄소·친환경 인증 기업 우대. 시설자금 장기 대출 가능. 부채비율 500% 미만 필수':sjgDetail},
+      {rank:3,name:canKibo&&!hasShinboLoan?'기보 기술보증 (특허 우대)':'지역신보 소액보증',
+        limit:canKibo&&!hasShinboLoan?'3억':'5천만',
+        tags:canKibo&&!hasShinboLoan?['보증료 0.5%','특허 1건 우대','90% 보증']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canKibo&&!hasShinboLoan?'환경기술 특허 보유 시 기보 기술보증 우선 검토':'기보 부채비율 초과 시 지역신보 대안'},
+      {rank:4,name:canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':sjgName,
+        limit:canShinbo&&!hasKiboLoan?'2억':sjgLimit,
+        tags:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:sjgTag,
+        detail:canShinbo&&!hasKiboLoan?'기보 미이용 시 신보 특례보증 가능':sjgDetail},
+      {rank:5,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:'지역 내 소상공인 대상 소액보증'}
     ];
   } else if (isSports) {
     funds = [
-      {rank:1,name:'국민체육진흥공단(KSPO) 튼튼론',limit:'1억',tags:['스포츠/체육 특화','금리 우대','시설/운전 자금']},
-      {rank:2,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']},
-      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-      {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
+      {rank:1,name:'국민체육진흥공단(KSPO) 튼튼론',limit:'1억',tags:['스포츠/체육 특화','금리 우대','시설/운전 자금'],
+        detail:'체육·스포츠 시설업 전용. 시설 개보수·운전자금 지원. 부채비율 제한 완화'},
+      {rank:2,name:sjgName,limit:sjgLimit,tags:sjgTag,detail:sjgDetail},
+      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'},
+      {rank:4,name:canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':sjgName,
+        limit:canShinbo&&!hasKiboLoan?'2억':sjgLimit,
+        tags:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:sjgTag,
+        detail:canShinbo&&!hasKiboLoan?'기보 미이용 시 신보 특례보증 가능':sjgDetail},
+      {rank:5,name:canJjg?'중진공 혁신창업사업화자금':'지역신보 소액보증',
+        limit:canJjg?'1억':'5천만',
+        tags:canJjg?['금리 2.5%','창업 7년 미만','성장성 평가']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canJjg?'창업 7년 미만 기업 성장 지원. 부채비율 500% 미만 필수':'중진공 부채비율 초과 시 지역신보 대안'}
     ];
   } else if (isTour) {
     funds = [
-      {rank:1,name:'관광진흥개발기금',limit:'5억',tags:['관광/숙박 특화','시설 개보수','장기 저리']},
-      {rank:2,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']},
-      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-      {rank:4,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-      {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
+      {rank:1,name:'관광진흥개발기금',limit:'5억',tags:['관광/숙박 특화','시설 개보수','장기 저리'],
+        detail:'관광·숙박·여행 업종 전용. 시설 개보수·신축 지원. 장기 저리 대출'},
+      {rank:2,name:sjgName,limit:sjgLimit,tags:sjgTag,detail:sjgDetail},
+      {rank:3,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:'지역 내 소상공인 대상 소액보증'},
+      {rank:4,name:canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':sjgName,
+        limit:canShinbo&&!hasKiboLoan?'2억':sjgLimit,
+        tags:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:sjgTag,
+        detail:canShinbo&&!hasKiboLoan?'기보 미이용 시 신보 특례보증 가능':sjgDetail},
+      {rank:5,name:canJjg?'중진공 혁신창업사업화자금':'지역신보 소액보증',
+        limit:canJjg?'1억':'5천만',
+        tags:canJjg?['금리 2.5%','창업 7년 미만','성장성 평가']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+        detail:canJjg?'창업 7년 미만 기업 성장 지원. 부채비율 500% 미만 필수':'중진공 부채비율 초과 시 지역신보 대안'}
     ];
   } else if (isRetail || isService) {
-    // 도소매/서비스: 중진공은 매출 10억이상 또는 직원 5명이상일 때만 추천
-    var _retJjg = (prevRevBillion >= 10 || empNum >= 5);
+    // 도소매/서비스: 중진공은 부채비율 500% 미만 + 매출 10억이상 또는 직원 5명이상일 때만 추천
+    var _retJjg = canJjg && (prevRevBillion >= 10 || empNum >= 5);
     if (_retJjg) {
       funds = [
-        {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
-        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-        {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-        {rank:4,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']},
-        {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
+        {rank:1,name:sjgName,limit:sjgLimit,tags:sjgTag,detail:sjgDetail},
+        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+          detail:'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'},
+        {rank:3,name:canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':'소진공 성장촉진자금',
+          limit:canShinbo&&!hasKiboLoan?'2억':'1억',
+          tags:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:['금리 3.0%','창업 3년 이내','온라인 신청'],
+          detail:canShinbo&&!hasKiboLoan?'기보 미이용 시 신보 특례보증 가능. 대표자 KCB 750점 이상 필요':'소진공 성장촉진자금'},
+        {rank:4,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가'],
+          detail:'도소매 매출 10억 이상 또는 직원 5명 이상 기업 대상. 부채비율 500% 미만 필수'},
+        {rank:5,name:canKibo&&!hasShinboLoan?'기보 기술보증 (특허 우대)':'지역신보 소액보증',
+          limit:canKibo&&!hasShinboLoan?'3억':'5천만',
+          tags:canKibo&&!hasShinboLoan?['보증료 0.5%','특허 1건 우대','90% 보증']:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+          detail:canKibo&&!hasShinboLoan?'IT·플랫폼 기술 보유 시 기보 기술보증 가능':'기보 부채비율 초과 시 지역신보 대안'}
       ];
     } else {
-      // 매출 10억 미만 + 직원 5명 미만: 중진공 제외
+      // 매출 10억 미만 + 직원 5명 미만 또는 부채비율 500% 초과: 소진공·지역신보 중심
       funds = [
-        {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
-        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-        {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-        {rank:4,name:'농신보 소액보증',limit:'3억',tags:['보증료 0.5%','소상공인 우대','빠른 승인']},
-        {rank:5,name:'지자체 소상공인 지원자금',limit:'5천만',tags:['시/군/구 직접 지원','무이자 또는 저리 지원','빠른 승인']}
+        {rank:1,name:sjgName,limit:sjgLimit,tags:sjgTag,
+          detail:'소상공인 전용 정책자금. 문턱 가장 낮음. 2026년 매월 초(1~2주차) 선착순 접수. NCB 839점 이하 전용 3천만원 별도 운영'},
+        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+          detail:'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'},
+        {rank:3,name:canShinbo&&!hasKiboLoan?'신보 창업기업 특례보증':'소진공 성장촉진자금',
+          limit:canShinbo&&!hasKiboLoan?'2억':'1억',
+          tags:canShinbo&&!hasKiboLoan?['보증료 0.5%','벤처인증 조건부','95% 보증']:['금리 3.0%','창업 3년 이내','온라인 신청'],
+          detail:canShinbo&&!hasKiboLoan?'기보 미이용 시 신보 특례보증 가능. 대표자 KCB 750점 이상 필요':'소진공 성장촉진자금'},
+        {rank:4,name:'농신보 소액보증',limit:'3억',tags:['보증료 0.5%','소상공인 우대','빠른 승인'],
+          detail:'농림·수산 외 소상공인도 일부 보증 가능. 지역 농신보 지점 확인 필요'},
+        {rank:5,name:'지자체 소상공인 지원자금',limit:'5천만',tags:['시/군/구 직접 지원','무이자 또는 저리 지원','빠른 승인'],
+          detail:'지자체별 소상공인 직접 지원. 무이자 또는 초저리 조건. 지역 경제과 문의'}
       ];
     }
   } else {
-    // 제조/IT/기타 기본 케이스: 기보/신보/중진공 조건 적용
+    // 제조/IT/기타 기본 케이스: 부채비율·기존대출 종합 반영
     var _f = [];
-    // 중진공: 제조/IT이면 무조건, 그 외는 매출 50억↑ 또는 직원 5명↑ 조건
-    if (isManu || isIT) {
-      _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']});
-    } else if (isLargeScale) {
-      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
+    // 중진공: 제조/IT이면 부채비율 500% 미만 시 추천
+    if ((isManu || isIT) && canJjg) {
+      _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대'],
+        detail:'제조·IT 업종 중진공 자금. 부채비율 500% 미만 시 신청 가능. 벤처·이노비즈 인증 우대'});
+    } else if (isLargeScale && canJjg) {
+      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가'],
+        detail:'창업 7년 미만 기업 성장 지원. 매출 50억 이상 또는 직원 5명 이상 기업 우대'});
+    } else if (!canJjg) {
+      // 부채비율 500% 초과 시 중진공 대신 소진공 우선
+      _f.push({rank:1,name:sjgName,limit:sjgLimit,tags:sjgTag,
+        detail:'부채비율 높아 중진공 신청 어려운 경우 소진공이 가장 현실적인 대안. 2026년 매월 초 선착순 접수'});
     }
-    // 기보: 제조/IT 업종만 추천
-    if (isManu || isIT) {
-      if (!hasShinboLoan) { // 신보 대출 없을 때만 기보 추천 (중복 방지)
-        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']});
-      } else {
-        // 신보 대출 있으면 신보 우선 추천
-        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
-      }
+    // 기보: 제조/IT 업종 + 부채비율 600% 미만 + 신보 대출 없을 때
+    if ((isManu || isIT) && canKibo && !hasShinboLoan) {
+      _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증'],
+        detail:'기술력(특허·인증) 보유 시 신용 낮아도 보증 가능. 신보와 중복 불가. 기술사업계획서 필수'});
+    } else if ((isManu || isIT) && canShinbo && hasShinboLoan) {
+      _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증'],
+        detail:'기존 신보 거래 기업 우대. 기보와 중복 불가. 대표자 KCB 750점 이상 필요'});
     }
     // 기보 대출 있으면 기보 우선 (신보 제외)
-    if (hasKiboLoan && !hasShinboLoan) {
+    if (hasKiboLoan && !hasShinboLoan && canKibo) {
       _f = _f.filter(function(x){return !x.name.includes('신보');});
       if (!_f.some(function(x){return x.name.includes('기보');})) {
-        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
+        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증'],
+          detail:'기존 기보 거래 기업 추가 보증 가능. 신보와 중복 불가'});
       }
     }
     // 신보 대출 있으면 신보 우선 (기보 제외)
-    if (hasShinboLoan && !hasKiboLoan) {
+    if (hasShinboLoan && !hasKiboLoan && canShinbo) {
       _f = _f.filter(function(x){return !x.name.includes('기보');});
       if (!_f.some(function(x){return x.name.includes('신보');})) {
-        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증'],
+          detail:'기존 신보 거래 기업 우대. 기보와 중복 불가. 대표자 KCB 750점 이상 필요'});
       }
     }
-    // 소진공, 지역신보는 공통 추가
-    _f.push({rank:_f.length+1,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']});
-    _f.push({rank:_f.length+1,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']});
+    // 소진공 추가 (아직 없으면)
+    if (!_f.some(function(x){return x.name.includes('소진공');})) {
+      _f.push({rank:_f.length+1,name:sjgName,limit:sjgLimit,tags:sjgTag,detail:sjgDetail});
+    }
+    // 지역신보는 공통 추가
+    _f.push({rank:_f.length+1,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리'],
+      detail:'지역 내 소상공인 대상 소액보증. 담보 없어도 신청 가능'});
     // 순위 재정렬
     _f.forEach(function(x,i){x.rank=i+1;});
     funds = _f.slice(0,5);
   }
-  return { certs: certs, funds: funds };
+  return { certs: certs, funds: funds, debtRatio: debtRatio, isSoSang: isSoSang };
 }
 
 // ===========================
