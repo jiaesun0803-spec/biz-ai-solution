@@ -291,14 +291,14 @@
                             <div class="section-title"><h3>매출현황 (단위: 원)</h3></div>
                             <div class="grid-4">
                                 <div class="form-group"><label>금년매출 (전월말 기준)</label><input type="text" id="rev_cur" class="money-format" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>25년도 매출</label><input type="text" id="rev_25" class="money-format" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>24년도 매출</label><input type="text" id="rev_24" class="money-format" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>23년도 매출</label><input type="text" id="rev_23" class="money-format" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>전년도 매출 (2025년)</label><input type="text" id="rev_25" class="money-format" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>전전년도 매출 (2024년)</label><input type="text" id="rev_24" class="money-format" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>3년전 매출 (2023년)</label><input type="text" id="rev_23" class="money-format" placeholder="예: 100,000,000"></div>
                                 <div class="form-group col-span-4"><label>수출여부</label><div class="radio-group"><label><input type="radio" name="export" value="수출중" onchange="toggleExportInputs()"> 수출중</label><label><input type="radio" name="export" value="수출준비중" onchange="toggleExportInputs()"> 수출준비중</label><label><input type="radio" name="export" value="계획없음" onchange="toggleExportInputs()"> 계획없음</label></div></div>
                                 <div class="form-group"><label>금년수출매출</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>25년도 수출매출</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>24년도 수출매출</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
-                                <div class="form-group"><label>23년도 수출매출</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>전년도 수출매출 (2025년)</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>전전년도 수출매출 (2024년)</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
+                                <div class="form-group"><label>3년전 수출매출 (2023년)</label><input type="text" class="money-format export-money" placeholder="예: 100,000,000"></div>
                             </div>
                         </div>
                         <div class="form-section">
@@ -503,31 +503,31 @@
                                 <h4 style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px;border-bottom:2px solid #2563eb;padding-bottom:8px;">📊 손익계산서 (단위: 원)</h4>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전전년도 매출액</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전전년도 매출액 (2024년)</div>
                                         <input type="text" id="fs_rev_y23" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출액</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출액 (2025년)</div>
                                         <input type="text" id="fs_rev_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출원가</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출원가 (2025년)</div>
                                         <input type="text" id="fs_cogs_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 판관비</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 판관비 (2025년)</div>
                                         <input type="text" id="fs_sga_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 영업이익</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 영업이익 (2025년)</div>
                                         <input type="text" id="fs_op_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 당기순이익</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 당기순이익 (2025년)</div>
                                         <input type="text" id="fs_net_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div style="grid-column:1/-1;">
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 이자비용</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 이자비용 (2025년)</div>
                                         <input type="text" id="fs_int_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                 </div>

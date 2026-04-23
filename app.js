@@ -3518,8 +3518,9 @@ window.initFinanceTab = function() {
         var rev = cData.revenueData;
         var el23 = document.getElementById('fs_rev_y23');
         var el24 = document.getElementById('fs_rev_y24');
-        if (el23 && rev.y23 > 0) el23.value = fmtComma(rev.y23);
-        if (el24 && rev.y24 > 0) el24.value = fmtComma(rev.y24);
+        // 2026년 기준: 전전년도(fs_rev_y23)=2024년(y24), 전년도(fs_rev_y24)=2025년(y25)
+        if (el23 && rev.y24 > 0) el23.value = fmtComma(rev.y24);
+        if (el24 && rev.y25 > 0) el24.value = fmtComma(rev.y25);
       }
       // 업체 등록 부채 합계를 부채총계에 자동 채우기 (재무상태표 미입력 시 활용)
       if (totalRegisteredDebt > 0) {
@@ -3571,14 +3572,12 @@ window.saveFsData = function() {
   });
   cs[idx].fsData = fsData;
   // 매출액 → revenueData 연동 (업체관리 매출 데이터 자동 반영)
-  var _rv23 = parseInt(fsData.rev_y23) || 0;
-  var _rv24 = parseInt(fsData.rev_y24) || 0;
+  var _rv23 = parseInt(fsData.rev_y23) || 0; // 재무제표 전전년도 = 2024년
+  var _rv24 = parseInt(fsData.rev_y24) || 0; // 재무제표 전년도   = 2025년
   if (!cs[idx].revenueData) cs[idx].revenueData = {cur:0,y25:0,y24:0,y23:0};
-  if (_rv23 > 0) cs[idx].revenueData.y23 = _rv23;
-  if (_rv24 > 0) {
-    cs[idx].revenueData.y24 = _rv24;
-    cs[idx].revenueData.y25 = _rv24;
-  }
+  // 2026년 기준: 전전년도(rev_y23)→y24(2024), 전년도(rev_y24)→y25(2025)
+  if (_rv23 > 0) cs[idx].revenueData.y24 = _rv23;
+  if (_rv24 > 0) cs[idx].revenueData.y25 = _rv24;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
   alert('재무 데이터가 저장되었습니다.\n업체관리 매출 데이터도 함께 업데이트되었습니다.');
 };
