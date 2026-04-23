@@ -1071,7 +1071,7 @@ function tplStyle(color, orientation) {
   var layout = getReportLayoutConfig(orientation === 'landscape');
   return '<style>'
   + '* { box-sizing:border-box; }'
-  + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:'+layout.wrapPadding+'; width:100%; max-width:none; }'
+  + '.rp-wrap { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; background:#e8eaed; padding:'+layout.wrapPadding+'; width:'+(layout.isLandscape?'1122px':'100%')+'; max-width:none; }'
   + '.rp-wrap * { font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }'
 
   // ── 표지 ──
