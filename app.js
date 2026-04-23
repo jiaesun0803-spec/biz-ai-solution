@@ -804,7 +804,7 @@ window.updateDataLists = function() {
   const cBody=document.getElementById('company-list-body');
   if(cBody){ const shown=companies.slice(0,3); cBody.innerHTML=shown.length?shown.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>'; }
   const rBody=document.getElementById('report-list-body');
-  if(rBody){ const shown=[...reports].reverse().slice(0,15); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
+  if(rBody){ const shown=[...reports].reverse().slice(0,15); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-small-outline" style="margin-left:6px;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
   const filterComp=document.getElementById('filter-company');
   if(filterComp){ filterComp.innerHTML='<option value="">전체 업체</option>'; companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`); }
   updateDashboardReports(); renderCompanyCards();
@@ -1431,27 +1431,23 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
     +'</div>'
     +'</div>'
-    +'<div style="padding:0 32px 12px 32px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden">'
+    +'<div style="padding:0 32px 12px 32px;display:flex;justify-content:flex-end">'
+    +'<table style="border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden;min-width:480px;max-width:640px">'
     +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%;white-space:nowrap">상호</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+companyName+'</td>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:18%;white-space:nowrap">사업자등록번호</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.bizNum)||'-')+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">상호</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+companyName+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업자등록번호</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.bizNum)||'-')+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자명</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.rep)||'-')+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">업종</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.industry)||'-')+'</td>'
     +'</tr>'
     +'<tr>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">대표자명</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">업종</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
-    +'</tr>'
-    +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업장주소</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
-    +'</tr>'
-    +'<tr>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업장주소</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
+    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
+    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
     +'</tr>'
     +'</table>'
     +'</div>'
@@ -2792,33 +2788,40 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   );
 
   var p4 = rpPage(4,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col50">'
+    // ── 상단: 인증 2x2 그리드 ──
+    '<div style="margin-bottom:4px;font-size:13px;font-weight:700;color:#374151">추천 인증 항목</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px">'
     +   bpCerts.map(function(c,i){
-          return '<div class="rp-cert" style="margin-bottom:10px;min-height:88px">'
+          return '<div class="rp-cert" style="margin-bottom:0">'
             + '<div class="rp-certi" style="background:'+bpBgs[i%bpBgs.length]+'">'+bpIcons[i%bpIcons.length]+'</div>'
-            + '<div class="rp-certb"><div class="rp-certn">'+c.name+'</div><div class="rp-certd">'+c.effect+'</div></div>'
-            + '<div class="rp-certa"><div class="rp-certv" style="color:'+color+'">'+c.amount+'</div><div class="rp-certp">'+c.period+'</div></div>'
+            + '<div class="rp-certb"><div class="rp-certn">'+c.name+'<span style="float:right;font-size:11px;font-weight:700;color:'+color+';background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:1px 7px">'+c.amount+' / '+c.period+'</span></div><div class="rp-certd">'+c.effect+'</div></div>'
             + '</div>';
         }).join('')
     + '</div>'
-    + '<div class="rp-colF">'
-    +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;margin-bottom:10px;text-align:center">'
-    +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:8px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +     '<div style="font-size:32px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
-    +     '<div style="font-size:13px;color:#64748b;margin-top:6px">현재 신청 한도 + 인증 취득 후 추가 조달 합계 기준</div>'
+    // ── 중간: 조달한도 박스(좌) + 취득 우선순위(우) 2열 ──
+    + '<div style="display:grid;grid-template-columns:190px 1fr;gap:12px;margin-bottom:12px;align-items:start">'
+    +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;text-align:center;padding:14px 10px">'
+    +     '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:5px;line-height:1.5">인증 완료 시 총 추가 조달 가능 한도</div>'
+    +     '<div style="font-size:28px;font-weight:900;color:'+color+';line-height:1.1">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
+    +     '<div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.5">현재 신청 한도 + 인증 취득 후<br>추가 조달 합계 기준</div>'
     +   '</div>'
-    +   rpSec('취득 우선순위 전략', color, rpLst([
-          '1순위: 벤처인증 — 자금 한도 확대와 기술성 인정 효과가 동시에 발생하여 가장 먼저 추진할 가치가 높음',
-          '2순위: 이노비즈 인증 — 기술혁신 기업 포지션을 강화해 중진공·기보 계열 자금 접근성을 높임',
-          '3순위: 기업부설연구소 — 세액공제와 연구개발 신뢰도를 함께 확보해 중장기 자금 조달의 기반을 만듦',
-          '4순위: HACCP — 대형 유통과 B2B 채널 확장에 직접 연결되어 매출 성장의 증빙 자료로 활용 가능함'
-        ], color))
-    +   '<div class="rp-section" style="background:#eff6ff;border-color:#bfdbfe"><h4 style="color:#2563eb">정책자금 연결 포인트</h4>'+rpLst([
-          '인증 취득 시 금리·보증료 우대뿐 아니라 심사 신뢰도 향상 효과가 커서 승인 확률 개선에 유리함',
-          '사업계획서와 인증 로드맵을 하나의 성장 서사로 연결하면 기관별 심사에서 일관성을 확보할 수 있음'
-        ], '#2563eb')+'</div>'
+    +   '<div>'
+    +     '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:7px">취득 우선순위 전략</div>'
+    +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">'
+    +       bpCerts.map(function(c,i){
+              var rankColors=['#16a34a','#2563eb','#7c3aed','#ea580c'];
+              return '<div style="font-size:11.5px;color:#374151;line-height:1.6"><strong style="color:'+rankColors[i%4]+'">'+(i+1)+'순위: '+c.name+'</strong> — '+c.effect+'</div>';
+            }).join('')
+    +     '</div>'
+    +   '</div>'
     + '</div>'
+    // ── 하단: 정책자금 연결 포인트 풀폭 ──
+    + '<div class="rp-section" style="background:#eff6ff;border-color:#bfdbfe">'
+    +   '<h4 style="color:#2563eb;margin-bottom:8px">정책자금 연결 포인트</h4>'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +     '<div style="font-size:12px;color:#374151;line-height:1.65">● 인증 취득 시 금리·보증료 우대뿐 아니라 심사 신뢰도 향상 효과가 커서 승인 확률 개선에 유리함</div>'
+    +     '<div style="font-size:12px;color:#374151;line-height:1.65">● 사업계획서와 인증 로드맵을 하나의 성장 서사로 연결하면 기관별 심사에서 일관성을 확보할 수 있음</div>'
+    +   '</div>'
     + '</div>'
   );
 
