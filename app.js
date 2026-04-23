@@ -898,19 +898,27 @@ function initInputHandlers(){
 
 // ===========================
 function fKRW(n){
+  // 원 단위 숫자를 자연스러운 한국어 금액으로 변환
+  // 예: 95,000,000 → 9천5백만원 / 390,200,000 → 3억 9천2십만원
   var num = parseInt(n, 10);
-  if (!num || isNaN(num)) return '0원';
-  var eok  = Math.floor(num / 100000000);          // 억
-  var rem  = num % 100000000;
-  var chun = Math.floor(rem / 10000000);            // 천만
-  var man  = Math.floor((rem % 10000000) / 10000); // 만
-  var won  = rem % 10000;                           // 원
-  var result = '';
-  if (eok  > 0) result += eok + '억';
-  if (chun > 0) result += ' ' + chun + '천만';
-  else if (man > 0 && eok > 0) result += ' ';
-  if (man  > 0) result += man + '만';
-  if (won  > 0 && eok === 0 && chun === 0 && man === 0) result += won.toLocaleString('ko-KR');
+  if (isNaN(num) || num === 0) return '0원';
+  var eok      = Math.floor(num / 100000000);  // 억
+  var rem      = num % 100000000;              // 억 이하
+  var manTotal = Math.floor(rem / 10000);      // 만원 단위 숫자 (0~9999)
+  var result   = '';
+  if (eok > 0) result += eok + '억';
+  if (manTotal > 0) {
+    var chun = Math.floor(manTotal / 1000);         // 천만 자리
+    var baek = Math.floor((manTotal % 1000) / 100); // 백만 자리
+    var sip  = Math.floor((manTotal % 100) / 10);   // 십만 자리
+    var il   = manTotal % 10;                        // 만 자리
+    var manStr = '';
+    if (chun > 0) manStr += chun + '천';
+    if (baek > 0) manStr += baek + '백';
+    if (sip  > 0) manStr += sip  + '십';
+    if (il   > 0) manStr += il;
+    result += (eok > 0 ? ' ' : '') + manStr + '만';
+  }
   return result.trim() + '원';
 }
 // 천만원 단위 절사 버전 (보고서 금액 표시용: 3억 9천만200만원 → 3억 9천만원)
