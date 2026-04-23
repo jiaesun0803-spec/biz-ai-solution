@@ -884,6 +884,21 @@ function fKRW(n){
   if (won  > 0 && eok === 0 && chun === 0 && man === 0) result += won.toLocaleString('ko-KR');
   return result.trim() + '원';
 }
+// 천만원 단위 절사 버전 (보고서 금액 표시용: 3억 9천만200만원 → 3억 9천만원)
+function fKRWRound(n){
+  var num = parseInt(n, 10);
+  if (!num || isNaN(num)) return '0원';
+  // 천만원 단위로 반올림
+  var rounded = Math.round(num / 10000000) * 10000000;
+  var eok  = Math.floor(rounded / 100000000);
+  var rem  = rounded % 100000000;
+  var chun = Math.floor(rem / 10000000);
+  var result = '';
+  if (eok  > 0) result += eok + '억';
+  if (chun > 0) result += ' ' + chun + '천만';
+  if (!result) result = fKRW(num); // 천만 미만이면 원래 함수 사용
+  return result.trim() + '원';
+}
 
 // ===========================
 // ★ 기존 만원 단위 데이터 → 원 단위 마이그레이션
@@ -1450,7 +1465,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+'">'+fKRW(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+'">'+fKRW(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
+    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
     +'</table></div>';
 
   var gradeCards = '<div style="display:flex;gap:10px;margin-bottom:12px;align-items:stretch">'
@@ -1460,8 +1475,8 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:12px;color:#1e40af;font-weight:700">'+(d.grade_desc||'고성장 유망기업')+'</div>'
     +'</div>'
     +'<div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
-    +[['📈',growRate,'매출성장률','#16a34a'],['💰',fKRW(exp),'금년예상',C],['👥',(cData.empCount||'0')+'명','상시근로자','#7c3aed'],['🏆',(gradeVal)+'등급','종합등급',C]].map(function(v){
-      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px;margin-bottom:5px">'+v[0]+'</div><div style="font-size:14px;font-weight:800;color:'+v[3]+';margin-bottom:3px">'+v[1]+'</div><div style="font-size:11px;color:#64748b">'+v[2]+'</div></div>';
+    +[['📈',growRate,'매출성장률','#16a34a'],['💰',fKRWRound(exp),'금년예상',C],['👥',(cData.empCount||'0')+'명','상시근로자','#7c3aed'],['🏆',(gradeVal)+'등급','종합등급',C]].map(function(v){
+      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px;margin-bottom:5px">'+v[0]+'</div><div style="font-size:14px;font-weight:800;color:'+v[3]+';margin-bottom:3px;white-space:nowrap">'+v[1]+'</div><div style="font-size:11px;color:#64748b">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>';
 
@@ -1699,9 +1714,8 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+'">'+fKRW(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+'">'+fKRW(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
+    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
     +'</table></div>';
-
   var gradeCards = '<div style="display:flex;gap:10px;margin-bottom:12px;align-items:stretch">'
     +'<div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:16px 20px;min-width:160px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center">'
     +'<div style="font-size:11px;color:#64748b;margin-bottom:5px">종합 진단 등급</div>'
@@ -1709,8 +1723,8 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:12px;color:#475569;font-weight:700">'+(d.grade_desc||'고성장 잠재력 보유')+'</div>'
     +'</div>'
     +'<div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
-    +[['📈',growRate,'매출성장률','#16a34a'],['🚨','4건','핵심리스크','#dc2626'],['💰',fKRW(exp),'금년예상','#475569'],['🏦','+6.5억','추가조달가능','#475569']].map(function(v){
-      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px;margin-bottom:5px">'+v[0]+'</div><div style="font-size:14px;font-weight:800;color:'+v[3]+';margin-bottom:3px">'+v[1]+'</div><div style="font-size:11px;color:#64748b">'+v[2]+'</div></div>';
+    +[['📈',growRate,'매출성장률','#16a34a'],['🚨','4건','핵심리스크','#dc2626'],['💰',fKRWRound(exp),'금년예상','#475569'],['🏦','+6.5억','추가조달가능','#475569']].map(function(v){
+      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px;margin-bottom:5px">'+v[0]+'</div><div style="font-size:14px;font-weight:800;color:'+v[3]+';margin-bottom:3px;white-space:nowrap">'+v[1]+'</div><div style="font-size:11px;color:#64748b">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>';
 
@@ -1738,11 +1752,11 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
     +'<div class="rp-ch" style="height:140px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">'
-    +[['전년 매출',fKRW(rev.y25),'2025년','#475569'],['금년 예상',fKRW(exp),'연환산','#475569'],['YoY 성장',growRate,'전년 대비','#16a34a'],['현금흐름','주의','관리 필요','#f97316']].map(function(v){
-      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:15px;font-weight:800;color:'+v[3]+'">' +v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
+    +[['전년 매출',fKRWRound(rev.y25),'2025년','#475569'],['금년 예상',fKRWRound(exp),'연환산','#475569'],['YoY 성장',growRate,'전년 대비','#16a34a'],['현금흐름','주의','관리 필요','#f97316']].map(function(v){
+      return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:15px;font-weight:800;color:'+v[3]+';white-space:nowrap">' +v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    +'<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:12px">'
     +'<div style="border:1.5px solid #3b82f6;border-radius:10px;padding:14px 16px;background:#eff6ff">'
     +'<div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #bfdbfe">💡 재무 현황 분석</div>'
     +'<div style="display:flex;flex-direction:column;gap:9px">'
@@ -2051,7 +2065,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
   function financeMetricCard(label, value, desc, valueColor) {
     return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;min-height:122px;display:flex;flex-direction:column;justify-content:center;text-align:center">'
       +'<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;font-weight:700">'+label+'</div>'
-      +'<div style="font-size:20px;font-weight:900;color:'+(valueColor||color)+';line-height:1.28;letter-spacing:-0.5px">'+value+'</div>'
+      +'<div style="font-size:20px;font-weight:900;color:'+(valueColor||color)+';line-height:1.28;letter-spacing:-0.5px;white-space:nowrap">'+value+'</div>'
       +'<div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.4">'+desc+'</div>'
       +'</div>';
   }
@@ -2091,8 +2105,8 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
     +'<div style="display:grid;grid-template-columns:1.45fr 1fr;gap:14px;align-items:stretch">'
     +rpSec('연도별 매출 추이', color, '<div class="rp-ch" style="height:198px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>')
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-    +financeMetricCard('전년 매출', fKRW(rev.y25), '2025년', color)
-    +financeMetricCard('금년 예상', fKRW(exp), '연환산', color)
+    +financeMetricCard('전년 매출', fKRWRound(rev.y25), '2025년', color)
+    +financeMetricCard('금년 예상', fKRWRound(exp), '연환산', color)
     +financeMetricCard('성장률', yoy, 'YoY', '#16a34a')
     +financeMetricCard('종합 점수', totalScore+'점', '100점 만점', color)
     +'</div>'
@@ -2367,7 +2381,6 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>'
     +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch">'
     +rpSec('핵심 마케팅 전략', color,
       strategies.map(function(t){
         return '<div style="display:flex;align-items:flex-start;gap:8px;background:#fff0f6;border:1px solid #fce7f3;border-radius:8px;padding:10px 12px;margin-bottom:7px">'
@@ -2385,7 +2398,6 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
       }).join('')
     )
     +'</div>'
-    +'</div>'
   );
 
   var p2 = rpPage(2,'KPI 목표 및 월별 실행 로드맵','성과 지표 · 실행 타임라인',color,
@@ -2395,9 +2407,7 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
       '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px">'
       +roadmap.map(roadmapCard).join('')
       +'</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-      +focusBoxes.map(focusCard).join('')
-      +'</div>'
+      +'<div style="background:#fdf2f8;border:1px solid #f5c2da;border-radius:10px;padding:14px;margin-top:4px">'      +'<div style="font-size:13px;font-weight:800;color:#9d174d;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f5c2da">📅 분기별 실행 계획</div>'      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'      +(d.quarterly_plan||[        {q:'1분기',tasks:['채널별 콘텐츠 기초 세팅','SNS 계정 최적화 및 팔로워 확보','초기 광고 집행 및 반응 데이터 수집']},        {q:'2분기',tasks:['성과 데이터 기반 채널 집중화','인플루언서 협업 1~2건 진행','리뷰·후기 콘텐츠 강화']},        {q:'3분기',tasks:['고성과 채널 예산 확대','신규 고객 유입 캠페인 집중','재구매율 향상 프로모션 운영']},        {q:'4분기',tasks:['연간 성과 분석 및 KPI 점검','차년도 마케팅 전략 수립','충성 고객 리텐션 프로그램 운영']}      ]).map(function(q){        return '<div style="background:white;border:1px solid #fce7f3;border-radius:8px;padding:12px">'          +'<div style="font-size:12px;font-weight:800;color:#9d174d;margin-bottom:8px">'+q.q+'</div>'          +(q.tasks||[]).map(function(t){            return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">'              +'<div style="width:5px;height:5px;border-radius:50%;background:#e879a0;flex-shrink:0;margin-top:5px"></div>'              +'<span style="font-size:11px;color:#52525b;line-height:1.55">'+t+'</span>'              +'</div>';          }).join('')          +'</div>';      }).join('')      +'</div>'      +'</div>'
     )
     +'</div>'
   );
@@ -2416,18 +2426,38 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var gda    = Math.round((score/100)*151);
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
-  var funds  = d.funds||getIndustryCerts(ind, cData.name, itm).funds;
+  var _industryCerts = getIndustryCerts(ind, cData.name, itm, cData);
+  var funds  = d.funds||_industryCerts.funds;
+  // totalRange: funds 기반 동적 계산
+  function parseLimitNum(s) {
+    if (!s) return 0;
+    s = String(s).replace(/[,\s]/g,'');
+    if (s.includes('억')) return parseFloat(s)*100000000;
+    if (s.includes('천만')) return parseFloat(s)*10000000;
+    if (s.includes('만')) return parseFloat(s)*10000;
+    return parseFloat(s)||0;
+  }
+  var _revNum = parseInt((cData.revenueData&&cData.revenueData.y25)||0) || parseInt((cData.revenueData&&cData.revenueData.y24)||0) || 0;
+  var _debtTotal = (parseInt(cData.debtJjg)||0)+(parseInt(cData.debtKibo)||0)+(parseInt(cData.debtShinbo)||0)+(parseInt(cData.debtSjg)||0)+(parseInt(cData.debtJaidan)||0)+(parseInt(cData.debtCorpCol)||0)+(parseInt(cData.debtRepCr)||0)+(parseInt(cData.debtRepCol)||0);
+  var _debtRatio = _revNum > 0 ? Math.round((_debtTotal/_revNum)*100) : 0;
+  var _minLim = 0, _maxLim = 0;
+  funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
+  function fLimitStr(n){ if(n>=100000000) return (n/100000000).toFixed(0)+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
+  // 부채비율 높으면 한도 하향 조정
+  var _adj = _debtRatio > 300 ? 0.6 : _debtRatio > 200 ? 0.8 : 1.0;
+  var _minAdj = Math.round(_minLim * _adj);
+  var _maxAdj = Math.round(_maxLim * _adj);
+  var totalRange = d.total_range || ('기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj)+'+');
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
-  var comp   = d.comparison||[{org:'중진공',limit:'1억',rate:'2.5%',period:'5년',diff:'easy'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'mid'},{org:'소진공',limit:'1억',rate:'3.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'}];
+  var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
   var cReady = d.checklist_ready||['사업자등록증 사본','부가세 신고서 (최근 2년)','국세납부증명서','신용정보 동의서'];
   var cNeed  = d.checklist_need||['사업계획서 (기보 필수)','벤처인증서 (취득 후 추가)'];
   var scoreItems = d.score_items||[
-    '기본 자격요건 4개 충족 — 중진공·기보·소진공 등 주요 정책자금 즉시 신청 가능한 상태임',
-    '벤처·이노비즈 인증 취득 시 추가 우대 한도 최대 3억원 이상 추가 확보 가능함',
-    '현재 조건에서 신청 가능한 자금 총액: 중진공+기보+소진공 합계 최대 약 5억원 수준임'
+    '기본 자격요건 충족 — 소진공·지역신보 등 주요 정책자금 즉시 신청 가능한 상태임',
+    '벤처·메인비즈 인증 취득 시 추가 우대 한도 확보 가능함',
+    '현재 조건에서 신청 가능한 자금 총액: '+totalRange+' 수준임'
   ];
-  var totalRange = d.total_range || '기본 3억 ~ 최대 7억+';
 
   function chkS(s){
     return s==='pass'?{bg:'#dcfce7',tc:'#16a34a',ic:'✓',bbc:'#dcfce7',btc:'#166534',bl:'통과'}
@@ -3155,13 +3185,26 @@ function getIndustryCerts(ind, nm, itm, cData) {
       {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
     ];
   } else if (isRetail || isService) {
-    funds = [
-      {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
-      {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
-      {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
-      {rank:4,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']},
-      {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
-    ];
+    // 도소매/서비스: 중진공은 매출 10억이상 또는 직원 5명이상일 때만 추천
+    var _retJjg = (prevRevBillion >= 10 || empNum >= 5);
+    if (_retJjg) {
+      funds = [
+        {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
+        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+        {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+        {rank:4,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']},
+        {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
+      ];
+    } else {
+      // 매출 10억 미만 + 직원 5명 미만: 중진공 제외
+      funds = [
+        {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
+        {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
+        {rank:3,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','벤처인증 조건부','95% 보증']},
+        {rank:4,name:'농신보 소액보증',limit:'3억',tags:['보증료 0.5%','소상공인 우대','빠른 승인']},
+        {rank:5,name:'지자체 소상공인 지원자금',limit:'5천만',tags:['시/군/구 직접 지원','무이자 또는 저리 지원','빠른 승인']}
+      ];
+    }
   } else {
     // 제조/IT/기타 기본 케이스: 기보/신보/중진공 조건 적용
     var _f = [];
