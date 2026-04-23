@@ -1431,6 +1431,30 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
     +'</div>'
     +'</div>'
+    +'<div style="padding:0 32px 12px 32px">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden">'
+    +'<tr style="background:#f1f5f9">'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%;white-space:nowrap">상호</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+companyName+'</td>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:18%;white-space:nowrap">사업자등록번호</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.bizNum)||'-')+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">대표자명</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">업종</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
+    +'</tr>'
+    +'<tr style="background:#f1f5f9">'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업장주소</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
+    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
+    +'</tr>'
+    +'</table>'
+    +'</div>'
     +'<div class="rp-cover-bottom">'
     +'<div class="rp-cover-meta">'
     +'<span>작성일: '+issueMonth+'</span>'
@@ -1753,6 +1777,21 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
     +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
     +'</table></div>';
+  // 정책자금 totalRange 계산 (buildFundHTML과 동일 로직) - 추가조달가능금액 연동
+  var _clientFunds = getIndustryCerts(ind, nm, itm, cData).funds;
+  var _clientRevNum = parseInt((cData.revenueData&&cData.revenueData.y25)||0) || parseInt((cData.revenueData&&cData.revenueData.y24)||0) || 0;
+  var _clientDebtTotal = (parseInt(cData.debtJjg)||0)+(parseInt(cData.debtKibo)||0)+(parseInt(cData.debtShinbo)||0)+(parseInt(cData.debtSjg)||0)+(parseInt(cData.debtJaidan)||0)+(parseInt(cData.debtCorpCol)||0)+(parseInt(cData.debtRepCr)||0)+(parseInt(cData.debtRepCol)||0);
+  var _clientDebtRatio = _clientRevNum > 0 ? Math.round((_clientDebtTotal/_clientRevNum)*100) : 0;
+  var _clientMaxLim = 0;
+  _clientFunds.forEach(function(f){
+    var s=String(f.limit||'').replace(/[,\s]/g,'');
+    var n=s.includes('억')?parseFloat(s)*100000000:s.includes('천만')?parseFloat(s)*10000000:s.includes('만')?parseFloat(s)*10000:parseFloat(s)||0;
+    if(n>0)_clientMaxLim+=n;
+  });
+  var _clientAdj = _clientDebtRatio > 300 ? 0.6 : _clientDebtRatio > 200 ? 0.8 : 1.0;
+  var _clientMaxAdj = Math.round(_clientMaxLim * _clientAdj);
+  if (_clientRevNum > 0) { var _clientRevCap = Math.round(_clientRevNum * 0.8); if (_clientMaxAdj > _clientRevCap) _clientMaxAdj = _clientRevCap; }
+  var _clientFundLabel = _clientMaxAdj > 0 ? (function(n){return n>=100000000?(n/100000000).toFixed(0)+'억':n>=10000000?(n/10000000).toFixed(0)+'천만':n>=10000?(n/10000).toFixed(0)+'만':n+''})(_clientMaxAdj) : '-';
   var gradeCards = '<div style="display:flex;gap:10px;margin-bottom:12px;align-items:stretch">'
     +'<div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:16px 20px;min-width:160px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center">'
     +'<div style="font-size:11px;color:#64748b;margin-bottom:5px">종합 진단 등급</div>'
@@ -1760,7 +1799,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:12px;color:#475569;font-weight:700">'+(d.grade_desc||'고성장 잠재력 보유')+'</div>'
     +'</div>'
     +'<div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
-    +[['📈',growRate,'매출성장률','#16a34a'],['🚨','4건','핵심리스크','#dc2626'],['💰',fKRWRound(exp),'금년예상','#475569'],['🏦','+6.5억','추가조달가능','#475569']].map(function(v){
+    +[['📈',growRate,'매출성장률','#16a34a'],['🚨','4건','핵심리스크','#dc2626'],['💰',fKRWRound(exp),'금년예상','#475569'],['🏦',_clientFundLabel,'추가조달가능','#475569']].map(function(v){
       return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px;margin-bottom:5px">'+v[0]+'</div><div style="font-size:14px;font-weight:800;color:'+v[3]+';margin-bottom:3px;white-space:nowrap">'+v[1]+'</div><div style="font-size:11px;color:#64748b">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>';
@@ -2209,7 +2248,9 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + '</div>';
+  // p2: 신용개선방향 등 내용 잘림 방지 - rp-page-auto 사용 (높이 제한 없음)
+  var p2Auto = p2.replace('class="rp-page"', 'class="rp-page-auto"');
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2Auto + p3 + '</div>';
 }
 
 // ===========================
@@ -2484,7 +2525,16 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var _adj = _debtRatio > 300 ? 0.6 : _debtRatio > 200 ? 0.8 : 1.0;
   var _minAdj = Math.round(_minLim * _adj);
   var _maxAdj = Math.round(_maxLim * _adj);
-  var totalRange = d.total_range || ('기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj)+'+');
+  // 은행 심사관 관점: 연매출의 80% 이내로 제한 (매출 초과 불가)
+  // 필요자금 참고: 매출 있으면 매출 기반 한도 적용
+  if (_revNum > 0) {
+    var _revCap = Math.round(_revNum * 0.8); // 매출의 80% 상한
+    if (_maxAdj > _revCap) _maxAdj = _revCap;
+    if (_minAdj > _revCap) _minAdj = Math.round(_revCap * 0.5);
+    // 최소 금액은 최대 금액의 50% 이상
+    if (_minAdj > _maxAdj) _minAdj = Math.round(_maxAdj * 0.5);
+  }
+  var totalRange = d.total_range || ('기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj));
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
@@ -3449,6 +3499,11 @@ window.initFinanceTab = function() {
         var el = document.getElementById('fs_'+f);
         if (el) el.value = fs[f] ? fmtComma(fs[f]) : '';
       });
+      // fsData가 있어도 업체등록 부채합계를 부채총계에 항상 반영 (업체등록 부채합계가 더 정확한 경우)
+      if (totalRegisteredDebt > 0) {
+        var elTotLiab = document.getElementById('fs_total_liab');
+        if (elTotLiab) elTotLiab.value = fmtComma(totalRegisteredDebt);
+      }
     } else {
       // 저장된 fsData 없으면 모든 필드 초기화 후 매출/부채만 자동 채우기
       fields.forEach(function(f) {
