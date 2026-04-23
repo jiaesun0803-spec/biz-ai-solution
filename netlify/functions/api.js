@@ -72,7 +72,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   const token = jwt.sign(
     { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin },
-    JWT_SECRET, { expiresIn: '7d' }
+    JWT_SECRET, { expiresIn: '30d' }
   );
   const { pw: _, ...safeUser } = user;
   res.json({ token, user: safeUser });

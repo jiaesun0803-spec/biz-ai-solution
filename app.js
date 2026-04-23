@@ -12,7 +12,15 @@ async function apiCall(path, options={}) {
   if (token) headers['Authorization'] = 'Bearer ' + token;
   const res = await fetch(API_BASE + path, { ...options, headers });
   const data = await res.json().catch(()=>({}));
-  if (!res.ok) throw new Error(data.error || '서버 오류가 발생했습니다.');
+  if (!res.ok) {
+    // 401: 토큰 만료 또는 인증 실패 → 로컬 데이터 보존 후 재로그인 안내
+    if (res.status === 401) {
+      const err = new Error(data.error || '인증이 만료되었습니다.');
+      err.isAuthError = true;
+      throw err;
+    }
+    throw new Error(data.error || '서버 오류가 발생했습니다.');
+  }
   return data;
 }
 const STORAGE_KEY    = 'biz_consult_companies';
@@ -271,6 +279,10 @@ async function syncCompaniesFromServer() {
     if (typeof renderCompanyCards === 'function') renderCompanyCards();
   } catch(e) {
     console.warn('서버 업체 동기화 실패 (로컬 데이터 유지):', e.message);
+    // 401 인증 만료 시 재로그인 안내 배너 표시 (데이터는 절대 삭제하지 않음)
+    if (e.isAuthError) {
+      showSessionExpiredBanner();
+    }
     // 동기화 실패 시에도 기존 로컬 데이터 그대로 유지 - 아무것도 덮어쓰지 않음
     updateDataLists();
     if (typeof renderCompanyCards === 'function') renderCompanyCards();
@@ -356,6 +368,23 @@ window.handleLogin = async function() {
   }
 };
 window.handleLogout = function() { localStorage.removeItem(DB_SESSION); localStorage.removeItem('biz_jwt_token'); location.reload(); };
+
+// 세션 만료 안내 배너 (데이터 삭제 없이 재로그인만 요청)
+function showSessionExpiredBanner() {
+  if (document.getElementById('session-expired-banner')) return; // 중복 표시 방지
+  const banner = document.createElement('div');
+  banner.id = 'session-expired-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#fff;padding:12px 20px;text-align:center;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+  banner.innerHTML = '\u26a0\ufe0f \ub85c\uadf8\uc778 \uc138\uc158\uc774 \ub9cc\ub8cc\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc5c5\uccb4 \ub370\uc774\ud130\ub294 \uc548\uc804\ud558\uac8c \ubcf4\uc874\ub418\uc5c8\uc2b5\ub2c8\ub2e4. <button onclick="handleSessionExpiredRelogin()" style="margin-left:12px;background:#fff;color:#ef4444;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:bold;">\uc7ac\ub85c\uadf8\uc778</button> <button onclick="document.getElementById(&quot;session-expired-banner&quot;).remove()" style="margin-left:8px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:6px 10px;border-radius:4px;cursor:pointer;">\ub2eb\uae30</button>';
+  document.body.prepend(banner);
+}
+window.handleSessionExpiredRelogin = function() {
+  // 로컬 데이터(업체, 보고서) 보존 후 토큰만 삭제
+  localStorage.removeItem(DB_SESSION);
+  localStorage.removeItem('biz_jwt_token');
+  // 업체와 보고서는 절대 삭제하지 않음
+  location.reload();
+};
 
 // ===========================
 // ★ 프로필
