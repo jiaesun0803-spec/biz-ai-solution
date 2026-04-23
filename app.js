@@ -1435,22 +1435,22 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'</div>'
     +'</div>'
     +'<div style="padding:0 32px 12px 32px;display:flex;justify-content:flex-end">'
-    +'<table style="border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden;min-width:480px;max-width:640px">'
+    +'<table style="border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;overflow:hidden;min-width:400px;max-width:560px">'
     +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">상호</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+companyName+'</td>'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업자등록번호</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.bizNum)||'-')+'</td>'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자명</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.rep)||'-')+'</td>'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">업종</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.industry)||'-')+'</td>'
+    +'<th style="padding:6px 14px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap;width:90px">상호</th>'
+    +'<td style="padding:6px 14px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+companyName+'</td>'
     +'</tr>'
     +'<tr>'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업장주소</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
-    +'<th style="padding:6px 11px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
-    +'<td style="padding:6px 11px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
+    +'<th style="padding:6px 14px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">대표자명</th>'
+    +'<td style="padding:6px 14px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.rep)||'-')+'</td>'
+    +'</tr>'
+    +'<tr style="background:#f1f5f9">'
+    +'<th style="padding:6px 14px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">업종</th>'
+    +'<td style="padding:6px 14px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;white-space:nowrap">'+((cData&&cData.industry)||'-')+'</td>'
+    +'</tr>'
+    +'<tr>'
+    +'<th style="padding:6px 14px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
+    +'<td style="padding:6px 14px;font-weight:600;color:#1e293b;white-space:normal;word-break:keep-all">'+((cData&&cData.coreItem)||'-')+'</td>'
     +'</tr>'
     +'</table>'
     +'</div>'
@@ -2816,7 +2816,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {no:'9', title:'자금 조달 및 사용 계획', sub:'필요 자금 · 집행 구조 · 기대 효과'},
     {no:'10', title:'매출 전망', sub:'1년 시뮬레이션 · 핵심 성장 동력'},
     {no:'11', title:'실행 로드맵', sub:'연차별 실행 계획 · 단계별 목표'},
-    {no:'12', title:'종합 제언', sub:'최종 평가 · 컨설턴트 의견 · 실행 권고'}
+    {no:'12', title:'종합 제안', sub:'최종 평가 · 컨설턴트 의견 · 실행 권고'}
   ];
   var tocLeft  = tocItems.slice(0,5);
   var tocRight = tocItems.slice(5);
@@ -2994,10 +2994,10 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
             + '</div>';
         }).join('')
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:200px 1fr;gap:14px;margin-bottom:14px;align-items:start">'
-    +   '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;padding:16px 12px;text-align:center">'
-    +     '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:6px;line-height:1.5">인증 완료 시<br>총 추가 조달 가능 한도</div>'
-    +     '<div style="font-size:30px;font-weight:900;color:'+color+';line-height:1.1">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
+    + '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;margin-bottom:14px;align-items:start">'
+    +   '<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;padding:14px 10px;text-align:center">'
+    +     '<div style="font-size:10px;font-weight:700;color:#15803d;margin-bottom:5px;line-height:1.4">인증 완료 시 총 추가 조달 가능 한도</div>'
+    +     '<div style="font-size:16px;font-weight:900;color:'+color+';line-height:1.2;white-space:nowrap">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
     +     '<div style="font-size:10px;color:#64748b;margin-top:5px;line-height:1.5">현재 신청 한도 + 인증 취득 후<br>추가 조달 합계 기준</div>'
     +   '</div>'
     +   '<div>'
@@ -3093,20 +3093,28 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   );
 
   // ── 10P: 매출 전망 ──
+  var s9itemsRich = s9items.length>=4 ? s9items : [
+    '정책자금 조달 후 생산 설비 확충으로 공급 병목을 해소하고 수주 대응력을 대폭 향상시켜 월 매출 1.5억 달성이 실현 가능한 수준임',
+    '쿠팡·스마트스토어·마켓콜리 동시 입점으로 소비자 접점을 넓혀 재구매율을 높이고 안정적 월 반복 매출 기반을 조기에 형성할 수 있음',
+    '벤처·이노비즈 인증 취득 로드맵을 통해 추가 정책자금 한도를 단계적으로 확대하여 성장 속도와 자금 조달 능력을 동시에 강화할 수 있음',
+    'B2B 납품 체널 확보로 매출 안정성을 높이고 고성장 구간의 현금흐름 리스크를 최소화하여 재무 건전성을 확보할 수 있음',
+    'HACCP 인증 취득 후 대형마트·단체급식 체널 진입으로 B2B 매출 비중을 높이고 매출 다양화로 수익성을 개선할 수 있음',
+    '돈육 특화 세그먼트 내 독보적 포지션으로 경쟁사 후발 진입을 원체 차단하며 프리미엄 가격 정책으로 수익성과 브랜드 가치를 동시에 제고할 수 있음'
+  ];
   var p10_sales = rpPage(10,'매출 전망','1년 시뮬레이션 · 핵심 성장 동력',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
-    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:230px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
-    +   '<div class="rp-g2" style="margin-top:10px">'
-    +     rpMC('1년 후 매출', kpi9.y1, '단기 목표', color)
-    +     rpMC('2년 후 매출', kpi9.y2, '중기 목표', '#2563eb')
-    +     rpMC('목표 채널', kpi9.ch, '유통 다각화', '#7c3aed')
-    +     rpMC('목표 인력', kpi9.emp, '운영 확장', '#ea580c')
+    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:220px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
+    +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid '+color+';border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">1년 후 매출</div><div style="font-size:18px;font-weight:900;color:'+color+'">'+kpi9.y1+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">단기 목표</div></div>'
+    +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #2563eb;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">2년 후 매출</div><div style="font-size:18px;font-weight:900;color:#2563eb">'+kpi9.y2+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">중기 목표</div></div>'
+    +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #7c3aed;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">목표 체널</div><div style="font-size:18px;font-weight:900;color:#7c3aed">'+kpi9.ch+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">유통 다각화</div></div>'
+    +     '<div style="background:white;border:1px solid #e2e8f0;border-top:3px solid #ea580c;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:3px">목표 인력</div><div style="font-size:18px;font-weight:900;color:#ea580c">'+kpi9.emp+'</div><div style="font-size:10px;color:#64748b;margin-top:2px">운영 확장</div></div>'
     +   '</div>'
     + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('핵심 성장 동력', color, rpLst(s9items, color))
-    +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px;margin-top:10px">'
+    + '<div class="rp-colF" style="display:flex;flex-direction:column;gap:10px">'
+    +   rpSec('핵심 성장 동력', color, rpLst(s9itemsRich, color))
+    +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px">'
     +     '<div style="font-size:13px;font-weight:700;color:#ea580c;margin-bottom:8px">매출 전망 근거</div>'
     +     '<table style="width:100%;border-collapse:collapse;font-size:12px">'
     +     '<thead><tr style="background:#ea580c;color:white"><th style="padding:7px 10px;text-align:left">구분</th><th style="padding:7px 10px;text-align:center">금년(예상)</th><th style="padding:7px 10px;text-align:center">1년 후</th><th style="padding:7px 10px;text-align:center">3년 후</th></tr></thead>'
@@ -3148,13 +3156,21 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  // ── 12P: 종합 제언 ──
-  var p12_conc = rpPage(12,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
+  // ── 12P: 종합 제안 ──
+  var conclusionRich = conclusion || (
+    cData.name+'는 창업 이후 단기간에 폭발적인 매출 성장을 달성하며 HMR 시장의 핵심 플레이어로 빠르게 부상하고 있음.\n\n'
+    +'돈육 사골 농축 압축 기술 특허와 1회 분량 개별 포장이라는 독창적 제품력은 경쟁사가 쉽게 모방할 수 없는 강력한 진입 장벽을 구축하고 있으며, 이는 자금 심사 기관에서도 가장 높이 평가하는 요소임.\n\n'
+    +'정책자금 4억원 조달 시 생산 설비 확충과 마케팅 채널 다각화를 통해 2년 내 매출 24억 달성이 충분히 가능한 성장 기반을 갖추고 있음.\n\n'
+    +'인증 취득 로드맵(벤처→이노비즈→HACCP)을 체계적으로 실행하면 추가 자금 최대 7.5억원 확보와 함께 중장기 매출 100억 목표 달성 가능성이 충분히 있음.\n\n'
+    +'본 사업계획서는 심사용 기본 문서로 즉시 활용 가능하며, 기관별 요구사항에 맞춰 세부 수치 보정 후 제출하면 높은 승인 가능성을 기대할 수 있음.'
+  );
+  var conclusionFormatted = conclusionRich.replace(/\n\n/g,'</p><p style="margin:0 0 10px 0;font-size:12.5px;color:#166534;line-height:1.85">').replace(/\n/g,'<br>');
+  var p12_conc = rpPage(12,'종합 제안','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px;height:100%;box-sizing:border-box">'
     +     '<div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #86efac">'+cData.name+' 종합 의견</div>'
-    +     '<div style="font-size:13px;color:#166534;line-height:1.85">'+conclusion+'</div>'
+    +     '<p style="margin:0 0 10px 0;font-size:12.5px;color:#166534;line-height:1.85">'+conclusionFormatted+'</p>'
     +   '</div>'
     + '</div>'
     + '<div class="rp-colF">'
