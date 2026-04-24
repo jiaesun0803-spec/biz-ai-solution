@@ -2922,25 +2922,28 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +     '</tbody></table>'
     +   '</div>'
     + '</div>'
-    // 하단: 사업개요 및 추진배경 (가로폭 넓게, 전체 너비)
-    + '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;flex:1;overflow:hidden;min-height:0">'
-    +   '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid '+color+'">사업개요 및 추진 배경</div>'
-    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;overflow:hidden">'
-    +   overviewItems.map(function(item){
-          return '<div style="font-size:10.5px;color:#374151;line-height:1.65;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">●</span>'+item+'</div>';
-        }).join('')
+    // 하단: 사업개요 및 추진배경 + 핵심 강점 요약 flex:1로 공간 채움
+    + '<div style="display:flex;gap:8px;flex:1;overflow:hidden;min-height:0">'
+    // 사업개요 및 추진배경 (좌측 넓게)
+    +   '<div style="flex:2;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;overflow:hidden;display:flex;flex-direction:column">'
+    +     '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid '+color+'">사업개요 및 추진 배경</div>'
+    +     '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;align-content:space-between">'
+    +     overviewItems.map(function(item){
+            return '<div style="font-size:10.5px;color:#374151;line-height:1.7;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">●</span>'+item+'</div>';
+          }).join('')
+    +     '</div>'
     +   '</div>'
-    + '</div>'
-    // 최하단: 핵심 강점 요약 (가로폭 넓게)
-    + '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:7px 12px;flex-shrink:0">'
-    +   '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:4px">핵심 강점 요약</div>'
-    +   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px 12px">'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>특허 기술 기반 진입장벽 구축 완료</div>'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>창업 1년 만에 시장성 검증 완료</div>'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>HMR 돈육 특화 세그먼트 선점</div>'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>소수 정예 고효율 운영 체계 확립</div>'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>인증 취득 로드맵 실행 준비 완료</div>'
-    +     '<div style="font-size:10.5px;color:#166534;line-height:1.55;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>정책자금 조달 후 즉시 실행 가능</div>'
+    // 핵심 강점 요약 (우측)
+    +   '<div style="flex:1;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:8px 12px;overflow:hidden;display:flex;flex-direction:column">'
+    +     '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:5px;padding-bottom:3px;border-bottom:1.5px solid #bbf7d0">핵심 강점 요약</div>'
+    +     '<div style="flex:1;display:flex;flex-direction:column;gap:7px;justify-content:flex-start">'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>특허 기술 기반 진입장벽 구축 완료</div>'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>창업 1년 만에 시장성 검증 완료</div>'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>HMR 돈육 특화 세그먼트 선점</div>'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>소수 정예 고효율 운영 체계 확립</div>'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>인증 취득 로드맵 실행 준비 완료</div>'
+    +       '<div style="font-size:10.5px;color:#166534;line-height:1.6;padding-left:11px;position:relative"><span style="position:absolute;left:0;color:'+color+';font-weight:700">✓</span>정책자금 조달 후 즉시 실행 가능</div>'
+    +     '</div>'
     +   '</div>'
     + '</div>'
     + '</div>'
