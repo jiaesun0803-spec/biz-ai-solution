@@ -3635,6 +3635,180 @@ window.generateReport = async function(type, version, event) {
 // 숫자 → 콤마 포맷 변환 유틸
 function fmtComma(n) { var v = parseInt(n)||0; return v > 0 ? v.toLocaleString('ko-KR') : ''; }
 
+// ===== 소상공인 간이 재무 모드 업종별 원가율 테이블 =====
+var SIMPLE_FS_INDUSTRY = {
+  food:     { costRate: 0.42, label: '음식점·주점업' },
+  retail:   { costRate: 0.70, label: '소매업' },
+  service:  { costRate: 0.30, label: '서비스업' },
+  wholesale:{ costRate: 0.75, label: '도매업' },
+  mfg:      { costRate: 0.60, label: '소규모 제조업' },
+  edu:      { costRate: 0.35, label: '교육·학원업' },
+  it:       { costRate: 0.28, label: 'IT·소프트웨어' },
+  const:    { costRate: 0.65, label: '건설·인테리어' },
+  other:    { costRate: 0.50, label: '기타' }
+};
+
+// 재무제표 보유 유무 모드 전환
+window.toggleFsMode = function(mode) {
+  var fsForm     = document.getElementById('finance-fs-form');
+  var simpleForm = document.getElementById('finance-simple-form');
+  if (mode === 'yes') {
+    if (fsForm)     fsForm.style.display     = 'block';
+    if (simpleForm) simpleForm.style.display = 'none';
+  } else {
+    if (fsForm)     fsForm.style.display     = 'none';
+    if (simpleForm) simpleForm.style.display = 'block';
+  }
+};
+
+// 소상공인 간이 재무 실시간 추정 계산
+window.calcSimpleFs = function() {
+  var _n = function(id) { var el = document.getElementById(id); if (!el) return 0; return parseInt((el.value||'0').replace(/,/g,'')) || 0; };
+  var industry  = (document.getElementById('simple_industry') || {}).value || '';
+  var revY24    = _n('simple_rev_y24');  // 2025년(전년도)
+  var revY23    = _n('simple_rev_y23');  // 2024년(전전년도)
+  var rent      = _n('simple_rent')   * 12;
+  var labor     = _n('simple_labor')  * 12;
+  var interest  = _n('simple_interest') * 12;
+  var totalDebt = _n('simple_debt');
+
+  var resultDiv = document.getElementById('simple-fs-result');
+  if (!industry || revY24 <= 0) {
+    if (resultDiv) resultDiv.style.display = 'none';
+    return;
+  }
+
+  var cfg = SIMPLE_FS_INDUSTRY[industry] || SIMPLE_FS_INDUSTRY['other'];
+  var cogs     = Math.round(revY24 * cfg.costRate);
+  var fixedCost= rent + labor;
+  var opProfit = revY24 - cogs - fixedCost;
+  var opRate   = (opProfit / revY24 * 100);
+
+  // 간이 자산 추정: 매출의 0.8배 (소상공인 평균 자산 회전율)
+  var estAsset = Math.round(revY24 * 0.8);
+  // 간이 자본 추정: 자산 - 부채
+  var estEquity = estAsset - totalDebt;
+  // 부채비율(부채/자본 xd7 100) - 정책자금 판정용
+  var debtRatio = estEquity > 0 ? (totalDebt / estEquity * 100) : (totalDebt > 0 ? 9999 : 0);
+  // 부채 대 자산 비율(부채/자산 xd7 100) - 표시용
+  var debtAssetRatio = estAsset > 0 ? (totalDebt / estAsset * 100) : 0;
+
+  // 정책자금 기관별 판정
+  var policyItems = [];
+  var allOk = true;
+  if (debtRatio >= 9999) {
+    policyItems.push('<span style="color:#ef4444;font-weight:700;">🚨 자본잠식 의심 — 모든 기관 부결 위험</span>');
+    allOk = false;
+  } else {
+    var sjgOk  = debtRatio <= 200;
+    var sbkbOk = debtRatio <= 250;
+    var jjgOk  = debtRatio <= 300;
+    if (!sjgOk) allOk = false;
+    policyItems.push((sjgOk  ? '✅' : '❌') + ' 소진공 (200% 이하 권장): ' + debtRatio.toFixed(0) + '% → ' + (sjgOk  ? '적합' : '초과'));
+    policyItems.push((sbkbOk ? '✅' : '❌') + ' 신보·기보 (250% 이하 안전): ' + debtRatio.toFixed(0) + '% → ' + (sbkbOk ? '적합' : '초과'));
+    policyItems.push((jjgOk  ? '✅' : '❌') + ' 중진공 (300% 이하 권장): ' + debtRatio.toFixed(0) + '% → ' + (jjgOk  ? '적합' : '초과'));
+  }
+
+  // 결과 표시
+  var elOp    = document.getElementById('simple_op_result');
+  var elOpR   = document.getElementById('simple_op_rate_result');
+  var elDR    = document.getElementById('simple_debt_rate_result');
+  var elPol   = document.getElementById('simple_policy_result');
+  var elPolBox= document.getElementById('simple_policy_box');
+  var elPolDet= document.getElementById('simple_policy_detail');
+
+  if (elOp)  elOp.textContent  = fKRWRound(opProfit);
+  if (elOpR) { elOpR.textContent = opRate.toFixed(1) + '%'; elOpR.style.color = opRate >= 10 ? '#16a34a' : opRate >= 0 ? '#f59e0b' : '#ef4444'; }
+  if (elDR)  { elDR.textContent  = debtRatio >= 9999 ? '자본잠식' : debtRatio.toFixed(0) + '%'; elDR.style.color = debtRatio <= 200 ? '#16a34a' : debtRatio <= 300 ? '#f59e0b' : '#ef4444'; }
+  if (elPol) {
+    if (allOk) { elPol.textContent = '🟢 신청 가능'; elPol.style.color = '#16a34a'; }
+    else       { elPol.textContent = '🟡 일부 주의'; elPol.style.color = '#f59e0b'; }
+  }
+  if (elPolBox) elPolBox.style.background = allOk ? '#f0fdf4' : '#fefce8';
+  if (elPolDet) elPolDet.innerHTML = policyItems.join('<br>');
+  if (resultDiv) resultDiv.style.display = 'block';
+
+  // 실시간 저장 (window._simpleFsCache)
+  window._simpleFsCache = {
+    industry: industry, industryLabel: cfg.label,
+    revY24: revY24, revY23: revY23,
+    cogs: cogs, fixedCost: fixedCost, opProfit: opProfit, opRate: opRate,
+    totalDebt: totalDebt, estAsset: estAsset, estEquity: estEquity,
+    debtRatio: debtRatio, debtAssetRatio: debtAssetRatio,
+    interest: interest
+  };
+};
+
+// 소상공인 간이 데이터 저장
+window.saveSimpleFsData = function() {
+  var sel = document.getElementById('finance-company-select');
+  if (!sel || !sel.value) { alert('업체를 먼저 선택하세요.'); return; }
+  calcSimpleFs();
+  var cache = window._simpleFsCache;
+  if (!cache || !cache.revY24) { alert('전년도 매출과 업종을 입력하세요.'); return; }
+  var cs = window._companiesCache || [];
+  var cData = cs.find(function(c){return c.name===sel.value;});
+  if (!cData) { alert('업체 데이터를 찾을 수 없습니다.'); return; }
+  cData.simpleFsData = cache;
+  // 업체정보 매출도 동기화
+  if (!cData.revenueData) cData.revenueData = {};
+  cData.revenueData.y25 = cache.revY24;
+  cData.revenueData.y24 = cache.revY23;
+  try {
+    var stored = JSON.parse(localStorage.getItem('companies')||'[]');
+    var idx = stored.findIndex(function(c){return c.name===sel.value;});
+    if (idx >= 0) { stored[idx] = cData; } else { stored.push(cData); }
+    localStorage.setItem('companies', JSON.stringify(stored));
+    alert('간이 재무 데이터가 저장되었습니다.');
+  } catch(e) { alert('저장 중 오류가 발생했습니다: ' + e.message); }
+};
+
+// 소상공인 간이 재무 분석 보고서 생성
+window.generateSimpleFinanceReport = function(e) {
+  if (e) e.preventDefault();
+  var sel = document.getElementById('finance-company-select');
+  if (!sel || !sel.value) { alert('업체를 먼저 선택하세요.'); return; }
+  calcSimpleFs();
+  var cache = window._simpleFsCache;
+  if (!cache || !cache.revY24) { alert('전년도 매출과 업종을 입력하세요.'); return; }
+  var cs = window._companiesCache || [];
+  var cData = cs.find(function(c){return c.name===sel.value;}) || {};
+
+  // 간이 데이터를 정식 fsData 형식으로 변환
+  var fakeFs = {
+    rev_y24: cache.revY24,
+    rev_y23: cache.revY23,
+    cogs_y24: cache.cogs,
+    sga_y24: cache.fixedCost,
+    op_y24: cache.opProfit,
+    net_y24: Math.round(cache.opProfit - cache.interest),
+    int_y24: cache.interest,
+    cur_asset: Math.round(cache.estAsset * 0.4),
+    fix_asset: Math.round(cache.estAsset * 0.6),
+    total_asset: cache.estAsset,
+    cur_liab: cache.totalDebt,
+    fix_liab: 0,
+    total_liab: cache.totalDebt,
+    cap: Math.round(cache.estEquity * 0.5),
+    total_equity: cache.estEquity > 0 ? cache.estEquity : 0,
+    isSimpleMode: true,
+    industryLabel: cache.industryLabel
+  };
+  var tempCData = Object.assign({}, cData, { fsData: fakeFs });
+  if (!tempCData.revenueData) tempCData.revenueData = {};
+  tempCData.revenueData.y25 = cache.revY24;
+  tempCData.revenueData.y24 = cache.revY23;
+
+  // 정식 보고서 생성 함수 호출 (간이 모드 플래그 전달)
+  if (typeof generateFinanceReport === 'function') {
+    window._simpleModeOverride = tempCData;
+    generateFinanceReport(e);
+    window._simpleModeOverride = null;
+  } else {
+    alert('보고서 생성 함수를 찾을 수 없습니다.');
+  }
+};
+
 window.initFinanceTab = function() {
   var sel = document.getElementById('finance-company-select');
   if (!sel) return;
@@ -3643,12 +3817,27 @@ window.initFinanceTab = function() {
     var form = document.getElementById('finance-fs-form');
     var debtInfo = document.getElementById('finance-debt-info');
     var debtSummary = document.getElementById('finance-debt-summary');
+    var modeToggle = document.getElementById('fs-mode-toggle');
+    var simpleForm = document.getElementById('finance-simple-form');
     if (!nm) {
       if(form) form.style.display='none';
       if(debtInfo) debtInfo.style.display='none';
+      if(modeToggle) modeToggle.style.display='none';
+      if(simpleForm) simpleForm.style.display='none';
       return;
     }
-    if(form) form.style.display='block';
+    // 모드 토글 표시
+    if(modeToggle) modeToggle.style.display='block';
+    // 현재 선택된 모드에 따라 폼 표시
+    var currentMode = document.querySelector('input[name="fs_mode"]:checked');
+    var mode = currentMode ? currentMode.value : 'yes';
+    if (mode === 'yes') {
+      if(form) form.style.display='block';
+      if(simpleForm) simpleForm.style.display='none';
+    } else {
+      if(form) form.style.display='none';
+      if(simpleForm) simpleForm.style.display='block';
+    }
     // 저장된 데이터 불러오기
     var cs = (window._companiesCache||[]);
     var cData = cs.find(function(c){return c.name===nm;});
