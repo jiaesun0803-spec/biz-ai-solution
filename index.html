@@ -503,31 +503,31 @@
                                 <h4 style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px;border-bottom:2px solid #2563eb;padding-bottom:8px;">📊 손익계산서 (단위: 원)</h4>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전전년도 매출액</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전전년도(2024년) 매출액</div>
                                         <input type="text" id="fs_rev_y23" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출액</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 매출액</div>
                                         <input type="text" id="fs_rev_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 매출원가</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 매출원가</div>
                                         <input type="text" id="fs_cogs_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 판관비</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 판관비</div>
                                         <input type="text" id="fs_sga_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 영업이익</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 영업이익</div>
                                         <input type="text" id="fs_op_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 당기순이익</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 당기순이익</div>
                                         <input type="text" id="fs_net_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div style="grid-column:1/-1;">
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도 이자비용</div>
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">전년도(2025년) 이자비용</div>
                                         <input type="text" id="fs_int_y24" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                 </div>
@@ -550,16 +550,16 @@
                                         <input type="text" id="fs_total_asset" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">유동부채</div>
-                                        <input type="text" id="fs_cur_liab" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">유동부채 <span style="font-size:10px;color:#2563eb;font-weight:400">(중진공+신보+기보+소진공+재단 자동합산)</span></div>
+                                        <input type="text" id="fs_cur_liab" class="fs-input" placeholder="자동 계산됨" style="width:100%;padding:7px 10px;border:1px solid #bfdbfe;border-radius:6px;font-size:13px;background:#eff6ff;" readonly>
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">비유동부채</div>
-                                        <input type="text" id="fs_fix_liab" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">비유동부채 <span style="font-size:10px;color:#7c3aed;font-weight:400">(회사담보 자동반영)</span></div>
+                                        <input type="text" id="fs_fix_liab" class="fs-input" placeholder="자동 계산됨" style="width:100%;padding:7px 10px;border:1px solid #ede9fe;border-radius:6px;font-size:13px;background:#f5f3ff;" readonly>
                                     </div>
                                     <div>
-                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">부채총계</div>
-                                        <input type="text" id="fs_total_liab" class="fs-input" placeholder="예: 100,000,000" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;" oninput="calcFsRatios()">
+                                        <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">부채총계 <span style="font-size:10px;color:#16a34a;font-weight:400">(유동+비유동 자동합산)</span></div>
+                                        <input type="text" id="fs_total_liab" class="fs-input" placeholder="자동 계산됨" style="width:100%;padding:7px 10px;border:1px solid #bbf7d0;border-radius:6px;font-size:13px;background:#f0fdf4;font-weight:700;" readonly>
                                     </div>
                                     <div>
                                         <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:700">자본금</div>
@@ -580,19 +580,72 @@
                                 <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center;">
                                     <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">영업이익률</div>
                                     <div id="fs_ratio_op" style="font-size:18px;font-weight:900;color:#2563eb;">—</div>
+                                    <div style="font-size:10px;color:#cbd5e1;margin-top:3px;">영업이익 ÷ 매출</div>
                                 </div>
                                 <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center;">
-                                    <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">부채비율</div>
-                                    <div id="fs_ratio_debt" style="font-size:18px;font-weight:900;color:#7c3aed;">—</div>
+                                    <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">부채 대 자산 비율</div>
+                                    <div id="fs_ratio_debt" style="font-size:18px;font-weight:900;">—</div>
+                                    <div id="fs_debt_grade" style="font-size:11px;font-weight:700;margin-top:3px;">—</div>
+                                    <div style="font-size:10px;color:#cbd5e1;margin-top:2px;">부채총계 ÷ 자산총계</div>
                                 </div>
                                 <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center;">
                                     <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">유동비율</div>
                                     <div id="fs_ratio_cur" style="font-size:18px;font-weight:900;color:#16a34a;">—</div>
+                                    <div style="font-size:10px;color:#cbd5e1;margin-top:3px;">유동자산 ÷ 유동부채</div>
                                 </div>
                                 <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center;">
                                     <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">이자보상배율</div>
                                     <div id="fs_ratio_icr" style="font-size:18px;font-weight:900;color:#ea580c;">—</div>
+                                    <div style="font-size:10px;color:#cbd5e1;margin-top:3px;">영업이익 ÷ 이자비용</div>
                                 </div>
+                            </div>
+                            <!-- 부채 대 자산 비율 산업 벤치마크 세부 설명 -->
+                            <div id="fs_debt_detail" style="margin-top:12px;padding:10px 14px;background:white;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#64748b;">자산총계를 입력하면 산업 벤치마크와 비교합니다.</div>
+                            <!-- 부채 대 자산 비율 등급 기준표 -->
+                            <div style="margin-top:10px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+                                <div style="background:#dcfce7;border-radius:6px;padding:6px 8px;text-align:center;">
+                                    <div style="font-size:10px;font-weight:700;color:#16a34a;">★ 우수</div>
+                                    <div style="font-size:10px;color:#166534;">30% 이하</div>
+                                </div>
+                                <div style="background:#dbeafe;border-radius:6px;padding:6px 8px;text-align:center;">
+                                    <div style="font-size:10px;font-weight:700;color:#2563eb;">★ 양호</div>
+                                    <div style="font-size:10px;color:#1d4ed8;">30~50%</div>
+                                </div>
+                                <div style="background:#fef9c3;border-radius:6px;padding:6px 8px;text-align:center;">
+                                    <div style="font-size:10px;font-weight:700;color:#ca8a04;">⚠ 보통</div>
+                                    <div style="font-size:10px;color:#92400e;">50~60%</div>
+                                </div>
+                                <div style="background:#ffedd5;border-radius:6px;padding:6px 8px;text-align:center;">
+                                    <div style="font-size:10px;font-weight:700;color:#ea580c;">⚠ 높음</div>
+                                    <div style="font-size:10px;color:#c2410c;">60~80%</div>
+                                </div>
+                                <div style="background:#fee2e2;border-radius:6px;padding:6px 8px;text-align:center;">
+                                    <div style="font-size:10px;font-weight:700;color:#ef4444;">❗ 위험</div>
+                                    <div style="font-size:10px;color:#b91c1c;">80% 초과</div>
+                                </div>
+                            </div>
+
+                            <!-- 정책자금 기관별 권장 부채비율 판정 영역 -->
+                            <div style="margin-top:14px;border-top:2px solid #e2e8f0;padding-top:12px;">
+                                <div style="font-size:12px;font-weight:800;color:#1e3a5f;margin-bottom:8px;">🏛️ 정책자금 기관별 부채비율 적합성 판정</div>
+                                <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">부채비율 = 부채총계 ÷ 자본총계 × 100 (자본총계 입력 시 자동 계산)</div>
+                                <div id="fs_policy_debt_status" style="font-size:12px;color:#94a3b8;">자본총계를 입력하면 정책자금 기관별 부채비율 적합성을 확인합니다.</div>
+                                <!-- 기관별 권장 구간 참고표 -->
+                                <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+                                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:7px 10px;">
+                                        <div style="font-size:10px;font-weight:800;color:#0369a1;">소진공</div>
+                                        <div style="font-size:10px;color:#0c4a6e;margin-top:2px;">권장: <strong>200% 이하</strong></div>
+                                    </div>
+                                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:7px 10px;">
+                                        <div style="font-size:10px;font-weight:800;color:#0369a1;">신보·기보</div>
+                                        <div style="font-size:10px;color:#0c4a6e;margin-top:2px;">안전: <strong>250% 이하</strong></div>
+                                    </div>
+                                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:7px 10px;">
+                                        <div style="font-size:10px;font-weight:800;color:#0369a1;">중진공</div>
+                                        <div style="font-size:10px;color:#0c4a6e;margin-top:2px;">권장: <strong>300% 이하</strong></div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:6px;font-size:10px;color:#94a3b8;padding:6px 10px;background:#f8fafc;border-radius:6px;">⚠ 자본잠식(부채비율 무한대) 상태인 경우 모든 기관 즉시 부결 위험이 매우 큽니다.</div>
                             </div>
                         </div>
 
