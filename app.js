@@ -3872,3 +3872,270 @@ window.backToInput = function(tab) {
   document.getElementById(tab+'-result-step').style.display='none';
   showTab('reportList');
 };
+
+// ===========================
+// ★ 2026 정책자금 심사기준 모달
+// ===========================
+window.openFundCriteriaModal = function() {
+  var modal = document.getElementById('fundCriteriaModal');
+  var body  = document.getElementById('fundCriteriaModalBody');
+  if (!modal || !body) return;
+  // 콘텐츠가 아직 없으면 인라인 HTML 주입
+  if (!body.innerHTML.trim()) {
+    body.innerHTML = buildFundCriteriaHTML();
+  }
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+};
+window.closeFundCriteriaModal = function() {
+  var modal = document.getElementById('fundCriteriaModal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+// ESC 키로 닫기
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') window.closeFundCriteriaModal();
+});
+
+function buildFundCriteriaHTML() {
+  var c = '#ea580c'; // 오렌지 포인트 컬러
+  return `
+<style>
+.fc-section{background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:24px 26px;margin-bottom:22px}
+.fc-sec-title{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.fc-sec-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.fc-sec-label{font-size:16px;font-weight:800;color:#1e293b}
+.fc-sec-sub{font-size:12px;color:#64748b;margin-left:4px}
+/* 부결 항목 */
+.fc-reject{display:flex;gap:12px;align-items:flex-start;padding:15px 16px;border-radius:11px;margin-bottom:10px;border:1.5px solid transparent;transition:transform .15s}
+.fc-reject:hover{transform:translateX(3px)}
+.fc-reject.cr{background:linear-gradient(135deg,#fff1f2,#fef2f2);border-color:#fecaca}
+.fc-reject.hi{background:linear-gradient(135deg,#fff7ed,#fff5eb);border-color:#fed7aa}
+.fc-reject.md{background:linear-gradient(135deg,#fffbeb,#fefce8);border-color:#fde68a}
+.fc-rbadge{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.fc-rbadge.cr{background:#fee2e2}.fc-rbadge.hi{background:#ffedd5}.fc-rbadge.md{background:#fef9c3}
+.fc-rtitle{font-size:13px;font-weight:800;color:#1e293b;margin-bottom:4px}
+.fc-rdesc{font-size:12px;color:#475569;line-height:1.6}
+.fc-rtip{display:inline-flex;align-items:center;gap:4px;margin-top:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:4px 9px;font-size:11px;color:#64748b}
+.fc-rlevel{margin-left:auto;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.fc-lbadge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.fc-lbadge.cr{background:#fee2e2;color:#991b1b}.fc-lbadge.hi{background:#ffedd5;color:#9a3412}.fc-lbadge.md{background:#fef9c3;color:#854d0e}
+.fc-limp{font-size:10px;color:#94a3b8;text-align:right}
+/* 기관 카드 */
+.fc-org-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px}
+.fc-org{border-radius:12px;overflow:hidden;border:1.5px solid transparent}
+.fc-org.jjg{border-color:#bfdbfe;background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+.fc-org.kibo{border-color:#bbf7d0;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+.fc-org.shinbo{border-color:#e9d5ff;background:linear-gradient(135deg,#faf5ff,#f3e8ff)}
+.fc-org.sjg{border-color:#fed7aa;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.fc-org-hd{padding:13px 15px 10px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(0,0,0,.06)}
+.fc-org-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.fc-org-ic.jjg{background:#2563eb;color:#fff}.fc-org-ic.kibo{background:#16a34a;color:#fff}.fc-org-ic.shinbo{background:#7c3aed;color:#fff}.fc-org-ic.sjg{background:#ea580c;color:#fff}
+.fc-org-nm{font-size:14px;font-weight:800;color:#1e293b}.fc-org-full{font-size:10px;color:#64748b;margin-top:1px}
+.fc-org-bd{padding:12px 15px 14px}
+.fc-cr{display:flex;gap:7px;align-items:flex-start;margin-bottom:8px}
+.fc-cr:last-child{margin-bottom:0}
+.fc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.fc-dot.jjg{background:#2563eb}.fc-dot.kibo{background:#16a34a}.fc-dot.shinbo{background:#7c3aed}.fc-dot.sjg{background:#ea580c}
+.fc-ct{font-size:12px;color:#334155;line-height:1.55}
+.fc-ct strong{font-weight:700;color:#1e293b}
+.fc-chip{display:inline-block;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;margin-left:3px}
+.fc-chip.jjg{background:#2563eb}.fc-chip.kibo{background:#16a34a}.fc-chip.shinbo{background:#7c3aed}.fc-chip.sjg{background:#ea580c}
+/* 신용점수 표 */
+.fc-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
+.fc-table th{background:#1e3a5f;color:#fff;padding:9px 12px;text-align:left;font-weight:700;font-size:11px}
+.fc-table th:first-child{border-radius:7px 0 0 0}.fc-table th:last-child{border-radius:0 7px 0 0}
+.fc-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.fc-table tr:last-child td{border-bottom:none}
+.fc-table tr:nth-child(even) td{background:#f8fafc}
+.fc-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.fc-tag.pass{background:#dcfce7;color:#166534}.fc-tag.cond{background:#fef9c3;color:#854d0e}.fc-tag.fail{background:#fee2e2;color:#991b1b}
+/* 업력 카드 */
+.fc-yr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.fc-yr{border-radius:11px;padding:14px;text-align:center;border:1.5px solid}
+.fc-yr.y3{background:#f0fdf4;border-color:#86efac}.fc-yr.y7{background:#eff6ff;border-color:#93c5fd}.fc-yr.y7p{background:#faf5ff;border-color:#c4b5fd}
+.fc-yr-n{font-size:20px;font-weight:900;margin-bottom:3px}
+.fc-yr.y3 .fc-yr-n{color:#16a34a}.fc-yr.y7 .fc-yr-n{color:#2563eb}.fc-yr.y7p .fc-yr-n{color:#7c3aed}
+.fc-yr-lb{font-size:11px;font-weight:700;color:#475569;margin-bottom:7px}
+.fc-yr-fd{font-size:11px;color:#64748b;line-height:1.55}
+.fc-yr-fd strong{color:#1e293b;font-weight:700}
+/* 요약 배너 */
+.fc-summary{background:linear-gradient(135deg,#1e3a5f,#0f2744);border-radius:12px;padding:20px 24px;margin-top:6px}
+.fc-sum-title{font-size:14px;font-weight:800;color:#fb923c;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.fc-sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fc-sum-item{background:rgba(255,255,255,.07);border-radius:9px;padding:12px;border:1px solid rgba(255,255,255,.1)}
+.fc-sum-org{font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px}
+.fc-sum-score{font-size:16px;font-weight:900;color:#fff;margin-bottom:3px}
+.fc-sum-desc{font-size:10px;color:#cbd5e1;line-height:1.5}
+/* 도입 배너 */
+.fc-intro{background:linear-gradient(135deg,#fff1f2,#fff5f5);border:1.5px solid #fecaca;border-radius:11px;padding:15px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start}
+.fc-intro-icon{font-size:24px;flex-shrink:0;margin-top:1px}
+.fc-intro h3{font-size:14px;font-weight:800;color:#dc2626;margin-bottom:4px}
+.fc-intro p{font-size:12px;color:#7f1d1d;line-height:1.65}
+.fc-score-title{font-size:13px;font-weight:800;color:#1e293b;margin:16px 0 10px;display:flex;align-items:center;gap:7px}
+.fc-score-title::before{content:'';display:block;width:3px;height:14px;background:#ea580c;border-radius:2px}
+</style>
+
+<!-- ── 섹션 1: 부결 체크리스트 ── -->
+<div class="fc-section">
+  <div class="fc-sec-title">
+    <div class="fc-sec-num" style="background:#dc2626">1</div>
+    <span class="fc-sec-label">신청 전 필수 부결 체크리스트</span>
+    <span class="fc-sec-sub">— 하나라도 해당되면 즉시 부결 가능</span>
+  </div>
+  <div class="fc-intro">
+    <div class="fc-intro-icon">⚠️</div>
+    <div>
+      <h3>정책자금 신청 전 반드시 확인하세요</h3>
+      <p>아래 5가지 항목은 기관 공통 부결 요인입니다. 특히 세금 체납·가지급금·자본잠식은 심사관이 가장 먼저 확인하는 핵심 감점 요인입니다.</p>
+    </div>
+  </div>
+  <div class="fc-reject cr">
+    <div class="fc-rbadge cr">🚫</div>
+    <div style="flex:1">
+      <div class="fc-rtitle">① 세금 체납 — 절대 불가</div>
+      <div class="fc-rdesc">국세·지방세·4대보험료 중 하나라도 체납 시 모든 정책금융기관에서 즉시 부결됩니다. 완납 후 <strong>최소 1개월 경과 후</strong> 재신청 권장합니다.</div>
+      <div class="fc-rtip">💡 <strong>해결책:</strong> 분납 신청 후 완납 → 완납증명서 발급 → 1개월 후 신청</div>
+    </div>
+    <div class="fc-rlevel"><span class="fc-lbadge cr">즉시 부결</span><span class="fc-limp">100% 부결</span></div>
+  </div>
+  <div class="fc-reject cr">
+    <div class="fc-rbadge cr">💸</div>
+    <div style="flex:1">
+      <div class="fc-rtitle">② 가지급금 — 감점 최대 요인</div>
+      <div class="fc-rdesc">대표자가 회사 자금을 개인적으로 차용한 가지급금은 심사관이 가장 먼저 확인하는 항목입니다. 금액이 클수록 신용등급 하락 및 한도 축소로 직결됩니다.</div>
+      <div class="fc-rtip">💡 <strong>해결책:</strong> 가지급금 상환 또는 급여·배당으로 정리 → 재무상태표 정상화</div>
+    </div>
+    <div class="fc-rlevel"><span class="fc-lbadge cr">감점 최대</span><span class="fc-limp">한도 최대 50% ↓</span></div>
+  </div>
+  <div class="fc-reject hi">
+    <div class="fc-rbadge hi">📉</div>
+    <div style="flex:1">
+      <div class="fc-rtitle">③ 자본잠식 — 기보·중진공 즉시 부결</div>
+      <div class="fc-rdesc">자본총계가 마이너스(완전자본잠식) 또는 납입자본금 미만(부분자본잠식)인 경우 기보·중진공에서 즉시 부결됩니다. 신보·소진공도 한도가 대폭 축소됩니다.</div>
+      <div class="fc-rtip">💡 <strong>해결책:</strong> 유상증자 또는 이익잉여금 확보로 자본총계 플러스 유지</div>
+    </div>
+    <div class="fc-rlevel"><span class="fc-lbadge hi">기보·중진공 부결</span><span class="fc-limp">신보·소진공 한도 ↓</span></div>
+  </div>
+  <div class="fc-reject hi">
+    <div class="fc-rbadge hi">🔴</div>
+    <div style="flex:1">
+      <div class="fc-rtitle">④ 최근 3개월 내 연체 기록</div>
+      <div class="fc-rdesc">단 하루라도 최근 3개월 이내 금융 연체 기록이 있으면 심사에 매우 불리합니다. 연체 이력은 신용평가사(KCB·NICE)에 최대 5년간 기록됩니다.</div>
+      <div class="fc-rtip">💡 <strong>해결책:</strong> 연체 즉시 상환 → 3개월 이상 정상 거래 유지 후 신청</div>
+    </div>
+    <div class="fc-rlevel"><span class="fc-lbadge hi">심사 불리</span><span class="fc-limp">신용점수 최대 100점 ↓</span></div>
+  </div>
+  <div class="fc-reject md">
+    <div class="fc-rbadge md">🏠</div>
+    <div style="flex:1">
+      <div class="fc-rtitle">⑤ 사업장·주거지 압류</div>
+      <div class="fc-rdesc">대표자 개인 소유 부동산에 가압류·압류가 설정되어 있으면 담보 제공이 불가능해 100% 부결됩니다. 법인 소유 부동산의 경우에도 감점 요인이 됩니다.</div>
+      <div class="fc-rtip">💡 <strong>해결책:</strong> 압류 해제 후 신청 — 가압류는 채권자 합의 또는 공탁으로 해제 가능</div>
+    </div>
+    <div class="fc-rlevel"><span class="fc-lbadge md">담보 불가</span><span class="fc-limp">100% 부결</span></div>
+  </div>
+</div>
+
+<!-- ── 섹션 2: 기관별 심사기준 ── -->
+<div class="fc-section">
+  <div class="fc-sec-title">
+    <div class="fc-sec-num" style="background:#2563eb">2</div>
+    <span class="fc-sec-label">2026년 기관별 심사기준</span>
+    <span class="fc-sec-sub">— 신용점수·업종·업력·한도 산정 기준</span>
+  </div>
+  <div class="fc-org-grid">
+    <div class="fc-org jjg">
+      <div class="fc-org-hd"><div class="fc-org-ic jjg">🏭</div><div><div class="fc-org-nm">중진공</div><div class="fc-org-full">중소벤처기업진흥공단</div></div></div>
+      <div class="fc-org-bd">
+        <div class="fc-cr"><div class="fc-dot jjg"></div><div class="fc-ct"><strong>권장 신용점수</strong> NICE <span class="fc-chip jjg">750점 이상</span> 권장 — 내부 기업진단 점수 우선 적용</div></div>
+        <div class="fc-cr"><div class="fc-dot jjg"></div><div class="fc-ct"><strong>운전자금 한도</strong> 전년 매출의 <strong>1/3 ~ 1/4</strong> 이내</div></div>
+        <div class="fc-cr"><div class="fc-dot jjg"></div><div class="fc-ct"><strong>시설자금 한도</strong> 견적서 금액의 <strong>80 ~ 100%</strong> 이내</div></div>
+        <div class="fc-cr"><div class="fc-dot jjg"></div><div class="fc-ct"><strong>2026년 확대 업종</strong> 지식서비스(엔지니어링·디자인·R&D·콘텐츠·게임), 스마트물류, 로컬크리에이터</div></div>
+        <div class="fc-cr"><div class="fc-dot jjg"></div><div class="fc-ct"><strong>업력 조건</strong> 혁신창업사업화자금: 창업 7년 미만 / 신성장기반자금: 업력 무관</div></div>
+      </div>
+    </div>
+    <div class="fc-org kibo">
+      <div class="fc-org-hd"><div class="fc-org-ic kibo">🔬</div><div><div class="fc-org-nm">기보</div><div class="fc-org-full">기술보증기금</div></div></div>
+      <div class="fc-org-bd">
+        <div class="fc-cr"><div class="fc-dot kibo"></div><div class="fc-ct"><strong>심사 우선순위</strong> 신용점수보다 <strong>기술력 우선</strong> — 특허·기업부설연구소 보유 시 우대</div></div>
+        <div class="fc-cr"><div class="fc-dot kibo"></div><div class="fc-ct"><strong>즉시 부결 조건</strong> 대표자 연체·체납 시 즉시 부결 / 자본잠식 기업 부결</div></div>
+        <div class="fc-cr"><div class="fc-dot kibo"></div><div class="fc-ct"><strong>기술등급 조건</strong> 기술평가 <strong>B등급 이상</strong> 필요 (C등급 이하 한도 대폭 축소)</div></div>
+        <div class="fc-cr"><div class="fc-dot kibo"></div><div class="fc-ct"><strong>중복 제한</strong> 신보 대출 있으면 기보 신규 보증 제한 (기보·신보 중복 불가 원칙)</div></div>
+        <div class="fc-cr"><div class="fc-dot kibo"></div><div class="fc-ct"><strong>보증 한도</strong> 최대 30억 / 보증료 0.5~1.5%</div></div>
+      </div>
+    </div>
+    <div class="fc-org shinbo">
+      <div class="fc-org-hd"><div class="fc-org-ic shinbo">💳</div><div><div class="fc-org-nm">신보</div><div class="fc-org-full">신용보증기금</div></div></div>
+      <div class="fc-org-bd">
+        <div class="fc-cr"><div class="fc-dot shinbo"></div><div class="fc-ct"><strong>권장 신용점수</strong> KCB/NICE <span class="fc-chip shinbo">800점 이상</span> 선호 — 대표자 신용도 핵심 기준</div></div>
+        <div class="fc-cr"><div class="fc-dot shinbo"></div><div class="fc-ct"><strong>한도 산정</strong> 전년 매출의 <strong>1/4 ~ 1/6</strong> 이내</div></div>
+        <div class="fc-cr"><div class="fc-dot shinbo"></div><div class="fc-ct"><strong>중복 제한</strong> 기보 대출 있으면 신보 신규 보증 제한</div></div>
+        <div class="fc-cr"><div class="fc-dot shinbo"></div><div class="fc-ct"><strong>특례보증 조건</strong> 창업 7년 미만, 벤처인증 시 우대</div></div>
+        <div class="fc-cr"><div class="fc-dot shinbo"></div><div class="fc-ct"><strong>보증 한도</strong> 최대 20억 / 보증료 0.5~1.0% / 보증비율 95%</div></div>
+      </div>
+    </div>
+    <div class="fc-org sjg">
+      <div class="fc-org-hd"><div class="fc-org-ic sjg">🏪</div><div><div class="fc-org-nm">소진공</div><div class="fc-org-full">소상공인시장진흥공단</div></div></div>
+      <div class="fc-org-bd">
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>2026년 신설</strong> <span class="fc-chip sjg">839점 이하</span> 저신용 전용자금 별도 배정 — 일반 자금과 분리 운영</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>한도</strong> 일반 7천만원 / 저신용 전용 7천만원 / 성장촉진자금 1억</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>업력 조건</strong> 성장촉진자금: 창업 <strong>3년 이내</strong> / 일반경영안정자금: 업력 무관</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>제한 대상</strong> 다중채무자(3개 이상 금융기관 동시 연체) 제한 / 유흥업종 제외</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>금리</strong> 정책금리 연 2.0~3.0% / 온라인 신청 가능 / 처리 기간 2~4주</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- 신용점수 구간표 -->
+  <div class="fc-score-title">신용점수 구간별 기관 추천 매트릭스</div>
+  <table class="fc-table">
+    <thead><tr><th>신용점수 구간</th><th>중진공</th><th>기보</th><th>신보</th><th>소진공</th><th>미소금융·햇살론</th></tr></thead>
+    <tbody>
+      <tr><td><strong>800점 이상</strong></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag pass">✓ 선호</span></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag cond">— 해당없음</span></td></tr>
+      <tr><td><strong>750~799점</strong></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag cond">△ 조건부</span></td><td><span class="fc-tag pass">✓ 정상</span></td><td><span class="fc-tag cond">— 해당없음</span></td></tr>
+      <tr><td><strong>700~749점</strong></td><td><span class="fc-tag cond">△ 권장 미충족</span></td><td><span class="fc-tag pass">✓ 기술력 우선</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag pass">✓ 저신용 전용</span></td><td><span class="fc-tag cond">— 해당없음</span></td></tr>
+      <tr><td><strong>600~699점</strong></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag pass">✓ 저신용 전용</span></td><td><span class="fc-tag cond">△ 검토 가능</span></td></tr>
+      <tr><td><strong>600점 미만</strong></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag fail">✗ 제외</span></td><td><span class="fc-tag pass">✓ 전용 상품</span></td></tr>
+      <tr><td><strong>연체·체납 있음</strong></td><td><span class="fc-tag fail">✗ 즉시 부결</span></td><td><span class="fc-tag fail">✗ 즉시 부결</span></td><td><span class="fc-tag fail">✗ 즉시 부결</span></td><td><span class="fc-tag fail">✗ 부결</span></td><td><span class="fc-tag pass">✓ 연체 무관</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── 섹션 3: 업력 조건별 추천 자금 ── -->
+<div class="fc-section">
+  <div class="fc-sec-title">
+    <div class="fc-sec-num" style="background:#16a34a">3</div>
+    <span class="fc-sec-label">업력 조건별 추천 자금</span>
+    <span class="fc-sec-sub">— 창업일 기준 자동 계산 적용</span>
+  </div>
+  <div class="fc-yr-grid">
+    <div class="fc-yr y3">
+      <div class="fc-yr-n">3년 이하</div>
+      <div class="fc-yr-lb">초기 창업 단계</div>
+      <div class="fc-yr-fd"><strong>소진공 성장촉진자금</strong><br>창업 3년 이내 전용 / 최대 1억<br><br><strong>중진공 혁신창업사업화자금</strong><br>창업 7년 미만 / 최대 1억<br><br><strong>기보 창업기업 특례</strong><br>기술력 보유 시 최대 3억</div>
+    </div>
+    <div class="fc-yr y7">
+      <div class="fc-yr-n">3~7년</div>
+      <div class="fc-yr-lb">성장 단계</div>
+      <div class="fc-yr-fd"><strong>소진공 일반경영안정자금</strong><br>업력 무관 / 최대 7천만<br><br><strong>중진공 혁신창업사업화자금</strong><br>창업 7년 미만 / 최대 1억<br><br><strong>기보·신보 일반 보증</strong><br>매출·기술력 기반 한도 산정</div>
+    </div>
+    <div class="fc-yr y7p">
+      <div class="fc-yr-n">7년 초과</div>
+      <div class="fc-yr-lb">안정·확장 단계</div>
+      <div class="fc-yr-fd"><strong>소진공 일반경영안정자금</strong><br>업력 무관 / 최대 7천만<br><br><strong>중진공 신성장기반자금</strong><br>업력 무관 / 시설자금 우대<br><br><strong>기보·신보 일반 보증</strong><br>매출·기술력 기반 한도 산정</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 요약 배너 ── -->
+<div class="fc-summary">
+  <div class="fc-sum-title">📌 2026년 기관별 권장 신용점수 요약</div>
+  <div class="fc-sum-grid">
+    <div class="fc-sum-item"><div class="fc-sum-org">중진공</div><div class="fc-sum-score">NICE 750점↑</div><div class="fc-sum-desc">내부 기업진단 점수 우선<br>운전자금 매출 1/3~1/4</div></div>
+    <div class="fc-sum-item"><div class="fc-sum-org">기보</div><div class="fc-sum-score">기술력 우선</div><div class="fc-sum-desc">연체·체납 즉시 부결<br>B등급 이상 / 자본잠식 불가</div></div>
+    <div class="fc-sum-item"><div class="fc-sum-org">신보</div><div class="fc-sum-score">800점↑ 선호</div><div class="fc-sum-desc">대표자 신용도 핵심<br>매출 1/4~1/6 한도</div></div>
+    <div class="fc-sum-item"><div class="fc-sum-org">소진공</div><div class="fc-sum-score">839점↓ 전용</div><div class="fc-sum-desc">2026년 저신용 전용자금<br>별도 배정 / 다중채무 제한</div></div>
+  </div>
+</div>
+`;
+}
