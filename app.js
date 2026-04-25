@@ -3093,6 +3093,37 @@ function buildFundPrompt(cData, fRev) {
   else if (_dShinbo > 0 && _dKibo === 0) loanNote = '신보 기존 대출 있음 → 신보 위주 추천, 기보 중복 제외';
   else if (_dKibo > 0 && _dShinbo > 0)  loanNote = '기보·신보 모두 대출 있음 → 잔액 큰 기관 위주 추천';
   else                                   loanNote = '기보·신보 기존 대출 없음 → 업종 기준 최적 기관 추천';
+  // 2026년 기관별 심사기준 정보 구성
+  var _kcbS  = parseInt(cData.kcbScore)  || 0;
+  var _niceS = parseInt(cData.niceScore) || 0;
+  var _cs    = _kcbS || _niceS || 0;
+  var _finO  = cData.finOver || '없음';
+  var _taxO  = cData.taxOver || '없음';
+  var _bizYrs = (function(){
+    if (!cData.bizDate || cData.bizDate === '-') return 0;
+    var bd = new Date(cData.bizDate);
+    if (isNaN(bd.getTime())) return 0;
+    return Math.max(0, Math.floor((Date.now() - bd.getTime()) / (365.25 * 24 * 3600 * 1000)));
+  })();
+  var creditNote = _cs > 0
+    ? '\n[신용점수] '+(_kcbS?'KCB '+_kcbS+'점 ':'')+(_niceS?'NICE '+_niceS+'점 ':'')
+      + (_cs>=750?'(중진공 권장 충족)':_cs>=700?'(중진공 권장 미충족 — NICE 750점 이상 권장)':_cs>=600?'(저신용 — 기보 제외, 신보 조건부)':'(신용취약 — 기보·신보·중진공 제외)')
+    : '';
+  var overdueNote = (_finO==='있음'||_taxO==='있음')
+    ? '\n[연체/체납] 금융연체:'+_finO+', 세금체납:'+_taxO+' — 완납 후 1개월 경과 후 재신청 권장'
+    : '';
+  var bizYrsNote = _bizYrs > 0 ? '\n[업력] 창업일 기준 '+_bizYrs+'년 경과'+(_bizYrs<=3?' (소진공 성장촉진자금 조건 충족)':_bizYrs<=7?' (중진공 혁신창업 조건 충족)':' (중진공 신성장기반자금 대상)') : '';
+  // checks 동적 생성
+  var _checksArr = [
+    {text:'중소기업 해당 여부',status:'pass'},
+    {text:'국세·지방세 체납 없음',status:(_taxO==='있음'?'fail':'pass')},
+    {text:'금융 연체 이력 없음',status:(_finO==='있음'?'fail':'pass')},
+    {text:'사업자 등록 유효',status:'pass'},
+    {text:'업력 조건 충족'+(_bizYrs>0?' ('+_bizYrs+'년)':''),status:(_bizYrs===0?'cond':_bizYrs>=2?'pass':'cond')},
+    {text:'신용점수'+(_cs>0?' ('+_cs+'점)':''),status:(_cs===0?'cond':_cs>=700?'pass':_cs>=600?'cond':'fail')},
+    {text:'벤처·이노비즈 인증',status:'fail'}
+  ];
+  var _scoreVal = _cs > 0 ? Math.min(95, Math.max(40, Math.round(_cs/10-5))) : 78;
   var compOrg = (top1.name||'중진공').split('(')[0].trim()
     .replace('농림수산업자신용보증기금','농신보')
     .replace('한국무역보험공사','K-SURE')
@@ -3100,14 +3131,16 @@ function buildFundPrompt(cData, fRev) {
     .replace('국민체육진흥공단','KSPO')
     .replace('관광진흥개발기금','관광기금');
   return '정책자금 전문 컨설턴트. \''+nm+'\' 정책자금 매칭. 기업명 반드시 반영. JSON만.\n\n'
-    +'{"checks":[{"text":"중소기업 해당 여부","status":"pass"},{"text":"국세·지방세 체납 없음","status":"pass"},{"text":"금융 연체 이력 없음","status":"pass"},{"text":"사업자 등록 유효","status":"pass"},{"text":"업력 조건 충족","status":"cond"},{"text":"벤처·이노비즈 인증","status":"fail"}],'
-    +'"score":78,"score_desc":"'+nm+' 신청 가능","match_count":5,'
-    +'"score_items":["'+nm+'는 기본요건 4개 충족 3개 60자이상"],'
+    +'{"checks":'+JSON.stringify(_checksArr)+','
+    +'"score":'+_scoreVal+',"score_desc":"'+nm+' 2026년 정책자금 심사기준 분석","match_count":5,'
+    +'"score_items":["'+nm+'는 2026년 정책자금 심사기준 기반 분석 결과 60자이상"],'
     +'"funds":'+JSON.stringify(indFunds)+','
     +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'","rate":"'+(top1.tags&&top1.tags[0]||'우대금리')+'","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
-    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"]}\'\n\n'
-    +'[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote;
+    +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"],'
+    +'"rejection_checklist":["세금 체납 절대 불가 (국세·지방세·4대보험료 완납 후 1개월 경과 권장)","가지급금 정리 (대표자 회사돈 차용 가지급금 감점 최대 요인)","자본잠식 해결 (증자 또는 이익잉여금 확보로 자본총계 유지)","최근 3개월 연체 기록 없어야 함 (단 하루라도 3개월 이내 연체 시 심사 불리)","사업장·주거지 압류 없어야 함 (대표자 개인 소유 부동산 가압류·압류 시 100% 부결)"]}'
+    +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote+creditNote+overdueNote+bizYrsNote
+    +'\n[2026년 기관별 심사기준] 중진공: NICE 750점 이상 권장, 운전자금 매출 1/3~1/4, 시설자금 견적서 80~100% | 기보: 기술력 우선(연체/체납 시 즉시 부결), B등급 이상, 자본잠식 없어야 함 | 신보: KCB/NICE 800점 이상 선호, 매출 1/4~1/6 한도 | 소진공: 839점 이하 저신용 전용자금 별도 배정, 다중송무자 제한';
 }
 
 function buildFinancePrompt(cData, fRev) {
@@ -3219,6 +3252,14 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var creditScore = kcbScore || niceScore || 0; // 둘 중 입력된 값 우선
   var isCreditWeak = creditScore > 0 && creditScore < 600; // 신용취약자: 600점 미만
   var isCreditLow  = creditScore > 0 && creditScore < 700; // 저신용: 700점 미만
+  // 2026년 기관별 권장 신용점수 기준
+  // 중진공: NICE 750점 이상 권장 (내부 기업진단 점수 우선)
+  // 기보: 신용보다 기술력 우선 (대표자 연체/체납 시 즉시 부결)
+  // 신보: KCB/NICE 800점 이상 선호 (대표자 신용도 핵심 기준)
+  // 소진공: 839점 이하 저신용 전용 자금 별도 배정 (2026년)
+  var isJjgCredit  = creditScore === 0 || creditScore >= 750; // 중진공 신용 조건 충족
+  var isShinboCredit = creditScore === 0 || creditScore >= 800; // 신보 선호 신용 충족
+  var isSjgLowCredit = creditScore > 0 && creditScore <= 839;  // 소진공 저신용 전용 대상
   var finOver = cData.finOver || '없음';
   var taxOver = cData.taxOver || '없음';
   var hasOverdue = finOver === '있음' || taxOver === '있음'; // 연체/체납 여부
@@ -3235,6 +3276,12 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var isRetail = ind.includes('도소매') || ind.includes('유통');
   var isService = ind.includes('서비스') || ind.includes('물류');
   var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
+  // 2026년 중진공 확대 업종 (지식서비스업/유망서비스업)
+  var isKnowledgeSvc = ind.includes('엔지니어링') || ind.includes('디자인') || ind.includes('연구개발') || ind.includes('R&D') || ind.includes('콘텐츠') || ind.includes('영상') || ind.includes('방송') || ind.includes('게임');
+  var isSmartLogistics = ind.includes('물류') && (ind.includes('스마트') || ind.includes('이커머스') || ind.includes('전자상거래'));
+  var isLocalCreator = ind.includes('로컈크리에이터') || ind.includes('지역특산') || ind.includes('로컈');
+  // 중진공 접수 가능 업종 여부 (제조업 외 확대 조건 포함)
+  var isJjgEligible = isManu || isIT || isKnowledgeSvc || isSmartLogistics || isLocalCreator || (isLargeScale && (isService || isTour || ind.includes('보건') || ind.includes('교육')));
   var isRoot = ind.includes('주조') || ind.includes('금형') || ind.includes('소성가공') || ind.includes('용접') || ind.includes('표면처리') || ind.includes('열처리');
   var isMaterial = ind.includes('소재') || ind.includes('부품') || ind.includes('장비') || ind.includes('전기전자') || ind.includes('자동차') || ind.includes('기계') || ind.includes('금속') || ind.includes('화학');
   var isExport = ind.includes('수출') || ind.includes('무역');
@@ -3335,19 +3382,24 @@ function getIndustryCerts(ind, nm, itm, cData) {
   } else {
     // 제조/IT/기타 기본 케이스: 기보/신보/중진공 조건 적용
     var _f = [];
-    // 중진공: 제조/IT이면 무조건, 그 외는 매출 50억↑ 또는 직원 5명↑ 조건
+    // 중진공: 2026년 확대 업종 조건 적용 + 신용점수 750점 이상 권장
     if (isManu || isIT) {
-      _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:['금리 2.5%','즉시 신청 가능','제조업 우대']});
-    } else if (isLargeScale) {
+      var _jjgTag = isJjgCredit ? '금리 2.5%' : 'NICE 750점 권장';
+      _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:[_jjgTag,'즉시 신청 가능','제조업 우대']});
+    } else if (isJjgEligible && isJjgCredit) {
+      // 2026년 중진공 확대 업종 (지식서비스업/스마트물류/로컈크리에이터 등)
+      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
+    } else if (isLargeScale && isJjgCredit) {
       _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
     }
-    // 기보: 제조/IT 업종만 추천
-    if (isManu || isIT) {
-      if (!hasShinboLoan) { // 신보 대출 없을 때만 기보 추천 (중복 방지)
-        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']});
+    // 기보: 제조/IT + 기술력 보유 업종 (자본잠식 없음 조건)
+    if (isManu || isIT || isKnowledgeSvc) {
+      if (!hasShinboLoan) { // 신보 대출 없을 때만 기보 추청 (중복 방지)
+        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허/연구소 필수','B등급 이상']});
       } else {
-        // 신보 대출 있으면 신보 우선 추천
-        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+        // 신보 대출 있으면 신보 우선 추청
+        var _shinboTag = isShinboCredit ? '기존 신보 거래 우대' : 'KCB/NICE 800점 권장';
+        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTag,'95% 보증']});
       }
     }
     // 기보 대출 있으면 기보 우선 (신보 제외)
@@ -3372,9 +3424,9 @@ function getIndustryCerts(ind, nm, itm, cData) {
     funds = _f.slice(0,5);
   }
 
-  // ===== 신용점수 기반 후처리 필터 =====
+  // ===== 신용점수 기반 후처리 필터 (2026년 기관별 심사기준 적용) =====
   if (hasOverdue) {
-    // 연체·체납 있으면 기보·신보·중진공 제외, 소진공·지역신보·미소금융 위주
+    // 연체·체납 있으면 기보·신보·중진공 제외 (완납 후 1개월 경과 후 재신청 권장)
     funds = funds.filter(function(f){
       return !f.name.includes('기보') && !f.name.includes('신보') && !f.name.includes('중진공');
     });
@@ -3383,15 +3435,25 @@ function getIndustryCerts(ind, nm, itm, cData) {
     funds.unshift({rank:1,name:'햇살론 소상공인 보증',limit:'3천만',tags:['저신용 전용','보증료 면제','빠른 승인']});
     funds = funds.slice(0,5);
   } else if (isCreditWeak) {
-    // 신용 600점 미만: 기보 제외, 신용취약자 전용 상품 추가
-    funds = funds.filter(function(f){ return !f.name.includes('기보'); });
+    // 신용 600점 미만: 기보·신보·중진공 제외, 미소금융 + 소진공 저신용 전용 상품 추가
+    funds = funds.filter(function(f){ return !f.name.includes('기보') && !f.name.includes('신보') && !f.name.includes('중진공'); });
+    funds.unshift({rank:1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
     funds.unshift({rank:1,name:'미소금융 창업·운영자금',limit:'2천만',tags:['무담보·무보증','신용취약자 전용','600점 미만 가능']});
     funds = funds.slice(0,5);
   } else if (isCreditLow) {
-    // 신용 600~699점: 기보 제외, 신보 조건부 유지
+    // 신용 600~699점: 기보 제외, 신보 조건부 유지, 소진공 저신용 전용 추가
     funds = funds.filter(function(f){ return !f.name.includes('기보'); });
+    if (isSjgLowCredit && !funds.some(function(f){ return f.name.includes('저신용'); })) {
+      funds.unshift({rank:1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
+    }
     if (!funds.some(function(f){ return f.name.includes('신보'); })) {
       funds.push({rank:funds.length+1,name:'신보 창업기업 특례보증',limit:'1억',tags:['보증료 0.5%','저신용 조건부','심사 강화']});
+    }
+    funds = funds.slice(0,5);
+  } else if (isSjgLowCredit && !isShinboCredit) {
+    // 신용 700~799점 (신보 800점 미만): 소진공 저신용 전용 자금 안내 추가
+    if (!funds.some(function(f){ return f.name.includes('저신용'); })) {
+      funds.push({rank:funds.length+1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
     }
     funds = funds.slice(0,5);
   }
