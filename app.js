@@ -2309,18 +2309,18 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     )
     +'<div class="rp-2col">'
     +'<div class="rp-col50">'
-    +rpSec('\ub9e4\ucd9c \uc7a0\uc7ac\ub825 \uc2dc\ubbac\ub808\uc774\uc158 (\ub9cc\uc6d0/\uc6d4)', color,
+    +rpSec('매출 잠재력 시뮬레이션 (월 매출)', color,
       '<div class="rp-ch" style="height:200px"><canvas id="tp-linechart" data-s0="'+sim.s0+'" data-s1="'+sim.s1+'" data-s2="'+sim.s2+'" data-s3="'+sim.s3+'" style="width:100%;height:100%"></canvas></div>'
     )
     +'</div>'
     +'<div class="rp-colF">'
     +'<div class="rp-g2" style="margin-bottom:8px">'
-    +rpMC('\ud604\uc7ac',Math.round(sim.s0/100)*100+'\ub9cc','/\uc6d4',color)
-    +rpMC('6\uac1c\uc6d4',Math.round(sim.s1/100)*100+'\ub9cc','+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('현재',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s0),'/월',color)
+    +rpMC('6개월',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s1),'+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
     +'</div>'
     +'<div class="rp-g2">'
-    +rpMC('1\ub144',Math.round(sim.s2/100)*100+'\ub9cc','+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
-    +rpMC('2\ub144',Math.round(sim.s3/100)*100+'\ub9cc','+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('1년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s2),'+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('2년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s3),'+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
     +'</div>'
     +'<div style="font-size:11px;color:#64748b;padding:9px;background:#f0fdfa;border-radius:7px;margin-top:8px">\u203b \uc5c5\uc885 \ud3c9\uade0 \uc131\uc7a5\ub960 \ub2ec\uc131 \uac00\uc815 \uc2dc \ucd94\uc815\uac12 (\uc804\uc81c: \uc6b4\uc601 \uc804\ub7b5 \uc774\ud589, \uacc4\uc808\uc131 \ubc18\uc601, \uacbd\uc7c1 \ud658\uacbd \uc720\uc0ac \uc218\uc900 \uc720\uc9c0)</div>'
     +'</div>'
@@ -4207,18 +4207,29 @@ window.saveFsData = function() {
   if (_rv23 > 0) cs[idx].revenueData.y24 = _rv23;  // 2024년 매출
   if (_rv24 > 0) cs[idx].revenueData.y25 = _rv24;  // 2025년 매출
   window._companiesCache = cs;
-  alert('재무 데이터가 저장되었음.\n업체관리 매출 데이터도 함께 업데이트되었음.');
+  // 보고서 생성 시 자동 저장 - alert 제거 (보고서 생성 버튼 클릭 시 팝업 방지)
 };
 
 window.generateFinanceReport = async function(event) {
   var sel = document.getElementById('finance-company-select');
   if (!sel || !sel.value) { alert('기업을 선택해주세요.'); return; }
   var nm = sel.value;
-  // 저장 먼저 실행
-  saveFsData();
   var cs = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===nm;});
   if (!cData) { alert('기업 정보를 찾을 수 없음.'); return; }
+  // 로딩 오버레이 즉시 표시 (팝업 없이 바로 로딩 시작)
+  var overlay = document.getElementById('ai-loading-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    var tt = document.getElementById('loading-title-text');
+    var td = document.getElementById('loading-desc-text');
+    if(tt) tt.textContent = '재무제표 분석 생성 중...';
+    if(td) td.innerHTML = cData.name + ' 재무 데이터를 분석하여<br>맞춤형 재무제표 분석 리포트를 작성하고 있음.<br>최대 <b style="color:#3b82f6">60초</b>가 소요될 수 있음.';
+  }
+  // 저장 (alert 없이 자동 저장)
+  saveFsData();
+  // saveFsData 후 cData 재조회 (fsData 업데이트 반영)
+  cData = (window._companiesCache||[]).find(function(c){return c.name===nm;}) || cData;
   // rev 구성: fsData 매출 우선, 없으면 업체정보 revenueData 사용
   var _baseRev = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
   var _fsD = cData.fsData||{};
@@ -4231,23 +4242,16 @@ window.generateFinanceReport = async function(event) {
     y23: _baseRev.y23||0                                    // 2023년
   };
   var fRev = fRevAI(cData, rev);
-  var overlay = document.getElementById('ai-loading-overlay');
-  if (overlay) {
-    overlay.style.display = 'flex';
-    var tt = document.getElementById('loading-title-text');
-    var td = document.getElementById('loading-desc-text');
-    if(tt) tt.textContent = '재무제표 분석 생성 중...';
-    if(td) td.innerHTML = cData.name + ' 재무 데이터를 분석하여<br>맞춤형 재무제표 분석 리포트를 작성하고 있음.<br>최대 <b style="color:#3b82f6">60초</b>가 소요될 수 있음.';
-  }
   var data = null;
   try {
     data = await callGeminiJSON(buildFinancePrompt(cData, fRev), 8192);
   } catch(e) {
     console.error('재무제표 분석 오류:', e);
-    alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
-  } finally {
     if (overlay) overlay.style.display = 'none';
+    alert('보고서 생성 오류: ' + (e.message||'알 수 없는 오류'));
+    return;
   }
+  if (overlay) overlay.style.display = 'none';
   if (!data) return;
   var today = new Date().toISOString().split('T')[0];
   var rptTitle = cData.name+'_재무제표 분석';
@@ -4263,10 +4267,20 @@ window.generateFinanceReport = async function(event) {
   }
   var ca = document.getElementById('finance-content-area');
   if (ca) {
-    resetContentArea(ca);
-    ca.innerHTML = buildFinanceHTML(data, cData, rev, today);
-    addDisclaimerToReport('finance-content-area');
+    try {
+      resetContentArea(ca);
+      ca.innerHTML = buildFinanceHTML(data, cData, rev, today);
+      addDisclaimerToReport('finance-content-area');
+    } catch(htmlErr) {
+      console.error('재무제표 HTML 생성 오류:', htmlErr);
+      ca.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444">보고서 렌더링 오류가 발생했음.<br>다시 시도해 주세요.<br><small>' + (htmlErr.message||'') + '</small></div>';
+    }
   }
+  // resultStep 표시 보장 (ca 없어도 결과 화면 전환)
+  var inputStep2 = document.getElementById('finance-input-step');
+  var resultStep2 = document.getElementById('finance-result-step');
+  if(inputStep2) inputStep2.style.display = 'none';
+  if(resultStep2) resultStep2.style.display = 'block';
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
   initReportCharts(rev);
 };
