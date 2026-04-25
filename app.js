@@ -2602,16 +2602,25 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var _adj = _debtRatio > 300 ? 0.6 : _debtRatio > 200 ? 0.8 : 1.0;
   var _fundLimitAdj = Math.round(_fundLimit * _adj);
   function fLimitStr(n){ if(n>=100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'')+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
-  // 6. 최종 표시: 예상 한도 범위 (최소 = 최대의 60%, 최대 = 계산값)
+  // 6. 필요자금 상한 적용 (필요자금이 있으면 계산값과 비교해 작은 값 사용)
+  var _needFundNum = parseInt(cData.needFund)||0;
   var _maxAdj = _fundLimitAdj;
+  if (_needFundNum > 0 && _maxAdj > _needFundNum) _maxAdj = _needFundNum; // 필요자금 초과 불가
   var _minAdj = Math.round(_maxAdj * 0.6);
   // 매출 없으면 기관별 한도 합산 방식 fallback
   if (_revNum === 0) {
     var _minLim = 0, _maxLim = 0;
     funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
     _maxAdj = Math.round(_maxLim * _adj);
+    if (_needFundNum > 0 && _maxAdj > _needFundNum) _maxAdj = _needFundNum;
     _minAdj = Math.round(_minLim * _adj);
   }
+  // 한도 계산 근거 텍스트 생성
+  var _limitBasis = _revNum > 0
+    ? '예상 연매출 '+fLimitStr(_revNum)+' × '+(_isMfg?'1/4(제조업)':'1/7(비제조업)')
+      +(_debtTotal>0?' − 기대출 '+fLimitStr(_debtTotal):'')  
+      +(_adj<1?' × 부채비율 조정('+Math.round(_adj*100)+'%)':'')
+    : '매출 미입력 — 기관별 한도 기준 산정';
   var totalRange = d.total_range || (_maxAdj > 0 ? '기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj) : '별도 산정 필요');
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
@@ -2669,7 +2678,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     '<div class="rp-section" style="margin-bottom:12px;background:#fff7ed;border-color:#fed7aa">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
     +   '<div><div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:4px">추천 우선순위 전략</div><div style="font-size:13px;color:#7c2d12">가장 신청 난도가 낮은 자금부터 확보하고, 인증 취득 후 고한도 보증 상품으로 확장하는 구조임</div></div>'
-    +   '<div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div>'
+    +   '<div style="text-align:right"><div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div><div style="font-size:10.5px;color:#92400e;margin-top:3px;line-height:1.5">'+_limitBasis+'</div></div>'
     + '</div>'
     + '</div>'
     + '<div class="rp-g3" style="margin-bottom:12px">'
