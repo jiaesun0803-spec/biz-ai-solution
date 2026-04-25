@@ -852,7 +852,11 @@ window.saveCompanyData=function(){
   const debtShinbo=_pInt('debt_shinbo');
   const debtJjg=_pInt('debt_jjg');
   const debtSjg=_pInt('debt_sjg');
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const kcbScore=parseInt((document.getElementById('kcb_score')?.value||'0').replace(/[^0-9]/g,''))||0;
+  const niceScore=parseInt((document.getElementById('nice_score')?.value||'0').replace(/[^0-9]/g,''))||0;
+  const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
+  const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
   const idx=companies.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? companies[idx]._serverId : null;
@@ -2499,12 +2503,29 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
 function buildFundHTML(d, cData, rev, dateStr) {
   var color  = '#ea580c';
   var cover  = buildCoverHTML(cData, {title:'AI 정책자금매칭',reportKind:'AI 정책자금 매칭 리포트',vLabel:'리포트',borderColor:color}, rev, dateStr);
-  var checks = d.checks||[{text:'중소기업 해당 여부 확인',status:'pass'},{text:'국세·지방세 체납 없음',status:'pass'},{text:'금융 연체 이력 없음',status:'pass'},{text:'사업자 등록 유효',status:'pass'},{text:'업력 2년 이상 충족',status:'cond'},{text:'벤처·이노비즈 인증 보유',status:'fail'}];
-  var score  = d.score||78;
-  var gda    = Math.round((score/100)*151);
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
   var _industryCerts = getIndustryCerts(ind, cData.name, itm, cData);
+  // 신용점수·업력 동적 반영
+  var _kcb  = parseInt(cData.kcbScore)  || 0;
+  var _nice = parseInt(cData.niceScore) || 0;
+  var _cs   = _kcb || _nice || 0;
+  var _finO = cData.finOver || '없음';
+  var _taxO = cData.taxOver || '없음';
+  var _bizYrs = _industryCerts.bizYears || 0;
+  var _hasOvd = _industryCerts.hasOverdue || (_finO==='있음'||_taxO==='있음');
+  // checks 동적 생성
+  var checks = d.checks || [
+    {text:'중소기업 해당 여부',status:'pass'},
+    {text:'국세·지방세 체납 없음',status:_taxO==='있음'?'fail':'pass'},
+    {text:'금융 연체 이력 없음',status:_finO==='있음'?'fail':'pass'},
+    {text:'사업자 등록 유효',status:'pass'},
+    {text:'업력 조건 충족'+(_bizYrs>0?' ('+_bizYrs+'년)':''),status:_bizYrs===0?'cond':_bizYrs>=2?'pass':'cond'},
+    {text:'신용점수'+(_cs>0?' ('+(_kcb?'KCB ':'')+(_nice?'NICE ':'')+_cs+'점)':''),status:_cs===0?'cond':_cs>=700?'pass':_cs>=600?'cond':'fail'},
+    {text:'벤처·이노비즈 인증 보유',status:'fail'}
+  ];
+  var score  = d.score || (_cs>0 ? Math.min(95,Math.max(40,Math.round(_cs/10-5))) : 78);
+  var gda    = Math.round((score/100)*151);
   var funds  = d.funds||_industryCerts.funds;
   // totalRange: funds 기반 동적 계산
   function parseLimitNum(s) {
@@ -3178,7 +3199,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var funds = [];
   var isFood = ind.includes('식품') || ind.includes('외식') || ind.includes('음식') || ind.includes('농림') || ind.includes('수산');
   var isManu = ind.includes('제조');
-  // 기존 대출 기관 판단
+  // 기존 대요 기관 판단
   var debtKibo   = parseInt(cData.debtKibo)   || 0;
   var debtShinbo = parseInt(cData.debtShinbo) || 0;
   var debtJjg    = parseInt(cData.debtJjg)    || 0;
@@ -3192,6 +3213,25 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var prevRevBillion = prevRev / 10000;
   var empNum = parseInt(cData.empCount) || 0;
   var isLargeScale = prevRevBillion >= 50 || empNum >= 5;
+  // 신용점수 및 업력 조건
+  var kcbScore  = parseInt(cData.kcbScore)  || 0;
+  var niceScore = parseInt(cData.niceScore) || 0;
+  var creditScore = kcbScore || niceScore || 0; // 둘 중 입력된 값 우선
+  var isCreditWeak = creditScore > 0 && creditScore < 600; // 신용취약자: 600점 미만
+  var isCreditLow  = creditScore > 0 && creditScore < 700; // 저신용: 700점 미만
+  var finOver = cData.finOver || '없음';
+  var taxOver = cData.taxOver || '없음';
+  var hasOverdue = finOver === '있음' || taxOver === '있음'; // 연체/체납 여부
+  // 업력(년) 자동 계산
+  var bizYears = 0;
+  if (cData.bizDate && cData.bizDate !== '-') {
+    var bd = new Date(cData.bizDate);
+    if (!isNaN(bd.getTime())) {
+      bizYears = Math.max(0, Math.floor((Date.now() - bd.getTime()) / (365.25 * 24 * 3600 * 1000)));
+    }
+  }
+  var isNewBiz   = bizYears > 0 && bizYears <= 3;  // 창업 3년 이하
+  var isEarlyBiz = bizYears > 0 && bizYears <= 7;  // 창업 7년 이하 (중진공 혁신창업 조건)
   var isRetail = ind.includes('도소매') || ind.includes('유통');
   var isService = ind.includes('서비스') || ind.includes('물류');
   var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
@@ -3331,7 +3371,55 @@ function getIndustryCerts(ind, nm, itm, cData) {
     _f.forEach(function(x,i){x.rank=i+1;});
     funds = _f.slice(0,5);
   }
-  return { certs: certs, funds: funds };
+
+  // ===== 신용점수 기반 후처리 필터 =====
+  if (hasOverdue) {
+    // 연체·체납 있으면 기보·신보·중진공 제외, 소진공·지역신보·미소금융 위주
+    funds = funds.filter(function(f){
+      return !f.name.includes('기보') && !f.name.includes('신보') && !f.name.includes('중진공');
+    });
+    // 신용취약자 전용 상품 최우선 추가
+    funds.unshift({rank:1,name:'미소금융 창업·운영자금',limit:'2천만',tags:['무담보·무보증','신용취약자 전용','연체이력 무관']});
+    funds.unshift({rank:1,name:'햇살론 소상공인 보증',limit:'3천만',tags:['저신용 전용','보증료 면제','빠른 승인']});
+    funds = funds.slice(0,5);
+  } else if (isCreditWeak) {
+    // 신용 600점 미만: 기보 제외, 신용취약자 전용 상품 추가
+    funds = funds.filter(function(f){ return !f.name.includes('기보'); });
+    funds.unshift({rank:1,name:'미소금융 창업·운영자금',limit:'2천만',tags:['무담보·무보증','신용취약자 전용','600점 미만 가능']});
+    funds = funds.slice(0,5);
+  } else if (isCreditLow) {
+    // 신용 600~699점: 기보 제외, 신보 조건부 유지
+    funds = funds.filter(function(f){ return !f.name.includes('기보'); });
+    if (!funds.some(function(f){ return f.name.includes('신보'); })) {
+      funds.push({rank:funds.length+1,name:'신보 창업기업 특례보증',limit:'1억',tags:['보증료 0.5%','저신용 조건부','심사 강화']});
+    }
+    funds = funds.slice(0,5);
+  }
+
+  // ===== 업력 기반 후처리 필터 =====
+  if (bizYears > 0) {
+    // 소진공 성장촉진자금: 창업 3년 이내만 해당 → 초과 시 제거
+    if (!isNewBiz) {
+      funds = funds.filter(function(f){ return f.name !== '소진공 성장촉진자금'; });
+      // 대체: 소진공 일반경영안정자금 추가
+      if (!funds.some(function(f){ return f.name.includes('소진공'); })) {
+        funds.push({rank:funds.length+1,name:'소진공 일반경영안정자금',limit:'7천만',tags:['금리 2.0%','업력 무관','온라인 신청']});
+      }
+    }
+    // 중진공 혁신창업사업화자금: 창업 7년 이내만 해당 → 초과 시 제거
+    funds = funds.map(function(f){
+      if (f.name.includes('혁신창업사업화') && !isEarlyBiz) {
+        return Object.assign({},f,{name:'중진공 신성장기반자금',tags:['시설자금 우대','업력 무관','장기 대출']});
+      }
+      return f;
+    });
+  }
+
+  // 최종 순위 재정렬
+  funds.forEach(function(f,i){ f.rank = i+1; });
+  funds = funds.slice(0,5);
+
+  return { certs: certs, funds: funds, creditScore: creditScore, bizYears: bizYears, hasOverdue: hasOverdue };
 }
 
 // ===========================
