@@ -196,15 +196,23 @@ app.get('/api/companies/:id', authMiddleware, async (req, res) => {
 
 // 업체 등록
 app.post('/api/companies', authMiddleware, async (req, res) => {
-  const payload = { ...req.body, user_id: req.user.id, updated_at: new Date().toISOString() };
+  const companyData = req.body;
+  const name = companyData.name;
+  if (!name) return res.status(400).json({ error: '업체명이 필요합니다.' });
   // name 중복 체크 (같은 사용자 내)
   const { data: existing } = await supabase
     .from('companies')
     .select('id')
     .eq('user_id', req.user.id)
-    .eq('name', payload.name)
+    .eq('name', name)
     .single();
   if (existing) return res.status(409).json({ error: '이미 등록된 업체명입니다.' });
+  const payload = {
+    name,
+    user_id: req.user.id,
+    data_json: companyData,
+    updated_at: new Date().toISOString()
+  };
   const { data, error } = await supabase.from('companies').insert(payload).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
@@ -212,9 +220,13 @@ app.post('/api/companies', authMiddleware, async (req, res) => {
 
 // 업체 수정 (name 기준 upsert)
 app.put('/api/companies/:id', authMiddleware, async (req, res) => {
-  const payload = { ...req.body, updated_at: new Date().toISOString() };
-  delete payload.id;
-  delete payload.user_id;
+  const companyData = req.body;
+  const name = companyData.name;
+  const payload = {
+    name,
+    data_json: companyData,
+    updated_at: new Date().toISOString()
+  };
   const { data, error } = await supabase
     .from('companies')
     .update(payload)
@@ -243,14 +255,20 @@ app.post('/api/companies/sync', authMiddleware, async (req, res) => {
   if (!Array.isArray(companies)) return res.status(400).json({ error: 'companies 배열이 필요합니다.' });
   const results = [];
   for (const c of companies) {
-    const payload = { ...c, user_id: req.user.id, updated_at: new Date().toISOString() };
-    delete payload.id;
+    const name = c.name;
+    if (!name) continue;
+    const payload = {
+      name,
+      user_id: req.user.id,
+      data_json: c,
+      updated_at: new Date().toISOString()
+    };
     // name 기준 upsert
     const { data: existing } = await supabase
       .from('companies')
       .select('id')
       .eq('user_id', req.user.id)
-      .eq('name', c.name)
+      .eq('name', name)
       .single();
     if (existing) {
       const { data } = await supabase.from('companies').update(payload).eq('id', existing.id).select().single();

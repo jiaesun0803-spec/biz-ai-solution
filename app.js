@@ -3903,24 +3903,24 @@ function buildFundCriteriaHTML() {
 <style>
 .fc-section{background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:24px 26px;margin-bottom:22px}
 .fc-sec-title{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.fc-sec-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
-.fc-sec-label{font-size:16px;font-weight:800;color:#1e293b}
-.fc-sec-sub{font-size:12px;color:#64748b;margin-left:4px}
+.fc-sec-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;color:#fff;flex-shrink:0}
+.fc-sec-label{font-size:16.5px;font-weight:800;color:#1e293b}
+.fc-sec-sub{font-size:12.5px;color:#64748b;margin-left:4px}
 /* 부결 항목 */
 .fc-reject{display:flex;gap:12px;align-items:flex-start;padding:15px 16px;border-radius:11px;margin-bottom:10px;border:1.5px solid transparent;transition:transform .15s}
 .fc-reject:hover{transform:translateX(3px)}
 .fc-reject.cr{background:linear-gradient(135deg,#fff1f2,#fef2f2);border-color:#fecaca}
 .fc-reject.hi{background:linear-gradient(135deg,#fff7ed,#fff5eb);border-color:#fed7aa}
 .fc-reject.md{background:linear-gradient(135deg,#fffbeb,#fefce8);border-color:#fde68a}
-.fc-rbadge{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.fc-rbadge{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15.5px;flex-shrink:0}
 .fc-rbadge.cr{background:#fee2e2}.fc-rbadge.hi{background:#ffedd5}.fc-rbadge.md{background:#fef9c3}
-.fc-rtitle{font-size:13px;font-weight:800;color:#1e293b;margin-bottom:4px}
-.fc-rdesc{font-size:12px;color:#475569;line-height:1.6}
-.fc-rtip{display:inline-flex;align-items:center;gap:4px;margin-top:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:4px 9px;font-size:11px;color:#64748b}
+.fc-rtitle{font-size:13.5px;font-weight:800;color:#1e293b;margin-bottom:4px}
+.fc-rdesc{font-size:12.5px;color:#475569;line-height:1.6}
+.fc-rtip{display:inline-flex;align-items:center;gap:4px;margin-top:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:4px 9px;font-size:11.5px;color:#64748b}
 .fc-rlevel{margin-left:auto;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-.fc-lbadge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.fc-lbadge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
 .fc-lbadge.cr{background:#fee2e2;color:#991b1b}.fc-lbadge.hi{background:#ffedd5;color:#9a3412}.fc-lbadge.md{background:#fef9c3;color:#854d0e}
-.fc-limp{font-size:10px;color:#94a3b8;text-align:right}
+.fc-limp{font-size:10.5px;color:#94a3b8;text-align:right}
 /* 기관 카드 */
 .fc-org-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px}
 .fc-org{border-radius:12px;overflow:hidden;border:1.5px solid transparent}
@@ -3929,50 +3929,50 @@ function buildFundCriteriaHTML() {
 .fc-org.shinbo{border-color:#e9d5ff;background:linear-gradient(135deg,#faf5ff,#f3e8ff)}
 .fc-org.sjg{border-color:#fed7aa;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
 .fc-org-hd{padding:13px 15px 10px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(0,0,0,.06)}
-.fc-org-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.fc-org-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16.5px;flex-shrink:0}
 .fc-org-ic.jjg{background:#2563eb;color:#fff}.fc-org-ic.kibo{background:#16a34a;color:#fff}.fc-org-ic.shinbo{background:#7c3aed;color:#fff}.fc-org-ic.sjg{background:#ea580c;color:#fff}
-.fc-org-nm{font-size:14px;font-weight:800;color:#1e293b}.fc-org-full{font-size:10px;color:#64748b;margin-top:1px}
+.fc-org-nm{font-size:14.5px;font-weight:800;color:#1e293b}.fc-org-full{font-size:10.5px;color:#64748b;margin-top:1px}
 .fc-org-bd{padding:12px 15px 14px}
 .fc-cr{display:flex;gap:7px;align-items:flex-start;margin-bottom:8px}
 .fc-cr:last-child{margin-bottom:0}
 .fc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
 .fc-dot.jjg{background:#2563eb}.fc-dot.kibo{background:#16a34a}.fc-dot.shinbo{background:#7c3aed}.fc-dot.sjg{background:#ea580c}
-.fc-ct{font-size:12px;color:#334155;line-height:1.55}
+.fc-ct{font-size:12.5px;color:#334155;line-height:1.55}
 .fc-ct strong{font-weight:700;color:#1e293b}
-.fc-chip{display:inline-block;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;margin-left:3px}
+.fc-chip{display:inline-block;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:3px;margin-left:3px}
 .fc-chip.jjg{background:#2563eb}.fc-chip.kibo{background:#16a34a}.fc-chip.shinbo{background:#7c3aed}.fc-chip.sjg{background:#ea580c}
 /* 신용점수 표 */
-.fc-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
-.fc-table th{background:#1e3a5f;color:#fff;padding:9px 12px;text-align:left;font-weight:700;font-size:11px}
+.fc-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:14px}
+.fc-table th{background:#1e3a5f;color:#fff;padding:9px 12px;text-align:left;font-weight:700;font-size:11.5px}
 .fc-table th:first-child{border-radius:7px 0 0 0}.fc-table th:last-child{border-radius:0 7px 0 0}
 .fc-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
 .fc-table tr:last-child td{border-bottom:none}
 .fc-table tr:nth-child(even) td{background:#f8fafc}
-.fc-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.fc-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap}
 .fc-tag.pass{background:#dcfce7;color:#166534}.fc-tag.cond{background:#fef9c3;color:#854d0e}.fc-tag.fail{background:#fee2e2;color:#991b1b}
 /* 업력 카드 */
 .fc-yr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
 .fc-yr{border-radius:11px;padding:14px;text-align:center;border:1.5px solid}
 .fc-yr.y3{background:#f0fdf4;border-color:#86efac}.fc-yr.y7{background:#eff6ff;border-color:#93c5fd}.fc-yr.y7p{background:#faf5ff;border-color:#c4b5fd}
-.fc-yr-n{font-size:20px;font-weight:900;margin-bottom:3px}
+.fc-yr-n{font-size:20.5px;font-weight:900;margin-bottom:3px}
 .fc-yr.y3 .fc-yr-n{color:#16a34a}.fc-yr.y7 .fc-yr-n{color:#2563eb}.fc-yr.y7p .fc-yr-n{color:#7c3aed}
-.fc-yr-lb{font-size:11px;font-weight:700;color:#475569;margin-bottom:7px}
-.fc-yr-fd{font-size:11px;color:#64748b;line-height:1.55}
+.fc-yr-lb{font-size:11.5px;font-weight:700;color:#475569;margin-bottom:7px}
+.fc-yr-fd{font-size:11.5px;color:#64748b;line-height:1.55}
 .fc-yr-fd strong{color:#1e293b;font-weight:700}
 /* 요약 배너 */
 .fc-summary{background:linear-gradient(135deg,#1e3a5f,#0f2744);border-radius:12px;padding:20px 24px;margin-top:6px}
-.fc-sum-title{font-size:14px;font-weight:800;color:#fb923c;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.fc-sum-title{font-size:14.5px;font-weight:800;color:#fb923c;margin-bottom:12px;display:flex;align-items:center;gap:7px}
 .fc-sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .fc-sum-item{background:rgba(255,255,255,.07);border-radius:9px;padding:12px;border:1px solid rgba(255,255,255,.1)}
-.fc-sum-org{font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px}
-.fc-sum-score{font-size:16px;font-weight:900;color:#fff;margin-bottom:3px}
-.fc-sum-desc{font-size:10px;color:#cbd5e1;line-height:1.5}
+.fc-sum-org{font-size:11.5px;font-weight:700;color:#94a3b8;margin-bottom:5px}
+.fc-sum-score{font-size:16.5px;font-weight:900;color:#fff;margin-bottom:3px}
+.fc-sum-desc{font-size:10.5px;color:#cbd5e1;line-height:1.5}
 /* 도입 배너 */
 .fc-intro{background:linear-gradient(135deg,#fff1f2,#fff5f5);border:1.5px solid #fecaca;border-radius:11px;padding:15px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start}
-.fc-intro-icon{font-size:24px;flex-shrink:0;margin-top:1px}
-.fc-intro h3{font-size:14px;font-weight:800;color:#dc2626;margin-bottom:4px}
-.fc-intro p{font-size:12px;color:#7f1d1d;line-height:1.65}
-.fc-score-title{font-size:13px;font-weight:800;color:#1e293b;margin:16px 0 10px;display:flex;align-items:center;gap:7px}
+.fc-intro-icon{font-size:24.5px;flex-shrink:0;margin-top:1px}
+.fc-intro h3{font-size:14.5px;font-weight:800;color:#dc2626;margin-bottom:4px}
+.fc-intro p{font-size:12.5px;color:#7f1d1d;line-height:1.65}
+.fc-score-title{font-size:13.5px;font-weight:800;color:#1e293b;margin:16px 0 10px;display:flex;align-items:center;gap:7px}
 .fc-score-title::before{content:'';display:block;width:3px;height:14px;background:#ea580c;border-radius:2px}
 </style>
 
