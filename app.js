@@ -121,7 +121,7 @@ window.printReport = function() {
 
   var rev = {};
   try {
-    var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var cs = (window._companiesCache||[]);
     var cm = cs.find(function(x){return x.name===_currentReport.company;});
     if (cm && cm.revenueData) rev = cm.revenueData;
   } catch(e){}
@@ -226,25 +226,23 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===========================
 // ★ 서버 업체 데이터 동기화
 // ===========================
+// ★ 메모리 캐시 (Supabase DB 단독 저장 — localStorage 업체 저장 완전 제거)
+window._companiesCache = [];
+
+// 서버에서 업체 목록 로드 후 메모리 캐시에 저장
 async function syncCompaniesFromServer() {
   try {
-    const localData = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
     const serverData = await apiCall('/api/companies');
-
     if (!Array.isArray(serverData)) {
-      // 서버 응답 이상 - 로컬 데이터 유지
-      console.warn('서버 업체 데이터 형식 오류, 로컬 데이터 유지');
+      console.warn('서버 업체 데이터 형식 오류');
       updateDataLists();
       if (typeof renderCompanyCards === 'function') renderCompanyCards();
       return;
     }
-
-    // 서버 데이터를 name 기준 맵으로 변환 (extra 컬럼에 원본 JSON 저장됨)
-    const serverMap = {};
-    serverData.forEach(function(c) {
-      // extra 컬럼에 원본 업체 데이터가 저장됨 (없으면 서버 컬럼으로 폴백)
+    // 서버 데이터를 메모리 캐시에 저장 (extra 컬럼에 원본 JSON 저장됨)
+    window._companiesCache = serverData.map(function(c) {
       const base = (c.extra && typeof c.extra === 'object') ? c.extra : {};
-      const item = Object.assign({}, base, {
+      return Object.assign({}, base, {
         _serverId: c.id,
         name: c.name || base.name,
         industry: base.industry || c.industry || '',
@@ -254,75 +252,13 @@ async function syncCompaniesFromServer() {
         empCount: base.empCount || String(c.employees || ''),
         address: base.address || c.address || ''
       });
-      serverMap[item.name] = item;
     });
-
-    // 로컬 데이터를 name 기준 맵으로 변환
-    const localMap = {};
-    localData.forEach(function(c) { localMap[c.name] = c; });
-
-    // 병합: 서버 + 로컬 전용(서버에 없는 것) 합산
-    const merged = [];
-    const uploadQueue = []; // 서버에 없는 로컬 업체 업로드 대기열
-
-    // 서버 데이터 우선 반영
-    Object.values(serverMap).forEach(function(sc) { merged.push(sc); });
-
-    // 로컬에만 있는 업체 추가 (서버에 없는 것)
-    localData.forEach(function(lc) {
-      if (!serverMap[lc.name]) {
-        merged.push(lc);
-        uploadQueue.push(lc);
-      }
-    });
-
-    // 병합 결과를 로컬에 저장 (데이터 소실 방지)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-    console.log('업체 데이터 병합 완료: 서버', Object.keys(serverMap).length, '개 + 로컬 전용', uploadQueue.length, '개');
-
-    // 로컬 전용 업체를 서버에 비동기 업로드
-    if (uploadQueue.length > 0) {
-      (async function() {
-        try {
-          await apiCall('/api/companies/sync', { method:'POST', body: JSON.stringify({ companies: uploadQueue }) });
-          // 업로드 후 서버 ID 반영
-          const refreshed = await apiCall('/api/companies');
-          if (Array.isArray(refreshed)) {
-            const refreshMap = {};
-            refreshed.forEach(function(c) {
-              const base = (c.extra && typeof c.extra === 'object') ? c.extra : {};
-              const item = Object.assign({}, base, {
-                _serverId: c.id,
-                name: c.name || base.name,
-                industry: base.industry || c.industry || '',
-                rep: base.rep || c.rep_name || '',
-                bizNum: base.bizNum || c.reg_no || '',
-                bizDate: base.bizDate || c.founded || '',
-                empCount: base.empCount || String(c.employees || ''),
-                address: base.address || c.address || ''
-              });
-              refreshMap[item.name] = item;
-            });
-            const current = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-            const updated = current.map(function(c) { return refreshMap[c.name] || c; });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            console.log('로컬 전용 업체 서버 업로드 완료:', uploadQueue.length, '개');
-          }
-        } catch(uploadErr) {
-          console.warn('로컬 전용 업체 서버 업로드 실패 (로컬 유지):', uploadErr.message);
-        }
-      })();
-    }
-
+    console.log('업체 데이터 서버 로드 완료:', window._companiesCache.length, '개');
     updateDataLists();
     if (typeof renderCompanyCards === 'function') renderCompanyCards();
   } catch(e) {
-    console.warn('서버 업체 동기화 실패 (로컬 데이터 유지):', e.message);
-    // 401 인증 만료 시 재로그인 안내 배너 표시 (데이터는 절대 삭제하지 않음)
-    if (e.isAuthError) {
-      showSessionExpiredBanner();
-    }
-    // 동기화 실패 시에도 기존 로컬 데이터 그대로 유지 - 아무것도 덮어쓰지 않음
+    console.warn('서버 업체 동기화 실패:', e.message);
+    if (e.isAuthError) { showSessionExpiredBanner(); }
     updateDataLists();
     if (typeof renderCompanyCards === 'function') renderCompanyCards();
   }
@@ -730,7 +666,7 @@ window.showCompanyForm = function(editName=null) {
   const titleEl = document.getElementById('company-form-title');
   if (editName) {
     if(titleEl) titleEl.textContent = `기업 정보 수정 - ${editName}`;
-    const comp = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]').find(c=>c.name===editName);
+    const comp = (window._companiesCache||[]).find(c=>c.name===editName);
     if (comp?.rawData) {
       const els = document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea');
       comp.rawData.forEach((d,i) => { if(els[i]){ if(els[i].type==='checkbox'||els[i].type==='radio') els[i].checked=d.checked; else els[i].value=d.value; } });
@@ -750,7 +686,7 @@ window.showCompanyForm = function(editName=null) {
 
 window.renderCompanyCards = function() {
   const container = document.getElementById('company-cards-container'); if (!container) return;
-  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const companies = window._companiesCache || [];
   const keyword   = (document.getElementById('company-search-input')?.value||'').toLowerCase();
   const filtered  = companies.filter(c=>c.name.toLowerCase().includes(keyword)||(c.industry||'').toLowerCase().includes(keyword));
   if (!filtered.length) {
@@ -767,16 +703,19 @@ window.renderCompanyCards = function() {
   }).join('');
 };
 
-window.deleteCompany = function(name) {
+window.deleteCompany = async function(name) {
   if (!confirm(`[${name}]을 삭제하시겠습니까?`)) return;
-  let companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-  const target = companies.find(c=>c.name===name);
-  companies = companies.filter(c=>c.name!==name);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
-  // 서버에서도 삭제 (비동기)
+  const target = (window._companiesCache || []).find(c=>c.name===name);
   if (target && target._serverId) {
-    apiCall('/api/companies/'+target._serverId, { method:'DELETE' })
-      .catch(function(e){ console.warn('서버 업체 삭제 실패:', e.message); });
+    try {
+      await apiCall('/api/companies/'+target._serverId, { method:'DELETE' });
+      window._companiesCache = (window._companiesCache || []).filter(c=>c.name!==name);
+    } catch(e) {
+      alert('삭제 실패: ' + e.message);
+      return;
+    }
+  } else {
+    window._companiesCache = (window._companiesCache || []).filter(c=>c.name!==name);
   }
   updateDataLists(); renderCompanyCards();
 };
@@ -787,7 +726,7 @@ window.deleteCompany = function(name) {
 function updateDashboardReports() {
   const listEl = document.getElementById('dashboard-report-list'); if (!listEl) return;
   const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
-  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const companies = window._companiesCache || [];
   const supportDocs = JSON.parse(localStorage.getItem(DB_SUPPORT_DOC)||'[]');
   const notices = JSON.parse(localStorage.getItem(DB_NOTICES)||'[]');
   const setNum=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
@@ -843,7 +782,7 @@ window.dashboardFeatureSoon = function(name){
 // ★ 데이터 목록 갱신
 // ===========================
 window.updateDataLists = function() {
-  const companies = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const companies = window._companiesCache || [];
   const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
   document.querySelectorAll('.company-dropdown').forEach(sel=>{
     sel.innerHTML='<option value="">기업을 선택하세요</option>';
@@ -862,8 +801,8 @@ window.updateDataLists = function() {
 // ★ 보고서 목록 서브뷰
 // ===========================
 window.showReportListSummary=function(){document.getElementById('rl-summary').style.display='block';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='none';updateDataLists();};
-window.showFullCompanies=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='block';document.getElementById('rl-reports').style.display='none';const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');const tbody=document.getElementById('company-full-body');if(tbody){tbody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.industry||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>';}};
-window.showFullReports=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='block';const companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');const filterComp=document.getElementById('filter-company');if(filterComp){filterComp.innerHTML='<option value="">전체 업체</option>';companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`);}renderFullReports();};
+window.showFullCompanies=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='block';document.getElementById('rl-reports').style.display='none';const companies=window._companiesCache||[];const tbody=document.getElementById('company-full-body');if(tbody){tbody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.industry||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>';}};
+window.showFullReports=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='block';const companies=window._companiesCache||[];const filterComp=document.getElementById('filter-company');if(filterComp){filterComp.innerHTML='<option value="">전체 업체</option>';companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`);}renderFullReports();};
 window.renderFullReports=function(){const tf=document.getElementById('filter-type')?.value||'';const cf=document.getElementById('filter-company')?.value||'';const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');const filtered=[...reports].reverse().filter(r=>(!tf||r.type===tf)&&(!cf||r.company===cf));const shown=filtered.slice(0,15);const countEl=document.getElementById('filter-result-count');if(countEl)countEl.textContent=`총 ${filtered.length}건`;const tbody=document.getElementById('report-full-body');if(!tbody)return;tbody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReportFull('${r.id}')">삭제</button><button class="btn-small-outline" style="margin-left:6px;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">조건에 맞는 보고서가 없음.</td></tr>';};
 window.deleteReportFull=function(id){if(!confirm('삭제하시겠습니까?'))return;let r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');r=r.filter(x=>x.id!==id);localStorage.setItem(DB_REPORTS,JSON.stringify(r));renderFullReports();updateDashboardReports();};
 window.downloadReportById=function(id){
@@ -872,7 +811,7 @@ window.downloadReportById=function(id){
   if(!rep){alert('보고서를 찾을 수 없음.');return;}
   var rev={};
   try{
-    var cs=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var cs=window._companiesCache||[];
     var cm=cs.find(function(x){return x.name===rep.company;});
     if(cm&&cm.revenueData)rev=cm.revenueData;
   }catch(e){}
@@ -905,28 +844,28 @@ window.saveCompanyData=function(){
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
   const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
-  let companies=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-  const idx=companies.findIndex(c=>c.name===name);
-  const existingServerId = idx>-1 ? companies[idx]._serverId : null;
-  if(idx>-1) companies[idx]=Object.assign({},newC,{_serverId:existingServerId}); else companies.push(newC);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(companies));
-  // 서버에도 저장 (비동기, 실패해도 로컬은 유지)
+  const cache = window._companiesCache || [];
+  const idx = cache.findIndex(c=>c.name===name);
+  const existingServerId = idx>-1 ? cache[idx]._serverId : null;
+  // Supabase API 단독 저장 (localStorage 저장 없음)
   (async function(){
     try {
-      const payload = Object.assign({}, newC, { data_json: newC });
+      let saved;
       if (existingServerId) {
-        const updated = await apiCall('/api/companies/'+existingServerId, { method:'PUT', body: JSON.stringify(payload) });
-        companies[idx]._serverId = updated.id;
+        saved = await apiCall('/api/companies/'+existingServerId, { method:'PUT', body: JSON.stringify(newC) });
       } else {
-        const created = await apiCall('/api/companies', { method:'POST', body: JSON.stringify(payload) });
-        const newIdx = companies.findIndex(c=>c.name===name);
-        if(newIdx>-1) companies[newIdx]._serverId = created.id;
+        saved = await apiCall('/api/companies', { method:'POST', body: JSON.stringify(newC) });
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
-    } catch(e){ console.warn('서버 업체 저장 실패 (로컬만 저장됨):', e.message); }
+      // 메모리 캐시 업데이트
+      const item = Object.assign({}, newC, { _serverId: saved.id });
+      if (idx>-1) { window._companiesCache[idx] = item; }
+      else { window._companiesCache.push(item); }
+      alert('기업 정보가 저장되었음!');
+      updateDataLists(); showCompanyList();
+    } catch(e){
+      alert('저장 실패: ' + e.message);
+    }
   })();
-  alert('기업 정보가 저장되었음!');
-  updateDataLists(); showCompanyList();
 };
 window.toggleExportInputs=function(){const isExp=[...document.getElementsByName('export')].some(r=>r.checked&&r.value==='수출중');document.querySelectorAll('.export-money').forEach(i=>{i.disabled=!isExp;if(!isExp)i.value='';});};
 window.toggleCorpNumber=function(){const isC=[...document.getElementsByName('biz_type')].some(r=>r.checked&&r.value==='법인');const el=document.getElementById('corp_number');if(el){el.disabled=!isC;if(!isC)el.value='';}};
@@ -993,7 +932,7 @@ function fKRWRound(n){
 // ★ 기존 만원 단위 데이터 → 원 단위 마이그레이션
 // ===========================
 function migrateRevenueToWon() {
-  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs = (window._companiesCache||[]);
   var changed = false;
   cs.forEach(function(c) {
     // 마이그레이션 플래그가 없고, 매출 데이터가 만원 단위로 보이는 경우 변환
@@ -1050,7 +989,7 @@ function migrateRevenueToWon() {
     }
   });
   if (changed) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
+    window._companiesCache = cs;
     console.log('[Migration] 만원→원 단위 변환 완료');
   }
 }
@@ -3610,7 +3549,7 @@ window.generateReport = async function(type, version, event) {
   var tab = event.target.closest('.tab-content');
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
-  var cs  = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs  = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===cN;});
   if (!cData) { alert('기업 정보를 찾을 수 없음.'); return; }
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
@@ -3713,7 +3652,7 @@ window.initFinanceTab = function() {
     }
     if(form) form.style.display='block';
     // 저장된 데이터 불러오기
-    var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var cs = (window._companiesCache||[]);
     var cData = cs.find(function(c){return c.name===nm;});
     // ① 업체 등록 부채 현황 표시
     var dKibo   = parseInt(cData && cData.debtKibo)   || 0;
@@ -3808,7 +3747,7 @@ window.saveFsData = function() {
   var sel = document.getElementById('finance-company-select');
   if (!sel || !sel.value) { alert('기업을 먼저 선택해주세요.'); return; }
   var nm = sel.value;
-  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs = (window._companiesCache||[]);
   var idx = cs.findIndex(function(c){return c.name===nm;});
   if (idx < 0) { alert('기업 정보를 찾을 수 없음.'); return; }
   var fields = ['rev_y23','rev_y24','cogs_y24','sga_y24','op_y24','net_y24','int_y24',
@@ -3828,7 +3767,7 @@ window.saveFsData = function() {
     cs[idx].revenueData.y24 = _rv24;
     cs[idx].revenueData.y25 = _rv24;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cs));
+  window._companiesCache = cs;
   alert('재무 데이터가 저장되었습니다.\n업체관리 매출 데이터도 함께 업데이트되었습니다.');
 };
 
@@ -3838,7 +3777,7 @@ window.generateFinanceReport = async function(event) {
   var nm = sel.value;
   // 저장 먼저 실행
   saveFsData();
-  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===nm;});
   if (!cData) { alert('기업 정보를 찾을 수 없음.'); return; }
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
@@ -3887,7 +3826,7 @@ window.generateAnyReport = async function(type, version, event) {
   var tab = event.target.closest('.tab-content');
   var cN  = tab.querySelector('.company-dropdown').value;
   if (!cN) { alert('기업을 선택해주세요.'); return; }
-  var cs  = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs  = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===cN;});
   if (!cData) { alert('기업 정보를 찾을 수 없음.'); return; }
   var rev  = cData.revenueData||{y23:0,y24:0,y25:0,cur:0};
@@ -3932,7 +3871,7 @@ window.generateAnyReport = async function(type, version, event) {
 // ===========================
 window.viewReport = function(id) {
   var r = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]').find(function(x){return x.id===id;}); if(!r) return;
-  var cs = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  var cs = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===r.company;})||{name:r.company,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:r.date};
   var rev = r.revenueData||{cur:0,y25:0,y24:0,y23:0};
   var data; try{data=JSON.parse(r.content);}catch(e){data={};}
