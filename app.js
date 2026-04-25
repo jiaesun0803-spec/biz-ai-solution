@@ -859,11 +859,12 @@ window.saveCompanyData=function(){
   const debtSjg=_pInt('debt_sjg');
   const debtJaidan=_pInt('debt_jaidan');
   const debtCorpCollateral=_pInt('debt_corp_collateral');
+  const rentMonthly=_pInt('rent_monthly');
   const kcbScore=parseInt((document.getElementById('kcb_score')?.value||'0').replace(/[^0-9]/g,''))||0;
   const niceScore=parseInt((document.getElementById('nice_score')?.value||'0').replace(/[^0-9]/g,''))||0;
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
@@ -3915,7 +3916,44 @@ window.initFinanceTab = function() {
       var elRevY23 = document.getElementById('fs_rev_y23');
       if (elRevY23 && rev.y24 > 0) elRevY23.value = fmtComma(rev.y24);
     }
-    // ④ 유동부채 = 중진공+신보+기보+소진공+재단 자동 합산
+    // ③-2 간이 모드: 업체정보 매출 + 월임대료 자동 반영
+    if (cData && cData.revenueData) {
+      var rev2 = cData.revenueData;
+      // 2025년(전년도) 매출 → simple_rev_y24
+      var elSimRevY24 = document.getElementById('simple_rev_y24');
+      if (elSimRevY24 && rev2.y25 > 0) elSimRevY24.value = fmtComma(rev2.y25);
+      // 2024년(전전년도) 매출 → simple_rev_y23
+      var elSimRevY23 = document.getElementById('simple_rev_y23');
+      if (elSimRevY23 && rev2.y24 > 0) elSimRevY23.value = fmtComma(rev2.y24);
+    }
+    // 업체정보 월임대료 → simple_rent 자동 반영
+    var elSimRent = document.getElementById('simple_rent');
+    if (elSimRent && cData && cData.rentMonthly > 0) {
+      elSimRent.value = fmtComma(cData.rentMonthly);
+    }
+    // 간이 모드 총 대출 잔액 → simple_debt 자동 반영 (업체 등록 부채 합계)
+    var elSimDebt = document.getElementById('simple_debt');
+    if (elSimDebt && totalRegisteredDebt > 0) {
+      elSimDebt.value = fmtComma(totalRegisteredDebt);
+    }
+    // 간이 모드 업종 자동 선택
+    var elSimIndustry = document.getElementById('simple_industry');
+    if (elSimIndustry && cData && cData.industry) {
+      var industryMap = {
+        '제조업': 'manufacturing', '도매업': 'wholesale', '소매업': 'retail',
+        '음식점': 'food', '음식점업': 'food', '주점업': 'food',
+        '서비스업': 'service', 'IT': 'it', '소프트웨어': 'it',
+        '건설업': 'construction', '건설': 'construction'
+      };
+      var matchedIndustry = '';
+      Object.keys(industryMap).forEach(function(key) {
+        if ((cData.industry || '').includes(key)) matchedIndustry = industryMap[key];
+      });
+      if (matchedIndustry) elSimIndustry.value = matchedIndustry;
+    }
+    // 간이 모드 값 입력 후 실시간 계산 트리거
+    if (typeof calcSimpleFs === 'function') calcSimpleFs();
+    // ④ 유동부채 = 중진공+신보+기보+소진공+재단 자동 합산 (재단 포함 확인)
     var curLiab = dJjg + dShinbo + dKibo + dSjg + dJaidan;
     // ⑤ 비유동부채 = 회사담보
     var fixLiab = dCorpCol;
