@@ -645,6 +645,20 @@ window.showTab = function(tabId, updateUrl=true) {
       if(res) res.style.display='none';
     }
   });
+  // 재무제표 탭 전환 시: 기업 선택 초기화 + 보유여부 토글 숨김 + 입력 폼 숨김
+  if(tabId==='finance'){
+    const sel = document.getElementById('finance-company-select');
+    if(sel) sel.value = '';
+    const toggle = document.getElementById('fs-mode-toggle');
+    if(toggle) toggle.style.display = 'none';
+    const simpleForm = document.getElementById('finance-simple-form');
+    if(simpleForm) simpleForm.style.display = 'none';
+    const formalForm = document.getElementById('finance-formal-form');
+    if(formalForm) formalForm.style.display = 'none';
+    // 라디오 초기화
+    const radioYes = document.getElementById('fs_mode_yes');
+    if(radioYes) radioYes.checked = true;
+  }
   updateDataLists();
   if(updateUrl) history.pushState(null,'',`?tab=${tabId}`);
 };
@@ -674,6 +688,10 @@ window.showCompanyForm = function(editName=null) {
     }
   } else {
     if(titleEl) titleEl.textContent = '기업 정보 등록';
+    // 신규 등록 시 폼 완전 초기화
+    const form = document.getElementById('companyForm');
+    if (form) form.reset();
+    calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
   }
   const ct = document.getElementById('company');
   if (!ct.classList.contains('active')) {
@@ -3610,6 +3628,7 @@ window.generateReport = async function(type, version, event) {
     ca.innerHTML = version==='client'
       ? buildMgmtClientHTML(data, cData, rev, today)
       : buildMgmtConsultantHTML(data, cData, rev, today);
+    addDisclaimerToReport('report-content-area');
   } catch(htmlErr) {
     console.error('HTML 빌드 오류:', htmlErr);
     ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + (htmlErr.stack||String(htmlErr)) + '</pre></div>';
@@ -4151,10 +4170,24 @@ window.generateFinanceReport = async function(event) {
   if (ca) {
     resetContentArea(ca);
     ca.innerHTML = buildFinanceHTML(data, cData, rev, today);
+    addDisclaimerToReport('finance-content-area');
   }
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
   initReportCharts(rev);
 };
+
+// 보고서 면책 문구 추가 공통 함수
+function addDisclaimerToReport(contentAreaId) {
+  var ca = document.getElementById(contentAreaId);
+  if (!ca) return;
+  var existing = ca.querySelector('.report-disclaimer');
+  if (existing) existing.remove();
+  var disc = document.createElement('div');
+  disc.className = 'report-disclaimer';
+  disc.style.cssText = 'text-align:center;padding:18px 24px 12px;color:#94a3b8;font-size:10px;line-height:1.6;border-top:1px solid #f1f5f9;margin-top:8px;';
+  disc.innerHTML = '* 본 보고서는 AI가 생성한 분석 결과로 참고용으로만 사용하시기 바랍니다. 실제 경영 의사결정에는 전문 컨설턴트의 검토를 권장합니다.';
+  ca.appendChild(disc);
+}
 
 window.generateAnyReport = async function(type, version, event) {
   var overlay = document.getElementById('ai-loading-overlay');
@@ -4198,6 +4231,7 @@ window.generateAnyReport = async function(type, version, event) {
   resetContentArea(ca);
   ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
+  addDisclaimerToReport(cfg.contentAreaId);
   initReportCharts(rev);
 };
 
@@ -4220,9 +4254,10 @@ window.viewReport = function(id) {
       resetContentArea(ca);
       try {
       ca.innerHTML = r.version==='client' ? buildMgmtClientHTML(data,cData,rev,r.date) : buildMgmtConsultantHTML(data,cData,rev,r.date);
+      addDisclaimerToReport('report-content-area');
     } catch(htmlErr2) {
       console.error('viewReport HTML 오류:', htmlErr2);
-      ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>⚠️ 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + (htmlErr2.stack||String(htmlErr2)) + '</pre></div>';
+      ca.innerHTML = '<div style="padding:40px;color:red;font-size:14px;background:white;border-radius:8px"><b>\u26a0\ufe0f 보고서 렌더링 오류</b><br><pre style="margin-top:10px;font-size:12px;white-space:pre-wrap">' + (htmlErr2.stack||String(htmlErr2)) + '</pre></div>';
     }
       _currentReport = {company:cData.name, type:r.title, contentAreaId:'report-content-area', landscape:false};
       initReportCharts(rev);
@@ -4237,6 +4272,7 @@ window.viewReport = function(id) {
       var ca2 = document.getElementById(cfg.contentAreaId);
       resetContentArea(ca2);
       ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
+      addDisclaimerToReport(cfg.contentAreaId);
       _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
       initReportCharts(rev);
     }, 50);
