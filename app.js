@@ -1093,7 +1093,7 @@ function tplStyle(color, orientation) {
   + '.rp-cfoot { display:flex; justify-content:space-between; font-size:13px; color:#64748b; padding-top:10px; border-top:1px solid #e2e8f0; margin-top:10px; font-weight:500; }'
   + '.rp-cover-unified { padding:0; justify-content:space-between; background:#ffffff; }'
   + '.rp-cover-unified::before { content:""; position:absolute; left:34px; right:34px; top:34px; height:8px; background:'+c+'; }'
-  + '.rp-cover-unified::after { content:""; position:absolute; left:48px; top:42px; bottom:34px; width:1px; background:#e5e7eb; }'
+  + '.rp-cover-unified::after { content:none; }'
   + '.rp-cover-top { padding:86px 62px 0 62px; flex:0 0 auto; position:relative; z-index:1; }'
   + '.rp-cover-main { flex:1 1 auto; min-height:0; display:flex; align-items:flex-start; justify-content:center; padding:54px 56px 0 56px; position:relative; z-index:1; }'
   + '.rp-cover-main-inner { width:100%; text-align:center; }'
