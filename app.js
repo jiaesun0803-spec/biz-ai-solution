@@ -2577,7 +2577,21 @@ function buildFundHTML(d, cData, rev, dateStr) {
       +(_debtTotal>0?' − 기대출 '+fLimitStr(_debtTotal):'')  
       +(_adj<1?' × 부채비율 조정('+Math.round(_adj*100)+'%)':'')
     : '매출 미입력 — 기관별 한도 기준 산정';
-  var totalRange = d.total_range || (_maxAdj > 0 ? '기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj) : '별도 산정 필요');
+  // 매출이 없어도 기관별 공식 한도 기준으로 항상 금액 표시 (별도 산정 필요 제거)
+  if (_maxAdj === 0 && _revNum === 0 && funds.length > 0) {
+    // 매출 미입력 시: 기관별 공식 한도 합산 기준으로 표시
+    var _fallbackMin = 0, _fallbackMax = 0;
+    funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_fallbackMax+=n; if(_fallbackMin===0||n<_fallbackMin)_fallbackMin=n;} });
+    if (_needFundNum > 0 && _fallbackMax > _needFundNum) _fallbackMax = _needFundNum;
+    _maxAdj = _fallbackMax;
+    _minAdj = _fallbackMin;
+  }
+  // 최종 보정: 여전히 0이면 첫 번째 기관 한도 기준으로 표시
+  if (_maxAdj === 0 && funds.length > 0) {
+    _maxAdj = parseLimitNum(funds[0].limit) || 70000000;
+    _minAdj = Math.round(_maxAdj * 0.5);
+  }
+  var totalRange = d.total_range || '기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj);
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
@@ -2618,7 +2632,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     +     '<text x="55" y="48" text-anchor="middle" font-size="20" font-weight="700" fill="#1e293b">'+score+'</text>'
     +   '</svg>'
     +   '<div style="font-size:16px;font-weight:800;color:'+color+';line-height:1.2;margin-bottom:8px">'+(d.score_desc||'신청 가능')+'</div>'
-    +   '<div style="font-size:11px;color:#64748b;line-height:1.7">'+(d.match_count||5)+'개 기관 매칭 완료<br>예상 조달 범위 '+totalRange+'</div>'
+    +   '<div style="font-size:9.5px;color:#64748b;line-height:1.85;word-break:keep-all;white-space:normal;text-align:center">'+(d.match_count||5)+'개 기관 매칭 완료<br>예상 조달 범위<br>'+totalRange+'</div>'
     + '</div>'
     + rpSec('기본 자격 체크리스트', color,
           checks.map(function(c){ var s=chkS(c.status); return '<div class="rp-chk"><div class="rp-chi" style="background:'+s.bg+';color:'+s.tc+'">'+s.ic+'</div><div class="rp-cht">'+c.text+'</div><span class="rp-chb" style="background:'+s.bbc+';color:'+s.btc+'">'+s.bl+'</span></div>'; }).join('')
@@ -3535,6 +3549,46 @@ function getIndustryCerts(ind, nm, itm, cData) {
     });
   }
 
+  // ===== 매출 기반 기관별 한도 동적 조정 =====
+  // 매출이 있으면 기관별 공식 한도와 매출 기반 계산값 중 작은 값 사용
+  (function() {
+    var _rv = parseInt((cData.revenueData&&cData.revenueData.y25)||0) || parseInt((cData.revenueData&&cData.revenueData.y24)||0) || 0;
+    var _curM = new Date().getMonth()+1;
+    var _rvCur = parseInt((cData.revenueData&&cData.revenueData.cur)||0) || 0;
+    var _rvAnn = _rvCur > 0 ? Math.round(_rvCur*(12/Math.max(_curM,1))) : 0;
+    var _revNum = _rvAnn || _rv || 0;
+    if (_revNum <= 0) return; // 매출 없으면 하드코딩 한도 유지
+    var _isMfg2 = ind.includes('제조') || ind.includes('생산') || ind.includes('가공') || ind.includes('뿌리') || ind.includes('소재') || ind.includes('부품') || ind.includes('장비');
+    function _fls(n){ if(n>=100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'')+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
+    function _pln(s){ if(!s) return 0; s=String(s).replace(/[,\s]/g,''); if(s.includes('억')) return parseFloat(s)*100000000; if(s.includes('천만')) return parseFloat(s)*10000000; if(s.includes('만')) return parseFloat(s)*10000; return parseFloat(s)||0; }
+    // 기관별 매출 기반 한도 계산 규칙 (2026년 기준)
+    var _orgLimits = {
+      '중진공': _isMfg2 ? Math.round(_revNum*(1/4)) : Math.round(_revNum*(1/7)),
+      '기보': _isMfg2 ? Math.round(_revNum*(1/3)) : Math.round(_revNum*(1/5)),
+      '신보': Math.round(_revNum*(1/5)),
+      '신용보증재단': Math.min(100000000, Math.round(_revNum*(1/8))),
+      '지역신보': Math.min(100000000, Math.round(_revNum*(1/8))),
+      '소진공': Math.min(70000000, Math.round(_revNum*(1/8))),
+      '농신보': Math.round(_revNum*(1/5))
+    };
+    funds = funds.map(function(f) {
+      var _officialNum = _pln(f.limit);
+      var _dynNum = 0;
+      // 기관명 매칭
+      if (f.name.includes('중진공')) _dynNum = _orgLimits['중진공'];
+      else if (f.name.includes('기보') || f.name.includes('기술보증')) _dynNum = _orgLimits['기보'];
+      else if (f.name.includes('신보') && !f.name.includes('지역') && !f.name.includes('재단')) _dynNum = _orgLimits['신보'];
+      else if (f.name.includes('신용보증재단') || f.name.includes('지역신보')) _dynNum = _orgLimits['신용보증재단'];
+      else if (f.name.includes('소진공')) _dynNum = _orgLimits['소진공'];
+      else if (f.name.includes('농신보')) _dynNum = _orgLimits['농신보'];
+      if (_dynNum > 0 && _officialNum > 0) {
+        // 공식 한도와 매출 기반 계산값 중 작은 값 사용 (단, 최소 1천만 보장)
+        var _finalNum = Math.max(10000000, Math.min(_officialNum, _dynNum));
+        return Object.assign({}, f, { limit: _fls(_finalNum) });
+      }
+      return f;
+    });
+  })();
   // 최종 순위 재정렬
   funds.forEach(function(f,i){ f.rank = i+1; });
   funds = funds.slice(0,5);
