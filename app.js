@@ -23,10 +23,28 @@ async function apiCall(path, options={}) {
   }
   return data;
 }
-const STORAGE_KEY    = 'biz_consult_companies';
-const DB_REPORTS     = 'biz_reports';
-const DB_SUPPORT_DOC = 'biz_support_documents';
-const DB_NOTICES     = 'biz_dashboard_notices';
+const STORAGE_KEY_BASE = 'biz_consult_companies';
+const DB_REPORTS_BASE  = 'biz_reports';
+const DB_SUPPORT_DOC   = 'biz_support_documents';
+const DB_NOTICES       = 'biz_dashboard_notices';
+// 사용자별 격리 스토리지 키 (A사용자 데이터가 B사용자에게 보이지 않도록)
+function getUserStorageKey() {
+  try {
+    var s = JSON.parse(localStorage.getItem('biz_session')||'null');
+    var uid = (s && s._id) ? s._id : 'guest';
+    return STORAGE_KEY_BASE + '_' + uid;
+  } catch(e) { return STORAGE_KEY_BASE; }
+}
+function getReportsKey() {
+  try {
+    var s = JSON.parse(localStorage.getItem('biz_session')||'null');
+    var uid = (s && s._id) ? s._id : 'guest';
+    return DB_REPORTS_BASE + '_' + uid;
+  } catch(e) { return DB_REPORTS_BASE; }
+}
+// 하위 호환: STORAGE_KEY, DB_REPORTS는 동적으로 참조
+Object.defineProperty(window, 'STORAGE_KEY', { get: getUserStorageKey });
+Object.defineProperty(window, 'DB_REPORTS',  { get: getReportsKey });
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
 const ADMIN_BOOTSTRAP = {
   email:'admin@bizconsult.com',
@@ -379,6 +397,15 @@ window.handleLogin = async function() {
       approvedAt: res.user.approved_at||'',
       _id: res.user.id
     };
+    // 이전 사용자 세션 완전 초기화 (소속정보 꼬임 방지)
+    var prevSession = JSON.parse(localStorage.getItem('biz_session')||'null');
+    var prevUid = prevSession && prevSession._id ? prevSession._id : null;
+    var newUid = res.user.id;
+    if (prevUid && prevUid !== newUid) {
+      // 다른 사용자로 전환: 이전 사용자의 세션 관련 UI 상태만 초기화 (업체/보고서 데이터는 보존)
+      localStorage.removeItem('biz_session');
+      localStorage.removeItem('biz_jwt_token');
+    }
     localStorage.setItem(DB_SESSION, JSON.stringify(user));
     localStorage.setItem('biz_jwt_token', res.token);
     checkAuth();
@@ -1456,26 +1483,19 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
     +'</div>'
     +'</div>'
-    +'<div style="padding:0 32px 12px 32px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden">'
+     +'<div style="padding:0 32px 12px 32px">'    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;table-layout:fixed;word-break:break-all">'
     +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%;white-space:nowrap">상호</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+companyName+'</td>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:18%;white-space:nowrap">사업자등록번호</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.bizNum)||'-')+'</td>'
+      +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:13%">상호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:37%">'+companyName+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%">사업자등록번호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;width:35%">'+((cData&&cData.bizNum)||'-')+'</td>''
     +'</tr>'
     +'<tr>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">대표자명</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9;white-space:nowrap">업종</th>'
-    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
+       +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">대표자명</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">업종</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
     +'</tr>'
     +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap">사업장주소</th>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">사업장주소</th>'
     +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
     +'</tr>'
     +'<tr>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;white-space:nowrap">핵심아이템</th>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;background:#f1f5f9">핵심아이템</th>'
     +'<td style="padding:7px 12px;font-weight:600;color:#1e293b" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
     +'</tr>'
     +'</table>'
@@ -2557,26 +2577,42 @@ function buildFundHTML(d, cData, rev, dateStr) {
     if (s.includes('만')) return parseFloat(s)*10000;
     return parseFloat(s)||0;
   }
-  var _revNum = parseInt((cData.revenueData&&cData.revenueData.y25)||0) || parseInt((cData.revenueData&&cData.revenueData.y24)||0) || 0;
+  // ===== 정책자금 예상 한도 계산 (2026년 기준) =====
+  // 1. 매출 기준: 금년 매출(rev_cur)이 있으면 1분기 기준으로 연환산(×4), 없으면 25년>24년 순서로 사용
+  var _revCur = parseInt((cData.revenueData&&cData.revenueData.cur)||0) || 0;
+  var _revY25  = parseInt((cData.revenueData&&cData.revenueData.y25)||0) || 0;
+  var _revY24  = parseInt((cData.revenueData&&cData.revenueData.y24)||0) || 0;
+  // 금년 매출(전월말 기준)이 있으면 1분기 기준 연환산: 3월까지 입력값 × 4
+  // (rev_cur은 전월말 기준이므로 현재 월 기준으로 연환산)
+  var _curMonth = new Date().getMonth() + 1; // 1~12
+  var _annualizedCur = _revCur > 0 ? Math.round(_revCur * (12 / Math.max(_curMonth, 1))) : 0;
+  // 예상 연매출: 연환산 금년 > 25년 > 24년 순서
+  var _revNum = _annualizedCur || _revY25 || _revY24 || 0;
+  // 2. 기대출 총액 (신보·기보·중진공·소진공·재단·법인담보·대표담보 합산)
   var _debtTotal = (parseInt(cData.debtJjg)||0)+(parseInt(cData.debtKibo)||0)+(parseInt(cData.debtShinbo)||0)+(parseInt(cData.debtSjg)||0)+(parseInt(cData.debtJaidan)||0)+(parseInt(cData.debtCorpCol)||0)+(parseInt(cData.debtRepCr)||0)+(parseInt(cData.debtRepCol)||0);
   var _debtRatio = _revNum > 0 ? Math.round((_debtTotal/_revNum)*100) : 0;
-  var _minLim = 0, _maxLim = 0;
-  funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
-  function fLimitStr(n){ if(n>=100000000) return (n/100000000).toFixed(0)+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
-  // 부채비율 높으면 한도 하향 조정
+  // 3. 업종별 한도 비율: 제조업 1/4, 비제조업 1/7
+  var _ind = (cData.industry||'').toLowerCase();
+  var _isMfg = _ind.includes('제조') || _ind.includes('생산') || _ind.includes('가공') || _ind.includes('뿌리') || _ind.includes('소재') || _ind.includes('부품') || _ind.includes('장비');
+  var _limitRatio = _isMfg ? (1/4) : (1/7);
+  // 4. 예상 한도 = 예상 연매출 × 업종비율 - 기대출
+  var _baseLimit = _revNum > 0 ? Math.round(_revNum * _limitRatio) : 0;
+  var _fundLimit = Math.max(0, _baseLimit - _debtTotal);
+  // 5. 부채비율 높으면 추가 하향 (200~300%: ×0.8, 300%↑: ×0.6)
   var _adj = _debtRatio > 300 ? 0.6 : _debtRatio > 200 ? 0.8 : 1.0;
-  var _minAdj = Math.round(_minLim * _adj);
-  var _maxAdj = Math.round(_maxLim * _adj);
-  // 은행 심사관 관점: 연매출의 80% 이내로 제한 (매출 초과 불가)
-  // 필요자금 참고: 매출 있으면 매출 기반 한도 적용
-  if (_revNum > 0) {
-    var _revCap = Math.round(_revNum * 0.8); // 매출의 80% 상한
-    if (_maxAdj > _revCap) _maxAdj = _revCap;
-    if (_minAdj > _revCap) _minAdj = Math.round(_revCap * 0.5);
-    // 최소 금액은 최대 금액의 50% 이상
-    if (_minAdj > _maxAdj) _minAdj = Math.round(_maxAdj * 0.5);
+  var _fundLimitAdj = Math.round(_fundLimit * _adj);
+  function fLimitStr(n){ if(n>=100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'')+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
+  // 6. 최종 표시: 예상 한도 범위 (최소 = 최대의 60%, 최대 = 계산값)
+  var _maxAdj = _fundLimitAdj;
+  var _minAdj = Math.round(_maxAdj * 0.6);
+  // 매출 없으면 기관별 한도 합산 방식 fallback
+  if (_revNum === 0) {
+    var _minLim = 0, _maxLim = 0;
+    funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
+    _maxAdj = Math.round(_maxLim * _adj);
+    _minAdj = Math.round(_minLim * _adj);
   }
-  var totalRange = d.total_range || ('기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj));
+  var totalRange = d.total_range || (_maxAdj > 0 ? '기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj) : '별도 산정 필요');
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
@@ -3403,43 +3439,79 @@ function getIndustryCerts(ind, nm, itm, cData) {
   } else {
     // 제조/IT/기타 기본 케이스: 기보/신보/중진공 조건 적용
     var _f = [];
-    // 중진공: 2026년 확대 업종 조건 적용 + 신용점수 750점 이상 권장
-    if (isManu || isIT) {
+    // ===== 업종별 기관 추천 (2026년 기준) =====
+    // [제조업] 중진공 → 기술보증기금(기보) → 신용보증재단(지역신보) → 소상공인정책자금(소진공) → 지역 특례자금
+    // [비제조업] 중진공(조건부) → 신용보증기금(신보) → 신용보증재단(지역신보) → 소상공인정책자금(소진공) → 업종 특화 기관
+    // 신보·기보 중복 불가: 기보 이용 시 기보 추천, 신보 이용 시 신보 추천 (단, 신용보증재단은 항상 가능)
+    if (isManu || isRoot || isMaterial) {
+      // ===== 제조업 계열 =====
+      // 1순위: 중진공 (2026년 소공인 특화자금)
       var _jjgTag = isJjgCredit ? '금리 2.5%' : 'NICE 750점 권장';
       _f.push({rank:1,name:'중진공 소공인 특화자금',limit:'1억',tags:[_jjgTag,'즉시 신청 가능','제조업 우대']});
-    } else if (isJjgEligible && isJjgCredit) {
-      // 2026년 중진공 확대 업종 (지식서비스업/스마트물류/로컈크리에이터 등)
-      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
-    } else if (isLargeScale && isJjgCredit) {
-      _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
-    }
-    // 기보: 제조/IT + 기술력 보유 업종 (자본잠식 없음 조건)
-    if (isManu || isIT || isKnowledgeSvc) {
-      if (!hasShinboLoan) { // 신보 대출 없을 때만 기보 추청 (중복 방지)
-        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허/연구소 필수','B등급 이상']});
+      // 2순위: 기보 또는 신보 (중복 불가)
+      if (hasKiboLoan || (!hasShinboLoan && !hasKiboLoan)) {
+        // 기보 이용 중이거나 둘 다 없으면 기보 추천
+        _f.push({rank:2,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기술력 우선 심사','B등급 이상']});
+      } else if (hasShinboLoan) {
+        // 신보 이용 중이면 신보 추천
+        _f.push({rank:2,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+      }
+      // 3순위: 신용보증재단 (신보·기보 이용 여부 무관 항상 가능)
+      _f.push({rank:3,name:'신용보증재단(지역신보) 보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','기보·신보 병행 가능']});
+      // 4순위: 소상공인정책자금(소진공)
+      _f.push({rank:4,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','제조업 우대']});
+      // 5순위: 지역 특례자금
+      _f.push({rank:5,name:'지역 특례자금(시·도 지원)',limit:'5천만',tags:['지자체 직접 지원','무이자 또는 저리','빠른 승인']});
+    } else if (isIT || isKnowledgeSvc) {
+      // ===== IT/지식서비스업 =====
+      // 1순위: 중진공 (2026년 확대 업종)
+      if (isJjgEligible && isJjgCredit) {
+        _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','IT·지식서비스 가능']});
       } else {
-        // 신보 대출 있으면 신보 우선 추청
-        var _shinboTag = isShinboCredit ? '기존 신보 거래 우대' : 'KCB/NICE 800점 권장';
-        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTag,'95% 보증']});
+        _f.push({rank:1,name:'중진공 신성장기반자금',limit:'1억',tags:['NICE 750점 권장','IT 업종 가능','시설·운전 자금']});
+      }
+      // 2순위: 기보 또는 신보 (중복 불가)
+      if (hasKiboLoan || (!hasShinboLoan && !hasKiboLoan)) {
+        _f.push({rank:2,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기술력 우선 심사','IT·SW 특화']});
+      } else if (hasShinboLoan) {
+        _f.push({rank:2,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
+      }
+      // 3순위: 신용보증재단 (항상 가능)
+      _f.push({rank:3,name:'신용보증재단(지역신보) 보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','기보·신보 병행 가능']});
+      // 4순위: 소진공
+      _f.push({rank:4,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']});
+      // 5순위: 업종 특화 (K-STARTUP 등)
+      _f.push({rank:5,name:'창업진흥원 K-Startup 지원',limit:'1억',tags:['스타트업 특화','비대면 심사','성장성 평가']});
+    } else {
+      // ===== 비제조업 (서비스·도소매·관광 등) =====
+      // 1순위: 중진공 (매출 10억↑ 또는 직원 5명↑ 조건부)
+      if (isJjgEligible && isJjgCredit) {
+        _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
+      }
+      // 2순위: 신용보증기금(신보) — 비제조업 주력 기관
+      if (hasShinboLoan || (!hasKiboLoan && !hasShinboLoan)) {
+        // 신보 이용 중이거나 둘 다 없으면 신보 추천
+        var _shinboTag2 = isShinboCredit ? '기존 신보 거래 우대' : 'KCB/NICE 800점 권장';
+        _f.push({rank:_f.length+1,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTag2,'95% 보증']});
+      } else if (hasKiboLoan) {
+        // 기보 이용 중이면 기보 추천
+        _f.push({rank:_f.length+1,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
+      }
+      // 3순위: 신용보증재단 (항상 가능)
+      _f.push({rank:_f.length+1,name:'신용보증재단(지역신보) 보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','신보·기보 병행 가능']});
+      // 4순위: 소상공인정책자금(소진공)
+      _f.push({rank:_f.length+1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','서비스 우대']});
+      // 5순위: 업종 맞춤 기관 (관광/스포츠/식품 등)
+      if (isTour) {
+        _f.push({rank:_f.length+1,name:'관광진흥개발기금',limit:'5억',tags:['관광·숙박 특화','시설 개보수','장기 저리']});
+      } else if (isSports) {
+        _f.push({rank:_f.length+1,name:'국민체육진흥공단(KSPO) 튼튼론',limit:'1억',tags:['스포츠·체육 특화','금리 우대','시설·운전 자금']});
+      } else if (isFood) {
+        _f.push({rank:_f.length+1,name:'농림수산업자신용보증기금(농신보)',limit:'3억',tags:['식품·농업 특화','보증료 우대','빠른 승인']});
+      } else {
+        _f.push({rank:_f.length+1,name:'지역 특례자금(시·도 지원)',limit:'5천만',tags:['지자체 직접 지원','무이자 또는 저리','빠른 승인']});
       }
     }
-    // 기보 대출 있으면 기보 우선 (신보 제외)
-    if (hasKiboLoan && !hasShinboLoan) {
-      _f = _f.filter(function(x){return !x.name.includes('신보');});
-      if (!_f.some(function(x){return x.name.includes('기보');})) {
-        _f.push({rank:_f.length+1,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
-      }
-    }
-    // 신보 대출 있으면 신보 우선 (기보 제외)
-    if (hasShinboLoan && !hasKiboLoan) {
-      _f = _f.filter(function(x){return !x.name.includes('기보');});
-      if (!_f.some(function(x){return x.name.includes('신보');})) {
-        _f.push({rank:_f.length+1,name:'신보 창업기업 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
-      }
-    }
-    // 소진공, 지역신보는 공통 추가
-    _f.push({rank:_f.length+1,name:'소진공 성장촉진자금',limit:'1억',tags:['금리 3.0%','창업 3년 이내','온라인 신청']});
-    _f.push({rank:_f.length+1,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']});
     // 순위 재정렬
     _f.forEach(function(x,i){x.rank=i+1;});
     funds = _f.slice(0,5);
