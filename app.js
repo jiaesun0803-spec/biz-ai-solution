@@ -221,10 +221,21 @@ async function syncCompaniesFromServer() {
       return;
     }
 
-    // 서버 데이터를 name 기준 맵으로 변환
+    // 서버 데이터를 name 기준 맵으로 변환 (extra 컬럼에 원본 JSON 저장됨)
     const serverMap = {};
     serverData.forEach(function(c) {
-      const item = Object.assign({}, c.data_json||c, { _serverId: c.id });
+      // extra 컬럼에 원본 업체 데이터가 저장됨 (없으면 서버 컬럼으로 폴백)
+      const base = (c.extra && typeof c.extra === 'object') ? c.extra : {};
+      const item = Object.assign({}, base, {
+        _serverId: c.id,
+        name: c.name || base.name,
+        industry: base.industry || c.industry || '',
+        rep: base.rep || c.rep_name || '',
+        bizNum: base.bizNum || c.reg_no || '',
+        bizDate: base.bizDate || c.founded || '',
+        empCount: base.empCount || String(c.employees || ''),
+        address: base.address || c.address || ''
+      });
       serverMap[item.name] = item;
     });
 
@@ -261,7 +272,17 @@ async function syncCompaniesFromServer() {
           if (Array.isArray(refreshed)) {
             const refreshMap = {};
             refreshed.forEach(function(c) {
-              const item = Object.assign({}, c.data_json||c, { _serverId: c.id });
+              const base = (c.extra && typeof c.extra === 'object') ? c.extra : {};
+              const item = Object.assign({}, base, {
+                _serverId: c.id,
+                name: c.name || base.name,
+                industry: base.industry || c.industry || '',
+                rep: base.rep || c.rep_name || '',
+                bizNum: base.bizNum || c.reg_no || '',
+                bizDate: base.bizDate || c.founded || '',
+                empCount: base.empCount || String(c.employees || ''),
+                address: base.address || c.address || ''
+              });
               refreshMap[item.name] = item;
             });
             const current = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');

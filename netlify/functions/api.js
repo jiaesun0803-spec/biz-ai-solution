@@ -196,8 +196,8 @@ app.get('/api/companies/:id', authMiddleware, async (req, res) => {
 
 // 업체 등록
 app.post('/api/companies', authMiddleware, async (req, res) => {
-  const companyData = req.body;
-  const name = companyData.name;
+  const c = req.body;
+  const name = c.name;
   if (!name) return res.status(400).json({ error: '업체명이 필요합니다.' });
   // name 중복 체크 (같은 사용자 내)
   const { data: existing } = await supabase
@@ -210,7 +210,19 @@ app.post('/api/companies', authMiddleware, async (req, res) => {
   const payload = {
     name,
     user_id: req.user.id,
-    data_json: companyData,
+    reg_no: c.bizNum || '',
+    corp_no: c.corpNum || '',
+    address: c.address || '',
+    industry: c.industry || '',
+    rep_name: c.rep || '',
+    export: c.exportStatus || '',
+    certs: c.certs || '',
+    revenue_prev: parseInt((c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+    revenue_cur: parseInt((c.revenueData?.[1]?.revenue || c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+    employees: parseInt(c.empCount) || 0,
+    founded: c.bizDate || '',
+    date: c.date || new Date().toISOString().split('T')[0],
+    extra: c,
     updated_at: new Date().toISOString()
   };
   const { data, error } = await supabase.from('companies').insert(payload).select().single();
@@ -220,11 +232,23 @@ app.post('/api/companies', authMiddleware, async (req, res) => {
 
 // 업체 수정 (name 기준 upsert)
 app.put('/api/companies/:id', authMiddleware, async (req, res) => {
-  const companyData = req.body;
-  const name = companyData.name;
+  const c = req.body;
+  const name = c.name;
   const payload = {
     name,
-    data_json: companyData,
+    reg_no: c.bizNum || '',
+    corp_no: c.corpNum || '',
+    address: c.address || '',
+    industry: c.industry || '',
+    rep_name: c.rep || '',
+    export: c.exportStatus || '',
+    certs: c.certs || '',
+    revenue_prev: parseInt((c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+    revenue_cur: parseInt((c.revenueData?.[1]?.revenue || c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+    employees: parseInt(c.empCount) || 0,
+    founded: c.bizDate || '',
+    date: c.date || new Date().toISOString().split('T')[0],
+    extra: c,
     updated_at: new Date().toISOString()
   };
   const { data, error } = await supabase
@@ -260,7 +284,19 @@ app.post('/api/companies/sync', authMiddleware, async (req, res) => {
     const payload = {
       name,
       user_id: req.user.id,
-      data_json: c,
+      reg_no: c.bizNum || '',
+      corp_no: c.corpNum || '',
+      address: c.address || '',
+      industry: c.industry || '',
+      rep_name: c.rep || '',
+      export: c.exportStatus || '',
+      certs: c.certs || '',
+      revenue_prev: parseInt((c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+      revenue_cur: parseInt((c.revenueData?.[1]?.revenue || c.revenueData?.[0]?.revenue || '0').replace(/[^0-9]/g,'')) || 0,
+      employees: parseInt(c.empCount) || 0,
+      founded: c.bizDate || '',
+      date: c.date || new Date().toISOString().split('T')[0],
+      extra: c,
       updated_at: new Date().toISOString()
     };
     // name 기준 upsert
