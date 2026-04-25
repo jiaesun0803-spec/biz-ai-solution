@@ -4020,8 +4020,11 @@ window.calcFsRatios = function() {
   // 자본잠식 감지: 자본총계 ≤ 0
   var policyDebtEl = document.getElementById('fs_policy_debt_status');
   if (policyDebtEl) {
-    var debtEquityRatio = (totE > 0) ? (totL / totE * 100) : null;
-    var isCapitalImpaired = (totE <= 0 && totL > 0); // 자본잠식
+    // 자본총계 필드가 실제로 입력된 경우에만 판정 (빈 값이면 0이 아닌 미입력으로 처리)
+    var equityEl = document.getElementById('fs_total_equity');
+    var equityInputted = equityEl && equityEl.value && equityEl.value.trim() !== '' && equityEl.value.trim() !== '0';
+    var debtEquityRatio = (equityInputted && totE > 0) ? (totL / totE * 100) : null;
+    var isCapitalImpaired = (equityInputted && totE <= 0 && totL > 0); // 자본잠식 (자본총계 입력된 경우에만)
     var html = '';
 
     if (isCapitalImpaired) {
