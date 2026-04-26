@@ -2945,19 +2945,18 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var crossBds    = {so:'#86efac', wo:'#93c5fd', st:'#d8b4fe', wt:'#fdba74'};
   var crossLabels = {so:'💡 SO 전략 (강점×기회)', wo:'🔧 WO 전략 (약점×기회)', st:'🛡️ ST 전략 (강점×위협)', wt:'⚡ WT 전략 (약점×위협)'};
 
-  var p4 = rpPage(4,'SWOT 교차 전략','SO · WO · ST · WT 실행 전략',color,
-    '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;flex:1">'
+  var p4 = rpPageAuto(4,'SWOT 교차 전략','SO · WO · ST · WT 실행 전략',color,
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
     + ['so','wo','st','wt'].map(function(k){
-        return '<div style="background:'+crossBgs[k]+';border:1px solid '+crossBds[k]+';border-left:5px solid '+crossColors[k]+';border-radius:8px;padding:11px 13px;overflow:hidden">'
-          + '<div style="font-size:11.5px;font-weight:700;color:'+crossColors[k]+';margin-bottom:8px">'+crossLabels[k]+'</div>'
-          + (cross[k]||[]).map(function(t,i){
-              return '<div style="font-size:10.5px;color:#374151;padding-left:16px;position:relative;line-height:1.55;margin-bottom:5px">'
+        return '<div style="background:'+crossBgs[k]+';border:1px solid '+crossBds[k]+';border-left:5px solid '+crossColors[k]+';border-radius:8px;padding:9px 12px">'
+          + '<div style="font-size:11.5px;font-weight:700;color:'+crossColors[k]+';margin-bottom:6px">'+crossLabels[k]+'</div>'
+          + (cross[k]||[]).slice(0,3).map(function(t,i){
+              return '<div style="font-size:11px;color:#374151;padding-left:16px;position:relative;line-height:1.5;margin-bottom:4px">'
                 + '<span style="position:absolute;left:0;color:'+crossColors[k]+';font-weight:700">'+String(i+1)+'.</span>'+t+'</div>';
             }).join('')
           + '</div>';
       }).join('')
     + '</div>'
-    + '<div style="margin-top:10px">'
     +   rpSec('전략 실행 우선순위', color,
           '<table class="rp-ftb"><thead><tr><th style="text-align:left">전략</th><th>핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th>우선순위</th><th>실행 시기</th></tr></thead>'
           + '<tbody>'
@@ -2967,7 +2966,6 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#ea580c">WT 전략</td><td style="text-align:center">기존 고객 방어</td><td>'+(cross.wt&&cross.wt[0]?cross.wt[0].replace(/WT전략 [0-9]+: /g,'').split('—')[0].trim():'고객 유지율 97% 이상 유지 및 특허 추가 출원')+'</td><td style="text-align:center;color:#ea580c;font-weight:700">★★★☆☆</td><td style="text-align:center">상시</td></tr>'
           + '</tbody></table>'
         )
-    + '</div>'
   );
 
   // ── P5: 경쟁환경 및 차별화 전략 ──
