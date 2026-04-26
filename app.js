@@ -2799,35 +2799,93 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p2 = rpPage(2,'시장기회 및 SWOT','시장 성장성 · 외부환경 · 리스크 구조',color,
+  var mktLabel = d.s3_mktLabel || (ind+' 시장');
+  var mktSize   = d.s3_mktSize  || '7조원';
+  var mktGrowth = d.s3_mktGrowth|| '18%';
+  var mktTarget = d.s3_mktTarget|| '1~2인 가구';
+  var mktOpps   = d.s3_opportunities || [{title:'정책 지원 확대',desc:'정부 스마트공장·중소기업 지원 사업 확대로 보조금 활용 기회 증가'},{title:'온라인 채널 성장',desc:'이커머스 물동량 연 18% 증가 — 소규모 브랜드 진입 장벽 낮아짐'},{title:'인증 취득 레버리지',desc:'벤처·이노비즈 인증 취득 시 정책자금 가점 및 공공 조달 채널 확보'},{title:'해외 시장 진출',desc:'K-브랜드 인지도 상승으로 동남아·북미 수출 기회 구조적 확대'}];
+
+  var p2 = rpPage(2,'시장기회 분석','시장 규모 · 성장성 · 기회 요인',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   '<div class="rp-g3" style="margin-bottom:10px">'
-    +     rpMC('HMR 시장', '7조원', '2022년 기준', color)
-    +     rpMC('연평균 성장률', '18%', '육수·국물 세그먼트', '#2563eb')
-    +     rpMC('핵심 소비층', '1~2인 가구 61%', '구조적 성장', '#7c3aed')
+    +     rpMC(mktLabel, mktSize, '시장 규모', color)
+    +     rpMC('연평균 성장률', mktGrowth, ind+' 세그먼트', '#2563eb')
+    +     rpMC('핵심 소비층', mktTarget, '구조적 성장', '#7c3aed')
     +   '</div>'
     +   rpSec('시장 성장 추이', color, '<div class="rp-ch" style="height:196px"><canvas id="bp-market-chart" style="width:100%;height:100%"></canvas></div>')
     + '</div>'
     + '<div class="rp-colF">'
     +   rpSec('시장 트렌드 분석', color, rpLst(d.s3_items||[
-          '1~2인 가구 비율 61%로 증가세 — 간편식 수요가 구조적으로 증가하며 HMR 시장 연 18% 성장 지속',
-          '건강·프리미엄 간편식에 대한 소비자 선호도 급상승 — 고가 제품군의 성장이 업계 평균을 크게 상회',
-          '쿠팡·마켓컬리 등 온라인 식품 채널 급성장 — 소규모 브랜드의 진입 장벽이 낮아져 성장 기회 확대됨',
-          '육수·국물 세그먼트는 HMR 중 가장 빠른 성장 구간 — 대체 불가 필수 식품으로 소비 빈도가 높음',
-          '식품 안전·품질 인증(HACCP 등)에 대한 소비자 요구 강화 — 인증 기업이 채널 확보에서 유리한 위치를 점함'
+          ind+' 시장 연 18% 성장 — 구조적 수요 증가로 중소기업에게 최적의 진입 시점',
+          '온라인 채널 급성장 — 소규모 브랜드의 진입 장벽이 낮아져 성장 기회 확대됨',
+          '소비자 프리미엄 선호 급상승 — 고가 제품군의 성장이 업계 평균을 크게 상회',
+          '정부 스마트공장·인증 지원 확대 — 인증 기업이 채널 확보에서 유리한 위치를 점함',
+          '글로벌 K-브랜드 인지도 상승 — 동남아·북미 수출 기회 구조적으로 확대됨'
         ], color))
+    +   rpSec('핵심 기회 요인', color,
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px">'
+          + mktOpps.slice(0,4).map(function(op){
+              return '<div style="background:#f0fdf4;border:1px solid #86efac;border-left:4px solid '+color+';border-radius:6px;padding:8px 10px">'
+                + '<div style="font-size:11px;font-weight:700;color:'+color+';margin-bottom:3px">'+op.title+'</div>'
+                + '<div style="font-size:10.5px;color:#374151;line-height:1.5">'+op.desc+'</div></div>';
+            }).join('')
+          + '</div>'
+        )
     + '</div>'
-    + '</div>'
-    + '<div class="rp-swot" style="margin-top:12px">'
-    +   '<div class="rp-sws rp-sw"><div class="rp-swl">강점 Strength</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-sww rp-sw"><div class="rp-swl">약점 Weakness</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-swo rp-sw"><div class="rp-swl">기회 Opportunity</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
-    +   '<div class="rp-swt rp-sw"><div class="rp-swl">위협 Threat</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
     + '</div>'
   );
 
-  var p3 = rpPage(3,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
+  var p3 = rpPage(3,'SWOT 분석','강점 · 약점 · 기회 · 위협 요인',color,
+    '<div class="rp-swot" style="flex:1;margin-bottom:10px">'
+    +   '<div class="rp-sws rp-sw"><div class="rp-swl">💪 강점 (Strengths)</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-sww rp-sw"><div class="rp-swl">⚠️ 약점 (Weaknesses)</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swo rp-sw"><div class="rp-swl">🚀 기회 (Opportunities)</div><ul>'+(swot.opportunity||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    +   '<div class="rp-swt rp-sw"><div class="rp-swl">🛡️ 위협 (Threats)</div><ul>'+(swot.threat||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
+    + '</div>'
+    + (function(){
+        var insights = [
+          {label:'핵심 강점 활용 포인트', color:'#16a34a', bg:'#f0fdf4', bd:'#86efac', items:[
+            (swot.strength&&swot.strength[0]?swot.strength[0].split('—')[0].trim():'기술 특허 보유')+' → 경쟁사 진입 장벽 구축에 즉시 활용 가능',
+            (swot.opportunity&&swot.opportunity[0]?swot.opportunity[0].split('—')[0].trim():'시장 성장세')+' → 현재가 최적의 시장 진입·확장 시점'
+          ]},
+          {label:'즉시 해결 필요 약점', color:'#ea580c', bg:'#fff7ed', bd:'#fdba74', items:[
+            (swot.weakness&&swot.weakness[0]?swot.weakness[0].split('—')[0].trim():'인력 부족')+' → 정책자금 조달 후 핵심 인력 채용 우선 실행',
+            (swot.threat&&swot.threat[0]?swot.threat[0].split('—')[0].trim():'경쟁 심화')+' → 인증·특허 강화로 방어 체계 선제 구축'
+          ]}
+        ];
+        return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+          + insights.map(function(ins){
+              return '<div style="background:'+ins.bg+';border:1px solid '+ins.bd+';border-left:5px solid '+ins.color+';border-radius:8px;padding:10px 12px">'
+                + '<div style="font-size:11px;font-weight:700;color:'+ins.color+';margin-bottom:6px">'+ins.label+'</div>'
+                + ins.items.map(function(t){return '<div style="font-size:10.5px;color:#374151;padding-left:12px;position:relative;line-height:1.5;margin-bottom:4px"><span style="position:absolute;left:0;color:'+ins.color+'">•</span>'+t+'</div>';}).join('')
+                + '</div>';
+            }).join('')
+          + '</div>';
+      })()
+  );
+
+  var cross = d.s2_cross || {so:['SO전략 1: 기술 특허 × 시장 성장 — 독점 포지션 강화로 시장 점유율 확대','SO전략 2: 인증 취득 × 정책 지원 — 공공기관 수의계약 채널 집중 공략','SO전략 3: 매출 실적 × 이커머스 성장 — 풀필먼트 센터 전용 패키지 출시','SO전략 4: 인건비 절감 트렌드 × 2주 설치 강점 — ROI 계산기로 도입 결정 가속'],wo:['WO전략 1: 정책자금 조달 × 영업 인력 부족 — 정책자금으로 영업 인력 2→5명 확충','WO전략 2: 이커머스 풀필먼트 전용 패키지 개발 — 쿠팡·네이버 물류 파트너 채널 진입','WO전략 3: IoT 하드웨어 파트너사 2곳 이상 다변화 — 공급망 리스크 분산 및 원가 절감','WO전략 4: 정부 스마트공장 보조금 연계 영업 — 고객 초기 도입 비용 50% 절감 지원'],st:['ST전략 1: AI 특허 + 실증 데이터로 중소기업 전문 포지셔닝 — 대형 SI 진입 방어','ST전략 2: SaaS 구독 모델 + 고객 유지율 96% — 경기 침체 시에도 안정적 반복 매출','ST전략 3: ISO 27001 취득 추진 — 보안 우려 선제 해소, 공공기관 신뢰도 강화','ST전략 4: 조달청 우수제품 등록 유지 — 유사 스타트업 대비 공공 채널 진입 장벽 구축'],wt:['WT전략 1: 기존 고객 전담 CS 체계 강화 — 유지율 97% 이상 유지로 매출 기반 방어','WT전략 2: 데이터 암호화·접근 권한 관리 고도화 — IoT 보안 취약점 이슈 선제 대응','WT전략 3: 핵심 기능 특허 추가 출원 — 유사 스타트업의 기능 복제 법적 차단','WT전략 4: 파트너사 다변화로 하드웨어 의존도 감소 — 경기 침체 시 원가 구조 유연화']};
+  var crossColors = {so:color, wo:'#2563eb', st:'#7c3aed', wt:'#ea580c'};
+  var crossBgs    = {so:'#f0fdf4', wo:'#eff6ff', st:'#fdf4ff', wt:'#fff7ed'};
+  var crossBds    = {so:'#86efac', wo:'#93c5fd', st:'#d8b4fe', wt:'#fdba74'};
+  var crossLabels = {so:'💡 SO 전략 (강점×기회)', wo:'🔧 WO 전략 (약점×기회)', st:'🛡️ ST 전략 (강점×위협)', wt:'⚡ WT 전략 (약점×위협)'};
+
+  var p4 = rpPage(4,'SWOT 교차 전략','SO · WO · ST · WT 실행 전략',color,
+    '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;flex:1">'
+    + ['so','wo','st','wt'].map(function(k){
+        return '<div style="background:'+crossBgs[k]+';border:1px solid '+crossBds[k]+';border-left:5px solid '+crossColors[k]+';border-radius:8px;padding:11px 13px;overflow:hidden">'
+          + '<div style="font-size:11.5px;font-weight:700;color:'+crossColors[k]+';margin-bottom:8px">'+crossLabels[k]+'</div>'
+          + (cross[k]||[]).map(function(t,i){
+              return '<div style="font-size:10.5px;color:#374151;padding-left:16px;position:relative;line-height:1.55;margin-bottom:5px">'
+                + '<span style="position:absolute;left:0;color:'+crossColors[k]+';font-weight:700">'+String(i+1)+'.</span>'+t+'</div>';
+            }).join('')
+          + '</div>';
+      }).join('')
+    + '</div>'
+  );
+
+  var p5 = rpPage(5,'경쟁환경 및 차별화 전략','비교표 · 포지셔닝 · 핵심 우위',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('경쟁사 비교표', color,
@@ -2848,7 +2906,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '<div class="rp-g2" style="margin-top:12px">'+(Array.isArray(diffs)&&typeof diffs[0]==='object'?diffs:[]).slice(0,4).map(diffCard).join('')+'</div>'
   );
 
-  var p4 = rpPage(4,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
+  var p6 = rpPage(6,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 실행 우선순위',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   bpCerts.map(function(c,i){
@@ -2879,7 +2937,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p5 = rpPage(5,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
+  var p7 = rpPage(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 기대 효과',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('자금 집행 계획표', color,
@@ -2908,10 +2966,10 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  var p6 = rpPage(6,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
+  var p8 = rpPage(8,'매출 전망 및 실행 로드맵','1년 시뮬레이션 · 단계별 확장 계획',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
-    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:210px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
+    +   rpSec('월별 매출 시뮬레이션', color, '<div class="rp-ch" style="height:170px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>')
     +   '<div class="rp-g2" style="margin-top:10px">'
     +     rpMC('1년 후 매출', kpi9.y1, '단기 목표', color)
     +     rpMC('2년 후 매출', kpi9.y2, '중기 목표', '#2563eb')
@@ -2928,16 +2986,16 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + rpSec('연차별 실행 로드맵', color,
         '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">'
         + rmYears.map(function(r,i){
-            return '<div style="border-radius:8px;padding:12px;border:1px solid #e2e8f0;border-top:4px solid '+rmColors[i]+';background:white;min-height:146px">'
+            return '<div style="border-radius:8px;padding:12px;border:1px solid #e2e8f0;border-top:4px solid '+rmColors[i]+';background:white;min-height:110px">'
               + '<div style="font-size:13px;font-weight:800;color:'+rmColors[i]+';margin-bottom:8px">'+r.year+'</div>'
-              + (r.tasks||[]).map(function(t){ return '<div style="font-size:13px;color:#475569;padding-left:11px;position:relative;line-height:1.55;margin-bottom:5px"><span style="position:absolute;left:0;color:'+rmColors[i]+';font-weight:700">•</span>'+t+'</div>'; }).join('')
+              + (r.tasks||[]).map(function(t){ return '<div style="font-size:11.5px;color:#475569;padding-left:11px;position:relative;line-height:1.5;margin-bottom:4px"><span style="position:absolute;left:0;color:'+rmColors[i]+';font-weight:700">•</span>'+t+'</div>'; }).join('')
               + '</div>';
           }).join('')
         + '</div>'
       )
   );
 
-  var p7 = rpPage(7,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
+  var p9 = rpPage(9,'종합 제언','최종 평가 · 컨설턴트 의견 · 실행 권고',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   '<div class="rp-cls" style="height:100%">'
@@ -2961,7 +3019,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + '</div>';
+  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
 }
 
 
@@ -3243,6 +3301,12 @@ function buildBizPlanPrompt(cData, fRev) {
   return '사업계획서 전문가. \''+nm+'\' 완성형 AI 사업계획서. 기업명·제품명·실제수치를 모든 항목에 반드시 포함. JSON만.\n\n'
     +'{"s1_items":["'+nm+'는 '+itm+'을 통해 5개 70자이상"],'
     +'"s2_swot":{"strength":["'+nm+'의 강점 4개 50자이상"],"weakness":["'+nm+'의 약점 3개 50자이상"],"opportunity":["'+nm+'의 기회 4개 50자이상"],"threat":["'+nm+'의 위협 3개 50자이상"]},'
+    +'"s2_cross":{"so":["SO전략 4개 50자이상"],"wo":["WO전략 4개 50자이상"],"st":["ST전략 4개 50자이상"],"wt":["WT전략 4개 50자이상"]},'
+    +'"s3_mktLabel":"'+ind+' 시장",'
+    +'"s3_mktSize":"시장 규모 숫자+단위",'
+    +'"s3_mktGrowth":"연평균 성장률 숫자%",'
+    +'"s3_mktTarget":"핵심 소비층 10자이내",'
+    +'"s3_opportunities":[{"title":"기회요인명","desc":"'+nm+' 관점 기회 설명 50자이상"}],'
     +'"s3_items":["'+ind+' 시장 현황 5개 70자이상"],'
     +'"s4_items":["'+nm+'의 '+itm+' 경쟁력 4개 70자이상"],'
     +'"s4_competitor":[{"item":"제품경쟁력","self":"★★★★★","a":"★★★★","b":"★★★"},{"item":"기술력(특허)","self":"★★★★★","a":"★★★","b":"★★★"},{"item":"가격경쟁력","self":"★★★★","a":"★★★★★","b":"★★★★"},{"item":"유통망","self":"★★★","a":"★★★★★","b":"★★★★"},{"item":"성장성","self":"★★★★★","a":"★★★","b":"★★★"}],'
