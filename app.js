@@ -2958,7 +2958,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
       }).join('')
     + '</div>'
     +   rpSec('전략 실행 우선순위', color,
-          '<table class="rp-ftb"><thead><tr><th style="text-align:left">전략</th><th>핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th>우선순위</th><th>실행 시기</th></tr></thead>'
+          '<table class="rp-ftb"><thead><tr><th style="text-align:left;width:72px;white-space:nowrap">전략</th><th style="width:90px">핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th style="width:80px">우선순위</th><th style="width:70px">실행 시기</th></tr></thead>'
           + '<tbody>'
           + '<tr><td style="font-weight:700;color:'+color+'">SO 전략</td><td style="text-align:center">공공 시장 집중 공략</td><td>'+(cross.so&&cross.so[0]?cross.so[0].replace(/SO전략 [0-9]+: /g,'').split('—')[0].trim():'조달·인증 활용 공공기관 영업 강화')+'</td><td style="text-align:center;color:'+color+';font-weight:700">★★★★★</td><td style="text-align:center">26년 Q1~Q2</td></tr>'
           + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#2563eb">WO 전략</td><td style="text-align:center">인력·채널 확충</td><td>'+(cross.wo&&cross.wo[0]?cross.wo[0].replace(/WO전략 [0-9]+: /g,'').split('—')[0].trim():'정책자금으로 영업 인력 확충 및 채널 진입')+'</td><td style="text-align:center;color:#2563eb;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q2~Q3</td></tr>'
@@ -3249,6 +3249,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '.rp-ptitle { color:white !important; font-size:14px !important; font-weight:700 !important; }'
     + '.rp-psub { color:rgba(255,255,255,0.65) !important; font-size:11px !important; }'
     + '.rp-section h4 { color:#1e2d4a !important; border-left:3px solid #c0392b; padding-left:8px; }'
+    + '.rp-page-auto { overflow:visible !important; height:auto !important; min-height:auto !important; max-height:none !important; }'
     + '</style>';
   return tplStyle(color, 'landscape') + bizPlanExtraCSS + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
 }
