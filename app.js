@@ -3059,21 +3059,24 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   ];
 
   var p7 = rpPage(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 상환 계획',color,
-    '<div class="rp-2col">'
+    // 상단: 자금조달구조 + 배분비율 (2열)
+    '<div class="rp-2col" style="margin-bottom:10px">'
     + '<div class="rp-col50">'
     +   rpSec('자금 조달 구조 (총 '+nf+')', color,
           fundSources.map(function(s){
-            return '<div style="border:1px solid #e2e8f0;border-left:5px solid '+s.color+';border-radius:8px;padding:10px 13px;margin-bottom:8px;background:white">'
+            return '<div style="border:1px solid #e2e8f0;border-left:5px solid '+s.color+';border-radius:8px;padding:9px 12px;margin-bottom:7px;background:white">'
               + '<div style="display:flex;justify-content:space-between;align-items:center">'
-              + '<div><div style="font-size:12px;font-weight:700;color:#1e293b">'+s.name+'</div><div style="font-size:11px;color:#64748b;margin-top:2px">'+s.desc+'</div></div>'
-              + '<div style="font-size:20px;font-weight:900;color:'+s.color+'">'+s.amount+'</div>'
+              + '<div><div style="font-size:11.5px;font-weight:700;color:#1e293b">'+s.name+'</div><div style="font-size:10.5px;color:#64748b;margin-top:2px">'+s.desc+'</div></div>'
+              + '<div style="font-size:18px;font-weight:900;color:'+s.color+'">'+s.amount+'</div>'
               + '</div></div>';
           }).join('')
-          + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 13px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">'
-          + '<span style="font-size:13px;font-weight:700;color:#15803d">합계 조달 목표</span>'
-          + '<span style="font-size:22px;font-weight:900;color:'+color+'">'+nf+'</span>'
+          + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 12px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">'
+          + '<span style="font-size:12px;font-weight:700;color:#15803d">합계 조달 목표</span>'
+          + '<span style="font-size:20px;font-weight:900;color:'+color+'">'+nf+'</span>'
           + '</div>'
         )
+    + '</div>'
+    + '<div class="rp-colF">'
     +   rpSec('자금 배분 비율', color,
           (fundRows||[]).map(function(r,idx){
             var barColor = [color,'#2563eb','#7c3aed','#ea580c'][idx%4];
@@ -3081,19 +3084,35 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
             return rpHB(r.item, ratioNum, r.ratio, barColor);
           }).join('')
         )
+    + '</div>'
+    + '</div>'
+    // 하단: 자금상환계획 + 집행계획표 (2열)
+    + '<div class="rp-2col">'
+    + '<div class="rp-col50">'
     +   rpSec('자금 상환 계획', color,
-          '<table class="rp-ftb"><thead><tr><th style="text-align:left">구분</th><th>금리</th><th>상환 방식</th><th style="text-align:left">상환 재원</th></tr></thead>'
+          '<table class="rp-ftb" style="font-size:11px"><thead><tr>'
+          + '<th style="text-align:left;width:30%">구분</th>'
+          + '<th style="width:12%">금리</th>'
+          + '<th style="width:25%">상환 방식</th>'
+          + '<th style="text-align:left">상환 재원</th>'
+          + '</tr></thead>'
           + '<tbody>'+fundRepay.map(function(r,i){
-              return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.src+'</td><td style="text-align:center">'+r.rate+'</td><td style="text-align:center">'+r.method+'</td><td>'+r.resource+'</td></tr>';
+              return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700;font-size:11px">'+r.src+'</td><td style="text-align:center">'+r.rate+'</td><td style="text-align:center">'+r.method+'</td><td style="font-size:10.5px">'+r.resource+'</td></tr>';
             }).join('')
           + '</tbody></table>'
         )
     + '</div>'
     + '<div class="rp-colF">'
     +   rpSec('자금 집행 계획표', color,
-          '<table class="rp-ftb"><thead><tr><th style="text-align:left">집행항목</th><th>금액</th><th>비중</th><th style="text-align:left">집행전략</th><th>집행시기</th></tr></thead>'
-          + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td><td style="text-align:center;font-size:10.5px">'+(r.timing||'26년 Q2~Q3')+'</td></tr>'; }).join('')
-          + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2">26년 Q2 ~ 27년 Q1 (약 12개월 집행)</td></tr>'
+          '<table class="rp-ftb" style="font-size:11px"><thead><tr>'
+          + '<th style="text-align:left;width:18%">집행항목</th>'
+          + '<th style="width:14%">금액</th>'
+          + '<th style="width:10%">비중</th>'
+          + '<th style="text-align:left">집행전략</th>'
+          + '<th style="width:14%">집행시기</th>'
+          + '</tr></thead>'
+          + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700;font-size:11px">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td style="font-size:10.5px">'+r.purpose+'</td><td style="text-align:center;font-size:10px">'+(r.timing||'26년 Q2~Q3')+'</td></tr>'; }).join('')
+          + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2" style="font-size:10.5px">26년 Q2 ~ 27년 Q1 (약 12개월 집행)</td></tr>'
           + '</tbody></table>'
         )
     + '</div>'
@@ -3103,16 +3122,25 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   // ── P8: 매출 전망 및 실행 로드맵 ──
   var curYr = new Date().getFullYear();
   var p8 = rpPage(8,'매출 전망 및 실행 로드맵','3개년 매출 전망 · 분기별 실행 계획',color,
-    '<div class="rp-2col" style="margin-bottom:10px">'
-    + '<div class="rp-col45">'
+    '<div class="rp-2col">'
+    + '<div class="rp-col40">'
     +   rpSec('3개년 매출 전망 ('+String(curYr).slice(-2)+'년 → '+String(curYr+1).slice(-2)+'년 → '+String(curYr+2).slice(-2)+'년)', color,
-          '<div class="rp-ch" style="height:130px"><canvas id="biz-monthly-chart" style="width:100%;height:100%"></canvas></div>'
+          // 차트 대신 KPI 카드 3개를 세로로 배치 (시안 스타일)
+          '<div style="display:flex;flex-direction:column;gap:10px">'
+          + [{
+              yr: String(curYr)+'년 (금년)', val: kpi9.y1, desc: 'YoY 성장 목표', c: color, bg: '#f0fdf4', bd: '#bbf7d0'
+            },{
+              yr: String(curYr+1)+'년', val: kpi9.y2, desc: 'BEP 달성 목표', c: '#2563eb', bg: '#eff6ff', bd: '#93c5fd'
+            },{
+              yr: String(curYr+2)+'년', val: d.s8_y3||'35억', desc: '도약 목표', c: '#7c3aed', bg: '#fdf4ff', bd: '#d8b4fe'
+            }].map(function(k){
+              return '<div style="background:'+k.bg+';border:1px solid '+k.bd+';border-left:5px solid '+k.c+';border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'
+                + '<div><div style="font-size:13px;font-weight:700;color:#374151">'+k.yr+'</div><div style="font-size:11.5px;color:#64748b;margin-top:3px">'+k.desc+'</div></div>'
+                + '<div style="font-size:30px;font-weight:900;color:'+k.c+'">'+k.val+'</div>'
+                + '</div>';
+            }).join('')
+          + '</div>'
         )
-    +   '<div class="rp-g3" style="margin-top:10px">'
-    +     rpMC('금년('+String(curYr).slice(-2)+'년)', kpi9.y1, 'YoY 성장 목표', color)
-    +     rpMC(String(curYr+1)+'년', kpi9.y2, 'BEP 달성 목표', '#2563eb')
-    +     rpMC(String(curYr+2)+'년', d.s8_y3||'35억', '도약 목표', '#7c3aed')
-    +   '</div>'
     + '</div>'
     + '<div class="rp-colF">'
     +   rpSec('실행 로드맵 ('+String(curYr)+'년 → '+String(curYr+2)+'년)', color,
@@ -3156,7 +3184,6 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
               + '</div>';
           })()
         )
-    + '</div>'
     + '</div>'
   );
 
