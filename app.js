@@ -3117,74 +3117,108 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
   // ── P8: 매출 전망 및 실행 로드맵 ──
   var curYr = new Date().getFullYear();
-  var p8 = rpPage(8,'매출 전망 및 실행 로드맵','3개년 매출 전망 · 분기별 실행 계획',color,
-    '<div class="rp-2col">'
-    + '<div class="rp-col40">'
-    +   rpSec('3개년 매출 전망 ('+String(curYr).slice(-2)+'년 → '+String(curYr+1).slice(-2)+'년 → '+String(curYr+2).slice(-2)+'년)', color,
-          // 차트 대신 KPI 카드 3개를 세로로 배치 (시안 스타일)
-          '<div style="display:flex;flex-direction:column;gap:10px">'
-          + [{
-              yr: String(curYr)+'년 (금년)', val: kpi9.y1, desc: 'YoY 성장 목표', c: color, bg: '#f0fdf4', bd: '#bbf7d0'
-            },{
-              yr: String(curYr+1)+'년', val: kpi9.y2, desc: 'BEP 달성 목표', c: '#2563eb', bg: '#eff6ff', bd: '#93c5fd'
-            },{
-              yr: String(curYr+2)+'년', val: d.s8_y3||'35억', desc: '도약 목표', c: '#7c3aed', bg: '#fdf4ff', bd: '#d8b4fe'
-            }].map(function(k){
-              return '<div style="background:'+k.bg+';border:1px solid '+k.bd+';border-left:5px solid '+k.c+';border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'
-                + '<div><div style="font-size:13px;font-weight:700;color:#374151">'+k.yr+'</div><div style="font-size:11.5px;color:#64748b;margin-top:3px">'+k.desc+'</div></div>'
-                + '<div style="font-size:30px;font-weight:900;color:'+k.c+'">'+k.val+'</div>'
-                + '</div>';
-            }).join('')
-          + '</div>'
-        )
-    + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('실행 로드맵 ('+String(curYr)+'년 → '+String(curYr+2)+'년)', color,
-          (function(){
-            var rmData = [
-              {year:String(curYr)+'년\n금년', yc:color, ybg:'#f0fdf4',
-               q1:'인력 확충\n'+(d.s8_short&&d.s8_short[0]?d.s8_short[0]:'정책자금 조달 완료·핵심 인력 채용'),
-               q3:'제품 출시\n'+(d.s8_short&&d.s8_short[1]?d.s8_short[1]:'생산 설비 확충 가동'),
-               q4:'채널 공략\n'+(d.s8_short&&d.s8_short[2]?d.s8_short[2]:'쿠팡·스마트스토어 입점'),
-               annual:'연간 목표\n'+kpi9.y1},
-              {year:String(curYr+1)+'년\n성장기', yc:'#2563eb', ybg:'#eff6ff',
-               q1:'채널 확대\n'+(d.s8_mid&&d.s8_mid[0]?d.s8_mid[0]:'이커머스 풀필먼트 전용 패키지 출시'),
-               q3:'인증 취득\n'+(d.s8_mid&&d.s8_mid[1]?d.s8_mid[1]:'벤처인증 취득 완료'),
-               q4:'채널 다각화\n'+(d.s8_mid&&d.s8_mid[2]?d.s8_mid[2]:'B2B 납품 채널 3곳 확보'),
-               annual:'연간 목표\n'+kpi9.y2},
-              {year:String(curYr+2)+'년\n도약기', yc:'#7c3aed', ybg:'#fdf4ff',
-               q1:'제조업 확장\n'+(d.s8_long&&d.s8_long[0]?d.s8_long[0]:'이노비즈 인증 취득'),
-               q3:'자동화 완성\n'+(d.s8_long&&d.s8_long[1]?d.s8_long[1]:'자동화 생산 체계 완성'),
-               q4:'매출 목표\n'+(d.s8_long&&d.s8_long[2]?d.s8_long[2]:'해외 수출 시장 진출'),
-               annual:'연간 목표\n'+(d.s8_y3||'35억원')}
-            ];
-            return '<div style="display:flex;flex-direction:column;gap:8px">'
-              + rmData.map(function(yr){
-                  var yrLabel = yr.year.split('\n');
-                  return '<div style="border:1px solid #e2e8f0;border-left:5px solid '+yr.yc+';border-radius:8px;overflow:hidden">'
-                    + '<div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr 1fr;gap:0">'
-                    + '<div style="background:'+yr.yc+';color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;font-size:11px;font-weight:700;text-align:center;line-height:1.4">'
-                    + yrLabel.map(function(l){return '<span>'+l+'</span>';}).join('')
-                    + '</div>'
-                    + ['Q1-Q2','Q3','Q4','연간 목표'].map(function(qk, qi){
-                        var qval = [yr.q1, yr.q3, yr.q4, yr.annual][qi];
-                        var qparts = (qval||'').split('\n');
-                        return '<div style="padding:7px 8px;border-left:1px solid #e2e8f0;background:'+(qi===3?yr.ybg:'white')+'">'
-                          + '<div style="font-size:10px;font-weight:700;color:'+yr.yc+';margin-bottom:3px">'+qk+'</div>'
-                          + '<div style="font-size:10.5px;font-weight:700;color:#1e293b;margin-bottom:2px">'+(qparts[0]||'')+'</div>'
-                          + '<div style="font-size:9.5px;color:#64748b;line-height:1.45">'+(qparts[1]||'')+'</div>'
-                          + '</div>';
-                      }).join('')
-                    + '</div></div>';
-                }).join('')
-              + '</div>';
-          })()
-        )
-    + '</div>'
-    + '</div>'
+  // 매출 데이터 (억 단위 숫자로 변환)
+  function parseOk(v) {
+    if (!v) return 0;
+    var s = String(v).replace(/[,\s]/g,'');
+    var m = s.match(/([\d.]+)\s*억/);
+    if (m) return parseFloat(m[1]);
+    m = s.match(/([\d.]+)\s*천만/);
+    if (m) return parseFloat(m[1]) * 0.1;
+    m = s.match(/([\d.]+)\s*만/);
+    if (m) return parseFloat(m[1]) * 0.0001;
+    return parseFloat(s) || 0;
+  }
+  var y1v = parseOk(kpi9.y1) || 18;
+  var y2v = parseOk(kpi9.y2) || 24;
+  var y3v = parseOk(d.s8_y3) || 35;
+  // YoY 계산
+  var prevSales = rev && rev.cur ? rev.cur / 100000000 : (rev && rev.y25 ? rev.y25 / 100000000 : 0);
+  var yoy1 = prevSales > 0 ? Math.round((y1v / prevSales - 1) * 100) : null;
+  var yoy2 = y1v > 0 ? Math.round((y2v / y1v - 1) * 100) : null;
+  var yoy3 = y2v > 0 ? Math.round((y3v / y2v - 1) * 100) : null;
+  var yoy1txt = yoy1 !== null ? 'YoY +' + yoy1 + '%' : 'YoY 성장 목표';
+  var yoy2txt = yoy2 !== null ? 'YoY +' + yoy2 + '%' : 'YoY 성장 목표';
+  var yoy3txt = yoy3 !== null ? 'YoY +' + yoy3 + '%' : 'YoY 성장 목표';
+  // 서브텍스트 (s8_sub 또는 기본값)
+  var sub1 = (d.s8_sub && d.s8_sub[0]) || (yoy1txt + ' | BEP 달성 목표');
+  var sub2 = (d.s8_sub && d.s8_sub[1]) || (yoy2txt + ' | BEP 달성');
+  var sub3 = (d.s8_sub && d.s8_sub[2]) || (yoy3txt + ' | 도약 목표');
+  // 로드맵 데이터
+  var rmData = [
+    {year: String(curYr)+'년', stage: '금년', yc: color, ybg: color,
+     c1lbl: 'Q1-Q2', c1title: '인력 확충', c1body: (d.s8_short&&d.s8_short[0])||'정책자금 조달 완료. 핵심 인력 채용 착수. 생산 설비 확충 계획 수립.',
+     c2lbl: 'Q3', c2title: '제품 출시', c2body: (d.s8_short&&d.s8_short[1])||'신규 제품 라인 출시. 온라인 채널 입점 완료. 초도 물량 생산 가동.',
+     c3lbl: '연간 목표', c3title: kpi9.y1, c3body: yoy1txt + (d.s8_short&&d.s8_short[2] ? ' | ' + d.s8_short[2] : ' | 채널 공략 완료'), dark: true},
+    {year: String(curYr+1)+'년', stage: '성장기', yc: '#2563eb', ybg: '#2563eb',
+     c1lbl: 'Q1-Q2', c1title: '채널 확대', c1body: (d.s8_mid&&d.s8_mid[0])||'이커머스 풀필먼트 전용 패키지 출시. 신규 유통 채널 3개 확보.',
+     c2lbl: 'Q3-Q4', c2title: '채널 다각화', c2body: (d.s8_mid&&d.s8_mid[1])||'인증 취득 완료. 물류 파트너십 체결. 고객사 확대 및 연매출 달성.',
+     c3lbl: '연간 목표', c3title: kpi9.y2, c3body: yoy2txt + (d.s8_mid&&d.s8_mid[2] ? ' | ' + d.s8_mid[2] : ' | BEP 달성'), dark: true},
+    {year: String(curYr+2)+'년', stage: '도약기', yc: '#7c3aed', ybg: '#7c3aed',
+     c1lbl: '상반기', c1title: '제조업 확장', c1body: (d.s8_long&&d.s8_long[0])||'글로벌 시장 진출 준비. 해외 법인 설립 및 현지 생산 거점 확보.',
+     c2lbl: '하반기', c2title: '자동화 완성', c2body: (d.s8_long&&d.s8_long[1])||'자동화 생산 체계 완성. 원가율 최적화. 신성장 동력 확보.',
+     c3lbl: '연간 목표', c3title: (d.s8_y3||'35억원'), c3body: yoy3txt + (d.s8_long&&d.s8_long[2] ? ' | ' + d.s8_long[2] : ' | 도약 달성'), dark: true}
+  ];
+
+  var p8 = rpPageAuto(8,'매출 전망 및 실행 로드맵','3개년 매출 전망 · 분기별 실행 계획',color,
+    // ── 3개년 매출 전망 섹션 ──
+    rpSec('3개년 매출 전망 (금년 '+String(curYr).slice(-2)+'년 → '+String(curYr+1).slice(-2)+'년 → '+String(curYr+2).slice(-2)+'년)', color,
+      // 꺾은선 차트
+      '<div style="height:180px;margin-bottom:12px"><canvas id="bp-sales-forecast" data-y1="'+y1v+'" data-y2="'+y2v+'" data-y3="'+y3v+'" data-yr="'+curYr+'" style="width:100%;height:100%"></canvas></div>'
+      // KPI 카드 3개 가로 배치
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'
+      + '<div style="padding:14px 18px;border-right:1px solid #e2e8f0;text-align:center">'
+      +   '<div style="font-size:11.5px;color:#64748b;margin-bottom:4px">금년('+String(curYr).slice(-2)+'년)</div>'
+      +   '<div style="font-size:26px;font-weight:900;color:#1e293b;line-height:1.1">'+kpi9.y1+'</div>'
+      +   '<div style="font-size:10.5px;color:#e11d48;font-weight:600;margin-top:4px">'+sub1+'</div>'
+      + '</div>'
+      + '<div style="padding:14px 18px;border-right:1px solid #e2e8f0;text-align:center">'
+      +   '<div style="font-size:11.5px;color:#64748b;margin-bottom:4px">'+String(curYr+1).slice(-2)+'년</div>'
+      +   '<div style="font-size:26px;font-weight:900;color:#1e293b;line-height:1.1">'+kpi9.y2+'</div>'
+      +   '<div style="font-size:10.5px;color:#e11d48;font-weight:600;margin-top:4px">'+sub2+'</div>'
+      + '</div>'
+      + '<div style="padding:14px 18px;background:#1e2d4a;text-align:center">'
+      +   '<div style="font-size:11.5px;color:#94a3b8;margin-bottom:4px">'+String(curYr+2).slice(-2)+'년</div>'
+      +   '<div style="font-size:26px;font-weight:900;color:white;line-height:1.1">'+(d.s8_y3||'35억')+'</div>'
+      +   '<div style="font-size:10.5px;color:#93c5fd;font-weight:600;margin-top:4px">'+sub3+'</div>'
+      + '</div>'
+      + '</div>'
+    )
+    // ── 실행 로드맵 섹션 ──
+    + rpSec('실행 로드맵 (금년 '+String(curYr)+'년 → '+String(curYr+2)+'년)', color,
+      '<div style="display:flex;flex-direction:column;gap:10px">'
+      + rmData.map(function(yr){
+          return '<div style="display:grid;grid-template-columns:80px 1fr 1fr 1fr;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">'
+            // 연도 셀
+            + '<div style="background:'+yr.ybg+';color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 6px;text-align:center">'
+            +   '<div style="font-size:14px;font-weight:900;line-height:1.2">'+yr.year+'</div>'
+            +   '<div style="font-size:10px;opacity:0.85;margin-top:3px">'+yr.stage+'</div>'
+            + '</div>'
+            // Q1-Q2 셀
+            + '<div style="padding:10px 12px;border-left:1px solid #e2e8f0;background:white">'
+            +   '<div style="font-size:10px;font-weight:700;color:'+yr.yc+';margin-bottom:4px">'+yr.c1lbl+'</div>'
+            +   '<div style="font-size:11.5px;font-weight:700;color:#1e293b;margin-bottom:4px">'+yr.c1title+'</div>'
+            +   '<div style="font-size:10px;color:#64748b;line-height:1.5">'+yr.c1body+'</div>'
+            + '</div>'
+            // Q3 셀
+            + '<div style="padding:10px 12px;border-left:1px solid #e2e8f0;background:white">'
+            +   '<div style="font-size:10px;font-weight:700;color:'+yr.yc+';margin-bottom:4px">'+yr.c2lbl+'</div>'
+            +   '<div style="font-size:11.5px;font-weight:700;color:#1e293b;margin-bottom:4px">'+yr.c2title+'</div>'
+            +   '<div style="font-size:10px;color:#64748b;line-height:1.5">'+yr.c2body+'</div>'
+            + '</div>'
+            // 연간 목표 셀 (어두운 배경)
+            + '<div style="padding:10px 12px;border-left:1px solid #e2e8f0;background:#1e2d4a">'
+            +   '<div style="font-size:10px;font-weight:700;color:#93c5fd;margin-bottom:4px">'+yr.c3lbl+'</div>'
+            +   '<div style="font-size:13px;font-weight:900;color:white;margin-bottom:4px">'+yr.c3title+'</div>'
+            +   '<div style="font-size:10px;color:#94a3b8;line-height:1.5">'+yr.c3body+'</div>'
+            + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+    )
   );
 
-  // ── P9: 종합 제언 ──
+    // ── P9: 종합 제언 ──
   var kpiRows = d.s9_kpiRows||[
     {item:'사업 안정성', basis:'매출 성장 + 특허 보유 + 시장 검증 완료', eval:'★★★★★', note:'심사 우수 예상'},
     {item:'기술 차별화', basis:'핵심 특허 보유 + 실증 데이터 확보', eval:'★★★★☆', note:'추가 특허 출원 계획'},
@@ -3318,6 +3352,67 @@ function initReportCharts(rev) {
     // ─ 시장 성장 라인 (사업계획서 P2)
     var bm = document.getElementById('bp-market-chart');
     if(bm) { safeDestroyChart(bm); try { new Chart(bm.getContext('2d'),{type:'line',data:{labels:['2016','2017','2018','2019','2020','2021','2022'],datasets:[{data:[2,2.4,3,3.8,4.5,5.8,7],borderColor:'#1e2d4a',backgroundColor:'rgba(30,45,74,0.12)',borderWidth:3,pointRadius:5,fill:true,tension:0.35}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'조';}}}}}}); } catch(e){} }
+    // ─ P8 3개년 매출 전망 꺾은선 차트
+    var bsf = document.getElementById('bp-sales-forecast');
+    if(bsf) {
+      safeDestroyChart(bsf);
+      try {
+        var bsd = bsf.dataset;
+        var y1n = parseFloat(bsd.y1)||18, y2n = parseFloat(bsd.y2)||24, y3n = parseFloat(bsd.y3)||35;
+        var yrN = parseInt(bsd.yr)||new Date().getFullYear();
+        var lbls = ['금년('+String(yrN).slice(-2)+'년)', String(yrN+1).slice(-2)+'년', String(yrN+2).slice(-2)+'년'];
+        var yoy2p = y1n>0?Math.round((y2n/y1n-1)*100):null;
+        var yoy3p = y2n>0?Math.round((y3n/y2n-1)*100):null;
+        new Chart(bsf.getContext('2d'),{
+          type:'line',
+          data:{
+            labels: lbls,
+            datasets:[{
+              data:[y1n,y2n,y3n],
+              borderColor:'#1e2d4a',
+              backgroundColor:'rgba(30,45,74,0.10)',
+              borderWidth:3,
+              pointRadius:8,
+              pointHoverRadius:10,
+              pointBackgroundColor:'white',
+              pointBorderColor:'#1e2d4a',
+              pointBorderWidth:3,
+              fill:true,
+              tension:0.35
+            }]
+          },
+          options:{
+            maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{
+              y:{ticks:{font:{size:11},callback:function(v){return v+'억';}},grid:{color:'rgba(148,163,184,0.15)'}},
+              x:{ticks:{font:{size:12,weight:'bold'}},grid:{display:false}}
+            }
+          },
+          plugins:[{
+            afterDatasetsDraw: function(chart){
+              var ctx2 = chart.ctx;
+              var meta = chart.getDatasetMeta(0);
+              var vals = [y1n, y2n, y3n];
+              var yoys = [null, yoy2p, yoy3p];
+              meta.data.forEach(function(pt, i){
+                ctx2.save();
+                ctx2.font = 'bold 13px sans-serif';
+                ctx2.fillStyle = '#1e2d4a';
+                ctx2.textAlign = 'center';
+                ctx2.fillText(vals[i]+'억', pt.x, pt.y - 16);
+                if (yoys[i] !== null) {
+                  ctx2.font = '11px sans-serif';
+                  ctx2.fillStyle = '#16a34a';
+                  ctx2.fillText('+'+yoys[i]+'% ↑', pt.x + 32, pt.y - 4);
+                }
+                ctx2.restore();
+              });
+            }
+          }]
+        });
+      } catch(e){ console.error('bp-sales-forecast 오류:',e); }
+    }
     // ─ 월별 매출 바
     var bc = document.getElementById('biz-monthly-chart');
     if(bc) {
