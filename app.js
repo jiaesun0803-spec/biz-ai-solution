@@ -250,10 +250,33 @@ async function syncCompaniesFromServer() {
         bizNum: base.bizNum || c.reg_no || '',
         bizDate: base.bizDate || c.founded || '',
         empCount: base.empCount || String(c.employees || ''),
-        address: base.address || c.address || ''
+        address: base.address || c.address || (function(){
+          // 기존 데이터에 address 필드가 없을 경우 rawData[11]에서 추출 (biz_address 필드 인덱스)
+          var rd = base.rawData || [];
+          var v = rd[11] && rd[11].value ? rd[11].value : '';
+          return v;
+        })()
       });
     });
     console.log('업체 데이터 서버 로드 완료:', window._companiesCache.length, '개');
+    // address 필드 자동 마이그레이션: DB의 address가 비어 있지만 rawData에서 추출된 경우 서버에 업데이트
+    window._companiesCache.forEach(async function(comp) {
+      if (comp.address && comp.address !== '-' && comp._serverId) {
+        // 서버 데이터에서 address가 비어 있었는지 확인
+        var serverComp = serverData.find(function(s){ return s.id === comp._serverId; });
+        if (serverComp && !serverComp.address) {
+          try {
+            await apiCall('/api/companies/'+comp._serverId, {
+              method: 'PUT',
+              body: JSON.stringify(Object.assign({}, comp, { address: comp.address }))
+            });
+            console.log('주소 마이그레이션 완료:', comp.name, comp.address);
+          } catch(e2) {
+            console.warn('주소 마이그레이션 실패:', comp.name, e2.message);
+          }
+        }
+      }
+    });
     updateDataLists();
     if (typeof renderCompanyCards === 'function') renderCompanyCards();
   } catch(e) {
@@ -684,6 +707,11 @@ window.showCompanyForm = function(editName=null) {
     if (comp?.rawData) {
       const els = document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea');
       comp.rawData.forEach((d,i) => { if(els[i]){ if(els[i].type==='checkbox'||els[i].type==='radio') els[i].checked=d.checked; else els[i].value=d.value; } });
+      // address 필드가 따로 저장된 경우 biz_address 입력란에 동기화
+      if (comp.address && comp.address !== '-') {
+        const addrEl = document.getElementById('biz_address');
+        if (addrEl && !addrEl.value) addrEl.value = comp.address;
+      }
       calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
     }
   } else {
