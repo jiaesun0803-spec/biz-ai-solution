@@ -712,11 +712,7 @@ window.renderCompanyCards = function() {
     return;
   }
   container.innerHTML = filtered.map(c => {
-    let address = '주소 미입력';
-    if (c.rawData) {
-      const addrEl = c.rawData.find(d=>d.type==='text'&&d.value&&d.value.length>3&&d.value!==c.name&&d.value!==c.rep&&d.value!==c.bizNum&&d.value!==c.industry&&d.value!==c.bizDate&&d.value!==c.empCount&&d.value!==c.coreItem&&!d.value.match(/^\d{2,3}-/)&&(d.value.includes('시')||d.value.includes('구')||d.value.includes('동')||d.value.includes('로')||d.value.includes('길')));
-      if(addrEl) address = addrEl.value;
-    }
+    let address = c.address && c.address !== '-' ? c.address : '주소 미입력';
     return `<div class="company-card"><div class="company-card-top"><div class="company-card-icon">🏢</div><div class="company-card-info"><div class="company-card-name">${c.name}</div><div class="company-card-rep">${c.rep&&c.rep!=='-'?c.rep+' 대표':'대표자 미입력'}</div></div><div class="company-card-actions"><button class="btn-card-detail" onclick="showCompanyForm('${c.name}')">›</button><button class="btn-card-delete" onclick="deleteCompany('${c.name}')">🗑</button></div></div><div class="company-card-body"><div class="company-card-row"><span class="company-card-label">업종</span><span class="company-card-value">${c.industry&&c.industry!=='-'?c.industry:'미입력'}</span></div><div class="company-card-row"><span class="company-card-label">주소</span><span class="company-card-value addr">${address}</span></div></div></div>`;
   }).join('');
 };
@@ -864,7 +860,8 @@ window.saveCompanyData=function(){
   const niceScore=parseInt((document.getElementById('nice_score')?.value||'0').replace(/[^0-9]/g,''))||0;
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const address=document.getElementById('biz_address')?.value||'-';
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
@@ -1453,19 +1450,19 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
     +'</div>'
     +'</div>'
-     +'<div style="padding:0 32px 12px 32px">'    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;table-layout:fixed;word-break:break-all">'
+     +'<div style="padding:0 32px 12px 32px">'    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;table-layout:fixed;word-break:keep-all">'
     +'<tr style="background:#f1f5f9">'
-      +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:13%">상호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:37%">'+companyName+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%">사업자등록번호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;width:35%">'+((cData&&cData.bizNum)||'-')+'</td>'
+      +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:13%">상호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:37%">'+companyName+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%">사업자등록번호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;width:35%">'+((cData&&cData.bizNum)||'-')+'</td>'
     +'</tr>'
     +'<tr>'
-       +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">대표자명</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">업종</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
+       +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">대표자명</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">'+((cData&&cData.rep)||'-')+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">업종</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0">'+((cData&&cData.industry)||'-')+'</td>'
     +'</tr>'
     +'<tr style="background:#f1f5f9">'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">사업장주소</th>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;background:#f1f5f9">사업장주소</th>'
     +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0" colspan="3">'+((cData&&cData.address)||'-')+'</td>'
     +'</tr>'
     +'<tr>'
-    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;border-right:1px solid #e2e8f0;background:#f1f5f9">핵심아이템</th>'
+    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;background:#f1f5f9">핵심아이템</th>'
     +'<td style="padding:7px 12px;font-weight:600;color:#1e293b" colspan="3">'+((cData&&cData.coreItem)||'-')+'</td>'
     +'</tr>'
     +'</table>'
@@ -2665,34 +2662,25 @@ function buildFundHTML(d, cData, rev, dateStr) {
     +   '<div style="text-align:right"><div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div><div style="font-size:10.5px;color:#92400e;margin-top:3px;line-height:1.5">'+_limitBasis+'</div></div>'
     + '</div>'
     + '</div>'
-    + '<div class="rp-g3" style="margin-bottom:12px">'
-    + topFunds.map(function(f,i){
-        return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[i]+';min-height:150px">'
-          + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+rColors[i]+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div><div style="font-size:15px;font-weight:900;color:'+rColors[i]+';margin-top:2px">'+f.limit+'</div></div></div>'
-          + '<div style="font-size:12px;color:#64748b;line-height:1.55;margin-bottom:10px">우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함</div>'
-          + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+'">'+t+'</span>'; }).join('')+'</div>'
+    + '<div class="rp-g2" style="margin-bottom:12px">'
+    + topFunds.concat(otherFunds).slice(0,4).map(function(f,i){
+        var isTop = i < 3;
+        return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[Math.min(i,4)]+';min-height:130px">'
+          + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+rColors[Math.min(i,4)]+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.4;word-break:keep-all">'+f.name+'</div><div style="font-size:14px;font-weight:900;color:'+rColors[Math.min(i,4)]+';margin-top:2px">'+f.limit+'</div></div></div>'
+          + '<div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:8px">'+(isTop?'우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함':'추가 검토 가능한 자금으로 조건 충족 시 신청 가능함')+'</div>'
+          + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+';font-size:10px">'+t+'</span>'; }).join('')+'</div>'
           + '</div>';
       }).join('')
     + '</div>'
-    + '<div class="rp-2col">'
-    + '<div class="rp-col50">'
-    +   rpSec('추가 검토 가능한 자금', color,
-          otherFunds.map(function(f,i){
-            var idx = i + 3;
-            return '<div class="rp-rank" style="margin-bottom:8px;border-left:4px solid '+rColors[idx]+'">'
-              + '<div class="rp-rh"><div class="rp-rn" style="background:'+rColors[idx]+'">'+f.rank+'</div><span class="rp-rnm">'+f.name+'</span><span class="rp-rlm" style="color:'+rColors[idx]+'">'+f.limit+'</span></div>'
-              + '<div class="rp-rtgs">'+f.tags.map(function(t){ return '<span class="rp-rtg" style="background:#f8fafc;color:#475569">'+t+'</span>'; }).join('')+'</div>'
-              + '</div>';
-          }).join('')
-        )
-    + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('신청 순서 권장안', color, rpLst([
-          '1단계: 중진공·소진공 등 신청 난도가 낮은 자금을 먼저 확보해 초기 유동성을 안정화함',
-          '2단계: 특허·기술력 기반으로 기보 보증을 연결해 더 큰 한도를 추가 조달하는 구조를 설계함',
-          '3단계: 벤처·이노비즈 인증 취득 후 신보 특례보증까지 확장해 총 조달액을 극대화함',
-          '4단계: 기관별 심사 일정이 겹치지 않도록 월 단위 제출 캘린더를 운영해 승인 확률을 높임'
-        ], color))
+    + '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px 16px;margin-bottom:0">'
+    + '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">📋 신청 순서 권장안</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+    + ['1단계: 중진공·소진공 등 신청 난도가 낮은 자금을 먼저 확보해 초기 유동성을 안정화함','2단계: 특허·기술력 기반으로 기보 보증을 연결해 더 큰 한도를 추가 조달하는 구조를 설계함','3단계: 벤처·이노비즈 인증 취득 후 신보 특례보증까지 확장해 총 조달액을 극대화함','4단계: 기관별 심사 일정이 겹치지 않도록 월 단위 제출 캘린더를 운영해 승인 확률을 높임'].map(function(t,i){
+        return '<div style="background:white;border:1px solid #fed7aa;border-radius:6px;padding:10px 11px">'
+          +'<div style="font-size:11px;font-weight:800;color:'+color+';margin-bottom:5px">'+(i+1)+'단계</div>'
+          +'<div style="font-size:10.5px;color:#7c2d12;line-height:1.55;word-break:keep-all">'+t.replace(/^\d단계: /,'')+'</div>'
+          +'</div>';
+      }).join('')
     + '</div>'
     + '</div>'
   );

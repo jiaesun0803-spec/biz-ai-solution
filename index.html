@@ -244,7 +244,7 @@
                                 <div class="form-group"><label>설립(개시)일</label><input type="text" id="biz_date" placeholder="YYYY-MM-DD" maxlength="10"></div>
                                 <div class="form-group"><label>사업장 전화번호</label><input type="text" id="biz_phone" placeholder="숫자만 입력" maxlength="13"></div>
                                 <div class="form-group"><label>상시근로자 수</label><input type="text" id="emp_count" class="number-only" placeholder="명 (4대보험 가입 기준)"></div>
-                                <div class="form-group col-span-2"><label>사업장 주소</label><div class="input-row"><div class="radio-group"><label><input type="radio" name="rent_type" value="자가" onchange="toggleRentInputs()"> 자가</label><label><input type="radio" name="rent_type" value="임대" onchange="toggleRentInputs()"> 임대</label></div><input type="text" placeholder="상세 주소를 입력하세요" style="flex:1;"></div></div>
+                                <div class="form-group col-span-2"><label>사업장 주소</label><div class="input-row"><div class="radio-group"><label><input type="radio" name="rent_type" value="자가" onchange="toggleRentInputs()"> 자가</label><label><input type="radio" name="rent_type" value="임대" onchange="toggleRentInputs()"> 임대</label></div><input type="text" id="biz_address" placeholder="상세 주소를 입력하세요" style="flex:1;"></div></div>
                                 <div class="form-group"><label>보증금</label><input type="text" id="rent_deposit" class="money-format" placeholder="예: 100,000,000"></div>
                                 <div class="form-group"><label>월임대료</label><input type="text" id="rent_monthly" class="money-format" placeholder="예: 100,000,000"></div>
                             </div>
@@ -856,6 +856,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
                 <div id="finance-result-step" style="display:none;"><div class="report-view-portrait"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('finance')">← 목록으로</button><div class="header-btns"><button class="btn-primary" onclick="printReport()">PDF 다운로드</button></div></div><div id="finance-content-area" class="report-paper-portrait"></div></div></div>
             </div>
         </section>
