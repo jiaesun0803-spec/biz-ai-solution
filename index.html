@@ -1089,5 +1089,35 @@
     <div id="fundCriteriaModalBody" style="padding:28px 32px 32px;background:#f1f5f9"></div>
   </div>
 </div>
+<!-- ===== 업데이트 안내 팝업 (2026-04-27 하루만 표시) ===== -->
+<div id="update-notice-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:36px 32px 28px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;text-align:center;">
+    <div style="font-size:22px;margin-bottom:8px;">🔔</div>
+    <h3 style="margin:0 0 14px;font-size:17px;font-weight:700;color:#1e293b;">[공지] 주말 업데이트 완료 안내</h3>
+    <p style="margin:0 0 20px;font-size:14px;color:#475569;line-height:1.7;text-align:left;">
+      더 나은 서비스를 위해 주말 동안 주요 기능이 개선되었습니다.<br>
+      이전 버전이 보이는 경우 <strong style="color:#3b82f6;">Ctrl + Shift + R</strong>을 눌러 최신 버전으로 새로고침해 주시면 정상적으로 이용하실 수 있습니다. 감사합니다.
+    </p>
+    <button onclick="document.getElementById('update-notice-overlay').style.display='none';" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:10px 32px;font-size:14px;font-weight:600;cursor:pointer;">확인</button>
+  </div>
+</div>
+<script>
+(function(){
+  // 2026-04-27 하루 동안만 팝업 표시
+  var SHOW_DATE = '2026-04-27';
+  var KEY = 'update_notice_shown_' + SHOW_DATE;
+  var today = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD 형식
+  if (today === SHOW_DATE && !localStorage.getItem(KEY)) {
+    var overlay = document.getElementById('update-notice-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      // 확인 버튼 클릭 시 localStorage에 기록
+      overlay.querySelector('button').addEventListener('click', function(){
+        localStorage.setItem(KEY, '1');
+      });
+    }
+  }
+})();
+</script>
 </body>
 </html>
