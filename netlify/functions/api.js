@@ -317,6 +317,71 @@ app.post('/api/companies/sync', authMiddleware, async (req, res) => {
   res.json(results);
 });
 
+// ===== 보고서 API =====
+// 테이블 콜럼: id(uuid), user_id(uuid), company_id(nullable), type(text), title(text), html(text), data(jsonb), created_at
+
+// 보고서 목록 조회
+app.get('/api/reports', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('reports')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  // data.jsonb에서 프론트엔드 형식으로 변환
+  const result = (data || []).map(function(row) {
+    const d = row.data || {};
+    return {
+      id: d.id || row.id,
+      _dbId: row.id,
+      type: d.type || row.type || '',
+      company: d.company || '',
+      title: d.title || row.title || '',
+      date: d.date || row.created_at ? (row.created_at||'').split('T')[0] : '',
+      content: d.content || '',
+      version: d.version || 'client',
+      reportType: d.reportType || '',
+      revenueData: d.revenueData || {}
+    };
+  });
+  res.json(result);
+});
+
+// 보고서 저장
+app.post('/api/reports', authMiddleware, async (req, res) => {
+  const r = req.body;
+  if (!r.type || !r.company) return res.status(400).json({ error: '필수 항목 누락' });
+  const payload = {
+    user_id: req.user.id,
+    type: r.type || '',
+    title: r.title || '',
+    html: '',  // html은 프론트엔드에서 렌더링하므로 비움
+    data: r    // 보고서 전체 데이터를 data jsonb에 저장
+  };
+  const { data, error } = await supabase.from('reports').insert(payload).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json({ success: true, _dbId: data.id });
+});
+
+// 보고서 삭제 (data.id 기준으로 조회 후 삭제)
+app.delete('/api/reports/:reportId', authMiddleware, async (req, res) => {
+  // data jsonb 내 id 필드로 검색
+  const { data: rows, error: findErr } = await supabase
+    .from('reports')
+    .select('id')
+    .eq('user_id', req.user.id)
+    .filter('data->>id', 'eq', req.params.reportId);
+  if (findErr) return res.status(500).json({ error: findErr.message });
+  if (!rows || rows.length === 0) return res.status(404).json({ error: '보고서를 찾을 수 없음' });
+  const { error } = await supabase
+    .from('reports')
+    .delete()
+    .eq('id', rows[0].id)
+    .eq('user_id', req.user.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // 헬스체크
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 

@@ -46,6 +46,46 @@ function getReportsKey() {
 Object.defineProperty(window, 'STORAGE_KEY', { get: getUserStorageKey });
 Object.defineProperty(window, 'DB_REPORTS',  { get: getReportsKey });
 let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
+
+// ===========================
+// ★ 보고서 서버 캐시
+// ===========================
+window._reportsCache = [];
+
+// 서버에서 보고서 목록 로드 후 메모리 캐시에 저장
+async function syncReportsFromServer() {
+  try {
+    const data = await apiCall('/api/reports');
+    if (!Array.isArray(data)) { console.warn('보고서 서버 데이터 형식 오류'); return; }
+    window._reportsCache = data;
+    console.log('보고서 서버 로드 완료:', data.length, '개');
+    updateDataLists();
+    if (typeof updateDashboardReports === 'function') updateDashboardReports();
+  } catch(e) {
+    console.warn('보고서 서버 동기화 실패:', e.message);
+    // 실패 시 localStorage 폴백
+    window._reportsCache = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    updateDataLists();
+  }
+}
+
+// 보고서 서버 저장 (비동기, 실패해도 캐시에는 유지)
+async function saveReportToServer(rpt) {
+  try {
+    await apiCall('/api/reports', { method:'POST', body: JSON.stringify(rpt) });
+  } catch(e) {
+    console.warn('보고서 서버 저장 실패 (로컬 캐시에는 유지):', e.message);
+  }
+}
+
+// 보고서 서버 삭제
+async function deleteReportFromServer(id) {
+  try {
+    await apiCall('/api/reports/'+id, { method:'DELETE' });
+  } catch(e) {
+    console.warn('보고서 서버 삭제 실패:', e.message);
+  }
+}
 const ADMIN_BOOTSTRAP = {
   email:'admin@bizconsult.com',
   pw:'Admin1234!',
@@ -304,6 +344,7 @@ function checkAuth() {
     updateDataLists();
     initInputHandlers();
     syncCompaniesFromServer();
+    syncReportsFromServer();
   } else {
     localStorage.removeItem(DB_SESSION);
     localStorage.removeItem('biz_jwt_token');
@@ -560,7 +601,7 @@ function renderAdminTab(){
   const session=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null'));
   if(!session||!session.isAdmin) return;
   const el=function(id){ return document.getElementById(id); };
-  const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+  const reports=window._reportsCache||[];
   if(el('admin-stat-reports')) el('admin-stat-reports').textContent=reports.length;
 
   // API에서 사용자 목록 가져오기
@@ -767,7 +808,7 @@ window.deleteCompany = async function(name) {
 // ===========================
 function updateDashboardReports() {
   const listEl = document.getElementById('dashboard-report-list'); if (!listEl) return;
-  const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+  const reports   = window._reportsCache || [];
   const companies = window._companiesCache || [];
   const supportDocs = JSON.parse(localStorage.getItem(DB_SUPPORT_DOC)||'[]');
   const notices = JSON.parse(localStorage.getItem(DB_NOTICES)||'[]');
@@ -825,7 +866,7 @@ window.dashboardFeatureSoon = function(name){
 // ===========================
 window.updateDataLists = function() {
   const companies = window._companiesCache || [];
-  const reports   = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+  const reports   = window._reportsCache || [];
   document.querySelectorAll('.company-dropdown').forEach(sel=>{
     sel.innerHTML='<option value="">기업을 선택하세요</option>';
     companies.forEach(c=>sel.innerHTML+=`<option value="${c.name}">${c.name}</option>`);
@@ -845,10 +886,10 @@ window.updateDataLists = function() {
 window.showReportListSummary=function(){document.getElementById('rl-summary').style.display='block';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='none';updateDataLists();};
 window.showFullCompanies=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='block';document.getElementById('rl-reports').style.display='none';const companies=window._companiesCache||[];const tbody=document.getElementById('company-full-body');if(tbody){tbody.innerHTML=companies.length?companies.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.industry||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>';}};
 window.showFullReports=function(){document.getElementById('rl-summary').style.display='none';document.getElementById('rl-companies').style.display='none';document.getElementById('rl-reports').style.display='block';const companies=window._companiesCache||[];const filterComp=document.getElementById('filter-company');if(filterComp){filterComp.innerHTML='<option value="">전체 업체</option>';companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`);}renderFullReports();};
-window.renderFullReports=function(){const tf=document.getElementById('filter-type')?.value||'';const cf=document.getElementById('filter-company')?.value||'';const reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');const filtered=[...reports].reverse().filter(r=>(!tf||r.type===tf)&&(!cf||r.company===cf));const shown=filtered.slice(0,15);const countEl=document.getElementById('filter-result-count');if(countEl)countEl.textContent=`총 ${filtered.length}건`;const tbody=document.getElementById('report-full-body');if(!tbody)return;tbody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReportFull('${r.id}')">삭제</button><button class="btn-small-outline" style="margin-left:6px;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">조건에 맞는 보고서가 없음.</td></tr>';};
-window.deleteReportFull=function(id){if(!confirm('삭제하시겠습니까?'))return;let r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');r=r.filter(x=>x.id!==id);localStorage.setItem(DB_REPORTS,JSON.stringify(r));renderFullReports();updateDashboardReports();};
+window.renderFullReports=function(){const tf=document.getElementById('filter-type')?.value||'';const cf=document.getElementById('filter-company')?.value||'';const reports=window._reportsCache||[];const filtered=[...reports].reverse().filter(r=>(!tf||r.type===tf)&&(!cf||r.company===cf));const shown=filtered.slice(0,15);const countEl=document.getElementById('filter-result-count');if(countEl)countEl.textContent=`총 ${filtered.length}건`;const tbody=document.getElementById('report-full-body');if(!tbody)return;tbody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReportFull('${r.id}')">삭제</button><button class="btn-small-outline" style="margin-left:6px;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">조건에 맞는 보고서가 없음.</td></tr>';};
+window.deleteReportFull=function(id){if(!confirm('삭제하시겠습니까?'))return;window._reportsCache=(window._reportsCache||[]).filter(x=>x.id!==id);deleteReportFromServer(id);renderFullReports();updateDashboardReports();};
 window.downloadReportById=function(id){
-  var reports=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+  var reports=window._reportsCache||[];
   var rep=reports.find(function(x){return x.id===id;});
   if(!rep){alert('보고서를 찾을 수 없음.');return;}
   var rev={};
@@ -865,7 +906,7 @@ window.downloadReportById=function(id){
   pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${rep.content||''}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
   pw.document.close();
 };
-window.deleteReport=function(id){if(!confirm('삭제하시겠습니까?'))return;let r=JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');r=r.filter(x=>x.id!==id);localStorage.setItem(DB_REPORTS,JSON.stringify(r));updateDataLists();};
+window.deleteReport=function(id){if(!confirm('삭제하시겠습니까?'))return;window._reportsCache=(window._reportsCache||[]).filter(x=>x.id!==id);deleteReportFromServer(id);updateDataLists();};
 
 // ===========================
 // ★ 기업 저장
@@ -4055,7 +4096,7 @@ window.generateReport = async function(type, version, event) {
   if (!data) return;
 
   var today = new Date().toISOString().split('T')[0];
-  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+  var rs = [...(window._reportsCache||[])];
 
   // ★ 두 버전 모두 저장 (같은 데이터, 다른 버전 태그)
   var idBase = Date.now();
@@ -4075,7 +4116,9 @@ window.generateReport = async function(type, version, event) {
   };
   rs.push(rptClient);
   rs.push(rptConsultant);
-  localStorage.setItem(DB_REPORTS, JSON.stringify(rs));
+  window._reportsCache = rs;
+  saveReportToServer(rptClient);
+  saveReportToServer(rptConsultant);
   updateDataLists();
 
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
@@ -4662,8 +4705,9 @@ window.generateFinanceReport = async function(event) {
   var today = new Date().toISOString().split('T')[0];
   var rptTitle = cData.name+'_재무제표 분석';
   var rpt = {id:'rep_'+Date.now(),type:'재무제표 분석',company:cData.name,title:rptTitle,date:today,content:JSON.stringify(data),version:'client',revenueData:rev,reportType:'finance',contentAreaId:'finance-content-area'};
-  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
-  localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
+  window._reportsCache = [...(window._reportsCache||[]), rpt];
+  saveReportToServer(rpt);
+  updateDataLists();
   var tab = document.getElementById('finance');
   if (tab) {
     var inputStep = document.getElementById('finance-input-step');
@@ -4738,8 +4782,9 @@ window.generateAnyReport = async function(type, version, event) {
   var today = new Date().toISOString().split('T')[0];
   var rptTitle = cData.name+'_'+cfg.title;
   var rpt = {id:'rep_'+Date.now(),type:cfg.typeLabel,company:cData.name,title:rptTitle,date:today,content:JSON.stringify(data),version:version,revenueData:rev,reportType:type,contentAreaId:cfg.contentAreaId};
-  var rs = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]'); rs.push(rpt);
-  localStorage.setItem(DB_REPORTS, JSON.stringify(rs)); updateDataLists();
+  window._reportsCache = [...(window._reportsCache||[]), rpt];
+  saveReportToServer(rpt);
+  updateDataLists();
   tab.querySelector('[id$="-input-step"]').style.display = 'none';
   tab.querySelector('[id$="-result-step"]').style.display = 'block';
   var ca = document.getElementById(cfg.contentAreaId);
@@ -4763,7 +4808,7 @@ window.generateAnyReport = async function(type, version, event) {
 // ★ 보고서 보기 (showTab 리셋 후 setTimeout으로 복원)
 // ===========================
 window.viewReport = function(id) {
-  var r = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]').find(function(x){return x.id===id;}); if(!r) return;
+  var r = (window._reportsCache||[]).find(function(x){return x.id===id;}); if(!r) return;
   var cs = (window._companiesCache||[]);
   var cData = cs.find(function(c){return c.name===r.company;})||{name:r.company,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:r.date};
   var rev = r.revenueData||{cur:0,y25:0,y24:0,y23:0};
