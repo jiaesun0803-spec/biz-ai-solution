@@ -2789,8 +2789,8 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">상호 <strong style="color:white">'+cData.name+'</strong></span>'
     +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">대표자 <strong style="color:white">'+(cData.rep||'-')+'</strong></span>'
     +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">업종 <strong style="color:white">'+(cData.industry||'-')+'</strong></span>'
-    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업자번호 <strong style="color:white">'+(cData.bizNo||'-')+'</strong></span>'
-    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업장주소 <strong style="color:white">'+(cData.addr||'-')+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업자번호 <strong style="color:white">'+(cData.bizNum||cData.bizNo||'-')+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업장주소 <strong style="color:white">'+(cData.address||cData.addr||'-')+'</strong></span>'
     +   '</div>'
     +   '<div style="text-align:right">'
     +     '<div style="font-size:10px;color:rgba(255,255,255,0.6)">작성일: '+issueDate+'</div>'
@@ -3069,7 +3069,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {src:'기보 기술 보증', rate:'3.5%', method:'3년 분할 상환', resource:'공공 납품 매출'}
   ];
 
-  var p7 = rpPage(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 상환 계획',color,
+  var p7 = rpPageAuto(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 상환 계획',color,
     // 상단: 자금조달구조 + 배분비율 (2열)
     '<div class="rp-2col" style="margin-bottom:10px">'
     + '<div class="rp-col50">'
