@@ -1323,6 +1323,19 @@ function rpPage(num, title, sub, color, content) {
     + '</div>';
 }
 
+function rpPageAuto(num, title, sub, color, content) {
+  var numBg = (color==='#d97706'||color==='#92400e') ? '#fef3c7' : '#eff6ff';
+  var numTc = (color==='#d97706'||color==='#92400e') ? '#d97706' : color;
+  return '<div class="rp-page-auto">'
+    + '<div class="rp-ph">'
+    + '<div class="rp-pnum" style="background:'+numBg+';color:'+numTc+'">'+num+'</div>'
+    + '<span class="rp-ptitle">'+title+'</span>'
+    + '<span class="rp-psub">'+(sub||'')+'</span>'
+    + '</div>'
+    + '<div class="rp-body">'+content+'</div>'
+    + '</div>';
+}
+
 function rpSec(title, color, content) {
   return '<div class="rp-section">'
     + (title ? '<h4 style="color:'+color+'">'+title+'</h4>' : '')
@@ -2868,8 +2881,8 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           + ['p','e','s','t'].map(function(k){
               var pc = pestColors[k];
               return '<div style="background:'+pc.bg+';border:1px solid '+pc.bd+';border-radius:8px;padding:10px 12px">'
-                + '<div style="font-size:11.5px;font-weight:700;color:'+pc.c+';margin-bottom:7px">'+pc.label+'</div>'
-                + (pestData[k]||[]).map(function(t){return '<div style="font-size:10px;color:#374151;padding-left:10px;position:relative;line-height:1.5;margin-bottom:4px"><span style="position:absolute;left:0;color:'+pc.c+'">▸</span>'+t+'</div>';}).join('')
+                + '<div style="font-size:12px;font-weight:700;color:'+pc.c+';margin-bottom:7px">'+pc.label+'</div>'
+                + (pestData[k]||[]).map(function(t){return '<div style="font-size:12px;color:#374151;padding-left:12px;position:relative;line-height:1.55;margin-bottom:5px"><span style="position:absolute;left:0;color:'+pc.c+'">▸</span>'+t+'</div>';}).join('')
                 + '</div>';
             }).join('')
           + '</div>'
@@ -3196,7 +3209,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {item:'상환 가능성', basis:'월정 수입 기반 원리금 상환 — 현금 흐름 예측 가능', eval:'★★★★★', note:'보수적 시나리오에서도 상환 가능'}
   ];
 
-  var p9 = rpPage(9,'종합 제언','최종 평가 · 투자 타당성 · 실행 권고',color,
+  var p9 = rpPageAuto(9,'종합 제언','최종 평가 · 투자 타당성 · 실행 권고',color,
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">'
     + [
         {icon:'🏆', title:'안정적 수익 구조', desc:conclusion.split('.')[0]||cData.name+'의 매출 성장과 반복 구매 기반이 안정적 수익 구조를 형성하고 있음', c:color},
@@ -3238,6 +3251,86 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '.rp-section h4 { color:#1e2d4a !important; border-left:3px solid #c0392b; padding-left:8px; }'
     + '</style>';
   return tplStyle(color, 'landscape') + bizPlanExtraCSS + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
+}
+
+// ===========================
+// ★ 차트 초기화 함수
+// ===========================
+function safeDestroyChart(canvas) {
+  if (!canvas || typeof Chart === 'undefined') return;
+  try { var e = Chart.getChart ? Chart.getChart(canvas) : null; if(e) e.destroy(); } catch(er) {}
+}
+
+function initReportCharts(rev) {
+  if (typeof Chart === 'undefined') { console.warn('Chart.js 미로드'); return; }
+  setTimeout(function() {
+    // ─ 경영진단 레이더
+    var ra = document.getElementById('rp-radar');
+    if(ra && ra.dataset && ra.dataset.scores) {
+      safeDestroyChart(ra);
+      try { new Chart(ra.getContext('2d'),{type:'radar',data:{labels:['재무','전략/마케팅','인사','운영','IT'],datasets:[{data:ra.dataset.scores.split(',').map(Number),backgroundColor:'rgba(59,130,246,0.18)',borderColor:'#3b82f6',borderWidth:2,pointBackgroundColor:'#1e3a8a',pointBorderColor:'#ffffff',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6}]},options:{layout:{padding:{top:6,right:10,bottom:6,left:10}},scales:{r:{min:0,max:100,ticks:{display:false,stepSize:20,showLabelBackdrop:false},angleLines:{color:'rgba(148,163,184,0.28)'},grid:{color:'rgba(148,163,184,0.20)'},pointLabels:{font:{size:13,weight:'bold'},color:'#475569'}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){console.error('레이더 오류:',e);}
+    }
+    // ─ 매출 라인
+    var li = document.getElementById('rp-linechart');
+    if(li && li.dataset && li.dataset.y23 !== undefined) {
+      safeDestroyChart(li);
+      try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
+    }
+    // ─ 재무 도넛
+    var de = document.getElementById('fp-donut');
+    if(de && de.dataset && de.dataset.names) {
+      safeDestroyChart(de);
+      try { new Chart(de.getContext('2d'),{type:'doughnut',data:{labels:de.dataset.names.split('|'),datasets:[{data:de.dataset.ratios.split(',').map(Number),backgroundColor:['#2563eb','#7c3aed','#06b6d4','#16a34a','#ea580c'],borderWidth:3,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}}); } catch(e){}
+    }
+    // ─ 3개년 성장
+    var fg = document.getElementById('fp-growth-chart');
+    if(fg) {
+      safeDestroyChart(fg);
+      try {
+        var gd = fg.dataset || {};        var growthData = [+(gd.y1||0), +(gd.y2||0), +(gd.y3||0)];
+        if (!growthData[0] && !growthData[1] && !growthData[2]) growthData = [140000,240000,350000];
+        var gRange=Math.max(growthData[2]-growthData[0], growthData[0]*0.5, 50000);
+        var gMid1=Math.round(growthData[0]+gRange*0.30);
+        var gMid2=Math.round(growthData[0]+gRange*0.60);
+        var gMid3=Math.round(growthData[1]+gRange*0.18);
+        var expandedData=[growthData[0], gMid1, gMid2, growthData[1], gMid3, growthData[2]];
+        new Chart(fg.getContext('2d'),{type:'line',data:{labels:['26.1Q','26.2Q','26.3Q','27.1Q','27.3Q','28'],datasets:[{data:expandedData,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.15)',borderWidth:3,pointRadius:[6,4,4,6,4,6],pointHoverRadius:8,fill:true,tension:0.4,cubicInterpolationMode:'monotone'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}});;
+      } catch(e){}
+    }
+    // ─ 상권 레이더
+    var tr = document.getElementById('tp-radar');
+    if(tr && tr.dataset && tr.dataset.scores) {
+      safeDestroyChart(tr);
+      try { new Chart(tr.getContext('2d'),{type:'radar',data:{labels:['유동인구','접근성','성장성','경쟁강도','가시성'],datasets:[{data:tr.dataset.scores.split(',').map(Number),backgroundColor:'rgba(13,148,136,0.18)',borderColor:'#0d9488',pointBackgroundColor:'#0d9488',pointRadius:5}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:12}}}},maintainAspectRatio:false,plugins:{legend:{display:false}}}}); } catch(e){}
+    }
+    // ─ 상권 매출 라인
+    var tl = document.getElementById('tp-linechart');
+    if(tl && tl.dataset && tl.dataset.s0) {
+      safeDestroyChart(tl);
+      try { var td=tl.dataset; new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return Math.round(v/100)*100+'만';}}}}}}); } catch(e){}
+    }
+    // ─ 마케팅 도넛
+    var md = document.getElementById('mp-donut');
+    if(md && md.dataset && md.dataset.names) {
+      safeDestroyChart(md);
+      try { new Chart(md.getContext('2d'),{type:'doughnut',data:{labels:md.dataset.names.split('|'),datasets:[{data:md.dataset.ratios.split(',').map(Number),backgroundColor:['#db2777','#9d174d','#f4c0d1','#fdf2f8'],borderWidth:3,borderColor:'white'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}}); } catch(e){}
+    }
+    // ─ 시장 성장 라인 (사업계획서 P2)
+    var bm = document.getElementById('bp-market-chart');
+    if(bm) { safeDestroyChart(bm); try { new Chart(bm.getContext('2d'),{type:'line',data:{labels:['2016','2017','2018','2019','2020','2021','2022'],datasets:[{data:[2,2.4,3,3.8,4.5,5.8,7],borderColor:'#1e2d4a',backgroundColor:'rgba(30,45,74,0.12)',borderWidth:3,pointRadius:5,fill:true,tension:0.35}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return v+'조';}}}}}}); } catch(e){} }
+    // ─ 월별 매출 바
+    var bc = document.getElementById('biz-monthly-chart');
+    if(bc) {
+      safeDestroyChart(bc);
+      try {
+        var curM=new Date().getMonth(), sr=rev||{};
+        var avgM=sr.cur&&curM>0?Math.round(sr.cur/curM):sr.y25?Math.round(sr.y25/12):3000;
+        var ac=[],fc=[];
+        for(var i=0;i<12;i++){if(i<curM){ac.push(Math.round(avgM*(0.9+i*0.02)));fc.push(null);}else{ac.push(null);fc.push(Math.round(avgM*Math.pow(1.06,i-curM+1)));}
+        }
+        new Chart(bc.getContext('2d'),{type:'bar',data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],datasets:[{label:'실적',data:ac,backgroundColor:'rgba(22,163,74,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:5},{label:'예측',data:fc,backgroundColor:'rgba(59,130,246,0.55)',borderColor:'#3b82f6',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){}
+    }
+  }, 400);
 }
 
 // ===========================
