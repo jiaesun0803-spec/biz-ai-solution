@@ -2828,7 +2828,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   ];
 
   // ── P1: 사업개요 및 핵심지표 ──
-  var p1 = rpPage(1,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
+  var p1 = rpPageAuto(1,'사업개요 및 핵심지표','기업 정보 · 실행 배경 · 핵심 강점',color,
     '<div class="rp-2col">'
     + '<div class="rp-col45">'
     +   rpSec('기업 기본 정보', color,
@@ -2874,7 +2874,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   };
   var pestColors = {p:{bg:'#eff6ff',bd:'#93c5fd',c:'#2563eb',label:'P 정치·규제'},e:{bg:'#fff7ed',bd:'#fdba74',c:'#ea580c',label:'E 경제'},s:{bg:'#f0fdf4',bd:'#86efac',c:'#16a34a',label:'S 사회'},t:{bg:'#fdf4ff',bd:'#d8b4fe',c:'#7c3aed',label:'T 기술'}};
 
-  var p2 = rpPage(2,'시장기회 분석 (PEST)','거시환경 분석 · 시장 규모 · 성장성',color,
+  var p2 = rpPageAuto(2,'시장기회 분석 (PEST)','거시환경 분석 · 시장 규모 · 성장성',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('PEST 거시환경 분석', color,
@@ -2910,7 +2910,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   );
 
   // ── P3: SWOT 분석 ──
-  var p3 = rpPage(3,'SWOT 분석','강점 · 약점 · 기회 · 위협 요인',color,
+  var p3 = rpPageAuto(3,'SWOT 분석','강점 · 약점 · 기회 · 위협 요인',color,
     '<div class="rp-swot" style="flex:1;margin-bottom:10px">'
     +   '<div class="rp-sws rp-sw"><div class="rp-swl">💪 강점 (Strengths)</div><ul>'+(swot.strength||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
     +   '<div class="rp-sww rp-sw"><div class="rp-swl">⚠️ 약점 (Weaknesses)</div><ul>'+(swot.weakness||[]).map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>'
@@ -2970,7 +2970,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   );
 
   // ── P5: 경쟁환경 및 차별화 전략 ──
-  var p5 = rpPage(5,'경쟁환경 분석 및 차별화 전략','경쟁사 비교 · 차별화 포인트',color,
+  var p5 = rpPageAuto(5,'경쟁환경 분석 및 차별화 전략','경쟁사 비교 · 차별화 포인트',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('주요 경쟁사 비교 분석', color,
@@ -3017,7 +3017,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {period:'28년: 제조업 자재창고 확장', detail:'제조업 자재창고 전용 모듈 개발 · 이노비즈 인증 활용 제조 고객 공략 · 고객사 100개 달성 · 총 매출 목표 달성'}
   ];
 
-  var p6 = rpPage(6,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 핵심 인력',color,
+  var p6 = rpPageAuto(6,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 핵심 인력',color,
     '<div class="rp-2col">'
     + '<div class="rp-col50">'
     +   rpSec('보유 인증 현황 및 활용 전략', color,
