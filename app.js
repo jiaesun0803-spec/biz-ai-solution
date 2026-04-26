@@ -2732,9 +2732,60 @@ function buildFundHTML(d, cData, rev, dateStr) {
 // ★ AI 사업계획서 (표지+10P)
 // ===========================
 function buildBizPlanHTML(d, cData, rev, dateStr) {
-  var color = '#16a34a';
+  var color = '#1e2d4a';   // 네이비 (시안 기준)
+  var accentRed = '#c0392b'; // 빨간 포인트
   var exp   = calcExp(cData, rev);
-  var cover = buildCoverHTML(cData, {title:'AI 사업계획서',reportKind:'AI 맞춤형 사업계획서',vLabel:'완성본',borderColor:color}, rev, dateStr);
+
+  // ── 사업계획서 전용 표지 (시안 스타일: 네이비 그라데이션 전체 배경) ──
+  var session = JSON.parse(localStorage.getItem(DB_SESSION)||'{}');
+  var cName = session.name||'담당 컨설턴트';
+  var cDept = session.dept||'(주)비즈AI솔루션';
+  var dateObj = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(dateObj.getTime())) dateObj = new Date();
+  var issueDate = dateObj.getFullYear()+'년 '+(dateObj.getMonth()+1)+'월';
+  var kpiCoverItems = [
+    {val: fKRW(rev.y25||0), lbl: '전년도 매출'},
+    {val: '+'+(rev.y24>0&&rev.y25>0?Math.round(((rev.y25-rev.y24)/rev.y24)*100):21)+'%', lbl: 'YoY 성장률'},
+    {val: (cData.empCount||'-')+'명', lbl: '상시 근로자'},
+    {val: cData.needFund>0?fKRW(cData.needFund):'2억원', lbl: '투자 요청액'},
+    {val: cData.certs?cData.certs.split(',').length+'건':'1건', lbl: '보유 인증'}
+  ];
+  var cover = '<div class="rp-cover" style="background:linear-gradient(160deg,#1a2a4a 0%,#0d1b3e 60%,#1a2a4a 100%);padding:0;position:relative;overflow:hidden">'
+    // 배경 장식 원
+    + '<div style="position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>'
+    + '<div style="position:absolute;bottom:-60px;left:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,0.03)"></div>'
+    // 중앙 콘텐츠
+    + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 60px;position:relative;z-index:1">'
+    +   '<div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 20px;font-size:11px;color:rgba(255,255,255,0.85);letter-spacing:1px;margin-bottom:24px">기관·투자용 AI 사업계획서 · 안정성·실행형</div>'
+    +   '<div style="font-size:48px;font-weight:900;color:white;text-align:center;line-height:1.15;letter-spacing:-1.5px;margin-bottom:12px">'+cData.name+'</div>'
+    +   '<div style="font-size:15px;color:rgba(255,255,255,0.7);text-align:center;margin-bottom:8px">'+(cData.coreItem||cData.industry||'핵심 사업 아이템')+'</div>'
+    +   '<div style="width:60px;height:3px;background:'+accentRed+';border-radius:2px;margin:16px auto 28px"></div>'
+    // KPI 카드 5개
+    +   '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">'
+    +   kpiCoverItems.map(function(k){
+          return '<div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:14px 20px;text-align:center;min-width:90px">'
+            + '<div style="font-size:20px;font-weight:900;color:white;line-height:1.2">'+k.val+'</div>'
+            + '<div style="font-size:10px;color:rgba(255,255,255,0.65);margin-top:4px">'+k.lbl+'</div>'
+            + '</div>';
+        }).join('')
+    +   '</div>'
+    + '</div>'
+    // 하단 기업정보 바
+    + '<div style="background:rgba(0,0,0,0.35);padding:14px 40px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;flex-shrink:0">'
+    +   '<div style="display:flex;gap:32px">'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">상호 <strong style="color:white">'+cData.name+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">대표자 <strong style="color:white">'+(cData.rep||'-')+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">업종 <strong style="color:white">'+(cData.industry||'-')+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업자번호 <strong style="color:white">'+(cData.bizNo||'-')+'</strong></span>'
+    +     '<span style="font-size:11px;color:rgba(255,255,255,0.7)">사업장주소 <strong style="color:white">'+(cData.addr||'-')+'</strong></span>'
+    +   '</div>'
+    +   '<div style="text-align:right">'
+    +     '<div style="font-size:10px;color:rgba(255,255,255,0.6)">작성일: '+issueDate+'</div>'
+    +     '<div style="font-size:10px;color:rgba(255,255,255,0.6)">담당 컨설턴트: '+cName+'</div>'
+    +     '<div style="font-size:10px;color:rgba(255,255,255,0.6)">'+cDept+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '</div>';
 
   var swot = d.s2_swot||{strength:['창업 1년 만에 13억 8천만원 폭발적 매출 달성 — 시장성 검증 완료'],weakness:['상시근로자 4명의 소규모 인력으로 사업 확장 속도에 제약이 있음'],opportunity:['HMR 시장 연 18% 성장 — 돈육·육수 세그먼트 최우수 성장 구간'],threat:['대형 식품기업의 후발 진입 가능성 상시 존재 — 특허 방어 필수']};
   var compRows = d.s4_competitor||[{item:'제품 경쟁력',self:'★★★★★',a:'★★★★',b:'★★★'},{item:'기술력(특허)',self:'★★★★★',a:'★★★',b:'★★★'},{item:'가격 경쟁력',self:'★★★★',a:'★★★★★',b:'★★★★'},{item:'유통망',self:'★★★',a:'★★★★★',b:'★★★★'},{item:'성장성',self:'★★★★★',a:'★★★',b:'★★★'}];
@@ -2751,7 +2802,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
   var fundRows = d.s7_rows||[{item:'원재료 구입',amount:'1억 5천만원',ratio:'37.5%',purpose:'돈육 사골 등 핵심 원재료 선매입 및 안정적 재고 확보'},{item:'생산 설비 투자',amount:'1억원',ratio:'25%',purpose:'반자동 생산설비 도입 — 원가율 20% 절감 목표'},{item:'마케팅·채널 확대',amount:'7천만원',ratio:'17.5%',purpose:'SNS 광고·쿠팡 입점·브랜드 마케팅 집행'},{item:'운전자금',amount:'8천만원',ratio:'20%',purpose:'인건비·공과금·운영 고정비 등'}];
   var kpi9 = d.s9_kpi||{y1:'18억',y2:'24억',ch:'5개↑',emp:'11명'};
   var rmYears = d.s9_roadmap||[{year:'2026',tasks:['정책자금 4억 조달 완료','생산 설비 확충 가동','쿠팡·스마트스토어 입점']},{year:'2027',tasks:['벤처인증 취득 완료','B2B 납품 채널 3곳','매출 24억 달성']},{year:'2028',tasks:['이노비즈 취득','매출 35억 달성','자동화 생산 완성']},{year:'2029~',tasks:['해외 수출 추진','기업부설연구소','매출 100억 목표']}];
-  var rmColors = ['#16a34a','#2563eb','#7c3aed','#ea580c'];
+  var rmColors = ['#1e2d4a','#2563eb','#7c3aed','#ea580c'];
   var conclusion = d.s10_conclusion||cData.name+'는 창업 이후 단기간에 폭발적인 매출 성장을 달성하며 HMR 시장의 핵심 플레이어로 부상하고 있음. 돈육 사골 농축 압축 기술 특허와 1회 분량 개별 포장이라는 독창적 제품력은 경쟁사가 쉽게 모방할 수 없는 진입 장벽을 구축하고 있음. 정책자금 4억원 조달 시 생산 설비 확충과 마케팅 채널 다각화를 통해 2년 내 매출 24억 달성이 충분히 가능한 성장 기반을 갖추고 있음. 인증 취득 로드맵을 체계적으로 실행하면 추가 자금 최대 6.5억원 확보와 함께 중장기 매출 100억 목표 달성 가능성이 충분히 있음.';
   var yoy = (rev.y24>0&&rev.y25>0)?Math.round(((rev.y25-rev.y24)/rev.y24)*100):21;
   var overviewItems = d.s1_items||[
@@ -3151,7 +3202,15 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'landscape') + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
+  // 사업계획서 전용 CSS: 내지 헤더를 네이비 바 스타일로 오버라이드
+  var bizPlanExtraCSS = '<style>'
+    + '.rp-ph { background:#1e2d4a !important; border-radius:6px !important; padding:10px 14px !important; margin-bottom:14px !important; border-bottom:none !important; }'
+    + '.rp-pnum { background:#c0392b !important; color:white !important; border-radius:4px !important; width:26px !important; height:26px !important; font-size:12px !important; }'
+    + '.rp-ptitle { color:white !important; font-size:14px !important; font-weight:700 !important; }'
+    + '.rp-psub { color:rgba(255,255,255,0.65) !important; font-size:11px !important; }'
+    + '.rp-section h4 { color:#1e2d4a !important; border-left:3px solid #c0392b; padding-left:8px; }'
+    + '</style>';
+  return tplStyle(color, 'landscape') + bizPlanExtraCSS + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
 }
 
 // ===========================
