@@ -3181,6 +3181,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           })()
         )
     + '</div>'
+    + '</div>'
   );
 
   // ── P9: 종합 제언 ──
@@ -3192,42 +3193,55 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {item:'상환 가능성', basis:'월정 수입 기반 원리금 상환 — 현금 흐름 예측 가능', eval:'★★★★★', note:'보수적 시나리오에서도 상환 가능'}
   ];
 
-  var p9 = rpPageAuto(9,'종합 제언','최종 평가 · 투자 타당성 · 실행 권고',color,
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">'
+  // P9a: 종합 제언 카드 3개
+  var p9a = rpPageAuto(9,'종합 제언','최종 평가 · 투자 타당성 · 실행 권고',color,
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:0">'
     + [
         {icon:'🏆', title:'안정적 수익 구조', desc:conclusion.split('.')[0]||cData.name+'의 매출 성장과 반복 구매 기반이 안정적 수익 구조를 형성하고 있음', c:color},
         {icon:'📋', title:'구체적 실행 계획', desc:'인력 채용·제품 개발·인증 취득·영업 확대의 단계별 실행 계획이 명확하며 투자 자금 집행 목적과 기대 효과가 구체적으로 제시됨', c:'#2563eb'},
         {icon:'📈', title:'성장 잠재력', desc:mktLabel+' CAGR '+mktGrowth+' 고성장. '+String(curYr+2)+'년 매출 목표 달성 시 기업가치 상승 및 추가 투자 유치 가능성이 높음', c:'#7c3aed'}
       ].map(function(card){
-        return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px">'
-          + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-          +   '<span style="font-size:26px;flex-shrink:0">'+card.icon+'</span>'
-          +   '<span style="font-size:13px;font-weight:700;color:'+card.c+'">'+card.title+'</span>'
+        return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:20px 22px">'
+          + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'
+          +   '<span style="font-size:30px;flex-shrink:0">'+card.icon+'</span>'
+          +   '<span style="font-size:14px;font-weight:700;color:'+card.c+'">'+card.title+'</span>'
           + '</div>'
-          + '<div style="font-size:11.5px;color:#374151;line-height:1.65">'+card.desc+'</div>'
+          + '<div style="font-size:12px;color:#374151;line-height:1.75">'+card.desc+'</div>'
           + '</div>';
       }).join('')
     + '</div>'
+  );
+
+  // P9b: 투자 타당성 요약 표 (별도 페이지 - 헤더 없음)
+  var p9b = '<div class="rp-page-auto"><div class="rp-body">'
     + rpSec('투자 타당성 요약', color,
-        '<table class="rp-ftb"><thead><tr><th style="text-align:left">평가 항목</th><th style="text-align:left">근거 및 현황</th><th>평가</th><th style="text-align:left">비고</th></tr></thead>'
+        '<table class="rp-ftb"><thead><tr>'
+        + '<th style="text-align:left;width:120px">평가 항목</th>'
+        + '<th style="text-align:left">근거 및 현황</th>'
+        + '<th style="width:90px">평가</th>'
+        + '<th style="text-align:left;width:150px">비고</th>'
+        + '</tr></thead>'
         + '<tbody>'+kpiRows.map(function(r,i){
-            return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td>'+r.basis+'</td><td style="text-align:center;font-size:12px">'+r.eval+'</td><td style="font-size:10.5px;color:#64748b">'+r.note+'</td></tr>';
+            return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'>'              + '<td style="font-weight:700">'+r.item+'</td>'              + '<td>'+r.basis+'</td>'              + '<td style="text-align:center;font-size:12px">'+r.eval+'</td>'              + '<td style="font-size:10.5px;color:#64748b">'+r.note+'</td>'              + '</tr>';
           }).join('')
         + '</tbody></table>'
       )
-    + '<div style="background:#f0fdf4;border:2px solid '+color+';border-radius:10px;padding:12px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="background:#f0fdf4;border:2px solid '+color+';border-radius:10px;padding:16px 20px;margin-top:14px;display:flex;justify-content:space-between;align-items:center">'
     +   '<div>'
-    +     '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">투자 요청 금액 및 활용 목적</div>'
-    +     '<div style="font-size:11px;color:#374151;line-height:1.6">'+fundRows.map(function(r){return r.item+'('+r.ratio+')';}).join(' + ')+'<br>→ '+String(curYr+2)+'년 매출 목표 달성, 대출 전액 상환 완료, 기업가치 상승 목표</div>'
+    +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:6px">투자 요청 금액 및 활용 목적</div>'
+    +     '<div style="font-size:12px;color:#374151;line-height:1.7">'+fundRows.map(function(r){return r.item+'('+r.ratio+')';}).join(' + ')+'<br>→ '+String(curYr+2)+'년 매출 목표 달성, 대출 전액 상환 완료, 기업가치 상승 목표</div>'
     +   '</div>'
     +   '<div style="text-align:right">'
-    +     '<div style="font-size:11px;color:#64748b;margin-bottom:2px">투자 요청</div>'
-    +     '<div style="font-size:32px;font-weight:900;color:'+color+'">'+nf+'</div>'
+    +     '<div style="font-size:11px;color:#64748b;margin-bottom:4px">투자 요청</div>'
+    +     '<div style="font-size:36px;font-weight:900;color:'+color+'">'+nf+'</div>'
     +   '</div>'
     + '</div>'
-  );
+    + '</div></div>';
 
-  // 사업계획서 전용 CSS: 내지 헤더를 네이비 바 스타일로 오버라이드
+
+  var p9 = p9a + p9b;
+
+    // 사업계획서 전용 CSS: 내지 헤더를 네이비 바 스타일로 오버라이드
   var bizPlanExtraCSS = '<style>'
     + '.rp-ph { background:#1e2d4a !important; border-radius:6px !important; padding:10px 14px !important; margin-bottom:14px !important; border-bottom:none !important; }'
     + '.rp-pnum { background:#c0392b !important; color:white !important; border-radius:4px !important; width:26px !important; height:26px !important; font-size:12px !important; }'
