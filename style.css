@@ -50,7 +50,7 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 .version-info { padding: 8px 18px 14px; font-size: 11px; color: #475569; text-align: center; }
 
 /* ===== 메인 ===== */
-.main-content { flex: 1; padding: 28px 32px; overflow-y: auto; background-color: #f1f5f9; }
+.main-content { flex: 1; padding: 28px 32px 200px 32px; overflow-y: auto; background-color: #f1f5f9; }
 .page-title { font-size: 20px; font-weight: bold; color: #0f172a; margin-bottom: 24px; }
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeIn 0.3s; }
