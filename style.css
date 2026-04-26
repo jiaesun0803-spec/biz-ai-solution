@@ -619,9 +619,11 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
+    min-width: 0;
 }
 
 /* ── 세로형 (경영진단·재무진단·정책자금·상권분석·마케팅제안) ── */
@@ -646,8 +648,8 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     flex-wrap: wrap;
 }
 .report-view-landscape .report-view-header {
-    width: 100%;
-    max-width: min(277mm, calc(100vw - 48px));
+    width: 1122px;
+    min-width: 1122px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -676,8 +678,9 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 /* report-paper: resetContentArea()가 padding=0으로 강제함 */
 .report-paper-landscape {
     background: transparent;
-    width: 100%;
-    max-width: min(277mm, calc(100vw - 48px));
+    width: 1122px;
+    min-width: 1122px;
+    max-width: 1122px;
     margin: 0 auto;
     overflow: visible;
 }
@@ -697,7 +700,13 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 /* ============================================
    ★ rp- 보고서 미리보기 컨테이너
 ============================================ */
-.report-paper-landscape,
+.report-paper-landscape {
+  background: transparent;
+  width: 1122px;
+  min-width: 1122px;
+  max-width: 1122px;
+  overflow: visible;
+}
 .report-paper {
   background: transparent;
   width: 100%;
