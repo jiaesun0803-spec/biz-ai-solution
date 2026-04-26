@@ -1112,7 +1112,8 @@ function tplStyle(color, orientation) {
 
   // ── 페이지 (A4 landscape 기준) ──
   + '.rp-page { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; height:'+layout.contentHeight+'; min-height:'+layout.contentHeight+'; display:flex; flex-direction:column; overflow:hidden; }'
-  + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; display:flex; flex-direction:column; }'
+  + '.rp-page-auto { background:white; border-radius:8px; margin-bottom:14px; padding:'+layout.pagePadding+'; min-height:auto; height:auto; overflow:visible; display:flex; flex-direction:column; }'
+  + '.rp-page-auto .rp-body { flex:none; overflow:visible; }'
   + '.rp-ph   { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2.5px solid #f1f5f9; flex-shrink:0; }'
   + '.rp-pnum { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }'
   + '.rp-ptitle{ font-size:17px; font-weight:700; color:#1e293b; }'
@@ -2958,12 +2959,12 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
       }).join('')
     + '</div>'
     +   rpSec('전략 실행 우선순위', color,
-          '<table class="rp-ftb"><thead><tr><th style="text-align:left;width:72px;white-space:nowrap">전략</th><th style="width:90px">핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th style="width:80px">우선순위</th><th style="width:70px">실행 시기</th></tr></thead>'
+          '<table class="rp-ftb"><thead><tr><th style="text-align:left;width:72px;white-space:nowrap">전략</th><th style="width:120px;white-space:nowrap">핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th style="width:80px">우선순위</th><th style="width:70px;white-space:nowrap">실행 시기</th></tr></thead>'
           + '<tbody>'
-          + '<tr><td style="font-weight:700;color:'+color+'">SO 전략</td><td style="text-align:center">공공 시장 집중 공략</td><td>'+(cross.so&&cross.so[0]?cross.so[0].replace(/SO전략 [0-9]+: /g,'').split('—')[0].trim():'조달·인증 활용 공공기관 영업 강화')+'</td><td style="text-align:center;color:'+color+';font-weight:700">★★★★★</td><td style="text-align:center">26년 Q1~Q2</td></tr>'
-          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#2563eb">WO 전략</td><td style="text-align:center">인력·채널 확충</td><td>'+(cross.wo&&cross.wo[0]?cross.wo[0].replace(/WO전략 [0-9]+: /g,'').split('—')[0].trim():'정책자금으로 영업 인력 확충 및 채널 진입')+'</td><td style="text-align:center;color:#2563eb;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q2~Q3</td></tr>'
-          + '<tr><td style="font-weight:700;color:#7c3aed">ST 전략</td><td style="text-align:center">기술 포지셔닝 강화</td><td>'+(cross.st&&cross.st[0]?cross.st[0].replace(/ST전략 [0-9]+: /g,'').split('—')[0].trim():'특허·실증 데이터로 전문 포지셔닝 강화')+'</td><td style="text-align:center;color:#7c3aed;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q3</td></tr>'
-          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#ea580c">WT 전략</td><td style="text-align:center">기존 고객 방어</td><td>'+(cross.wt&&cross.wt[0]?cross.wt[0].replace(/WT전략 [0-9]+: /g,'').split('—')[0].trim():'고객 유지율 97% 이상 유지 및 특허 추가 출원')+'</td><td style="text-align:center;color:#ea580c;font-weight:700">★★★☆☆</td><td style="text-align:center">상시</td></tr>'
+          + '<tr><td style="font-weight:700;color:'+color+'">SO 전략</td><td style="text-align:center;white-space:nowrap">공공 시장 집중 공략</td><td>'+(cross.so&&cross.so[0]?cross.so[0].replace(/SO전략 [0-9]+: /g,'').split('—')[0].trim():'조달·인증 활용 공공기관 영업 강화')+'</td><td style="text-align:center;color:'+color+';font-weight:700">★★★★★</td><td style="text-align:center">26년 Q1~Q2</td></tr>'
+          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#2563eb">WO 전략</td><td style="text-align:center;white-space:nowrap">인력·채널 확충</td><td>'+(cross.wo&&cross.wo[0]?cross.wo[0].replace(/WO전략 [0-9]+: /g,'').split('—')[0].trim():'정책자금으로 영업 인력 확충 및 채널 진입')+'</td><td style="text-align:center;color:#2563eb;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q2~Q3</td></tr>'
+          + '<tr><td style="font-weight:700;color:#7c3aed">ST 전략</td><td style="text-align:center;white-space:nowrap">기술 포지셔닝 강화</td><td>'+(cross.st&&cross.st[0]?cross.st[0].replace(/ST전략 [0-9]+: /g,'').split('—')[0].trim():'특허·실증 데이터로 전문 포지셔닝 강화')+'</td><td style="text-align:center;color:#7c3aed;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q3</td></tr>'
+          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#ea580c">WT 전략</td><td style="text-align:center;white-space:nowrap">기존 고객 방어</td><td>'+(cross.wt&&cross.wt[0]?cross.wt[0].replace(/WT전략 [0-9]+: /g,'').split('—')[0].trim():'고객 유지율 97% 이상 유지 및 특허 추가 출원')+'</td><td style="text-align:center;color:#ea580c;font-weight:700">★★★☆☆</td><td style="text-align:center">상시</td></tr>'
           + '</tbody></table>'
         )
   );
@@ -3022,7 +3023,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +   rpSec('보유 인증 현황 및 활용 전략', color,
           '<table class="rp-ftb"><thead><tr><th style="text-align:left">인증명</th><th>현황</th><th style="text-align:left">활용 전략</th></tr></thead>'
           + '<tbody>'+bpCerts.map(function(c,i){
-              var status = c.period&&c.period.includes('취득')?'<span style="background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">취득완료</span>':'<span style="background:#fef9c3;color:#854d0e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">'+c.period+'</span>';
+              var certPeriod = c.period||c.date||c.status||'';
+              var certDone = certPeriod.includes('취득')||certPeriod.includes('완료')||certPeriod.includes('등록')||certPeriod.includes('완');
+              var status = certDone?'<span style="background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">취득완료</span>':'<span style="background:#fef9c3;color:#854d0e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">'+(certPeriod||'진행중')+'</span>';
               return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+c.name+'</td><td style="text-align:center">'+status+'</td><td>'+c.effect+'</td></tr>';
             }).join('')
           + '</tbody></table>'
@@ -3097,37 +3100,19 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
         )
     + '</div>'
     + '</div>'
-    // 하단: 자금상환계획 + 집행계획표 (2열)
-    + '<div class="rp-2col">'
-    + '<div class="rp-col50">'
-    +   rpSec('자금 상환 계획', color,
-          '<table class="rp-ftb" style="font-size:11px"><thead><tr>'
-          + '<th style="text-align:left;width:30%">구분</th>'
-          + '<th style="width:12%">금리</th>'
-          + '<th style="width:25%">상환 방식</th>'
-          + '<th style="text-align:left">상환 재원</th>'
-          + '</tr></thead>'
-          + '<tbody>'+fundRepay.map(function(r,i){
-              return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700;font-size:11px">'+r.src+'</td><td style="text-align:center">'+r.rate+'</td><td style="text-align:center">'+r.method+'</td><td style="font-size:10.5px">'+r.resource+'</td></tr>';
-            }).join('')
-          + '</tbody></table>'
-        )
-    + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('자금 집행 계획표', color,
-          '<table class="rp-ftb" style="font-size:11px"><thead><tr>'
-          + '<th style="text-align:left;width:18%">집행항목</th>'
-          + '<th style="width:14%">금액</th>'
-          + '<th style="width:10%">비중</th>'
-          + '<th style="text-align:left">집행전략</th>'
-          + '<th style="width:14%">집행시기</th>'
-          + '</tr></thead>'
-          + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700;font-size:11px">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td style="font-size:10.5px">'+r.purpose+'</td><td style="text-align:center;font-size:10px">'+(r.timing||'26년 Q2~Q3')+'</td></tr>'; }).join('')
-          + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2" style="font-size:10.5px">26년 Q2 ~ 27년 Q1 (약 12개월 집행)</td></tr>'
-          + '</tbody></table>'
-        )
-    + '</div>'
-    + '</div>'
+    // 하단: 자금 집행 계획표 (전체 너비)
+    + rpSec('자금 집행 계획표', color,
+        '<table class="rp-ftb" style="font-size:12px;width:100%"><thead><tr>'
+        + '<th style="text-align:left;width:16%">집행항목</th>'
+        + '<th style="width:12%">금액</th>'
+        + '<th style="width:8%">비중</th>'
+        + '<th style="text-align:left">집행전략</th>'
+        + '<th style="width:12%">집행시기</th>'
+        + '</tr></thead>'
+        + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td><td style="text-align:center;font-size:11px">'+(r.timing||'26년 Q2~Q3')+'</td></tr>'; }).join('')
+        + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2">26년 Q2 ~ 27년 Q1 (약 12개월 집행)</td></tr>'
+        + '</tbody></table>'
+      )
   );
 
   // ── P8: 매출 전망 및 실행 로드맵 ──
