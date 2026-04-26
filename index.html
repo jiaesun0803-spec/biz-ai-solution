@@ -869,7 +869,33 @@
                     <div class="info-yellow-box"><h4 style="font-weight:bold;margin-bottom:15px;">💡 사업계획서 구성 (9개 섹션)</h4><div class="info-grid"><ul class="info-list"><li>1. 기업 개요 및 비전</li><li>3. 시장 분석 (TAM·SAM·SOM)</li><li>5. 마케팅·영업 전략</li><li>7. 재무 계획 (3개년)</li><li>9. 실행 로드맵</li></ul><ul class="info-list"><li>2. 사업 아이템 및 경쟁력</li><li>4. 사업 모델 (BM)</li><li>6. 운영·조직 계획</li><li>8. 리스크 관리 방안</li></ul></div></div>
                     <div class="fund-split-layout report-control-layout"><div class="fund-left report-control-left"><div class="fund-card"><label class="fund-label">분석 대상 기업</label><select class="company-dropdown" id="aiBiz-company-select"><option value="">기업을 선택하세요</option></select><div class="report-generate-actions report-left-actions"><button class="btn-report-blue report-generate-btn report-generate-btn-green" onclick="generateAnyReport('aiBiz','final',event)">◎ 사업계획서 생성</button></div></div></div><div class="fund-right fund-card"><h4 style="margin-bottom:12px;font-size:15px;color:#1e293b;">작성 목적</h4><div class="criteria-grid"><div class="criteria-col"><div class="criteria-item"><div class="dot green"></div><div><strong>정부지원사업 신청용</strong><div class="criteria-desc">중소기업 지원사업, 창업 지원</div></div></div><div class="criteria-item"><div class="dot orange"></div><div><strong>금융기관 제출용</strong><div class="criteria-desc">정책자금, 은행 대출 신청</div></div></div></div><div class="criteria-divider"></div><div class="criteria-col"><div class="criteria-item"><div class="dot blue"></div><div><strong>투자유치용</strong><div class="criteria-desc">엔젤투자, VC 투자 유치</div></div></div></div></div></div></div>
                 </div>
-                <div id="aiBiz-result-step" style="display:none;"><div class="report-view-landscape"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiBiz')">← 목록으로</button><div class="header-btns"><button class="btn-primary" onclick="printReport()">PDF 다운로드</button></div></div><div id="aiBiz-content-area" class="report-paper-landscape"></div></div></div>
+                <div id="aiBiz-result-step" style="display:none;"><div class="report-view-landscape"><div class="report-view-header"><button class="btn-small-outline" onclick="backToInput('aiBiz')">← 목록으로</button><div class="header-btns"><button id="biz-script-btn" class="btn-small-outline" onclick="generatePresentationScript()" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;font-weight:600;">🎤 발표 스크립트 생성</button><button class="btn-primary" onclick="printReport()">PDF 다운로드</button></div></div><div id="aiBiz-content-area" class="report-paper-landscape"></div></div></div>
+
+<!-- 발표 스크립트 모달 -->
+<div id="script-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9999;overflow-y:auto;">
+  <div style="background:#fff;max-width:860px;margin:40px auto 60px;border-radius:16px;padding:40px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <button onclick="document.getElementById('script-modal').style.display='none'" style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;line-height:1;">✕</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <span style="font-size:32px;">🎤</span>
+      <div>
+        <h2 style="margin:0;font-size:20px;color:#1e293b;font-weight:700;">발표 스크립트</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:#64748b;">AI 사업계획서 기반 페이지별 발표 멘트</p>
+      </div>
+    </div>
+    <div id="script-loading" style="display:none;text-align:center;padding:60px 0;">
+      <div style="font-size:44px;margin-bottom:16px;animation:spin 2s linear infinite;">⏳</div>
+      <p style="color:#64748b;font-size:15px;line-height:1.8;">AI가 발표 스크립트를 작성 중입니다...<br>약 20~30초 소요됩니다.</p>
+    </div>
+    <div id="script-content" style="line-height:1.85;font-size:14px;color:#334155;"></div>
+    <div id="script-actions" style="display:none;margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:12px;color:#94a3b8;">※ AI가 생성한 참고용 스크립트입니다. 실제 발표 시 내용을 조정하여 사용하세요.</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="copyScriptToClipboard()" style="background:#f8fafc;border:1px solid #e2e8f0;color:#475569;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">📋 복사</button>
+        <button onclick="downloadScriptAsTxt()" style="background:#16a34a;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">⬇ 다운로드</button>
+      </div>
+    </div>
+  </div>
+</div>
             </div>
         </section>
 

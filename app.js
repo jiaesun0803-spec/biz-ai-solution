@@ -4340,6 +4340,15 @@ window.generateAnyReport = async function(type, version, event) {
   resetContentArea(ca);
   ca.innerHTML = cfg.buildHTML(data, cData, rev, today);
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
+  // 사업계획서인 경우 발표 스크립트 생성을 위해 데이터 저장
+  if (type === 'aiBiz') {
+    window._lastBizData  = data;
+    window._lastBizCData = cData;
+    window._lastBizRev   = rev;
+    // 스크립트 버튼 활성화
+    var scriptBtn = document.getElementById('biz-script-btn');
+    if (scriptBtn) { scriptBtn.disabled = false; scriptBtn.style.opacity = '1'; }
+  }
   addDisclaimerToReport(cfg.contentAreaId);
   initReportCharts(rev);
 };
@@ -4660,3 +4669,121 @@ function buildFundCriteriaHTML() {
 </div>
 `;
 }
+
+// ===========================
+// ★ 발표 스크립트 생성
+// ===========================
+window.generatePresentationScript = async function() {
+  var modal = document.getElementById('script-modal');
+  var loading = document.getElementById('script-loading');
+  var contentDiv = document.getElementById('script-content');
+  var actionsDiv = document.getElementById('script-actions');
+  if (!modal || !loading || !contentDiv) return;
+
+  var d = window._lastBizData;
+  var cData = window._lastBizCData;
+  if (!d || !cData) {
+    alert('사업계획서를 먼저 생성해주세요.');
+    return;
+  }
+
+  // 모달 열기
+  modal.style.display = 'block';
+  loading.style.display = 'block';
+  contentDiv.style.display = 'none';
+  if (actionsDiv) actionsDiv.style.display = 'none';
+
+  var nm = cData.name || '기업명';
+  var ind = cData.industry || '제조업';
+  var itm = cData.coreItem || '주력제품';
+  var rep = cData.rep || '대표';
+  var rev = window._lastBizRev || {};
+  var r25 = rev.y25 ? (rev.y25/100000000).toFixed(1)+'억원' : '전년 매출';
+  var nf = cData.needFund > 0 ? (cData.needFund/100000000).toFixed(1)+'억원' : '4억원';
+
+  // 사업계획서 핵심 내용 요약
+  var overviewItems = (d.s1_items||[]).slice(0,3).join(' / ');
+  var strengths = ((d.s2_swot||{}).strength||[]).slice(0,2).join(', ');
+  var opportunities = ((d.s2_swot||{}).opportunity||[]).slice(0,2).join(', ');
+  var kpi = d.s9_kpi || {y1:'18억', y2:'24억'};
+  var conclusion = (d.s10_conclusion||'').slice(0,200);
+
+  var prompt = `당신은 전문 경영 발표 코치입니다. 아래 AI 사업계획서 내용을 바탕으로 투자자·심사위원 앞에서 발표할 수 있는 페이지별 발표 스크립트를 작성해주세요.
+
+[기업 정보]
+- 기업명: ${nm}
+- 업종: ${ind}
+- 핵심아이템: ${itm}
+- 대표자: ${rep}
+- 전년 매출: ${r25}
+- 필요 자금: ${nf}
+
+[사업계획서 핵심 내용]
+- 사업 개요: ${overviewItems}
+- 핵심 강점: ${strengths}
+- 시장 기회: ${opportunities}
+- 매출 목표: 1년차 ${kpi.y1}, 2년차 ${kpi.y2}
+- 종합 의견: ${conclusion}
+
+[작성 요건]
+1. 표지(인사말) → P1(기업개요) → P2(목차) → P3(사업개요) → P4(시장분석) → P5(SWOT) → P6(교차전략) → P7(경쟁분석) → P8(인증·조달전략) → P9(자금계획) → P10(매출전망·로드맵) → P11(종합제언) 순서로 작성
+2. 각 페이지별로 **[P페이지번호 - 섹션명]** 형식의 제목을 붙이고, 발표 멘트를 2~4문단으로 작성
+3. 각 페이지 예상 발표 시간을 괄호로 표시 (예: 약 2분)
+4. 자연스럽고 설득력 있는 구어체로 작성 (존댓말, ~입니다 체)
+5. 핵심 수치와 기업명을 반드시 포함
+6. 마지막에 Q&A 예상 질문 3개와 답변 요령을 추가`;
+
+  try {
+    var scriptText = await callGeminiAPIBiz(prompt);
+    loading.style.display = 'none';
+    contentDiv.style.display = 'block';
+    if (actionsDiv) actionsDiv.style.display = 'flex';
+
+    // 마크다운 스타일로 렌더링
+    window._lastScriptText = scriptText;
+    var html = scriptText
+      .replace(/^## (.+)$/gm, '<h3 style="color:#1e293b;font-size:16px;font-weight:700;margin:24px 0 8px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;">$1</h3>')
+      .replace(/^\*\*\[(.+?)\]\*\*(.*)$/gm, '<div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:10px 14px;margin:12px 0 6px;border-radius:0 8px 8px 0;"><strong style="color:#16a34a;font-size:14px;">[$1]</strong>$2</div>')
+      .replace(/^\*\*(.+?)\*\*(.*)$/gm, '<p style="margin:6px 0;"><strong>$1</strong>$2</p>')
+      .replace(/^### (.+)$/gm, '<h4 style="color:#16a34a;font-size:14px;font-weight:700;margin:16px 0 6px;">$1</h4>')
+      .replace(/^\[(.+?)\](.*)$/gm, '<div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:10px 14px;margin:12px 0 6px;border-radius:0 8px 8px 0;"><strong style="color:#16a34a;font-size:14px;">[$1]</strong>$2</div>')
+      .replace(/^- (.+)$/gm, '<li style="margin:4px 0;padding-left:4px;">$1</li>')
+      .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul style="margin:8px 0 8px 16px;padding:0;">$&</ul>')
+      .replace(/\n\n/g, '</p><p style="margin:8px 0;">')
+      .replace(/\n/g, '<br>');
+    contentDiv.innerHTML = '<div style="padding:4px 0;">' + html + '</div>';
+  } catch(e) {
+    loading.style.display = 'none';
+    contentDiv.style.display = 'block';
+    contentDiv.innerHTML = '<div style="color:#ef4444;padding:20px;background:#fef2f2;border-radius:8px;">스크립트 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.<br><small>' + (e.message||'') + '</small></div>';
+  }
+};
+
+window.copyScriptToClipboard = function() {
+  var text = window._lastScriptText || '';
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function() {
+    alert('클립보드에 복사되었습니다.');
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('클립보드에 복사되었습니다.');
+  });
+};
+
+window.downloadScriptAsTxt = function() {
+  var text = window._lastScriptText || '';
+  if (!text) return;
+  var cData = window._lastBizCData || {};
+  var nm = cData.name || '기업';
+  var blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nm + '_발표스크립트.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
