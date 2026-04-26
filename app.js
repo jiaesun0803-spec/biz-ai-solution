@@ -3214,10 +3214,12 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
         {icon:'📋', title:'구체적 실행 계획', desc:'인력 채용·제품 개발·인증 취득·영업 확대의 단계별 실행 계획이 명확하며 투자 자금 집행 목적과 기대 효과가 구체적으로 제시됨', c:'#2563eb'},
         {icon:'📈', title:'성장 잠재력', desc:mktLabel+' CAGR '+mktGrowth+' 고성장. '+String(curYr+2)+'년 매출 목표 달성 시 기업가치 상승 및 추가 투자 유치 가능성이 높음', c:'#7c3aed'}
       ].map(function(card){
-        return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center">'
-          + '<div style="font-size:28px;margin-bottom:8px">'+card.icon+'</div>'
-          + '<div style="font-size:12px;font-weight:700;color:'+card.c+';margin-bottom:6px">'+card.title+'</div>'
-          + '<div style="font-size:10.5px;color:#64748b;line-height:1.55">'+card.desc+'</div>'
+        return '<div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px">'
+          + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          +   '<span style="font-size:26px;flex-shrink:0">'+card.icon+'</span>'
+          +   '<span style="font-size:13px;font-weight:700;color:'+card.c+'">'+card.title+'</span>'
+          + '</div>'
+          + '<div style="font-size:11.5px;color:#374151;line-height:1.65">'+card.desc+'</div>'
           + '</div>';
       }).join('')
     + '</div>'
