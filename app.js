@@ -5782,6 +5782,7 @@ window.downloadScriptAsTxt = function() {
   a.download = nm + '_발표스크립트.txt';
   a.click();
   URL.revokeObjectURL(a.href);
+};
 // ===========================
 // ★ 공지사항 & 지원사업공문 (서버 DB 기반 - 모든 기기 공유)
 // ===========================
