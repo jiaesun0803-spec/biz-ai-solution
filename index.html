@@ -186,7 +186,7 @@
                     <div class="dash-card bottom-card">
                         <div class="bottom-card-header">
                             <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count" id="dashboard-support-count">0건</span></div>
-                            <button id="btn-sd-register" class="btn-add-small" onclick="openSupportDocModal()" style="display:none;">＋ 등록</button>
+                            <button id="btn-sd-register" class="btn-add-small" onclick="openSupportDocModal()">＋ 등록</button>
                             <button id="btn-sd-more" class="btn-add-small" onclick="showTab('supportDocs')" style="display:none;">더보기 →</button>
                         </div>
                         <div class="bottom-card-desc">정부지원사업 관련 공문, 접수 일정, 제출 요청자료를 한 곳에서 관리합니다.</div>
@@ -197,8 +197,8 @@
                     <div class="dash-card bottom-card">
                         <div class="bottom-card-header">
                             <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count" id="dashboard-notice-count">0건</span></div>
-                            <button id="btn-nt-register" class="btn-add-small orange" onclick="openNoticeModal()" style="display:none;">＋ 등록</button>
-                            <button id="btn-nt-more" class="btn-add-small orange" onclick="showTab('notices')" style="display:none;">더보기 →</button>
+                            <button id="btn-nt-register" class="btn-add-small orange" onclick="openNoticeModal()">＋ 등록</button>
+                            <button id="btn-nt-more" class="btn-add-small" onclick="showTab('notices')" style="display:none;">더보기 →</button>
                         </div>
                         <div class="bottom-card-desc">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</div>
                         <div id="dashboard-notice-list"></div>
@@ -1014,7 +1014,7 @@
             <div class="max-width-wrapper">
                 <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <h2 class="page-title-lg">📄 지원사업 공문</h2>
-                    <button id="btn-sd-tab-register" class="btn-primary" style="padding:9px 18px;font-size:13px;display:none;" onclick="openSupportDocModal()">＋ 공문 등록</button>
+                    <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="openSupportDocModal()">＋ 공문 등록</button>
                 </div>
                 <p style="font-size:13px;color:#64748b;margin-bottom:20px;">정부지원사업 관련 공문, 접수 일정, 제출 요청자료를 한 곳에서 관리합니다.</p>
                 <div class="list-card">
@@ -1031,7 +1031,7 @@
             <div class="max-width-wrapper">
                 <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <h2 class="page-title-lg">🔔 공지사항</h2>
-                    <button id="btn-nt-tab-register" class="btn-primary" style="padding:9px 18px;font-size:13px;display:none;" onclick="openNoticeModal()">＋ 공지 등록</button>
+                    <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="openNoticeModal()">＋ 공지 등록</button>
                 </div>
                 <p style="font-size:13px;color:#64748b;margin-bottom:20px;">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</p>
                 <div class="list-card">
