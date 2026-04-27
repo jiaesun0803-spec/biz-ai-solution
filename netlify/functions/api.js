@@ -428,6 +428,26 @@ app.delete('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res)
   res.json({ success: true });
 });
 
+// 공지사항 수정 (관리자만)
+app.patch('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { title, category, date, description, is_pinned } = req.body;
+  const updates = {};
+  if (title !== undefined) updates.title = title;
+  if (category !== undefined) updates.category = category;
+  if (date !== undefined) updates.date = date;
+  if (description !== undefined) updates.description = description;
+  if (is_pinned !== undefined) updates.is_pinned = is_pinned;
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: '수정할 내용이 없습니다.' });
+  const { data, error } = await supabase
+    .from('notices')
+    .update(updates)
+    .eq('id', req.params.id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // ===== 지원사업공문 API (모든 인증된 사용자 조회, 관리자만 등록/삭제) =====
 
 // 지원사업공문 목록 조회

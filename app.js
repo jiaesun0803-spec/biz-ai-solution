@@ -5966,6 +5966,86 @@ window.deleteNotice = async function(id) {
     alert('삭제 실패: ' + e.message);
   }
 };
+
+/* 공지사항 상단고정 토글 */
+window.toggleNoticePin = async function(id) {
+  var item = _ntBoardData.find(function(x){ return x.id == id; });
+  if(!item) return;
+  var newPin = !item.is_pinned;
+  try {
+    await apiCall('/api/notices/' + id, { method:'PATCH', body: JSON.stringify({ is_pinned: newPin }) });
+    await _renderNoticeTable();
+    await _renderDashNotices();
+    // 상세보기 중이면 다시 렌더링
+    if(_ntCurrentId == id) openNoticeBoardDetail(id);
+  } catch(e) {
+    alert('고정 변경 실패: ' + e.message);
+  }
+};
+
+/* 공지사항 수정 모달 열기 */
+window.openNoticeEditModal = function(id) {
+  var item = _ntBoardData.find(function(x){ return x.id == id; });
+  if(!item) return;
+  var m = document.getElementById('notice-edit-modal');
+  if(!m) {
+    // 모달이 없으면 동적 생성
+    m = document.createElement('div');
+    m.id = 'notice-edit-modal';
+    m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
+    m.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:32px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">'+
+      '<h3 style="font-size:18px;font-weight:700;color:#1e293b;">✏️ 공지사항 수정</h3>'+
+      '<button onclick="closeNoticeEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;">&times;</button>'+
+      '</div>'+
+      '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">구분</label>'+
+      '<select id="nt-edit-category" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">'+
+      '<option>업무알림</option><option>시스템공지</option><option>업데이트</option><option>공지</option><option>안내</option><option>기타</option>'+
+      '</select></div>'+
+      '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">제목 <span style="color:#ef4444;">*</span></label>'+
+      '<input id="nt-edit-title" type="text" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;" placeholder="공지 제목을 입력하세요"></div>'+
+      '<div style="margin-bottom:20px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">내용</label>'+
+      '<textarea id="nt-edit-desc" rows="7" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;" placeholder="공지 내용을 입력하세요"></textarea></div>'+
+      '<input type="hidden" id="nt-edit-id">'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
+      '<button onclick="closeNoticeEditModal()" style="padding:10px 20px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#64748b;font-size:14px;cursor:pointer;">취소</button>'+
+      '<button onclick="saveNoticeEdit()" style="padding:10px 24px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">저장</button>'+
+      '</div></div>';
+    document.body.appendChild(m);
+  }
+  // 기존 값 세팅
+  var catSel = document.getElementById('nt-edit-category');
+  var titleInp = document.getElementById('nt-edit-title');
+  var descTa = document.getElementById('nt-edit-desc');
+  var idInp = document.getElementById('nt-edit-id');
+  if(catSel) catSel.value = item.category || '공지';
+  if(titleInp) titleInp.value = item.title || '';
+  if(descTa) descTa.value = item.description || '';
+  if(idInp) idInp.value = item.id;
+  m.style.display = 'flex';
+};
+window.closeNoticeEditModal = function() {
+  var m = document.getElementById('notice-edit-modal');
+  if(m) m.style.display = 'none';
+};
+window.saveNoticeEdit = async function() {
+  var id = (document.getElementById('nt-edit-id')||{}).value;
+  var title = ((document.getElementById('nt-edit-title')||{}).value||'').trim();
+  if(!title) { alert('제목을 입력해주세요.'); return; }
+  var cat = ((document.getElementById('nt-edit-category')||{}).value||'공지').trim();
+  var desc = ((document.getElementById('nt-edit-desc')||{}).value||'').trim();
+  try {
+    await apiCall('/api/notices/' + id, { method:'PATCH', body: JSON.stringify({ title: title, category: cat, description: desc }) });
+    closeNoticeEditModal();
+    await _renderNoticeTable();
+    await _renderDashNotices();
+    // 상세보기 중이면 다시 렌더링
+    if(_ntCurrentId == id) openNoticeBoardDetail(id);
+  } catch(e) {
+    alert('수정 실패: ' + e.message);
+  }
+};
 /* ===== 공지사항 게시판 상태 ===== */
 var _ntBoardData = [];      // 전체 데이터
 var _ntCurrentId = null;    // 현재 상세보기 ID
@@ -5975,12 +6055,19 @@ var _ntPageSize = 10;       // 페이지당 게시물 수
 /* 게시판 목록 표시 */
 window._renderNoticeBoard = async function(resetPage) {
   if(resetPage) _ntPage = 1;
-  var arr = _ntBoardData;
+  var arr = _ntBoardData.slice();
   // 필터
   var cat = (document.getElementById('nt-filter-cat')||{}).value || '';
   var kw  = ((document.getElementById('nt-search')||{}).value || '').trim().toLowerCase();
   if(cat) arr = arr.filter(function(x){ return (x.category||'공지') === cat; });
   if(kw)  arr = arr.filter(function(x){ return (x.title||'').toLowerCase().indexOf(kw) !== -1; });
+
+  // 고정글 상단 정렬 (고정글끼리는 최신순, 일반글끼리는 최신순)
+  arr.sort(function(a, b) {
+    if(a.is_pinned && !b.is_pinned) return -1;
+    if(!a.is_pinned && b.is_pinned) return 1;
+    return b.id - a.id;
+  });
 
   var total = arr.length;
   var totalPages = Math.max(1, Math.ceil(total / _ntPageSize));
@@ -6001,7 +6088,6 @@ window._renderNoticeBoard = async function(resetPage) {
   if(!pageArr.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:48px;color:#94a3b8;">해당하는 공지사항이 없습니다.</td></tr>';
   } else {
-    // 번호는 역순으로 (1번 = 가장 최신)
     tbody.innerHTML = pageArr.map(function(item, idx){
       var num = total - start - idx;
       var catColor = {
@@ -6012,13 +6098,19 @@ window._renderNoticeBoard = async function(resetPage) {
         '안내':       ['#f8fafc','#64748b'],
         '기타':       ['#fdf4ff','#9333ea']
       }[item.category] || ['#f1f5f9','#475569'];
+      var pinIcon = item.is_pinned ? '<span style="color:#f59e0b;margin-right:4px;" title="상단고정">📌</span>' : '';
+      var pinRowStyle = item.is_pinned ? 'background:#fffbeb;' : '';
       var adminBtns = isAdmin
-        ? '<button onclick="event.stopPropagation();deleteNotice('+item.id+')" style="padding:4px 10px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'
+        ? '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">'+
+          '<button onclick="event.stopPropagation();openNoticeEditModal('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">수정</button>'+
+          '<button onclick="event.stopPropagation();toggleNoticePin('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:6px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;">'+(item.is_pinned?'📌 고정해제':'📌 고정')+'</button>'+
+          '<button onclick="event.stopPropagation();deleteNotice('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'+
+          '</div>'
         : '-';
-      return '<tr style="cursor:pointer;" onclick="openNoticeBoardDetail('+item.id+')" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">'+
-        '<td style="text-align:center;color:#94a3b8;font-size:13px;">'+num+'</td>'+
+      return '<tr style="cursor:pointer;'+pinRowStyle+'" onclick="openNoticeBoardDetail('+item.id+')" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\''+( item.is_pinned?'#fffbeb':'')+'\'">' +
+        '<td style="text-align:center;color:#94a3b8;font-size:13px;">'+( item.is_pinned?'<span style="color:#f59e0b;font-weight:700;">고정</span>':num)+'</td>'+
         '<td style="text-align:center;"><span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:'+catColor[0]+';color:'+catColor[1]+';">'+_esc(item.category||'공지')+'</span></td>'+
-        '<td style="color:#1e293b;font-weight:500;">'+_esc(item.title)+'</td>'+
+        '<td style="color:#1e293b;font-weight:500;">'+pinIcon+_esc(item.title)+'</td>'+
         '<td style="text-align:center;color:#94a3b8;font-size:12px;">'+_esc(item.date||'')+'</td>'+
         '<td style="text-align:center;">'+adminBtns+'</td>'+
         '</tr>';
@@ -6057,15 +6149,33 @@ window.openNoticeBoardDetail = function(id) {
   _ntCurrentId = id;
   var item = arr[idx];
 
-  // 상세 뷰 데이터 세팅
+  // 상세 빰 데이터 세팅
   var catEl = document.getElementById('nd-v-category');
   var titleEl = document.getElementById('nd-v-title');
   var dateEl = document.getElementById('nd-v-date');
   var descEl = document.getElementById('nd-v-desc');
   if(catEl) catEl.textContent = item.category || '공지';
-  if(titleEl) titleEl.textContent = item.title || '';
+  if(titleEl) titleEl.textContent = (item.is_pinned ? '📌 ' : '') + (item.title || '');
   if(dateEl) dateEl.textContent = item.date || '';
-  if(descEl) descEl.textContent = item.description || '(내용 없음)';
+  if(descEl) {
+    // 줄바꾸을 <br>로 변환하여 표시
+    descEl.innerHTML = _esc(item.description || '(내용 없음)').replace(/\n/g, '<br>');
+  }
+  // 관리자 버튼 영역 업데이트
+  var session = JSON.parse(localStorage.getItem('biz_session')||'null');
+  var isAdmin = session && session.isAdmin;
+  var adminArea = document.getElementById('nd-v-admin-btns');
+  if(adminArea) {
+    if(isAdmin) {
+      adminArea.style.display = 'flex';
+      adminArea.innerHTML =
+        '<button onclick="openNoticeEditModal('+item.id+')" style="padding:6px 14px;font-size:12px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:600;">✏️ 수정</button>'+
+        '<button onclick="toggleNoticePin('+item.id+')" style="padding:6px 14px;font-size:12px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:8px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;font-weight:600;">'+(item.is_pinned?'📌 고정해제':'📌 상단고정')+'</button>'+
+        '<button onclick="deleteNotice('+item.id+');_showNoticeList();" style="padding:6px 14px;font-size:12px;border:1px solid #fca5a5;border-radius:8px;background:#fff5f5;color:#ef4444;cursor:pointer;font-weight:600;">🗑️ 삭제</button>';
+    } else {
+      adminArea.style.display = 'none';
+    }
+  }
 
   // 이전/다음 버튼 업데이트
   var prevBtn = document.getElementById('nd-v-prev');
