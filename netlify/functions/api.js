@@ -383,6 +383,94 @@ app.delete('/api/reports/:reportId', authMiddleware, async (req, res) => {
 });
 
 // 헬스체크
+
+// ===== 공지사항 API (모든 인증된 사용자 조회, 관리자만 등록/삭제) =====
+
+// 공지사항 초기화 (테이블 없을 경우 자동 생성)
+async function ensureNoticesTable() {
+  // Supabase REST API로는 DDL 불가 - 테이블 존재 확인만
+  try {
+    const { data, error } = await supabase.from('notices').select('id').limit(1);
+    return !error;
+  } catch(e) { return false; }
+}
+
+// 공지사항 목록 조회 (로그인 사용자 모두 가능)
+app.get('/api/notices', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('notices')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// 공지사항 등록 (관리자만)
+app.post('/api/notices', authMiddleware, adminMiddleware, async (req, res) => {
+  const { title, category, date, description } = req.body;
+  if (!title) return res.status(400).json({ error: '제목을 입력해주세요.' });
+  const { data, error } = await supabase
+    .from('notices')
+    .insert({ title, category: category || '공지', date: date || new Date().toISOString().slice(0,10), description: description || '' })
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 공지사항 삭제 (관리자만)
+app.delete('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { error } = await supabase
+    .from('notices')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// ===== 지원사업공문 API (모든 인증된 사용자 조회, 관리자만 등록/삭제) =====
+
+// 지원사업공문 목록 조회
+app.get('/api/support-docs', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('support_docs')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// 지원사업공문 등록 (관리자만)
+app.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) => {
+  const { title, category, date, deadline, description, file_name, file_url } = req.body;
+  if (!title) return res.status(400).json({ error: '제목을 입력해주세요.' });
+  const { data, error } = await supabase
+    .from('support_docs')
+    .insert({
+      title,
+      category: category || '공문',
+      date: date || new Date().toISOString().slice(0,10),
+      deadline: deadline || null,
+      description: description || '',
+      file_name: file_name || null,
+      file_url: file_url || null
+    })
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 지원사업공문 삭제 (관리자만)
+app.delete('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { error } = await supabase
+    .from('support_docs')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 module.exports.handler = serverless(app);
