@@ -66,6 +66,8 @@
                 <li onclick="showTab('aiFund')" id="menu-aiFund"><span>🎯</span> 정책자금매칭</li>
                 <li onclick="showTab('aiTrade')" id="menu-aiTrade"><span>🏪</span> 상권분석</li>
                 <li onclick="showTab('aiMarketing')" id="menu-aiMarketing"><span>📢</span> 마케팅제안</li>
+                <li onclick="showTab('supportDocs')" id="menu-supportDocs"><span>📄</span> 지원사업공문</li>
+                <li onclick="showTab('notices')" id="menu-notices"><span>🔔</span> 공지사항</li>
             </ul>
         </nav>
         <div class="bottom-menu"><ul>
@@ -184,7 +186,7 @@
                     <div class="dash-card bottom-card">
                         <div class="bottom-card-header">
                             <div class="bottom-card-title">📄 지원사업 공문 <span class="bottom-card-count" id="dashboard-support-count">0건</span></div>
-                            <button class="btn-add-small" onclick="dashboardFeatureSoon('지원사업 공문')">＋ 등록</button>
+                            <button class="btn-add-small" onclick="openSupportDocModal()">＋ 등록</button>
                         </div>
                         <div class="bottom-card-desc">정부지원사업 관련 공문, 접수 일정, 제출 요청자료를 한 곳에서 관리합니다.</div>
                         <div id="dashboard-support-docs"></div>
@@ -194,7 +196,7 @@
                     <div class="dash-card bottom-card">
                         <div class="bottom-card-header">
                             <div class="bottom-card-title">📢 공지사항 <span class="bottom-card-count" id="dashboard-notice-count">0건</span></div>
-                            <button class="btn-add-small orange" onclick="dashboardFeatureSoon('공지사항')">＋ 등록</button>
+                            <button class="btn-add-small orange" onclick="openNoticeModal()">＋ 등록</button>
                         </div>
                         <div class="bottom-card-desc">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</div>
                         <div id="dashboard-notice-list"></div>
@@ -1005,6 +1007,40 @@
             </div>
         </section>
 
+        <!-- 지원사업 공문 -->
+        <section id="supportDocs" class="tab-content">
+            <div class="max-width-wrapper">
+                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h2 class="page-title-lg">📄 지원사업 공문</h2>
+                    <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="openSupportDocModal()">＋ 공문 등록</button>
+                </div>
+                <p style="font-size:13px;color:#64748b;margin-bottom:20px;">정부지원사업 관련 공문, 접수 일정, 제출 요청자료를 한 곳에서 관리합니다.</p>
+                <div class="list-card">
+                    <table class="report-table" id="support-doc-table">
+                        <thead><tr><th style="width:40%">공문명</th><th style="width:20%">관련사업</th><th style="width:15%">마감일</th><th style="width:12%">등록일</th><th style="width:13%">관리</th></tr></thead>
+                        <tbody id="support-doc-body"><tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 공지사항 -->
+        <section id="notices" class="tab-content">
+            <div class="max-width-wrapper">
+                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h2 class="page-title-lg">🔔 공지사항</h2>
+                    <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="openNoticeModal()">＋ 공지 등록</button>
+                </div>
+                <p style="font-size:13px;color:#64748b;margin-bottom:20px;">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</p>
+                <div class="list-card">
+                    <table class="report-table" id="notice-table">
+                        <thead><tr><th style="width:50%">제목</th><th style="width:20%">구분</th><th style="width:15%">등록일</th><th style="width:15%">관리</th></tr></thead>
+                        <tbody id="notice-body"><tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- 설정 -->
         <section id="settings" class="tab-content">
             <div class="max-width-wrapper">
@@ -1089,6 +1125,41 @@
     <div id="fundCriteriaModalBody" style="padding:28px 32px 32px;background:#f1f5f9"></div>
   </div>
 </div>
+<!-- ===== 지원사업 공문 등록 모달 ===== -->
+<div id="support-doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;">
+    <button onclick="closeSupportDocModal()" style="position:absolute;top:16px;right:16px;background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;">×</button>
+    <h3 style="margin:0 0 20px;font-size:16px;font-weight:700;color:#1e293b;">📄 지원사업 공문 등록</h3>
+    <div class="grid-1" style="gap:12px;display:grid;">
+      <div class="form-group"><label>공문명 <span style="color:#ef4444;">*</span></label><input type="text" id="sd-title" placeholder="공문 제목을 입력하세요"></div>
+      <div class="form-group"><label>관련 지원사업명</label><input type="text" id="sd-program" placeholder="예: 2026년 중소기업 스마트공장사업"></div>
+      <div class="form-group"><label>마감일</label><input type="text" id="sd-deadline" placeholder="YYYY-MM-DD" maxlength="10"></div>
+      <div class="form-group"><label>내용 요약</label><textarea id="sd-desc" rows="3" placeholder="공문 주요 내용 요약"></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button onclick="closeSupportDocModal()" style="padding:9px 18px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:13px;cursor:pointer;">취소</button>
+      <button onclick="saveSupportDoc()" class="btn-primary" style="padding:9px 18px;font-size:13px;">등록 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 공지사항 등록 모달 ===== -->
+<div id="notice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;">
+    <button onclick="closeNoticeModal()" style="position:absolute;top:16px;right:16px;background:#f1f5f9;border:none;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;">×</button>
+    <h3 style="margin:0 0 20px;font-size:16px;font-weight:700;color:#1e293b;">🔔 공지사항 등록</h3>
+    <div class="grid-1" style="gap:12px;display:grid;">
+      <div class="form-group"><label>제목 <span style="color:#ef4444;">*</span></label><input type="text" id="nt-title" placeholder="공지 제목을 입력하세요"></div>
+      <div class="form-group"><label>구분</label><select id="nt-category"><option value="업무알림">업무알림</option><option value="시스템공지">시스템공지</option><option value="업데이트">업데이트</option><option value="기타">기타</option></select></div>
+      <div class="form-group"><label>내용</label><textarea id="nt-desc" rows="4" placeholder="공지 내용을 입력하세요"></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button onclick="closeNoticeModal()" style="padding:9px 18px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:13px;cursor:pointer;">취소</button>
+      <button onclick="saveNotice()" class="btn-primary" style="padding:9px 18px;font-size:13px;">등록 완료</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 업데이트 안내 팝업 (2026-04-27 하루만 표시) ===== -->
 <div id="update-notice-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:36px 32px 28px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.18);position:relative;text-align:center;">

@@ -118,11 +118,22 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
 .recent-report-item { display: flex; align-items: center; padding: 11px 0; border-bottom: 1px solid #f1f5f9; gap: 12px; }
 .recent-report-item:last-child { border-bottom: none; }
 .report-type-icon { width: 36px; height: 36px; border-radius: 9px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
-.report-item-title { font-size: 14px; font-weight: bold; color: #1e293b; }
-.report-item-company { font-size: 12px; color: #64748b; margin-top: 2px; }
+.report-item-title { font-size: 13px; font-weight: bold; color: #1e293b; }
+.report-item-company { font-size: 11px; color: #64748b; margin-top: 2px; }
 .report-item-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.report-badge { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; background: #eff6ff; color: #3b82f6; }
+.report-badge { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; background: #eff6ff; color: #3b82f6; white-space: nowrap; }
 .report-date { font-size: 11px; color: #94a3b8; }
+/* 최근 보고서 테이블 */
+.rr-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.rr-th { font-size: 11px; font-weight: 600; color: #94a3b8; padding: 6px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; background: #f8fafc; }
+.rr-row { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+.rr-row:last-child { border-bottom: none; }
+.rr-row:hover { background: #f8fbff; }
+.rr-icon-cell { padding: 10px 6px 10px 0; width: 44px; vertical-align: middle; }
+.rr-title-cell { padding: 10px 8px; vertical-align: middle; overflow: hidden; }
+.rr-badge-cell { padding: 10px 8px; vertical-align: middle; text-align: center; width: 90px; }
+.rr-date-cell { padding: 10px 8px; vertical-align: middle; font-size: 11px; color: #94a3b8; white-space: nowrap; width: 90px; }
+.rr-btn-cell { padding: 10px 0 10px 4px; vertical-align: middle; text-align: right; width: 52px; }
 .empty-state { text-align: center; padding: 24px 18px; color: #94a3b8; font-size: 13px; border: 1px dashed #dbeafe; border-radius: 10px; background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%); }
 .empty-state-emoji { font-size: 24px; margin-bottom: 8px; }
 .empty-state-title { color: #334155; font-size: 13px; font-weight: 700; margin-bottom: 4px; }

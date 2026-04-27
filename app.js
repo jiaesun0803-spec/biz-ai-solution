@@ -1052,7 +1052,8 @@ function updateDashboardReports() {
   if (!reports.length) {
     listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없음.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
   } else {
-    listEl.innerHTML=[...reports].reverse().slice(0,3).map(r=>`<div class="recent-report-item"><div class="report-type-icon">${typeIcon(r.type)}</div><div><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></div><div class="report-item-right"><span class="report-badge">${r.type}</span><span class="report-date">🕐 ${r.date}</span><button class="btn-small-outline" style="font-size:11px;padding:4px 8px;" onclick="viewReport('${r.id}')">보기</button></div></div>`).join('');
+    const rows=[...reports].reverse().slice(0,3).map(r=>`<tr class="rr-row"><td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td><td class="rr-title-cell"><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></td><td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td><td class="rr-date-cell">${r.date}</td><td class="rr-btn-cell"><button class="btn-small-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap;" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('');
+    listEl.innerHTML=`<table class="rr-table"><thead><tr><th class="rr-th" style="width:44px;"></th><th class="rr-th">보고서명 / 업체명</th><th class="rr-th" style="width:90px;">구분</th><th class="rr-th" style="width:90px;">날짜</th><th class="rr-th" style="width:52px;"></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   renderDashboardBoard('dashboard-support-docs', supportDocs, {
@@ -5787,3 +5788,191 @@ window.downloadScriptAsTxt = function() {
   a.click();
   URL.revokeObjectURL(a.href);
 };
+
+
+/* =====================================================
+   지원사업공문 / 공지사항 CRUD
+   ===================================================== */
+
+var _SD_KEY = 'biz_support_docs';
+var _NT_KEY = 'biz_notices_v2';
+
+function _loadSD() { try { return JSON.parse(localStorage.getItem(_SD_KEY)||'[]'); } catch(e){ return []; } }
+function _saveSD(a) { localStorage.setItem(_SD_KEY, JSON.stringify(a)); }
+function _loadNT() { try { return JSON.parse(localStorage.getItem(_NT_KEY)||'[]'); } catch(e){ return []; } }
+function _saveNT(a) { localStorage.setItem(_NT_KEY, JSON.stringify(a)); }
+
+/* ── 지원사업 공문 모달 ── */
+window.openSupportDocModal = function() {
+  var m = document.getElementById('support-doc-modal');
+  if(!m) return;
+  var el = document.getElementById('sd-title'); if(el) el.value='';
+  var el2 = document.getElementById('sd-program'); if(el2) el2.value='';
+  var el3 = document.getElementById('sd-deadline'); if(el3) el3.value='';
+  var el4 = document.getElementById('sd-desc'); if(el4) el4.value='';
+  m.style.display='flex';
+};
+window.closeSupportDocModal = function() {
+  var m = document.getElementById('support-doc-modal'); if(m) m.style.display='none';
+};
+window.saveSupportDoc = function() {
+  var title = (document.getElementById('sd-title')||{}).value||'';
+  if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
+  var item = {
+    id: Date.now(),
+    title: title.trim(),
+    program: ((document.getElementById('sd-program')||{}).value||'').trim(),
+    deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim(),
+    desc: ((document.getElementById('sd-desc')||{}).value||'').trim(),
+    date: new Date().toISOString().slice(0,10)
+  };
+  var arr = _loadSD(); arr.unshift(item); _saveSD(arr);
+  closeSupportDocModal();
+  _renderSupportDocTable();
+  _renderDashSupportDocs();
+};
+window.deleteSupportDoc = function(id) {
+  if(!confirm('삭제하시겠습니까?')) return;
+  _saveSD(_loadSD().filter(function(x){ return x.id!==id; }));
+  _renderSupportDocTable(); _renderDashSupportDocs();
+};
+
+function _renderSupportDocTable() {
+  var tbody = document.getElementById('support-doc-body');
+  if(!tbody) return;
+  var arr = _loadSD();
+  // 카운트 업데이트
+  var cnt = document.getElementById('dashboard-support-count');
+  if(cnt) cnt.textContent = arr.length+'건';
+  if(!arr.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = arr.map(function(item){
+    return '<tr>'+
+      '<td>'+_esc(item.title)+'</td>'+
+      '<td>'+_esc(item.program||'-')+'</td>'+
+      '<td>'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
+      '<td>'+_esc(item.date||'')+'</td>'+
+      '<td><button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+/* ── 공지사항 모달 ── */
+window.openNoticeModal = function() {
+  var m = document.getElementById('notice-modal');
+  if(!m) return;
+  var el = document.getElementById('nt-title'); if(el) el.value='';
+  var el2 = document.getElementById('nt-desc'); if(el2) el2.value='';
+  m.style.display='flex';
+};
+window.closeNoticeModal = function() {
+  var m = document.getElementById('notice-modal'); if(m) m.style.display='none';
+};
+window.saveNotice = function() {
+  var title = (document.getElementById('nt-title')||{}).value||'';
+  if(!title.trim()){ alert('제목을 입력해주세요.'); return; }
+  var cat = ((document.getElementById('nt-category')||{}).value||'공지').trim();
+  var item = {
+    id: Date.now(),
+    title: title.trim(),
+    category: cat,
+    desc: ((document.getElementById('nt-desc')||{}).value||'').trim(),
+    date: new Date().toISOString().slice(0,10)
+  };
+  var arr = _loadNT(); arr.unshift(item); _saveNT(arr);
+  closeNoticeModal();
+  _renderNoticeTable();
+  _renderDashNotices();
+};
+window.deleteNotice = function(id) {
+  if(!confirm('삭제하시겠습니까?')) return;
+  _saveNT(_loadNT().filter(function(x){ return x.id!==id; }));
+  _renderNoticeTable(); _renderDashNotices();
+};
+
+function _renderNoticeTable() {
+  var tbody = document.getElementById('notice-body');
+  if(!tbody) return;
+  var arr = _loadNT();
+  var cnt = document.getElementById('dashboard-notice-count');
+  if(cnt) cnt.textContent = arr.length+'건';
+  if(!arr.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = arr.map(function(item){
+    return '<tr>'+
+      '<td>'+_esc(item.title)+'</td>'+
+      '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#f0f9ff;color:#0369a1;">'+_esc(item.category||'공지')+'</span></td>'+
+      '<td>'+_esc(item.date||'')+'</td>'+
+      '<td><button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+/* ── 대시보드 카드 렌더 ── */
+function _renderDashSupportDocs() {
+  var el = document.getElementById('dashboard-support-docs');
+  if(!el) return;
+  var arr = _loadSD().slice(0,3);
+  var cnt = document.getElementById('dashboard-support-count');
+  if(cnt) cnt.textContent = _loadSD().length+'건';
+  if(!arr.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공문이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(item){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
+      '<span style="font-size:11px;font-weight:600;color:#ea580c;background:#fff7ed;border-radius:8px;padding:2px 7px;">공문</span>'+
+      '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
+      (item.deadline?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;">~'+_esc(item.deadline)+'</span>':'<span style="font-size:11px;color:#94a3b8;">'+_esc(item.date)+'</span>')+
+      '</div>';
+  }).join('');
+}
+
+function _renderDashNotices() {
+  var el = document.getElementById('dashboard-notice-list');
+  if(!el) return;
+  var arr = _loadNT().slice(0,3);
+  var cnt = document.getElementById('dashboard-notice-count');
+  if(cnt) cnt.textContent = _loadNT().length+'건';
+  if(!arr.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공지가 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(item){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
+      '<span style="font-size:11px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:2px 7px;">'+_esc(item.category||'공지')+'</span>'+
+      '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
+      '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+_esc(item.date)+'</span>'+
+      '</div>';
+  }).join('');
+}
+
+/* ── 탭 진입 시 초기화 ── */
+window._initSupportDocsTab = function() { _renderSupportDocTable(); };
+window._initNoticesTab = function() { _renderNoticeTable(); };
+
+/* ── 공통 escape ── */
+function _esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── 대시보드 진입 시 카드 초기화 (showTab 훅) ── */
+(function() {
+  var _origShowTab = window.showTab;
+  if(typeof _origShowTab === 'function') {
+    window.showTab = function(tab) {
+      _origShowTab(tab);
+      if(tab === 'dashboard') { _renderDashSupportDocs(); _renderDashNotices(); }
+      if(tab === 'supportDocs') { _renderSupportDocTable(); }
+      if(tab === 'notices') { _renderNoticeTable(); }
+    };
+  }
+  // 페이지 로드 시 대시보드 카드 초기화
+  document.addEventListener('DOMContentLoaded', function() {
+    _renderDashSupportDocs(); _renderDashNotices();
+  });
+})();
