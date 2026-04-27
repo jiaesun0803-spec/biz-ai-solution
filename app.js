@@ -979,7 +979,11 @@ window.downloadReportById=function(id){
   var layout=getReportLayoutConfig(isLandscape);
   var pw=window.open('','_blank','width=1600,height=1000,scrollbars=yes');
   if(!pw){alert('팝업이 차단되었음. 팝업을 허용해 주세요.');return;}
-  var printCSS=`@page{size:${layout.pageSize};margin:${layout.printMargin};}html,body{margin:0;padding:0;background:#e8eaed;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;min-width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0 auto;padding:${layout.wrapPadding} 0;background:#e8eaed;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#e8eaed!important;padding:${layout.wrapPadding}!important;}.rp-cover{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.coverPadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;}.rp-page{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.pagePadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}@media print{html,body{background:white!important;}.pdf-shell{width:100%!important;padding:0!important;background:white!important;}.rp-wrap{width:100%!important;padding:0!important;background:white!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;}}`;
+  // 사업계획서는 표지 배경(네이비 그라데이션)을 보존하기 위해 background 강제 설정 제외
+  var coverBgCSS = isLandscape
+    ? 'border-radius:8px!important;margin:0 0 14px 0!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;'
+    : 'background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:'+layout.coverPadding+'!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;';
+  var printCSS=`@page{size:${layout.pageSize};margin:${layout.printMargin};}html,body{margin:0;padding:0;background:#e8eaed;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;min-width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0 auto;padding:${layout.wrapPadding} 0;background:#e8eaed;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#e8eaed!important;padding:${layout.wrapPadding}!important;}.rp-cover{${coverBgCSS}}.rp-page{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.pagePadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}@media print{html,body{background:white!important;}.pdf-shell{width:100%!important;padding:0!important;background:white!important;}.rp-wrap{width:100%!important;padding:0!important;background:white!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;}}`;
   pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${htmlContent}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
   pw.document.close();
 };
@@ -4815,15 +4819,7 @@ window.generateFinanceReport = async function(event) {
 
 // 보고서 면책 문구 추가 공통 함수
 function addDisclaimerToReport(contentAreaId) {
-  var ca = document.getElementById(contentAreaId);
-  if (!ca) return;
-  var existing = ca.querySelector('.report-disclaimer');
-  if (existing) existing.remove();
-  var disc = document.createElement('div');
-  disc.className = 'report-disclaimer';
-  disc.style.cssText = 'text-align:center;padding:18px 24px 12px;color:#94a3b8;font-size:10px;line-height:1.6;border-top:1px solid #f1f5f9;margin-top:8px;';
-  disc.innerHTML = '* 본 보고서는 AI가 생성한 분석 결과로 참고용으로만 사용하시기 바랍니다. 실제 경영 의사결정에는 전문 컨설턴트의 검토를 권장합니다.';
-  ca.appendChild(disc);
+  // 면책 문구 비활성화 (삭제 요청)
 }
 
 window.generateAnyReport = async function(type, version, event) {
