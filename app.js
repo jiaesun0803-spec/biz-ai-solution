@@ -3018,17 +3018,68 @@ function buildFundHTML(d, cData, rev, dateStr) {
           + '</div>';
       }).join('')
     + '</div>'
-    + '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px 16px;margin-bottom:0">'
-    + '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">📋 신청 순서 권장안</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
-    + ['1단계: 중진공·소진공 등 신청 난도가 낮은 자금을 먼저 확보해 초기 유동성을 안정화함','2단계: 특허·기술력 기반으로 기보 보증을 연결해 더 큰 한도를 추가 조달하는 구조를 설계함','3단계: 벤처·이노비즈 인증 취득 후 신보 특례보증까지 확장해 총 조달액을 극대화함','4단계: 기관별 심사 일정이 겹치지 않도록 월 단위 제출 캘린더를 운영해 승인 확률을 높임'].map(function(t,i){
-        return '<div style="background:white;border:1px solid #fed7aa;border-radius:6px;padding:10px 11px">'
-          +'<div style="font-size:11px;font-weight:800;color:'+color+';margin-bottom:5px">'+(i+1)+'단계</div>'
-          +'<div style="font-size:10.5px;color:#7c2d12;line-height:1.55;word-break:keep-all">'+t.replace(/^\d단계: /,'')+'</div>'
-          +'</div>';
-      }).join('')
-    + '</div>'
-    + '</div>'
+    + (function(){
+        // Top3 기관 기반 동적 신청 순서 권장안 생성
+        var _top3Names = fundsWithCalcLimit.slice(0,3).map(function(f){ return f.name; });
+        // 기관 분류 함수
+        function _isOrg(name, key) {
+          var n = name || '';
+          if (key==='소진공') return n.includes('소진공')||n.includes('소상공인');
+          if (key==='중진공') return n.includes('중진공')||n.includes('중소벤처');
+          if (key==='기보') return n.includes('기보')||n.includes('기술보증');
+          if (key==='신보') return n.includes('신보')||n.includes('신용보증기금');
+          if (key==='지역신보') return n.includes('지역')||n.includes('지신보')||n.includes('신용보증재단');
+          return false;
+        }
+        var _hasSjg = _top3Names.some(function(n){return _isOrg(n,'소진공');});
+        var _hasJjg = _top3Names.some(function(n){return _isOrg(n,'중진공');});
+        var _hasKibo = _top3Names.some(function(n){return _isOrg(n,'기보');});
+        var _hasShinbo = _top3Names.some(function(n){return _isOrg(n,'신보');});
+        var _hasLocal = _top3Names.some(function(n){return _isOrg(n,'지역신보');});
+        // 1단계: Top1·Top2 기관명 직접 언급
+        var _step1Orgs = _top3Names.slice(0,2).join('·');
+        var _step1 = _step1Orgs + ' 우선 신청 — 신청 난도가 낮은 자금을 먼저 확보해 초기 유동성을 안정화함';
+        // 2단계: Top3 기관 특성에 따라 분기
+        var _step2;
+        if (_hasKibo) {
+          _step2 = '특허·기술력 기반으로 기보 보증을 연결해 더 큰 한도를 추가 조달하는 구조를 설계함';
+        } else if (_hasShinbo) {
+          _step2 = '신보 보증 신청 — 매출·재무 자료를 보완해 신용보증기금 한도를 최대한 확보함';
+        } else if (_hasJjg) {
+          _step2 = '중진공 정책자금 신청 — 사업계획서·자금사용계획서를 완성해 중진공 심사에 대응함';
+        } else if (_hasLocal) {
+          _step2 = '지역신보 보증 연계 — 지역 내 협약 보증 상품을 활용해 추가 한도를 확보함';
+        } else {
+          _step2 = '추천 2순위 기관 서류 보완 — 자금사용계획서·사업계획서를 완성해 심사에 대응함';
+        }
+        // 3단계: 인증 여부 및 기관 구성에 따라 분기
+        var _step3;
+        if (_hasKibo && _hasShinbo) {
+          _step3 = '벤처·이노비즈 인증 취득 후 신보 특례보증까지 확장해 총 조달액을 극대화함';
+        } else if (_hasKibo) {
+          _step3 = '벤처·이노비즈 인증 취득 후 기보 한도를 추가 확장해 총 조달액을 극대화함';
+        } else if (_hasShinbo) {
+          _step3 = '수출 실적·고용 증가 등 신보 우대 요건을 갖춰 보증 한도를 단계적으로 확대함';
+        } else if (_hasSjg) {
+          _step3 = '소진공 성장촉진자금·소공인특화자금으로 단계 업그레이드해 한도를 2억까지 확대함';
+        } else {
+          _step3 = '추천 기관 인증·자격 요건을 갖춰 보증 한도를 단계적으로 확대함';
+        }
+        // 4단계: 공통 (일정 관리)
+        var _step4 = '기관별 심사 일정이 겹치지 않도록 월 단위 제출 캘린더를 운영해 승인 확률을 높임';
+        var _steps = [_step1, _step2, _step3, _step4];
+        return '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px 16px;margin-bottom:0">'
+          + '<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #fed7aa">📋 신청 순서 권장안</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+          + _steps.map(function(t,i){
+              return '<div style="background:white;border:1px solid #fed7aa;border-radius:6px;padding:10px 11px">'
+                +'<div style="font-size:11px;font-weight:800;color:'+color+';margin-bottom:5px">'+(i+1)+'단계</div>'
+                +'<div style="font-size:10.5px;color:#7c2d12;line-height:1.55;word-break:keep-all">'+t+'</div>'
+                +'</div>';
+            }).join('')
+          + '</div>'
+          + '</div>';
+      })()
   );
 
   // 기관별 업종·신용 조건 안내 (실제 신청 전 체크용)
