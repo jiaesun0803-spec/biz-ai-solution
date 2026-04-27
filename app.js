@@ -187,53 +187,187 @@ window.printCompanyForm = function() {
   if (!form) { alert('업체 정보를 찾을 수 없음.'); return; }
   var title = document.getElementById('company-form-title');
   var titleText = title ? title.textContent : '기업 정보';
-  var pw = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes');
+  var pw = window.open('', '_blank', 'width=1000,height=1400,scrollbars=yes');
   if (!pw) { alert('팝업이 차단되었음. 팝업을 허용해 주세요.'); return; }
   var printCSS = `
-    @page { size: A4 portrait; margin: 15mm; }
-    html, body { margin:0; padding:0; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; font-size:13px; color:#0f172a; }
+    @page { size: A4 portrait; margin: 12mm 15mm; }
+    html, body { margin:0; padding:0; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; font-size:12px; color:#0f172a; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    h1 { font-size:18px; font-weight:700; color:#1e3a8a; border-bottom:2px solid #1e3a8a; padding-bottom:8px; margin-bottom:16px; }
-    .section { margin-bottom:16px; }
-    .section-title { font-size:13px; font-weight:700; color:#1e3a8a; background:#eff6ff; padding:6px 10px; border-left:3px solid #3b82f6; margin-bottom:8px; }
-    table { width:100%; border-collapse:collapse; margin-bottom:8px; }
-    th { background:#f8fafc; color:#475569; font-size:11px; font-weight:600; padding:6px 8px; border:1px solid #e2e8f0; text-align:left; white-space:nowrap; width:130px; }
-    td { padding:6px 8px; border:1px solid #e2e8f0; font-size:12px; color:#0f172a; }
-    @media print { body { margin:0; } }
+    h1 { font-size:17px; font-weight:700; color:#1e3a8a; border-bottom:2px solid #1e3a8a; padding-bottom:8px; margin-bottom:14px; }
+    .section { margin-bottom:14px; page-break-inside:avoid; }
+    .section-title { font-size:12px; font-weight:700; color:#1e3a8a; background:#eff6ff; padding:5px 10px; border-left:3px solid #3b82f6; margin-bottom:6px; }
+    table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+    th { background:#f8fafc; color:#475569; font-size:11px; font-weight:600; padding:5px 8px; border:1px solid #e2e8f0; text-align:left; white-space:nowrap; width:120px; }
+    td { padding:5px 8px; border:1px solid #e2e8f0; font-size:11px; color:#0f172a; }
+    td.wide { white-space:pre-wrap; word-break:break-all; }
+    .cert-list { display:flex; flex-wrap:wrap; gap:6px; padding:6px 8px; border:1px solid #e2e8f0; }
+    .cert-tag { background:#dbeafe; color:#1e40af; font-size:11px; padding:2px 8px; border-radius:10px; }
+    .memo-box { border:1px solid #e2e8f0; padding:8px; font-size:11px; min-height:50px; white-space:pre-wrap; }
+    .sign-row { display:flex; gap:20px; margin-top:8px; }
+    .sign-cell { border:1px solid #e2e8f0; padding:6px 12px; font-size:11px; flex:1; }
+    .sign-label { color:#64748b; font-size:10px; margin-bottom:2px; }
+    @media print { body { margin:0; } .section { page-break-inside:avoid; } }
   `;
-  // 폼 데이터 수집
-  var g = function(id) { var el=document.getElementById(id); return el ? (el.value||el.innerText||'-') : '-'; };
+  // 데이터 수집 헬퍼
+  var g  = function(id) { var el=document.getElementById(id); return el ? (el.value||el.innerText||'').trim()||'-' : '-'; };
+  var gT = function(id) { var el=document.getElementById(id); return el ? (el.value||'').trim()||'-' : '-'; };
   var gR = function(name) { var el=document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : '-'; };
-  var rev = { cur: g('rev_cur'), y25: g('rev_25'), y24: g('rev_24'), y23: g('rev_23') };
+  var gPh= function(ph) { var el=document.querySelector('input[placeholder="'+ph+'"]'); return el ? (el.value||'').trim()||'-' : '-'; };
+  // 수출매출 (export-money 클래스 순서: 금년, 25년, 24년, 23년)
+  var expInputs = document.querySelectorAll('.export-money');
+  var expCur = expInputs[0]?expInputs[0].value||'-':'-';
+  var exp25  = expInputs[1]?expInputs[1].value||'-':'-';
+  var exp24  = expInputs[2]?expInputs[2].value||'-':'-';
+  var exp23  = expInputs[3]?expInputs[3].value||'-':'-';
+  // 부채
+  var debtJjg  = g('debt_jjg');  var debtSjg  = g('debt_sjg');
+  var debtShin = g('debt_shinbo'); var debtKibo = g('debt_kibo');
+  var debtJaid = g('debt_jaidan'); var debtCorp = g('debt_corp_collateral');
+  var debtRepC = g('debt_rep_credit'); var debtRepCol = g('debt_rep_collateral');
+  var totalDebt = document.getElementById('total-debt');
+  var totalDebtText = totalDebt ? totalDebt.innerText : '-';
+  // 보유 인증 (체크된 항목만)
+  var certLabels = [];
+  document.querySelectorAll('#companyForm input[type="checkbox"]').forEach(function(cb){
+    if(cb.checked){ var lbl=cb.closest('label'); if(lbl) certLabels.push(lbl.textContent.trim()); }
+  });
+  var certHTML = certLabels.length > 0
+    ? '<div class="cert-list">' + certLabels.map(function(c){return '<span class="cert-tag">'+c+'</span>';}).join('') + '</div>'
+    : '<div class="cert-list"><span style="color:#94a3b8;">선택된 인증 없음</span></div>';
+  // 비즈니스 상세 정보 (textarea placeholder로 구분)
+  var bizTextareas = document.querySelectorAll('#companyForm .form-section textarea');
+  var bizFields = {};
+  var bizLabels = ['핵심 아이템','시장 현황','판매 루트(유통망)','수익 모델','경쟁력 및 차별성','앞으로의 계획'];
+  var bizIdx = 0;
+  document.querySelectorAll('#companyForm .form-section').forEach(function(sec){
+    var secTitle = sec.querySelector('.section-title h3');
+    if(secTitle && secTitle.textContent.includes('비즈니스 상세')){
+      sec.querySelectorAll('textarea').forEach(function(ta, i){
+        var lbl = sec.querySelectorAll('label')[i];
+        var key = lbl ? lbl.textContent.trim() : (bizLabels[i]||('항목'+(i+1)));
+        bizFields[key] = ta.value.trim()||'-';
+      });
+    }
+  });
+  // 자금계획
+  var fundPlanTextarea = document.getElementById('fund_plan');
+  var fundPlanVal = fundPlanTextarea ? (fundPlanTextarea.value.trim()||'-') : '-';
+  var fundUseChecks = [];
+  document.querySelectorAll('#companyForm input[type="checkbox"]').forEach(function(cb){
+    if(cb.checked){
+      var lbl=cb.closest('label');
+      if(lbl && ['운전자금','시설자금','수출자금','기타'].indexOf(lbl.textContent.trim())>-1)
+        fundUseChecks.push(lbl.textContent.trim());
+    }
+  });
+  // 컨설턴트 메모
+  var memoEl = document.querySelector('#companyForm textarea[placeholder="기타 메모 및 특이사항"]');
+  var memoVal = memoEl ? (memoEl.value.trim()||'-') : '-';
+  var consultantEl = document.querySelector('#companyForm input[value="선지영"]');
+  var consultantName = consultantEl ? (consultantEl.value||'-') : '-';
+  // 경력사항
+  var careerRows = [];
+  var careerSection = null;
+  document.querySelectorAll('#companyForm .form-section').forEach(function(sec){
+    var h = sec.querySelector('.section-title h3');
+    if(h && h.textContent.includes('경력')) careerSection = sec;
+  });
+  if(careerSection){
+    careerSection.querySelectorAll('.input-row').forEach(function(row){
+      var inputs = row.querySelectorAll('input');
+      if(inputs.length>=2 && (inputs[0].value||inputs[1].value))
+        careerRows.push('<tr><td>'+inputs[0].value+'</td><td>'+inputs[1].value+'</td></tr>');
+    });
+  }
   var html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${titleText}</title><style>${printCSS}</style></head><body>
     <h1>기업 정보 입력서</h1>
+
     <div class="section">
-      <div class="section-title">회사 기본 정보</div>
+      <div class="section-title">1. 기업 기본 정보</div>
       <table>
         <tr><th>상호명</th><td>${g('comp_name')}</td><th>사업자유형</th><td>${gR('biz_type')}</td></tr>
         <tr><th>사업자등록번호</th><td>${g('biz_number')}</td><th>법인등록번호</th><td>${g('corp_number')}</td></tr>
-        <tr><th>업종</th><td>${g('comp_industry')}</td><th>설립일</th><td>${g('biz_date')}</td></tr>
-        <tr><th>대표자명</th><td>${document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-'}</td><th>직원수</th><td>${g('emp_count')}명</td></tr>
+        <tr><th>업종</th><td>${g('comp_industry')}</td><th>설립(개시)일</th><td>${g('biz_date')}</td></tr>
+        <tr><th>상시근로자 수</th><td>${g('emp_count')}명</td><th>사업장 전화</th><td>${g('biz_phone')}</td></tr>
+        <tr><th>임대유형</th><td>${gR('rent_type')}</td><th>월임대료</th><td>${g('rent_monthly')}원</td></tr>
+        <tr><th>보증금</th><td>${g('rent_deposit')}원</td><th></th><td></td></tr>
         <tr><th>사업장 주소</th><td colspan="3">${g('biz_address')}</td></tr>
-        <tr><th>핵심아이템</th><td colspan="3">${g('core_item')}</td></tr>
       </table>
     </div>
+
     <div class="section">
-      <div class="section-title">매출 현황</div>
+      <div class="section-title">2. 대표자 정보</div>
       <table>
-        <tr><th>금년 매출(연환산)</th><td>${rev.cur}원</td><th>2025년 매출</th><td>${rev.y25}원</td></tr>
-        <tr><th>2024년 매출</th><td>${rev.y24}원</td><th>2023년 매출</th><td>${rev.y23}원</td></tr>
-        <tr><th>필요자금</th><td>${g('need_fund')}원</td><th>자금용도</th><td>${g('fund_plan')}</td></tr>
+        <tr><th>대표자명</th><td>${gPh('대표자명을 입력하세요')}</td><th>생년월일</th><td>${g('rep_birth')}</td></tr>
+        <tr><th>연락처</th><td>${g('rep_phone')}</td><th>통신사</th><td>${gR('telecom')}</td></tr>
+        <tr><th>최종학력</th><td>${(function(){var el=document.querySelector('#companyForm select');return el?el.value||'-':'-';})()}</td><th>거주지 유형</th><td>${gR('home_rent')}</td></tr>
+        <tr><th>거주지 주소</th><td colspan="3">${gPh('상세 주소')}</td></tr>
       </table>
+      ${careerRows.length>0?'<table><thead><tr><th style="width:160px;">기간</th><th>경력 내용</th></tr></thead><tbody>'+careerRows.join('')+'</tbody></table>':''}
     </div>
+
     <div class="section">
-      <div class="section-title">신용 및 금융 현황</div>
+      <div class="section-title">3. 신용 정보</div>
       <table>
         <tr><th>KCB 신용점수</th><td>${g('kcb_score')}점</td><th>NICE 신용점수</th><td>${g('nice_score')}점</td></tr>
-        <tr><th>금융연체</th><td>${gR('fin_over')}</td><th>세금체납</th><td>${gR('tax_over')}</td></tr>
-        <tr><th>임대유형</th><td>${gR('rent_type')}</td><th>임대보증금</th><td>${g('rent_deposit')}원</td></tr>
+        <tr><th>금융연체 여부</th><td>${gR('fin_over')}</td><th>세금체납 여부</th><td>${gR('tax_over')}</td></tr>
       </table>
     </div>
+
+    <div class="section">
+      <div class="section-title">4. 매출 현황</div>
+      <table>
+        <tr><th>금년 매출(연환산)</th><td>${g('rev_cur')}원</td><th>2025년 매출</th><td>${g('rev_25')}원</td></tr>
+        <tr><th>2024년 매출</th><td>${g('rev_24')}원</td><th>2023년 매출</th><td>${g('rev_23')}원</td></tr>
+        <tr><th>수출 여부</th><td colspan="3">${gR('export')}</td></tr>
+        <tr><th>금년 수출매출</th><td>${expCur}원</td><th>2025년 수출매출</th><td>${exp25}원</td></tr>
+        <tr><th>2024년 수출매출</th><td>${exp24}원</td><th>2023년 수출매출</th><td>${exp23}원</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">5. 부채 현황</div>
+      <table>
+        <tr><th>중진공</th><td>${debtJjg}원</td><th>소진공</th><td>${debtSjg}원</td></tr>
+        <tr><th>신보</th><td>${debtShin}원</td><th>기보</th><td>${debtKibo}원</td></tr>
+        <tr><th>재단</th><td>${debtJaid}원</td><th>회사담보</th><td>${debtCorp}원</td></tr>
+        <tr><th>대표신용</th><td>${debtRepC}원</td><th>대표담보</th><td>${debtRepCol}원</td></tr>
+        <tr><th style="background:#fef9c3;color:#92400e;">총 부채 합계</th><td colspan="3" style="background:#fef9c3;font-weight:700;color:#92400e;">${totalDebtText}</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">6. 보유 인증</div>
+      ${certHTML}
+    </div>
+
+    <div class="section">
+      <div class="section-title">7. 비즈니스 상세 정보</div>
+      <table>
+        ${Object.entries(bizFields).map(function(e){return '<tr><th style="width:130px;vertical-align:top;">'+e[0]+'</th><td class="wide">'+e[1]+'</td></tr>';}).join('')}
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">8. 자금계획</div>
+      <table>
+        <tr><th>필요자금</th><td colspan="3">${g('need_fund')}원</td></tr>
+        <tr><th>자금용도</th><td colspan="3">${fundUseChecks.length>0?fundUseChecks.join(', '):'미선택'}</td></tr>
+        <tr><th style="vertical-align:top;">자금사용계획</th><td colspan="3" class="wide">${fundPlanVal}</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">9. 컨설턴트 메모 및 서명</div>
+      <div class="memo-box">${memoVal}</div>
+      <div class="sign-row">
+        <div class="sign-cell"><div class="sign-label">담당 컨설턴트</div>${consultantName}</div>
+        <div class="sign-cell"><div class="sign-label">작성일</div>${g('write_date')}</div>
+        <div class="sign-cell"><div class="sign-label">서명</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(인)</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;font-size:10px;color:#94a3b8;text-align:center;">AI가 생성한 보고서 및 분석 결과로 참고용으로만 사용하시기 바랍니다</div>
   </body></html>`;
   pw.document.write(html);
   pw.document.close();
