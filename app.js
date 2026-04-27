@@ -691,6 +691,29 @@ function loadUserProfile() {
   // 관리자 메뉴 탭 표시/숨김
   var adminMenu = document.getElementById('menu-admin');
   if(adminMenu) adminMenu.style.display = user.isAdmin ? 'flex' : 'none';
+
+  // 지원사업공문·공지사항 등록 버튼 (관리자 전용) / 더보기 버튼 (일반 사용자)
+  var btnSdReg = document.getElementById('btn-sd-register');
+  var btnSdMore = document.getElementById('btn-sd-more');
+  var btnSdTabReg = document.getElementById('btn-sd-tab-register');
+  var btnNtReg = document.getElementById('btn-nt-register');
+  var btnNtMore = document.getElementById('btn-nt-more');
+  var btnNtTabReg = document.getElementById('btn-nt-tab-register');
+  if(user.isAdmin) {
+    if(btnSdReg) btnSdReg.style.display = 'inline-flex';
+    if(btnSdMore) btnSdMore.style.display = 'none';
+    if(btnSdTabReg) btnSdTabReg.style.display = 'inline-flex';
+    if(btnNtReg) btnNtReg.style.display = 'inline-flex';
+    if(btnNtMore) btnNtMore.style.display = 'none';
+    if(btnNtTabReg) btnNtTabReg.style.display = 'inline-flex';
+  } else {
+    if(btnSdReg) btnSdReg.style.display = 'none';
+    if(btnSdMore) btnSdMore.style.display = 'inline-flex';
+    if(btnSdTabReg) btnSdTabReg.style.display = 'none';
+    if(btnNtReg) btnNtReg.style.display = 'none';
+    if(btnNtMore) btnNtMore.style.display = 'inline-flex';
+    if(btnNtTabReg) btnNtTabReg.style.display = 'none';
+  }
 }
 function updateUserDB(u, prevEmail){
   let users=getUsers();
@@ -5879,13 +5902,16 @@ function _renderSupportDocTable() {
     var fileBtn = item.fileData
       ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.fileName||'다운로드')+'</button>'
       : '<span style="color:#94a3b8;font-size:12px;">-</span>';
+    var _sdUser = JSON.parse(localStorage.getItem('biz_session')||'null');
+    var _sdAdmin = _sdUser && _sdUser.isAdmin;
+    var delBtn = _sdAdmin ? '<button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>' : '';
     return '<tr>'+
       '<td>'+_esc(item.title)+'</td>'+
       '<td>'+_esc(item.program||'-')+'</td>'+
       '<td>'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
       '<td>'+_esc(item.date||'')+'</td>'+
       '<td>'+fileBtn+'</td>'+
-      '<td><button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '<td>'+delBtn+'</td>'+
       '</tr>';
   }).join('');
 }
@@ -5945,12 +5971,15 @@ function _renderNoticeTable() {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr>';
     return;
   }
+  var _ntUser = JSON.parse(localStorage.getItem('biz_session')||'null');
+  var _ntAdmin = _ntUser && _ntUser.isAdmin;
   tbody.innerHTML = arr.map(function(item){
+    var delBtn = _ntAdmin ? '<button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>' : '';
     return '<tr>'+
       '<td>'+_esc(item.title)+'</td>'+
       '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#f0f9ff;color:#0369a1;">'+_esc(item.category||'공지')+'</span></td>'+
       '<td>'+_esc(item.date||'')+'</td>'+
-      '<td><button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '<td>'+delBtn+'</td>'+
       '</tr>';
   }).join('');
 }
