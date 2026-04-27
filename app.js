@@ -150,6 +150,67 @@ function getReportLayoutConfig(orientation) {
 // ===========================
 // ★ PDF 인쇄 (팝업창 → 인쇄 다이얼로그)
 // ===========================
+// ===========================
+// ★ 업체 입력보드 프린트
+// ===========================
+window.printCompanyForm = function() {
+  var form = document.getElementById('companyForm');
+  if (!form) { alert('업체 정보를 찾을 수 없음.'); return; }
+  var title = document.getElementById('company-form-title');
+  var titleText = title ? title.textContent : '기업 정보';
+  var pw = window.open('', '_blank', 'width=900,height=1200,scrollbars=yes');
+  if (!pw) { alert('팝업이 차단되었음. 팝업을 허용해 주세요.'); return; }
+  var printCSS = `
+    @page { size: A4 portrait; margin: 15mm; }
+    html, body { margin:0; padding:0; font-family: "Malgun Gothic","Apple SD Gothic Neo",sans-serif; font-size:13px; color:#0f172a; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    h1 { font-size:18px; font-weight:700; color:#1e3a8a; border-bottom:2px solid #1e3a8a; padding-bottom:8px; margin-bottom:16px; }
+    .section { margin-bottom:16px; }
+    .section-title { font-size:13px; font-weight:700; color:#1e3a8a; background:#eff6ff; padding:6px 10px; border-left:3px solid #3b82f6; margin-bottom:8px; }
+    table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+    th { background:#f8fafc; color:#475569; font-size:11px; font-weight:600; padding:6px 8px; border:1px solid #e2e8f0; text-align:left; white-space:nowrap; width:130px; }
+    td { padding:6px 8px; border:1px solid #e2e8f0; font-size:12px; color:#0f172a; }
+    @media print { body { margin:0; } }
+  `;
+  // 폼 데이터 수집
+  var g = function(id) { var el=document.getElementById(id); return el ? (el.value||el.innerText||'-') : '-'; };
+  var gR = function(name) { var el=document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : '-'; };
+  var rev = { cur: g('rev_cur'), y25: g('rev_25'), y24: g('rev_24'), y23: g('rev_23') };
+  var html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${titleText}</title><style>${printCSS}</style></head><body>
+    <h1>기업 정보 입력서</h1>
+    <div class="section">
+      <div class="section-title">회사 기본 정보</div>
+      <table>
+        <tr><th>상호명</th><td>${g('comp_name')}</td><th>사업자유형</th><td>${gR('biz_type')}</td></tr>
+        <tr><th>사업자등록번호</th><td>${g('biz_number')}</td><th>법인등록번호</th><td>${g('corp_number')}</td></tr>
+        <tr><th>업종</th><td>${g('comp_industry')}</td><th>설립일</th><td>${g('biz_date')}</td></tr>
+        <tr><th>대표자명</th><td>${document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-'}</td><th>직원수</th><td>${g('emp_count')}명</td></tr>
+        <tr><th>사업장 주소</th><td colspan="3">${g('biz_address')}</td></tr>
+        <tr><th>핵심아이템</th><td colspan="3">${g('core_item')}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">매출 현황</div>
+      <table>
+        <tr><th>금년 매출(연환산)</th><td>${rev.cur}원</td><th>2025년 매출</th><td>${rev.y25}원</td></tr>
+        <tr><th>2024년 매출</th><td>${rev.y24}원</td><th>2023년 매출</th><td>${rev.y23}원</td></tr>
+        <tr><th>필요자금</th><td>${g('need_fund')}원</td><th>자금용도</th><td>${g('fund_plan')}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">신용 및 금융 현황</div>
+      <table>
+        <tr><th>KCB 신용점수</th><td>${g('kcb_score')}점</td><th>NICE 신용점수</th><td>${g('nice_score')}점</td></tr>
+        <tr><th>금융연체</th><td>${gR('fin_over')}</td><th>세금체납</th><td>${gR('tax_over')}</td></tr>
+        <tr><th>임대유형</th><td>${gR('rent_type')}</td><th>임대보증금</th><td>${g('rent_deposit')}원</td></tr>
+      </table>
+    </div>
+  </body></html>`;
+  pw.document.write(html);
+  pw.document.close();
+  pw.onload = function() { pw.print(); };
+};
+
 window.printReport = function() {
   var caid = _currentReport.contentAreaId;
   if (!caid) {
@@ -874,7 +935,7 @@ window.updateDataLists = function() {
   const cBody=document.getElementById('company-list-body');
   if(cBody){ const shown=companies.slice(0,3); cBody.innerHTML=shown.length?shown.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.rep||'-'}</td><td>${c.bizNum||'-'}</td><td>${c.date}</td><td><button class="btn-small-outline" onclick="showCompanyForm('${c.name}')">수정/보기</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 기업이 없음.</td></tr>'; }
   const rBody=document.getElementById('report-list-body');
-  if(rBody){ const shown=[...reports].reverse().slice(0,15); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
+  if(rBody){ const shown=[...reports].reverse().slice(0,15); rBody.innerHTML=shown.length?shown.map(r=>`<tr><td><span style="background:#eff6ff;color:#3b82f6;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${r.type}</span></td><td><strong>${r.company}</strong></td><td>${r.title}</td><td>${r.date}</td><td style="white-space:nowrap;"><button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button><button class="btn-small-outline" style="margin-left:6px;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button><button class="btn-delete" style="margin-left:6px;" onclick="deleteReport('${r.id}')">삭제</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">생성된 보고서가 없음.</td></tr>'; }
   const filterComp=document.getElementById('filter-company');
   if(filterComp){ filterComp.innerHTML='<option value="">전체 업체</option>'; companies.forEach(c=>filterComp.innerHTML+=`<option value="${c.name}">${c.name}</option>`); }
   updateDashboardReports(); renderCompanyCards();
@@ -892,18 +953,34 @@ window.downloadReportById=function(id){
   var reports=window._reportsCache||[];
   var rep=reports.find(function(x){return x.id===id;});
   if(!rep){alert('보고서를 찾을 수 없음.');return;}
+  var cs=window._companiesCache||[];
+  var cData=cs.find(function(x){return x.name===rep.company;})||{name:rep.company,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:rep.date};
   var rev={};
+  try{if(cData&&cData.revenueData)rev=cData.revenueData;}catch(e){}
+  // content가 JSON이면 파싱하여 HTML 재빌드
+  var htmlContent='';
   try{
-    var cs=window._companiesCache||[];
-    var cm=cs.find(function(x){return x.name===rep.company;});
-    if(cm&&cm.revenueData)rev=cm.revenueData;
-  }catch(e){}
+    var data=JSON.parse(rep.content);
+    var type=rep.reportType||'management';
+    var cfg=REPORT_CONFIGS[type];
+    if(cfg&&cfg.buildHTML){
+      htmlContent=cfg.buildHTML(data,cData,rev,rep.date);
+    } else if(type==='management'){
+      var ver=rep.version||'client';
+      htmlContent=ver==='client'?buildMgmtClientHTML(data,cData,rev,rep.date):buildMgmtConsultantHTML(data,cData,rev,rep.date);
+    } else {
+      htmlContent='<pre style="padding:20px;font-size:12px;">'+(rep.content||'')+'</pre>';
+    }
+  }catch(e){
+    // content가 이미 HTML인 경우
+    htmlContent=rep.content||'';
+  }
   var isLandscape=(rep.reportType==='aiBiz'||rep.type==='사업계획서'||rep.type==='AI 사업계획서');
   var layout=getReportLayoutConfig(isLandscape);
   var pw=window.open('','_blank','width=1600,height=1000,scrollbars=yes');
   if(!pw){alert('팝업이 차단되었음. 팝업을 허용해 주세요.');return;}
   var printCSS=`@page{size:${layout.pageSize};margin:${layout.printMargin};}html,body{margin:0;padding:0;background:#e8eaed;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;min-width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0 auto;padding:${layout.wrapPadding} 0;background:#e8eaed;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#e8eaed!important;padding:${layout.wrapPadding}!important;}.rp-cover{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.coverPadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;}.rp-page{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.pagePadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}@media print{html,body{background:white!important;}.pdf-shell{width:100%!important;padding:0!important;background:white!important;}.rp-wrap{width:100%!important;padding:0!important;background:white!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;}}`;
-  pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${rep.content||''}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
+  pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${htmlContent}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
   pw.document.close();
 };
 window.deleteReport=function(id){if(!confirm('삭제하시겠습니까?'))return;window._reportsCache=(window._reportsCache||[]).filter(x=>x.id!==id);deleteReportFromServer(id);updateDataLists();};
@@ -4732,7 +4809,8 @@ window.generateFinanceReport = async function(event) {
   if(inputStep2) inputStep2.style.display = 'none';
   if(resultStep2) resultStep2.style.display = 'block';
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
-  initReportCharts(rev);
+  // canvas 크기 확보 후 차트 렌더링 (즉시 호출 시 height=0으로 그래프 안 나옴)
+  setTimeout(function(){ initReportCharts(rev); }, 150);
 };
 
 // 보고서 면책 문구 추가 공통 함수
@@ -4801,7 +4879,24 @@ window.generateAnyReport = async function(type, version, event) {
     if (scriptBtn) { scriptBtn.disabled = false; scriptBtn.style.opacity = '1'; }
   }
   addDisclaimerToReport(cfg.contentAreaId);
-  initReportCharts(rev);
+  setTimeout(function(){ initReportCharts(rev); }, 150);
+  // 사업계획서 landscape 미리보기 자동 스케일 조정
+  if (cfg.landscape) {
+    setTimeout(function() {
+      var container = document.querySelector('.report-view-landscape');
+      var paper = document.querySelector('.report-paper-landscape');
+      if (container && paper) {
+        var containerW = container.clientWidth - 32;
+        var paperW = 1122;
+        var scale = Math.min(1, containerW / paperW);
+        paper.style.transform = 'scale(' + scale + ')';
+        paper.style.transformOrigin = 'top center';
+        paper.style.marginBottom = ((scale - 1) * paper.scrollHeight) + 'px';
+        var header = container.querySelector('.report-view-header');
+        if (header) { header.style.width = (containerW) + 'px'; header.style.minWidth = 'unset'; }
+      }
+    }, 200);
+  }
 };
 
 // ===========================
@@ -4843,7 +4938,23 @@ window.viewReport = function(id) {
       ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
       addDisclaimerToReport(cfg.contentAreaId);
       _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
-      initReportCharts(rev);
+      setTimeout(function(){ initReportCharts(rev); }, 150);
+      // landscape 미리보기 자동 스케일
+      if (cfg.landscape) {
+        setTimeout(function() {
+          var container = document.querySelector('.report-view-landscape');
+          var paper = document.querySelector('.report-paper-landscape');
+          if (container && paper) {
+            var cW = container.clientWidth - 32;
+            var scale = Math.min(1, cW / 1122);
+            paper.style.transform = 'scale(' + scale + ')';
+            paper.style.transformOrigin = 'top center';
+            paper.style.marginBottom = ((scale - 1) * paper.scrollHeight) + 'px';
+            var header = container.querySelector('.report-view-header');
+            if (header) { header.style.width = cW + 'px'; header.style.minWidth = 'unset'; }
+          }
+        }, 200);
+      }
     }, 50);
   }
 };

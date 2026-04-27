@@ -619,9 +619,9 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
     min-width: 0;
 }

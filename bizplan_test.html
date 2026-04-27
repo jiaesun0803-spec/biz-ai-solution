@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사업계획서 미리보기</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body style="background:#e8eaed;margin:0;padding:20px;">
+<div id="preview-output"></div>
+<script src="app.js"></script>
+<script>
+// cData: 기업 데이터
+var cData = {
+  name: '(주) 대박컴퍼니',
+  rep: '홍길동',
+  industry: '식품 제조업',
+  bizNum: '123-45-67890',
+  address: '서울시 강남구 테헤란로 123',
+  coreItem: '돈육코인육수 제품',
+  empCount: 12,
+  needFund: 400000000,
+  certs: 'HACCP,조달청 우수제품,ISO9001',
+  date: '2026-04'
+};
+
+// rev: 매출 데이터
+var rev = {
+  cur: 1800000000,
+  y25: 1800000000,
+  y24: 1200000000
+};
+
+// d: AI 생성 데이터
+var d = {
+  s2_pest: {
+    p: ['중소기업 스마트공장 지원 확대', '조달청 우수제품 기업 우선 구매 정책', '전자상거래 성장 → 물류 인프라 투자 의무화'],
+    e: ['식품 제조 시장 연 7.5% 성장', '인건비 상승 → 자동화 ROI 개선', '이커머스 물동량 증가 → 채널 효율화 필수'],
+    s: ['1~2인 가구 증가 → 간편식 수요 구조적 확대', '소비자 프리미엄 선호 급상승', '탄소 중립 목표 → 효율화로 탄소 감축 요구'],
+    t: ['AI·IoT 기술 가격 하락 → 중소기업 도입 가능', '클라우드 SaaS 확산', 'AI 수요 예측 정확도 향상 → 재고 최적화 실현']
+  },
+  s2_mktSize: '60조원',
+  s2_cagr: '7.5%',
+  s2_target: '1인 가구, 맞벌이 부부',
+  s2_forecast: [{ yr: '2026', val: 1800000000 }, { yr: '2027', val: 2400000000 }, { yr: '2028', val: 3500000000 }],
+  s2_segments: [
+    { seg: '간편식 시장 확대', size: '30조원', growth: '+18%', focus: '최우선' },
+    { seg: '프리미엄 식품', size: '15조원', growth: '+12%', focus: '2순위' }
+  ],
+  s2_swot: {
+    strength: ['독자 진공 동결 건조 기술 특허 보유', '조달청 우수제품 등록으로 공공 판로 확보', '낮은 원가율로 높은 수익성 유지'],
+    weakness: ['전국 유통망 미구축', '마케팅 인력 부족', '브랜드 인지도 낮음'],
+    opportunity: ['간편식 시장 연 18% 고성장', '1인 가구 증가로 수요 확대', '정부 중소기업 지원 정책 강화'],
+    threat: ['대기업 간편식 시장 진출', '원자재 가격 상승', '유사 제품 경쟁 심화']
+  },
+  s3_cross: {
+    so: ['SO전략 1: 특허 기술과 조달 등록을 바탕으로 공공기관 납품 확대 — 연 매출 30% 공공 비중 목표'],
+    wo: ['WO전략 1: 정책자금으로 영업 인력 2명 채용 및 전국 유통 채널 진입 — 온라인 플랫폼 입점 확대'],
+    st: ['ST전략 1: 특허·실증 데이터로 전문 포지셔닝 강화 — 프리미엄 이미지 구축'],
+    wt: ['WT전략 1: 원가 절감을 위한 생산 자동화 투자 — 경쟁력 유지']
+  },
+  s3_priority: [
+    { strategy: 'SO전략', direction: '공공 시장 집중 공략', task: '조달청 등록 기반 공공기관 납품 확대', priority: '★★★★★', timing: '26년 Q1~Q2' },
+    { strategy: 'WO전략', direction: '인력·채널 확충', task: '정책자금으로 영업 인력 채용 및 온라인 플랫폼 입점', priority: '★★★★☆', timing: '26년 Q2~Q3' },
+    { strategy: 'ST전략', direction: '기술 포지셔닝 강화', task: '특허·실증 데이터로 프리미엄 이미지 구축', priority: '★★★★☆', timing: '26년 Q3' },
+    { strategy: 'WT전략', direction: '원가 절감', task: '생산 자동화 투자로 원가 경쟁력 유지', priority: '★★★☆☆', timing: '26년 Q4' }
+  ],
+  s4_competitor: [
+    { item: '기술 특허', self: '보유 (3건)', a: '없음', b: '없음' },
+    { item: '조달 등록', self: '완료', a: '미완', b: '미완' },
+    { item: '원가율', self: '38%', a: '45%', b: '42%' },
+    { item: '납품 실적', self: '공공 15건', a: '민간 위주', b: '민간 위주' }
+  ],
+  s5_items: [
+    { title: '기술 차별화', text: '독자 진공 동결 건조 특허로 경쟁사 대비 원가 20% 절감', color: '#16a34a' },
+    { title: '채널 차별화', text: '조달청 등록으로 공공기관 직납 가능 — 안정적 매출 기반', color: '#2563eb' },
+    { title: '품질 차별화', text: 'HACCP 인증 및 자체 품질 관리 시스템으로 불량률 0.1% 이하', color: '#7c3aed' },
+    { title: '가격 차별화', text: '효율적 생산 구조로 동급 제품 대비 15% 저렴한 공급가 실현', color: '#ea580c' }
+  ],
+  s6_certs: [
+    { name: 'HACCP', status: '완료', date: '2022.03', effect: '식품 안전 기준 충족', amount: '5000만원' },
+    { name: '조달청 우수제품', status: '완료', date: '2023.06', effect: '공공기관 직납 가능', amount: '3000만원' },
+    { name: 'ISO 9001', status: '진행중', date: '2025.06 예정', effect: '품질경영 국제 인증', amount: '2000만원' }
+  ],
+  s6_staff: [
+    { name: '홍길동', role: '대표이사', career: '식품업계 15년', key: '전략·영업' },
+    { name: '김철수', role: '생산팀장', career: '식품제조 10년', key: '품질·생산' },
+    { name: '이영희', role: '마케팅팀장', career: '이커머스 7년', key: '온라인 채널' }
+  ],
+  s6_mktg: [
+    { channel: '온라인 플랫폼', budget: '1억원', timing: '26년 Q1~Q2', kpi: '월 판매 500건' },
+    { channel: '공공 조달', budget: '5천만원', timing: '26년 Q1~Q3', kpi: '계약 10건' },
+    { channel: '오프라인 유통', budget: '5천만원', timing: '26년 Q3~Q4', kpi: '마트 5개 입점' }
+  ],
+  s7_sources: [
+    { name: '신용보증기금 보증부 대출', desc: '성장 기업 우대 보증 (보증비율 85%)', amount: '2억원', color: '#16a34a' },
+    { name: '중소기업진흥공단 정책자금', desc: '소공인 특화 자금 (금리 2.1%)', amount: '1억5천만원', color: '#2563eb' },
+    { name: '기술보증기금 기술평가 보증', desc: '특허 기반 기술 평가 보증', amount: '5천만원', color: '#7c3aed' }
+  ],
+  s7_rows: [
+    { item: '원재료 구입', amount: '1억5천만원', ratio: '37.5%', purpose: '돈육코인육수 핵심 원재료 국내산 돈육 선매입 및 안정적 재고 확보', timing: '26년 Q2~Q3' },
+    { item: '생산 설비 투자', amount: '1억원', ratio: '25%', purpose: '생산 공정 자동화로 원가율 20% 절감 및 생산량 증대', timing: '26년 Q2~Q3' },
+    { item: '마케팅·채널', amount: '7천만원', ratio: '17.5%', purpose: 'SNS 마케팅, 쿠팡 등 주요 이커머스 채널 입점 및 브랜딩 강화', timing: '26년 Q2~Q3' },
+    { item: '운전자금', amount: '8천만원', ratio: '20%', purpose: '인건비, 임대료, 공과금 등 3개월간의 안정적인 운영 비용 확보', timing: '26년 Q2~Q3' }
+  ],
+  s9_kpi: { y1: '18억', y2: '24억', ch: '5개↑', emp: '12명' },
+  s9_roadmap: [
+    { year: '2026', tasks: ['정책자금 4억 조달 완료', '생산 설비 확충 가동', '쿠팡·스마트스토어 입점'] },
+    { year: '2027', tasks: ['벤처인증 취득 완료', 'B2B 납품 채널 3곳', '매출 24억 달성'] },
+    { year: '2028', tasks: ['이노비즈 취득', '매출 35억 달성', '자동화 생산 완성'] }
+  ],
+  s9_kpiRows: [
+    { item: '시장 성장성', basis: '간편식 시장 연 18% 성장, 1인 가구 증가 구조적 수요', eval: '★★★★★', note: '최우선 투자 요인' },
+    { item: '기술 경쟁력', basis: '진공 동결 건조 특허 3건 보유, 경쟁사 대비 원가 20% 우위', eval: '★★★★★', note: '핵심 차별화 요소' },
+    { item: '재무 건전성', basis: '매출 대비 영업이익률 15%, 부채비율 60% 이하', eval: '★★★★☆', note: '안정적 재무 구조' },
+    { item: '경영진 역량', basis: '식품업계 평균 12년 경력, 조달·인증 실적 보유', eval: '★★★★☆', note: '실행력 검증됨' },
+    { item: '투자 회수 가능성', basis: '3년 내 BEP 달성, 2028년 코스닥 상장 추진', eval: '★★★★☆', note: 'EXIT 전략 명확' }
+  ],
+  s9_investAmt: '4억원',
+  s9_investPurpose: '생산 자동화 설비 투자 및 전국 유통망 확대를 통한 매출 3배 성장 달성',
+  s9_values: [
+    { icon: '🏆', title: '안정적 수익 구조', desc: '독자적인 진공 동결 건조 기술을 바탕으로 한 돈육코인육수 제품으로 급성장하는 가정간편식 시장에서 독보적인 경쟁력을 확보하고 있음' },
+    { icon: '📋', title: '구체적 실행 계획', desc: '인력 채용·제품 개발·인증 취득·영업 확대의 단계별 실행 계획이 명확하며 투자 자금 집행 목적과 기대 효과가 구체적으로 제시됨' },
+    { icon: '📈', title: '성장 잠재력', desc: '제조업 시장 CAGR 7.5% 고성장. 2028년 매출 목표 달성 시 기업가치 상승 및 추가 투자 유치 가능성이 높음' }
+  ]
+};
+
+try {
+  var html = buildBizPlanHTML(d, cData, rev, '2026-04-25');
+  document.getElementById('preview-output').innerHTML = html;
+  setTimeout(function() {
+    if (typeof initReportCharts === 'function') {
+      initReportCharts('preview');
+    }
+  }, 500);
+} catch(e) {
+  document.getElementById('preview-output').innerHTML = '<pre style="color:red;padding:20px">' + e.message + '\n' + e.stack + '</pre>';
+}
+</script>
+</body>
+</html>
