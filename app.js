@@ -1044,8 +1044,6 @@ function updateDashboardReports() {
   const listEl = document.getElementById('dashboard-report-list'); if (!listEl) return;
   const reports   = window._reportsCache || [];
   const companies = window._companiesCache || [];
-  const supportDocs = JSON.parse(localStorage.getItem(DB_SUPPORT_DOC)||'[]');
-  const notices = JSON.parse(localStorage.getItem(DB_NOTICES)||'[]');
   const setNum=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   const setText=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   setNum('stat-companies',companies.length);
@@ -1054,8 +1052,7 @@ function updateDashboardReports() {
   setNum('stat-total',reports.length);
   setText('dashboard-recent-count', `${Math.min(reports.length,3)}건`);
   setText('dashboard-company-hint', `업체 ${companies.length}개`);
-  setText('dashboard-support-count', `${supportDocs.length}건`);
-  setText('dashboard-notice-count', `${notices.length}건`);
+  // 공지사항·공문 카운트 및 카드는 _renderDashNotices(), _renderDashSupportDocs()가 서버에서 비동기 로드
 
   const typeIcon=t=>({'경영진단':'📈','재무제표 분석':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
 
@@ -1066,21 +1063,9 @@ function updateDashboardReports() {
     listEl.innerHTML=`<table class="rr-table"><thead><tr><th class="rr-th" style="width:44px;"></th><th class="rr-th">보고서명 / 업체명</th><th class="rr-th" style="width:90px;">구분</th><th class="rr-th" style="width:90px;">날짜</th><th class="rr-th" style="width:52px;"></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
-  renderDashboardBoard('dashboard-support-docs', supportDocs, {
-    emptyEmoji:'📄',
-    emptyTitle:'등록된 지원사업 공문이 없음.',
-    emptyDesc:'공문 등록 기능은 다음 단계에서 연결할 수 있음. 현재는 공간과 구조를 먼저 정리해두었음.',
-    buttonText:'기능 준비 상태 보기',
-    buttonAction:`dashboardFeatureSoon('지원사업 공문')`
-  });
-
-  renderDashboardBoard('dashboard-notice-list', notices, {
-    emptyEmoji:'📢',
-    emptyTitle:'등록된 공지사항이 없음.',
-    emptyDesc:'운영 공지, 업무 알림, 배포 이력 등을 이 영역에 모아둘 수 있음.',
-    buttonText:'기능 준비 상태 보기',
-    buttonAction:`dashboardFeatureSoon('공지사항')`
-  });
+  // 공지사항·공문 카드는 서버 API 기반으로 별도 렌더링
+  _renderDashSupportDocs();
+  _renderDashNotices();
 }
 
 function renderDashboardBoard(targetId, items, options) {
@@ -5797,20 +5782,37 @@ window.downloadScriptAsTxt = function() {
   a.download = nm + '_발표스크립트.txt';
   a.click();
   URL.revokeObjectURL(a.href);
-};
+// ===========================
+// ★ 공지사항 & 지원사업공문 (서버 DB 기반 - 모든 기기 공유)
+// ===========================
 
+/* ── 캐시 (렌더링 최적화) ── */
+var _sdCache = [];
+var _ntCache = [];
 
-/* =====================================================
-   지원사업공문 / 공지사항 CRUD
-   ===================================================== */
+/* ── 서버에서 공지사항 로드 ── */
+async function _loadNTFromServer() {
+  try {
+    var data = await apiCall('/api/notices');
+    _ntCache = Array.isArray(data) ? data : [];
+    return _ntCache;
+  } catch(e) {
+    console.warn('공지사항 로드 실패:', e.message);
+    return _ntCache;
+  }
+}
 
-var _SD_KEY = 'biz_support_docs';
-var _NT_KEY = 'biz_notices_v2';
-
-function _loadSD() { try { return JSON.parse(localStorage.getItem(_SD_KEY)||'[]'); } catch(e){ return []; } }
-function _saveSD(a) { localStorage.setItem(_SD_KEY, JSON.stringify(a)); }
-function _loadNT() { try { return JSON.parse(localStorage.getItem(_NT_KEY)||'[]'); } catch(e){ return []; } }
-function _saveNT(a) { localStorage.setItem(_NT_KEY, JSON.stringify(a)); }
+/* ── 서버에서 지원사업공문 로드 ── */
+async function _loadSDFromServer() {
+  try {
+    var data = await apiCall('/api/support-docs');
+    _sdCache = Array.isArray(data) ? data : [];
+    return _sdCache;
+  } catch(e) {
+    console.warn('지원사업공문 로드 실패:', e.message);
+    return _sdCache;
+  }
+}
 
 /* ── 지원사업 공문 모달 ── */
 window.openSupportDocModal = function() {
@@ -5842,28 +5844,33 @@ window.clearSdFile = function() {
   var nm = document.getElementById('sd-file-name'); if(nm) nm.textContent='선택된 파일 없음';
   var cl = document.getElementById('sd-file-clear'); if(cl) cl.style.display='none';
 };
-window.saveSupportDoc = function() {
+window.saveSupportDoc = async function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
   var fi = document.getElementById('sd-file');
   var file = fi && fi.files && fi.files[0] ? fi.files[0] : null;
-  function doSave(fileData, fileName, fileType) {
-    var item = {
-      id: Date.now(),
+
+  async function doSave(fileData, fileName, fileType) {
+    var payload = {
       title: title.trim(),
+      category: '공문',
       program: ((document.getElementById('sd-program')||{}).value||'').trim(),
-      deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim(),
-      desc: ((document.getElementById('sd-desc')||{}).value||'').trim(),
+      deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
+      description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
       date: new Date().toISOString().slice(0,10),
-      fileName: fileName || null,
-      fileType: fileType || null,
-      fileData: fileData || null
+      file_name: fileName || null,
+      file_url: fileData || null
     };
-    var arr = _loadSD(); arr.unshift(item); _saveSD(arr);
-    closeSupportDocModal();
-    _renderSupportDocTable();
-    _renderDashSupportDocs();
+    try {
+      await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
+      closeSupportDocModal();
+      await _renderSupportDocTable();
+      await _renderDashSupportDocs();
+    } catch(e) {
+      alert('저장 실패: ' + e.message);
+    }
   }
+
   if(file) {
     var reader = new FileReader();
     reader.onload = function(e) { doSave(e.target.result, file.name, file.type); };
@@ -5873,16 +5880,20 @@ window.saveSupportDoc = function() {
     doSave(null, null, null);
   }
 };
-window.deleteSupportDoc = function(id) {
+window.deleteSupportDoc = async function(id) {
   if(!confirm('삭제하시겠습니까?')) return;
-  _saveSD(_loadSD().filter(function(x){ return x.id!==id; }));
-  _renderSupportDocTable(); _renderDashSupportDocs();
+  try {
+    await apiCall('/api/support-docs/' + id, { method:'DELETE' });
+    await _renderSupportDocTable();
+    await _renderDashSupportDocs();
+  } catch(e) {
+    alert('삭제 실패: ' + e.message);
+  }
 };
-
-function _renderSupportDocTable() {
+async function _renderSupportDocTable() {
   var tbody = document.getElementById('support-doc-body');
   if(!tbody) return;
-  var arr = _loadSD();
+  var arr = await _loadSDFromServer();
   var cnt = document.getElementById('dashboard-support-count');
   if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
@@ -5890,8 +5901,8 @@ function _renderSupportDocTable() {
     return;
   }
   tbody.innerHTML = arr.map(function(item){
-    var fileBtn = item.fileData
-      ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.fileName||'다운로드')+'</button>'
+    var fileBtn = item.file_url
+      ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.file_name||'다운로드')+'</button>'
       : '<span style="color:#94a3b8;font-size:12px;">-</span>';
     return '<tr>'+
       '<td>'+_esc(item.title)+'</td>'+
@@ -5903,14 +5914,12 @@ function _renderSupportDocTable() {
       '</tr>';
   }).join('');
 }
-
 window.downloadSdFile = function(id) {
-  var arr = _loadSD();
-  var item = arr.find(function(x){ return x.id===id; });
-  if(!item || !item.fileData) { alert('첨부파일이 없습니다.'); return; }
+  var item = _sdCache.find(function(x){ return x.id===id; });
+  if(!item || !item.file_url) { alert('첨부파일이 없습니다.'); return; }
   var a = document.createElement('a');
-  a.href = item.fileData;
-  a.download = item.fileName || '첨부파일';
+  a.href = item.file_url;
+  a.download = item.file_name || '첨부파일';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -5927,32 +5936,39 @@ window.openNoticeModal = function() {
 window.closeNoticeModal = function() {
   var m = document.getElementById('notice-modal'); if(m) m.style.display='none';
 };
-window.saveNotice = function() {
+window.saveNotice = async function() {
   var title = (document.getElementById('nt-title')||{}).value||'';
   if(!title.trim()){ alert('제목을 입력해주세요.'); return; }
   var cat = ((document.getElementById('nt-category')||{}).value||'공지').trim();
-  var item = {
-    id: Date.now(),
+  var payload = {
     title: title.trim(),
     category: cat,
-    desc: ((document.getElementById('nt-desc')||{}).value||'').trim(),
+    description: ((document.getElementById('nt-desc')||{}).value||'').trim(),
     date: new Date().toISOString().slice(0,10)
   };
-  var arr = _loadNT(); arr.unshift(item); _saveNT(arr);
-  closeNoticeModal();
-  _renderNoticeTable();
-  _renderDashNotices();
+  try {
+    await apiCall('/api/notices', { method:'POST', body: JSON.stringify(payload) });
+    closeNoticeModal();
+    await _renderNoticeTable();
+    await _renderDashNotices();
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  }
 };
-window.deleteNotice = function(id) {
+window.deleteNotice = async function(id) {
   if(!confirm('삭제하시겠습니까?')) return;
-  _saveNT(_loadNT().filter(function(x){ return x.id!==id; }));
-  _renderNoticeTable(); _renderDashNotices();
+  try {
+    await apiCall('/api/notices/' + id, { method:'DELETE' });
+    await _renderNoticeTable();
+    await _renderDashNotices();
+  } catch(e) {
+    alert('삭제 실패: ' + e.message);
+  }
 };
-
-function _renderNoticeTable() {
+async function _renderNoticeTable() {
   var tbody = document.getElementById('notice-body');
   if(!tbody) return;
-  var arr = _loadNT();
+  var arr = await _loadNTFromServer();
   var cnt = document.getElementById('dashboard-notice-count');
   if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
@@ -5970,40 +5986,39 @@ function _renderNoticeTable() {
 }
 
 /* ── 대시보드 카드 렌더 ── */
-function _renderDashSupportDocs() {
+async function _renderDashSupportDocs() {
   var el = document.getElementById('dashboard-support-docs');
   if(!el) return;
-  var arr = _loadSD().slice(0,3);
+  var arr = await _loadSDFromServer();
   var cnt = document.getElementById('dashboard-support-count');
-  if(cnt) cnt.textContent = _loadSD().length+'건';
+  if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
     el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공문이 없습니다.</div>';
     return;
   }
-  el.innerHTML = arr.map(function(item){
+  el.innerHTML = arr.slice(0,3).map(function(item){
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
       '<span style="font-size:11px;font-weight:600;color:#ea580c;background:#fff7ed;border-radius:8px;padding:2px 7px;">공문</span>'+
       '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
-      (item.deadline?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;">~'+_esc(item.deadline)+'</span>':'<span style="font-size:11px;color:#94a3b8;">'+_esc(item.date)+'</span>')+
+      (item.deadline?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;">~'+_esc(item.deadline)+'</span>':'<span style="font-size:11px;color:#94a3b8;">'+_esc(item.date||'')+'</span>')+
       '</div>';
   }).join('');
 }
-
-function _renderDashNotices() {
+async function _renderDashNotices() {
   var el = document.getElementById('dashboard-notice-list');
   if(!el) return;
-  var arr = _loadNT().slice(0,3);
+  var arr = await _loadNTFromServer();
   var cnt = document.getElementById('dashboard-notice-count');
-  if(cnt) cnt.textContent = _loadNT().length+'건';
+  if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
     el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공지가 없습니다.</div>';
     return;
   }
-  el.innerHTML = arr.map(function(item){
+  el.innerHTML = arr.slice(0,3).map(function(item){
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
       '<span style="font-size:11px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:2px 7px;">'+_esc(item.category||'공지')+'</span>'+
       '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
-      '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+_esc(item.date)+'</span>'+
+      '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+_esc(item.date||'')+'</span>'+
       '</div>';
   }).join('');
 }
@@ -6030,6 +6045,13 @@ function _esc(s) {
   }
   // 페이지 로드 시 대시보드 카드 초기화
   document.addEventListener('DOMContentLoaded', function() {
-    _renderDashSupportDocs(); _renderDashNotices();
+    // 로그인 후 토큰이 있을 때만 로드
+    setTimeout(function() {
+      var token = localStorage.getItem('biz_jwt_token');
+      if(token) {
+        _renderDashSupportDocs();
+        _renderDashNotices();
+      }
+    }, 1500);
   });
 })();
