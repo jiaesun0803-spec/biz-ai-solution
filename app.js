@@ -5838,6 +5838,9 @@ window.openSupportDocModal = function() {
   var el2 = document.getElementById('sd-program'); if(el2) el2.value='';
   var el3 = document.getElementById('sd-deadline'); if(el3) el3.value='';
   var el4 = document.getElementById('sd-desc'); if(el4) el4.value='';
+  var el5 = document.getElementById('sd-agency'); if(el5) el5.value='';
+  var el6 = document.getElementById('sd-source-url'); if(el6) el6.value='';
+  var el7 = document.getElementById('sd-crawl-status'); if(el7) el7.textContent='';
   clearSdFile();
   m.style.display='flex';
 };
@@ -5860,6 +5863,31 @@ window.clearSdFile = function() {
   var nm = document.getElementById('sd-file-name'); if(nm) nm.textContent='선택된 파일 없음';
   var cl = document.getElementById('sd-file-clear'); if(cl) cl.style.display='none';
 };
+window.crawlSupportDocUrl = async function() {
+  var urlEl = document.getElementById('sd-source-url');
+  var statusEl = document.getElementById('sd-crawl-status');
+  var btn = document.getElementById('sd-crawl-btn');
+  var url = urlEl ? urlEl.value.trim() : '';
+  if(!url || !url.startsWith('http')) { alert('올바른 URL을 입력해주세요.'); return; }
+  if(btn) { btn.disabled=true; btn.textContent='추출 중...'; }
+  if(statusEl) statusEl.innerHTML = '<span style="color:#0ea5e9;">⏳ 페이지를 분석하고 있습니다...</span>';
+  try {
+    var result = await apiCall('/api/crawl-url', { method:'POST', body: JSON.stringify({ url }) });
+    if(result.success) {
+      if(result.title) { var t = document.getElementById('sd-title'); if(t) t.value = result.title; }
+      if(result.agency) { var a = document.getElementById('sd-agency'); if(a) a.value = result.agency; }
+      if(result.deadline) { var d = document.getElementById('sd-deadline'); if(d) d.value = result.deadline; }
+      if(result.description) { var desc = document.getElementById('sd-desc'); if(desc) desc.value = result.description.slice(0,500); }
+      if(statusEl) statusEl.innerHTML = '<span style="color:#16a34a;">✅ 자동 추출 완료! 내용을 확인하고 필요시 수정 후 등록하세요.</span>';
+    } else {
+      if(statusEl) statusEl.innerHTML = '<span style="color:#dc2626;">⚠️ ' + (result.error||'추출 실패') + '</span>';
+    }
+  } catch(e) {
+    if(statusEl) statusEl.innerHTML = '<span style="color:#dc2626;">❌ 오류: ' + e.message + '</span>';
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='자동 추출'; }
+  }
+};
 window.saveSupportDoc = async function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
@@ -5871,6 +5899,8 @@ window.saveSupportDoc = async function() {
       title: title.trim(),
       category: '공문',
       program: ((document.getElementById('sd-program')||{}).value||'').trim(),
+      agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
+      source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
       deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
       description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
       date: new Date().toISOString().slice(0,10),

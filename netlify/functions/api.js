@@ -4,6 +4,8 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const serverless = require('serverless-http');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -504,6 +506,91 @@ app.delete('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req,
     .eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
+});
+
+// ── URL 크롤링 API ──
+app.post('/api/crawl-url', authMiddleware, adminMiddleware, async (req, res) => {
+  const { url } = req.body;
+  if (!url || !url.startsWith('http')) return res.status(400).json({ error: '올바른 URL을 입력해주세요.' });
+  try {
+    const response = await axios.get(url, {
+      timeout: 12000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8'
+      },
+      maxRedirects: 5
+    });
+    const $ = cheerio.load(response.data);
+    $('script, style, nav, header, footer, iframe, .gnb, .lnb, .snb, #header, #footer, #nav, .navigation, .sidebar, .ad, .banner').remove();
+
+    // 제목 추출
+    let title = '';
+    const titleSelectors = ['.view-title','.board-title','.post-title','.detail-title','.bbs-title','h1.title','h2.title','h3.title','.subject','.tit','.board_view_title','.view_title','.content-title','h1','h2'];
+    for (const sel of titleSelectors) {
+      const t = $(sel).first().text().trim();
+      if (t && t.length > 3 && t.length < 200) { title = t; break; }
+    }
+    if (!title) title = $('title').text().replace(/[|\-–—].*$/, '').trim();
+    if (!title) title = $('meta[property="og:title"]').attr('content') || '';
+
+    // 기관명 추출
+    let agency = '';
+    const agencySelectors = ['.organization','.agency','.dept','.writer','.author','.board-writer','.view-writer'];
+    for (const sel of agencySelectors) {
+      const el = $(sel).first();
+      const t = el.attr('content') || el.text().trim();
+      if (t && t.length > 1 && t.length < 50) { agency = t; break; }
+    }
+    if (!agency) {
+      const u = url.toLowerCase();
+      if (u.includes('mss.go.kr')) agency = '중소벤처기업부';
+      else if (u.includes('sbiz.or.kr') || u.includes('sbc.or.kr')) agency = '소상공인시장진흥공단';
+      else if (u.includes('kosmes.or.kr') || u.includes('smes.go.kr')) agency = '중소벤처기업진흥공단';
+      else if (u.includes('kibo.or.kr')) agency = '기술보증기금';
+      else if (u.includes('kodit.or.kr')) agency = '신용보증기금';
+      else if (u.includes('bizinfo.go.kr')) agency = '기업마당';
+      else if (u.includes('gov.kr')) agency = '정부기관';
+    }
+
+    // 마감일 추출
+    let deadline = '';
+    const bodyText = $('body').text();
+    const deadlinePatterns = [
+      /접수\s*마감\s*[:\s]*([\d]{4}[.\-/년]\s*[\d]{1,2}[.\-/월]\s*[\d]{1,2})/,
+      /신청\s*마감\s*[:\s]*([\d]{4}[.\-/년]\s*[\d]{1,2}[.\-/월]\s*[\d]{1,2})/,
+      /마감일\s*[:\s]*([\d]{4}[.\-/년]\s*[\d]{1,2}[.\-/월]\s*[\d]{1,2})/,
+      /접수기간.*?~\s*([\d]{4}[.\-/년]\s*[\d]{1,2}[.\-/월]\s*[\d]{1,2})/,
+      /모집기간.*?~\s*([\d]{4}[.\-/년]\s*[\d]{1,2}[.\-/월]\s*[\d]{1,2})/
+    ];
+    for (const pattern of deadlinePatterns) {
+      const m = bodyText.match(pattern);
+      if (m) {
+        let raw = m[1].replace(/[년월일\s]/g, '-').replace(/-+/g, '-').replace(/-$/, '');
+        const parts = raw.split('-').filter(Boolean);
+        if (parts.length >= 3) deadline = parts[0] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+        break;
+      }
+    }
+
+    // 본문 내용 추출
+    let description = '';
+    const contentSelectors = ['.view-content','.board-content','.post-content','.detail-content','.bbs-content','.board_view_content','.view_content','.content-body','.article-body','.entry-content','#content','.contents','.cont'];
+    for (const sel of contentSelectors) {
+      const el = $(sel).first();
+      if (el.length) { description = el.text().replace(/\s+/g, ' ').trim().slice(0, 1500); break; }
+    }
+    if (!description) description = $('body').text().replace(/\s+/g, ' ').trim().slice(0, 1500);
+
+    res.json({ success: true, title: title.slice(0,200), agency: agency.slice(0,100), deadline, description: description.slice(0,1500), source_url: url });
+  } catch (err) {
+    const status = err.response ? err.response.status : 0;
+    const msg = (status === 403 || status === 401)
+      ? '해당 페이지는 접근이 제한되어 있습니다. 수동으로 내용을 입력해주세요.'
+      : '페이지를 불러올 수 없습니다: ' + err.message;
+    res.json({ success: false, error: msg, title: '', agency: '', deadline: '', description: '', source_url: url });
+  }
 });
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
