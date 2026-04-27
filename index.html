@@ -1029,17 +1029,82 @@
         <!-- 공지사항 -->
         <section id="notices" class="tab-content">
             <div class="max-width-wrapper">
-                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
-                    <h2 class="page-title-lg">🔔 공지사항</h2>
-                    <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="openNoticeModal()">＋ 공지 등록</button>
+
+                <!-- ===== 게시판 목록 뷰 ===== -->
+                <div id="notice-list-view">
+                    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h2 class="page-title-lg">🔔 공지사항</h2>
+                            <p style="font-size:13px;color:#64748b;margin:4px 0 0;">내부 운영 공지, 작업 알림, 주요 업데이트를 확인합니다.</p>
+                        </div>
+                        <button id="btn-nt-reg-board" class="btn-primary" style="padding:9px 18px;font-size:13px;display:none;" onclick="openNoticeModal()">＋ 공지 등록</button>
+                    </div>
+
+                    <!-- 검색/필터 바 -->
+                    <div style="display:flex;gap:10px;margin:18px 0 14px;flex-wrap:wrap;align-items:center;">
+                        <select id="nt-filter-cat" onchange="_renderNoticeBoard()" style="border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;color:#475569;background:#fff;">
+                            <option value="">전체 구분</option>
+                            <option value="업무알림">업무알림</option>
+                            <option value="시스템공지">시스템공지</option>
+                            <option value="업데이트">업데이트</option>
+                            <option value="공지">공지</option>
+                            <option value="안내">안내</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <input type="text" id="nt-search" oninput="_renderNoticeBoard()" placeholder="제목 검색..." style="border:1px solid #e2e8f0;border-radius:8px;padding:7px 14px;font-size:13px;color:#1e293b;flex:1;min-width:160px;">
+                    </div>
+
+                    <!-- 게시판 테이블 -->
+                    <div class="list-card" style="padding:0;overflow:hidden;">
+                        <table class="report-table" id="notice-board-table" style="margin:0;">
+                            <thead>
+                                <tr style="background:#f8fafc;">
+                                    <th style="width:6%;text-align:center;">번호</th>
+                                    <th style="width:12%;text-align:center;">구분</th>
+                                    <th style="width:52%;">제목</th>
+                                    <th style="width:15%;text-align:center;">등록일</th>
+                                    <th style="width:15%;text-align:center;">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notice-board-body">
+                                <tr><td colspan="5" style="text-align:center;padding:48px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 페이지네이션 -->
+                    <div id="notice-pagination" style="display:flex;justify-content:center;gap:6px;margin-top:20px;"></div>
                 </div>
-                <p style="font-size:13px;color:#64748b;margin-bottom:20px;">내부 운영 공지, 작업 알림, 주요 업데이트를 빠르게 확인합니다.</p>
-                <div class="list-card">
-                    <table class="report-table" id="notice-table">
-                        <thead><tr><th style="width:50%">제목</th><th style="width:20%">구분</th><th style="width:15%">등록일</th><th style="width:15%">관리</th></tr></thead>
-                        <tbody id="notice-body"><tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr></tbody>
-                    </table>
+
+                <!-- ===== 게시판 상세 뷰 ===== -->
+                <div id="notice-detail-view" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+                        <button onclick="_showNoticeList()" style="display:flex;align-items:center;gap:6px;background:#f1f5f9;border:none;border-radius:8px;padding:8px 16px;font-size:13px;color:#475569;cursor:pointer;font-weight:500;">← 목록으로</button>
+                        <h2 class="page-title-lg" style="margin:0;">🔔 공지사항</h2>
+                    </div>
+
+                    <div class="list-card" style="padding:32px;">
+                        <!-- 상단 메타 -->
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                            <span id="nd-v-category" style="font-size:12px;font-weight:700;color:#3b82f6;background:#eff6ff;border-radius:20px;padding:4px 12px;">공지</span>
+                        </div>
+                        <!-- 제목 -->
+                        <h3 id="nd-v-title" style="font-size:20px;font-weight:700;color:#1e293b;margin:0 0 12px;line-height:1.4;"></h3>
+                        <!-- 날짜 구분선 -->
+                        <div style="display:flex;gap:20px;padding:12px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;margin-bottom:28px;">
+                            <span style="font-size:12px;color:#94a3b8;">등록일 <strong id="nd-v-date" style="color:#64748b;"></strong></span>
+                        </div>
+                        <!-- 본문 -->
+                        <div id="nd-v-desc" style="font-size:14px;color:#334155;line-height:2;white-space:pre-wrap;min-height:120px;"></div>
+                    </div>
+
+                    <!-- 이전/다음 글 네비게이션 -->
+                    <div style="display:flex;justify-content:space-between;margin-top:16px;gap:12px;">
+                        <button id="nd-v-prev" onclick="_noticeNavPrev()" style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 20px;font-size:13px;color:#475569;cursor:pointer;text-align:left;">← 이전 글</button>
+                        <button id="nd-v-next" onclick="_noticeNavNext()" style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 20px;font-size:13px;color:#475569;cursor:pointer;text-align:right;">다음 글 →</button>
+                    </div>
                 </div>
+
             </div>
         </section>
 

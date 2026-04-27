@@ -5966,58 +5966,184 @@ window.deleteNotice = async function(id) {
     alert('삭제 실패: ' + e.message);
   }
 };
-async function _renderNoticeTable() {
-  var tbody = document.getElementById('notice-body');
-  if(!tbody) return;
-  var arr = await _loadNTFromServer();
-  var cnt = document.getElementById('dashboard-notice-count');
-  if(cnt) cnt.textContent = arr.length+'건';
-  if(!arr.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr>';
-    return;
-  }
+/* ===== 공지사항 게시판 상태 ===== */
+var _ntBoardData = [];      // 전체 데이터
+var _ntCurrentId = null;    // 현재 상세보기 ID
+var _ntPage = 1;            // 현재 페이지
+var _ntPageSize = 10;       // 페이지당 게시물 수
+
+/* 게시판 목록 표시 */
+window._renderNoticeBoard = async function(resetPage) {
+  if(resetPage) _ntPage = 1;
+  var arr = _ntBoardData;
+  // 필터
+  var cat = (document.getElementById('nt-filter-cat')||{}).value || '';
+  var kw  = ((document.getElementById('nt-search')||{}).value || '').trim().toLowerCase();
+  if(cat) arr = arr.filter(function(x){ return (x.category||'공지') === cat; });
+  if(kw)  arr = arr.filter(function(x){ return (x.title||'').toLowerCase().indexOf(kw) !== -1; });
+
+  var total = arr.length;
+  var totalPages = Math.max(1, Math.ceil(total / _ntPageSize));
+  if(_ntPage > totalPages) _ntPage = totalPages;
+  var start = (_ntPage - 1) * _ntPageSize;
+  var pageArr = arr.slice(start, start + _ntPageSize);
+
   var session = JSON.parse(localStorage.getItem('biz_session')||'null');
   var isAdmin = session && session.isAdmin;
-  tbody.innerHTML = arr.map(function(item){
-    var adminBtns = isAdmin
-      ? '<button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'
-      : '<span style="font-size:12px;color:#94a3b8;">-</span>';
-    return '<tr style="cursor:pointer;" onclick="openNoticeDetail('+item.id+')">'+
-      '<td style="color:#1e293b;font-weight:500;">'+_esc(item.title)+'</td>'+
-      '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#f0f9ff;color:#0369a1;">'+_esc(item.category||'공지')+'</span></td>'+
-      '<td>'+_esc(item.date||'')+'</td>'+
-      '<td onclick="event.stopPropagation()">'+adminBtns+'</td>'+
-      '</tr>';
-  }).join('');
-}
-/* ── 공지사항 상세보기 ── */
-window.openNoticeDetail = function(id) {
-  _loadNTFromServer().then(function(arr) {
-    var item = arr.find(function(x){ return x.id == id; });
-    if(!item) return;
-    var m = document.getElementById('notice-detail-modal');
-    if(!m) {
-      m = document.createElement('div');
-      m.id = 'notice-detail-modal';
-      m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
-      m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);" onclick="event.stopPropagation()">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">'+
-        '<div id="nd-category" style="font-size:12px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:3px 10px;"></div>'+
-        '<button onclick="document.getElementById(\'notice-detail-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">✕</button>'+
-        '</div>'+
-        '<h3 id="nd-title" style="font-size:18px;font-weight:700;color:#1e293b;margin:0 0 12px;"></h3>'+
-        '<div id="nd-date" style="font-size:12px;color:#94a3b8;margin-bottom:20px;"></div>'+
-        '<div id="nd-desc" style="font-size:14px;color:#334155;line-height:1.8;white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:16px;"></div>'+
-        '</div>';
-      m.addEventListener('click', function(){ m.style.display='none'; });
-      document.body.appendChild(m);
+
+  // 관리자 등록 버튼 표시
+  var btnReg = document.getElementById('btn-nt-reg-board');
+  if(btnReg) btnReg.style.display = isAdmin ? 'inline-flex' : 'none';
+
+  var tbody = document.getElementById('notice-board-body');
+  if(!tbody) return;
+
+  if(!pageArr.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:48px;color:#94a3b8;">해당하는 공지사항이 없습니다.</td></tr>';
+  } else {
+    // 번호는 역순으로 (1번 = 가장 최신)
+    tbody.innerHTML = pageArr.map(function(item, idx){
+      var num = total - start - idx;
+      var catColor = {
+        '업무알림':   ['#f0fdf4','#16a34a'],
+        '시스템공지': ['#fef3c7','#d97706'],
+        '업데이트':   ['#f0f9ff','#0369a1'],
+        '공지':       ['#eff6ff','#3b82f6'],
+        '안내':       ['#f8fafc','#64748b'],
+        '기타':       ['#fdf4ff','#9333ea']
+      }[item.category] || ['#f1f5f9','#475569'];
+      var adminBtns = isAdmin
+        ? '<button onclick="event.stopPropagation();deleteNotice('+item.id+')" style="padding:4px 10px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'
+        : '-';
+      return '<tr style="cursor:pointer;" onclick="openNoticeBoardDetail('+item.id+')" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">'+
+        '<td style="text-align:center;color:#94a3b8;font-size:13px;">'+num+'</td>'+
+        '<td style="text-align:center;"><span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:'+catColor[0]+';color:'+catColor[1]+';">'+_esc(item.category||'공지')+'</span></td>'+
+        '<td style="color:#1e293b;font-weight:500;">'+_esc(item.title)+'</td>'+
+        '<td style="text-align:center;color:#94a3b8;font-size:12px;">'+_esc(item.date||'')+'</td>'+
+        '<td style="text-align:center;">'+adminBtns+'</td>'+
+        '</tr>';
+    }).join('');
+  }
+
+  // 페이지네이션
+  var pg = document.getElementById('notice-pagination');
+  if(pg) {
+    if(totalPages <= 1) { pg.innerHTML = ''; }
+    else {
+      var btns = '';
+      for(var p = 1; p <= totalPages; p++) {
+        var active = (p === _ntPage);
+        btns += '<button onclick="_ntPage='+p+';_renderNoticeBoard()" style="width:32px;height:32px;border-radius:8px;border:1px solid '+(active?'#3b82f6':'#e2e8f0')+';background:'+(active?'#3b82f6':'#fff')+';color:'+(active?'#fff':'#475569')+';font-size:13px;cursor:pointer;font-weight:'+(active?'700':'400')+';">'+p+'</button>';
+      }
+      pg.innerHTML = btns;
     }
-    document.getElementById('nd-category').textContent = item.category || '공지';
-    document.getElementById('nd-title').textContent = item.title || '';
-    document.getElementById('nd-date').textContent = '등록일: ' + (item.date || '');
-    document.getElementById('nd-desc').textContent = item.description || '(내용 없음)';
-    m.style.display = 'flex';
-  });
+  }
+};
+
+/* 게시판 데이터 로드 후 렌더링 */
+async function _renderNoticeTable() {
+  _ntBoardData = await _loadNTFromServer();
+  var cnt = document.getElementById('dashboard-notice-count');
+  if(cnt) cnt.textContent = _ntBoardData.length+'건';
+  _renderNoticeBoard(true);
+}
+/* ── 공지사항 게시판 상세보기 함수 ── */
+
+/* 게시판 상세보기 열기 */
+window.openNoticeBoardDetail = function(id) {
+  var arr = _ntBoardData;
+  var idx = arr.findIndex(function(x){ return x.id == id; });
+  if(idx === -1) return;
+  _ntCurrentId = id;
+  var item = arr[idx];
+
+  // 상세 뷰 데이터 세팅
+  var catEl = document.getElementById('nd-v-category');
+  var titleEl = document.getElementById('nd-v-title');
+  var dateEl = document.getElementById('nd-v-date');
+  var descEl = document.getElementById('nd-v-desc');
+  if(catEl) catEl.textContent = item.category || '공지';
+  if(titleEl) titleEl.textContent = item.title || '';
+  if(dateEl) dateEl.textContent = item.date || '';
+  if(descEl) descEl.textContent = item.description || '(내용 없음)';
+
+  // 이전/다음 버튼 업데이트
+  var prevBtn = document.getElementById('nd-v-prev');
+  var nextBtn = document.getElementById('nd-v-next');
+  if(prevBtn) {
+    var prevItem = arr[idx + 1];
+    if(prevItem) {
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+      prevBtn.innerHTML = '← 이전 글: ' + _esc(prevItem.title);
+      prevBtn.onclick = function(){ openNoticeBoardDetail(prevItem.id); };
+    } else {
+      prevBtn.style.opacity = '0.4';
+      prevBtn.style.cursor = 'default';
+      prevBtn.innerHTML = '← 이전 글 없음';
+      prevBtn.onclick = null;
+    }
+  }
+  if(nextBtn) {
+    var nextItem = arr[idx - 1];
+    if(nextItem) {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+      nextBtn.innerHTML = '다음 글: ' + _esc(nextItem.title) + ' →';
+      nextBtn.onclick = function(){ openNoticeBoardDetail(nextItem.id); };
+    } else {
+      nextBtn.style.opacity = '0.4';
+      nextBtn.style.cursor = 'default';
+      nextBtn.innerHTML = '다음 글 없음 →';
+      nextBtn.onclick = null;
+    }
+  }
+
+  // 뷰 전환
+  var listView = document.getElementById('notice-list-view');
+  var detailView = document.getElementById('notice-detail-view');
+  if(listView) listView.style.display = 'none';
+  if(detailView) detailView.style.display = 'block';
+};
+
+/* 목록으로 돌아가기 */
+window._showNoticeList = function() {
+  var listView = document.getElementById('notice-list-view');
+  var detailView = document.getElementById('notice-detail-view');
+  if(listView) listView.style.display = 'block';
+  if(detailView) detailView.style.display = 'none';
+  _ntCurrentId = null;
+};
+
+/* 이전 글 */
+window._noticeNavPrev = function() {
+  if(!_ntCurrentId) return;
+  var arr = _ntBoardData;
+  var idx = arr.findIndex(function(x){ return x.id == _ntCurrentId; });
+  if(idx !== -1 && arr[idx+1]) openNoticeBoardDetail(arr[idx+1].id);
+};
+
+/* 다음 글 */
+window._noticeNavNext = function() {
+  if(!_ntCurrentId) return;
+  var arr = _ntBoardData;
+  var idx = arr.findIndex(function(x){ return x.id == _ntCurrentId; });
+  if(idx !== -1 && arr[idx-1]) openNoticeBoardDetail(arr[idx-1].id);
+};
+
+/* 대시보드에서 공지 클릭 시 게시판 탭으로 이동 후 상세보기 */
+window.openNoticeDetail = function(id) {
+  // 목록이 아직 로드되지 않았으면 로드 후 열기
+  if(!_ntBoardData.length) {
+    _loadNTFromServer().then(function(arr){
+      _ntBoardData = arr;
+      showTab('notices');
+      setTimeout(function(){ openNoticeBoardDetail(id); }, 100);
+    });
+  } else {
+    showTab('notices');
+    setTimeout(function(){ openNoticeBoardDetail(id); }, 100);
+  }
 };
 
 /* ── 대시보드 카드 렌더 ── */
