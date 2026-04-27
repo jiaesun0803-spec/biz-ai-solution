@@ -26,7 +26,7 @@ async function apiCall(path, options={}) {
 const STORAGE_KEY_BASE = 'biz_consult_companies';
 const DB_REPORTS_BASE  = 'biz_reports';
 const DB_SUPPORT_DOC   = 'biz_support_documents';
-const DB_NOTICES       = 'biz_dashboard_notices';
+const DB_NOTICES       = 'biz_notices_v2';
 // 사용자별 격리 스토리지 키 (A사용자 데이터가 B사용자에게 보이지 않도록)
 function getUserStorageKey() {
   try {
