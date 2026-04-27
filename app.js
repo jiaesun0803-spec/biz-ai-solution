@@ -1059,17 +1059,13 @@ function updateDashboardReports() {
   renderDashboardBoard('dashboard-support-docs', supportDocs, {
     emptyEmoji:'📄',
     emptyTitle:'등록된 지원사업 공문이 없음.',
-    emptyDesc:'공문 등록 기능은 다음 단계에서 연결할 수 있음. 현재는 공간과 구조를 먼저 정리해두었음.',
-    buttonText:'기능 준비 상태 보기',
-    buttonAction:`dashboardFeatureSoon('지원사업 공문')`
+    emptyDesc:'지원사업 공문을 등록하면 이 곳에 표시됩니다.'
   });
 
   renderDashboardBoard('dashboard-notice-list', notices, {
     emptyEmoji:'📢',
     emptyTitle:'등록된 공지사항이 없음.',
-    emptyDesc:'운영 공지, 업무 알림, 배포 이력 등을 이 영역에 모아둘 수 있음.',
-    buttonText:'기능 준비 상태 보기',
-    buttonAction:`dashboardFeatureSoon('공지사항')`
+    emptyDesc:'공지사항을 등록하면 이 곳에 표시됩니다.'
   });
 }
 
