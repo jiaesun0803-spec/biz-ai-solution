@@ -2809,7 +2809,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
       + '</div>';
   }
 
-  // ===== 개별 카드 금액을 업체 현황 기반 현실적 예상 한도로 계산 =====
+  // ===== 개별 카드 금액을 업체 현황 기반 현실적 예상 한도로 기관별 차등 계산 =====
   // 기관별 공식 최대 한도 (2026년 기준)
   var _orgMaxLimits = {
     '소진공': 70000000,       // 7천만
@@ -2820,6 +2820,17 @@ function buildFundHTML(d, cData, rev, dateStr) {
     '지역신보': 50000000,     // 5천만
     '재단': 30000000,         // 3천만
     'default': 70000000
+  };
+  // 기관별 배분 비율 (난도 낮을수록 낮은 비율, 높을수록 높은 비율)
+  // 매출 기반 _baseLimit에서 각 기관이 실제로 지원 가능한 비율
+  var _orgRatios = {
+    '소진공': 0.45,      // 난도 낮음, 한도 작음 → 예상한도의 45%
+    '소진공저신용': 0.40,
+    '중진공': 0.60,
+    '지역신보': 0.55,
+    '신보': 0.80,        // 난도 중간, 한도 큼
+    '기보': 0.95,        // 난도 높음, 한도 가장 큼
+    'default': 0.50
   };
   function getOrgMaxLimit(fname) {
     if (!fname) return _orgMaxLimits['default'];
@@ -2833,13 +2844,32 @@ function buildFundHTML(d, cData, rev, dateStr) {
     if (n.includes('재단') || n.includes('소진공재단')) return _orgMaxLimits['재단'];
     return _orgMaxLimits['default'];
   }
-  // 각 기관별 현실적 예상 한도 계산: min(_maxAdj, 기관별 공식 최대 한도)
+  function getOrgRatio(fname) {
+    if (!fname) return _orgRatios['default'];
+    var n = fname;
+    if (n.includes('저신용') || n.includes('소상공인 전용')) return _orgRatios['소진공저신용'];
+    if (n.includes('소진공') || n.includes('소상공인')) return _orgRatios['소진공'];
+    if (n.includes('중진공') || n.includes('중소벤처')) return _orgRatios['중진공'];
+    if (n.includes('신보') || n.includes('신용보증기금')) return _orgRatios['신보'];
+    if (n.includes('기보') || n.includes('기술보증기금')) return _orgRatios['기보'];
+    if (n.includes('지역신보') || n.includes('신용보증재단')) return _orgRatios['지역신보'];
+    return _orgRatios['default'];
+  }
+  // 각 기관별 현실적 예상 한도 계산
+  // = min(매출기반한도 × 기관비율 × 부채비율조정, 기관 공식 최대 한도)
   // 단, 매출 미입력 시에는 기존 AI 생성 한도 유지
   var fundsWithCalcLimit = funds.map(function(f, i) {
     if (_revNum === 0) return f; // 매출 없으면 AI 생성값 유지
     var orgMax = getOrgMaxLimit(f.name);
-    // 전체 예상 한도(_maxAdj)와 기관 공식 최대 한도 중 작은 값
-    var calcAmt = Math.min(_maxAdj, orgMax);
+    var orgRatio = getOrgRatio(f.name);
+    // 매출 기반 한도 × 기관 비율 × 부채비율 조정
+    var calcAmt = Math.round(_baseLimit * orgRatio * _adj);
+    // 기대출 차감
+    calcAmt = Math.max(0, calcAmt - _debtTotal);
+    // 기관 공식 최대 한도 초과 불가
+    calcAmt = Math.min(calcAmt, orgMax);
+    // 필요자금 초과 불가
+    if (_needFundNum > 0) calcAmt = Math.min(calcAmt, _needFundNum);
     // 최소 500만원 보장
     calcAmt = Math.max(calcAmt, 5000000);
     return Object.assign({}, f, { limit: fLimitStr(calcAmt) });
