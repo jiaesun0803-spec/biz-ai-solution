@@ -5950,11 +5950,11 @@ async function _renderSupportDocTable() {
     var fileBtn = item.file_url
       ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.file_name||'다운로드')+'</button>'
       : '<span style="color:#94a3b8;font-size:12px;">-</span>';
-    return '<tr>'+
-      '<td>'+_esc(item.title)+'</td>'+
-      '<td>'+_esc(item.program||'-')+'</td>'+
-      '<td>'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
-      '<td>'+_esc(item.date||'')+'</td>'+
+    return '<tr style="cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'" >'+
+      '<td onclick="openSdViewModal('+item.id+')" style="color:#1e40af;font-weight:600;">'+_esc(item.title)+'</td>'+
+      '<td onclick="openSdViewModal('+item.id+')">'+_esc(item.program||'-')+'</td>'+
+      '<td onclick="openSdViewModal('+item.id+')">'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
+      '<td onclick="openSdViewModal('+item.id+')">'+_esc(item.date||'')+'</td>'+
       '<td>'+fileBtn+'</td>'+
       '<td><button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
       '</tr>';
@@ -5966,6 +5966,50 @@ window.downloadSdFile = function(id) {
   var a = document.createElement('a');
   a.href = item.file_url;
   a.download = item.file_name || '첨부파일';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+/* ── 공문 상세 보기 모달 ── */
+var _sdViewCurrentItem = null;
+window.openSdViewModal = function(id) {
+  var item = _sdCache.find(function(x){ return x.id===id; });
+  if(!item) return;
+  _sdViewCurrentItem = item;
+  var m = document.getElementById('sd-view-modal');
+  var body = document.getElementById('sd-view-body');
+  if(!m || !body) return;
+  function row(label, value, isLink) {
+    if(!value || value==='-') return '';
+    var val = isLink
+      ? '<a href="'+_esc(value)+'" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline;word-break:break-all;">'+_esc(value)+'</a>'
+      : '<span style="color:#1e293b;word-break:break-all;">'+_esc(value)+'</span>';
+    return '<div style="display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid #f1f5f9;">'
+      +'<span style="font-size:12px;font-weight:600;color:#64748b;">'+label+'</span>'
+      +val+'</div>';
+  }
+  body.innerHTML =
+    row('공문명', item.title) +
+    row('주관기관', item.agency) +
+    row('관련 지원사업', item.program) +
+    row('마감일', item.deadline) +
+    row('등록일', item.date) +
+    row('출처 URL', item.source_url, true) +
+    (item.description ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">내용 요약</span><p style="margin:0;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap;">'+_esc(item.description)+'</p></div>' : '');
+  var fileBtn = document.getElementById('sd-view-file-btn');
+  if(fileBtn) fileBtn.style.display = item.file_url ? 'inline-flex' : 'none';
+  m.style.display = 'flex';
+};
+window.closeSdViewModal = function() {
+  var m = document.getElementById('sd-view-modal');
+  if(m) m.style.display = 'none';
+  _sdViewCurrentItem = null;
+};
+window.downloadSdFileFromView = function() {
+  if(!_sdViewCurrentItem || !_sdViewCurrentItem.file_url) { alert('첨부파일이 없습니다.'); return; }
+  var a = document.createElement('a');
+  a.href = _sdViewCurrentItem.file_url;
+  a.download = _sdViewCurrentItem.file_name || '첨부파일';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
