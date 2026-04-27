@@ -2763,10 +2763,11 @@ function buildFundHTML(d, cData, rev, dateStr) {
   }
   // 한도 계산 근거 텍스트 생성
   var _limitBasis = _revNum > 0
-    ? '예상 연매출 '+fLimitStr(_revNum)+' × '+(_isMfg?'1/4(제조업)':'1/7(비제조업)')
-      +(_debtTotal>0?' − 기대출 '+fLimitStr(_debtTotal):'')  
+    ? '예상 연매출 '+fLimitStr(_revNum)+' × '+(_isMfg?'25%(1/4, 제조업)':'14%(1/7, 비제조업)')+' 기준'
+      +(_debtTotal>0?' − 기대출 '+fLimitStr(_debtTotal):'')
       +(_adj<1?' × 부채비율 조정('+Math.round(_adj*100)+'%)':'')
-    : '매출 미입력 — 기관별 한도 기준 산정';
+      +' | 2026년 기준'
+    : '매출 미입력 — 기관별 공식 한도 기준 산정 (2026년)';
   // 매출이 없어도 기관별 공식 한도 기준으로 항상 금액 표시 (별도 산정 필요 제거)
   if (_maxAdj === 0 && _revNum === 0 && funds.length > 0) {
     // 매출 미입력 시: 기관별 공식 한도 합산 기준으로 표시
@@ -2787,11 +2788,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
   var cReady = d.checklist_ready||['사업자등록증 사본','부가세 신고서 (최근 2년)','국세납부증명서','신용정보 동의서'];
   var cNeed  = d.checklist_need||['사업계획서 (기보 필수)','벤처인증서 (취득 후 추가)'];
-  var scoreItems = d.score_items||[
-    '기본 자격요건 충족 — 소진공·지역신보 등 주요 정책자금 즉시 신청 가능한 상태임',
-    '벤처·메인비즈 인증 취득 시 추가 우대 한도 확보 가능함',
-    '현재 조건에서 신청 가능한 자금 총액: '+totalRange+' 수준임'
-  ];
+  var scoreItems = d.score_items; // fundsWithCalcLimit 이후에 재정의됨
 
   function chkS(s){
     return s==='pass'?{bg:'#dcfce7',tc:'#16a34a',ic:'✓',bbc:'#dcfce7',btc:'#166534',bl:'통과'}
@@ -2810,72 +2807,157 @@ function buildFundHTML(d, cData, rev, dateStr) {
   }
 
   // ===== 개별 카드 금액을 업체 현황 기반 현실적 예상 한도로 기관별 차등 계산 =====
-  // 기관별 공식 최대 한도 (2026년 기준)
+  // 기관별 공식 최대 한도 (2026년 기준 실제 기준)
   var _orgMaxLimits = {
-    '소진공': 70000000,       // 7천만
-    '소진공저신용': 70000000,  // 7천만
-    '중진공': 100000000,      // 1억
-    '신보': 200000000,        // 2억
-    '기보': 300000000,        // 3억
-    '지역신보': 50000000,     // 5천만
-    '재단': 30000000,         // 3천만
-    'default': 70000000
+    '소진공': 70000000,          // 일반 경영안정자금 최대 7천만
+    '소진공성장': 200000000,     // 성장촉진자금 최대 2억
+    '소진공소공인': 500000000,   // 소공인특화자금 최대 5억
+    '소진공저신용': 70000000,    // 저신용 최대 7천만
+    '중진공': 500000000,         // 운전자금 최대 5억 (시설 60억이나 운전 기준 적용)
+    '신보': 3000000000,          // 일반 보증 최대 30억
+    '기보': 3000000000,          // 일반 보증 최대 30억
+    '지역신보': 100000000,       // 일반 보증 최대 1억 (특례 2억)
+    '지역신보특례': 200000000,   // 특례 보증 최대 2억
+    '재단': 30000000,            // 3천만
+    'default': 100000000         // 기본 1억
   };
-  // 기관별 배분 비율 (난도 낮을수록 낮은 비율, 높을수록 높은 비율)
-  // 매출 기반 _baseLimit에서 각 기관이 실제로 지원 가능한 비율
+  // 기관별 최소 신청 가능 금액 (이 금액 미만이면 사실상 신청 불가 또는 안내 필요)
+  var _orgMinLimits = {
+    '소진공': 10000000,          // 최소 1천만
+    '소진공저신용': 10000000,    // 최소 1천만
+    '중진공': 50000000,          // 실무상 최소 5천만
+    '신보': 30000000,            // 최소 3천만 (용이 기준)
+    '기보': 30000000,            // 최소 3천만 (용이 기준)
+    '지역신보': 5000000,         // 최소 500만
+    '재단': 5000000,             // 최소 500만
+    'default': 5000000
+  };
+  // 기관별 매출 대비 한도 비율
+  // 매출의 25~35%를 최대 부채 한도 기준으로, 기관별 특성 반영
+  // _baseLimit = 매출 × 업종비율(제조 1/4, 비제조 1/7) 이므로 여기서 추가 배율 적용
   var _orgRatios = {
-    '소진공': 0.45,      // 난도 낮음, 한도 작음 → 예상한도의 45%
-    '소진공저신용': 0.40,
-    '중진공': 0.60,
-    '지역신보': 0.55,
-    '신보': 0.80,        // 난도 중간, 한도 큼
-    '기보': 0.95,        // 난도 높음, 한도 가장 큼
-    'default': 0.50
+    '소진공': 1.0,         // 소진공은 소상공인 대상, _baseLimit 그대로 (단 최대 7천만 cap)
+    '소진공저신용': 0.85,  // 저신용 소상공인 소폭 하향
+    '중진공': 1.0,         // 중진공: 매출의 1/3~1/4 기준 = _baseLimit(1/4) × 1.0 ~ 1.33
+    '지역신보': 1.0,       // 지역신보: 소상공인 기준 _baseLimit 적용 (최대 1억 cap)
+    '신보': 1.4,           // 신보: 매출의 35% 수준 (_baseLimit × 1.4, 최대 30억 cap)
+    '기보': 1.5,           // 기보: 기술력 평가 가산, 매출의 35~40% (_baseLimit × 1.5)
+    'default': 1.0
   };
-  function getOrgMaxLimit(fname) {
-    if (!fname) return _orgMaxLimits['default'];
+  function getOrgKey(fname) {
+    if (!fname) return 'default';
     var n = fname;
-    if (n.includes('저신용') || n.includes('소상공인 전용')) return _orgMaxLimits['소진공저신용'];
-    if (n.includes('소진공') || n.includes('소상공인')) return _orgMaxLimits['소진공'];
-    if (n.includes('중진공') || n.includes('중소벤처')) return _orgMaxLimits['중진공'];
-    if (n.includes('신보') || n.includes('신용보증기금')) return _orgMaxLimits['신보'];
-    if (n.includes('기보') || n.includes('기술보증기금')) return _orgMaxLimits['기보'];
-    if (n.includes('지역신보') || n.includes('신용보증재단')) return _orgMaxLimits['지역신보'];
-    if (n.includes('재단') || n.includes('소진공재단')) return _orgMaxLimits['재단'];
-    return _orgMaxLimits['default'];
+    if (n.includes('저신용') || n.includes('소상공인 전용')) return '소진공저신용';
+    if (n.includes('소공인') || n.includes('소공인특화')) return '소진공소공인';
+    if (n.includes('성장촉진')) return '소진공성장';
+    if (n.includes('소진공') || n.includes('소상공인')) return '소진공';
+    if (n.includes('중진공') || n.includes('중소벤처')) return '중진공';
+    if (n.includes('신보') || n.includes('신용보증기금')) return '신보';
+    if (n.includes('기보') || n.includes('기술보증기금')) return '기보';
+    if (n.includes('특례') && (n.includes('지역신보') || n.includes('신용보증재단'))) return '지역신보특례';
+    if (n.includes('지역신보') || n.includes('신용보증재단')) return '지역신보';
+    if (n.includes('재단') || n.includes('소진공재단')) return '재단';
+    return 'default';
+  }
+  function getOrgMaxLimit(fname) {
+    var key = getOrgKey(fname);
+    return _orgMaxLimits[key] || _orgMaxLimits['default'];
+  }
+  function getOrgMinLimit(fname) {
+    var key = getOrgKey(fname);
+    // 소공인특화·성장촉진은 소진공 최소 기준 적용
+    if (key === '소진공소공인' || key === '소진공성장') return _orgMinLimits['소진공'];
+    if (key === '지역신보특례') return _orgMinLimits['지역신보'];
+    return _orgMinLimits[key] || _orgMinLimits['default'];
   }
   function getOrgRatio(fname) {
-    if (!fname) return _orgRatios['default'];
-    var n = fname;
-    if (n.includes('저신용') || n.includes('소상공인 전용')) return _orgRatios['소진공저신용'];
-    if (n.includes('소진공') || n.includes('소상공인')) return _orgRatios['소진공'];
-    if (n.includes('중진공') || n.includes('중소벤처')) return _orgRatios['중진공'];
-    if (n.includes('신보') || n.includes('신용보증기금')) return _orgRatios['신보'];
-    if (n.includes('기보') || n.includes('기술보증기금')) return _orgRatios['기보'];
-    if (n.includes('지역신보') || n.includes('신용보증재단')) return _orgRatios['지역신보'];
-    return _orgRatios['default'];
+    var key = getOrgKey(fname);
+    if (key === '소진공소공인' || key === '소진공성장') return _orgRatios['소진공'];
+    if (key === '지역신보특례') return _orgRatios['지역신보'];
+    return _orgRatios[key] || _orgRatios['default'];
+  }
+  // 중진공 전용: 매출의 1/3~1/4 기준으로 별도 계산
+  function calcJjgLimit(revNum, debtTotal, adj, needFundNum) {
+    // 중진공 운전자금: 매출의 1/3(상한) ~ 1/4(기준) 적용
+    var jjgBase = Math.round(revNum * (1/3)); // 1/3 기준 (상한)
+    var jjgCalc = Math.round(jjgBase * adj);
+    jjgCalc = Math.max(0, jjgCalc - debtTotal);
+    jjgCalc = Math.min(jjgCalc, _orgMaxLimits['중진공']); // 운전자금 최대 5억
+    if (needFundNum > 0) jjgCalc = Math.min(jjgCalc, needFundNum);
+    jjgCalc = Math.max(jjgCalc, _orgMinLimits['중진공']); // 최소 5천만 보장
+    return jjgCalc;
   }
   // 각 기관별 현실적 예상 한도 계산
-  // = min(매출기반한도 × 기관비율 × 부채비율조정, 기관 공식 최대 한도)
+  // 핵심 기준: 매출의 25~35% = 최대 부채 한도, 기존 대출 잔액 차감
   // 단, 매출 미입력 시에는 기존 AI 생성 한도 유지
   var fundsWithCalcLimit = funds.map(function(f, i) {
     if (_revNum === 0) return f; // 매출 없으면 AI 생성값 유지
+    var orgKey = getOrgKey(f.name);
     var orgMax = getOrgMaxLimit(f.name);
+    var orgMin = getOrgMinLimit(f.name);
     var orgRatio = getOrgRatio(f.name);
-    // 매출 기반 한도 × 기관 비율 × 부채비율 조정
-    var calcAmt = Math.round(_baseLimit * orgRatio * _adj);
-    // 기대출 차감
-    calcAmt = Math.max(0, calcAmt - _debtTotal);
-    // 기관 공식 최대 한도 초과 불가
-    calcAmt = Math.min(calcAmt, orgMax);
-    // 필요자금 초과 불가
-    if (_needFundNum > 0) calcAmt = Math.min(calcAmt, _needFundNum);
-    // 최소 500만원 보장
+    var calcAmt;
+    // 중진공: 매출의 1/3~1/4 기준 별도 계산
+    if (orgKey === '중진공') {
+      calcAmt = calcJjgLimit(_revNum, _debtTotal, _adj, _needFundNum);
+    } else {
+      // 일반 기관: 매출 기반 한도 × 기관 비율 × 부채비율 조정
+      calcAmt = Math.round(_baseLimit * orgRatio * _adj);
+      // 기대출 차감 (소진공은 잔액 기준 적용)
+      calcAmt = Math.max(0, calcAmt - _debtTotal);
+      // 기관 공식 최대 한도 초과 불가
+      calcAmt = Math.min(calcAmt, orgMax);
+      // 필요자금 초과 불가
+      if (_needFundNum > 0) calcAmt = Math.min(calcAmt, _needFundNum);
+    }
+    // 최소 한도 미충족 여부 판단
+    var belowMin = (orgMin > 0 && calcAmt < orgMin);
+    // 최소 한도 미충족 시 최소값으로 표시 (단, 신보·기보는 안내 메모 추가)
+    var limitNote = null;
+    if (belowMin) {
+      if (orgKey === '신보' || orgKey === '기보') {
+        // 신보·기보: 예상 한도가 최소 3천만 미만이면 안내 메모
+        limitNote = '예상 한도 ' + fLimitStr(calcAmt) + ' — 최소 3천만 미만, 인증 취득 또는 매출 확대 후 재신청 권장';
+        calcAmt = orgMin; // 최소값으로 표시
+      } else if (orgKey === '중진공') {
+        limitNote = '예상 한도 ' + fLimitStr(calcAmt) + ' — 실무상 5천만 이상 신청 시 심사 원활';
+        calcAmt = orgMin;
+      } else {
+        calcAmt = orgMin; // 기타 기관은 최소값 보장
+      }
+    }
+    // 최소 500만원 절대 보장
     calcAmt = Math.max(calcAmt, 5000000);
-    return Object.assign({}, f, { limit: fLimitStr(calcAmt) });
+    return Object.assign({}, f, {
+      limit: fLimitStr(calcAmt),
+      limitNote: limitNote
+    });
   });
   var topFunds = fundsWithCalcLimit.slice(0, 3);
   var otherFunds = fundsWithCalcLimit.slice(3);
+  // fundsWithCalcLimit 기반으로 totalRange 재계산 (매출 입력 시)
+  if (_revNum > 0) {
+    var _calcMin = 0, _calcMax = 0;
+    fundsWithCalcLimit.forEach(function(f) {
+      var n = parseLimitNum(f.limit);
+      if (n > 0) {
+        _calcMax += n;
+        if (_calcMin === 0 || n < _calcMin) _calcMin = n;
+      }
+    });
+    if (_needFundNum > 0 && _calcMax > _needFundNum) _calcMax = _needFundNum;
+    if (_calcMax > 0) {
+      totalRange = '기본 ' + fLimitStr(_calcMin) + ' ~ 최대 ' + fLimitStr(_calcMax);
+    }
+  }
+  // scoreItems: 재계산된 totalRange 반영
+  if (!scoreItems) {
+    scoreItems = [
+      '기본 자격요건 충족 — 소진공·지역신보 등 주요 정책자금 즉시 신청 가능한 상태임',
+      '벤처·메인비즈 인증 취득 시 추가 우대 한도 확보 가능함',
+      '현재 조건에서 신청 가능한 자금 총액: ' + totalRange + ' 수준임'
+    ];
+  }
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
     '<div style="display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:12px;align-items:stretch">'
@@ -2911,6 +2993,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
         var isTop = i < 3;
         return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[Math.min(i,4)]+';min-height:130px">'
           + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+rColors[Math.min(i,4)]+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.4;word-break:keep-all">'+f.name+'</div><div style="font-size:14px;font-weight:900;color:'+rColors[Math.min(i,4)]+';margin-top:2px">'+f.limit+'</div></div></div>'
+          + (f.limitNote ? '<div style="font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">⚠ '+f.limitNote+'</div>' : '')
           + '<div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:8px">'+(isTop?'우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함':'추가 검토 가능한 자금으로 조건 충족 시 신청 가능함')+'</div>'
           + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+';font-size:10px">'+t+'</span>'; }).join('')+'</div>'
           + '</div>';
