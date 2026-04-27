@@ -1017,8 +1017,8 @@
                 <p style="font-size:13px;color:#64748b;margin-bottom:20px;">정부지원사업 관련 공문, 접수 일정, 제출 요청자료를 한 곳에서 관리합니다.</p>
                 <div class="list-card">
                     <table class="report-table" id="support-doc-table">
-                        <thead><tr><th style="width:40%">공문명</th><th style="width:20%">관련사업</th><th style="width:15%">마감일</th><th style="width:12%">등록일</th><th style="width:13%">관리</th></tr></thead>
-                        <tbody id="support-doc-body"><tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr></tbody>
+                        <thead><tr><th style="width:35%">공문명</th><th style="width:18%">관련사업</th><th style="width:12%">마감일</th><th style="width:10%">등록일</th><th style="width:12%">첨부파일</th><th style="width:13%">관리</th></tr></thead>
+                        <tbody id="support-doc-body"><tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -1135,6 +1135,14 @@
       <div class="form-group"><label>관련 지원사업명</label><input type="text" id="sd-program" placeholder="예: 2026년 중소기업 스마트공장사업"></div>
       <div class="form-group"><label>마감일</label><input type="text" id="sd-deadline" placeholder="YYYY-MM-DD" maxlength="10"></div>
       <div class="form-group"><label>내용 요약</label><textarea id="sd-desc" rows="3" placeholder="공문 주요 내용 요약"></textarea></div>
+      <div class="form-group">
+        <label>파일 첨부 <span style="font-size:11px;color:#94a3b8;font-weight:400;">(PDF, Word, Excel, 이미지 등 최대 5MB)</span></label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label for="sd-file" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px dashed #cbd5e1;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;background:#f8fafc;transition:border-color .2s;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='#cbd5e1'">📎 파일 선택<input type="file" id="sd-file" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.hwp" onchange="previewSdFile(this)"></label>
+          <span id="sd-file-name" style="font-size:12px;color:#64748b;">선택된 파일 없음</span>
+          <button id="sd-file-clear" onclick="clearSdFile()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">✕ 제거</button>
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
       <button onclick="closeSupportDocModal()" style="padding:9px 18px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:13px;cursor:pointer;">취소</button>

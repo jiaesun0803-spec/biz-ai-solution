@@ -5810,26 +5810,58 @@ window.openSupportDocModal = function() {
   var el2 = document.getElementById('sd-program'); if(el2) el2.value='';
   var el3 = document.getElementById('sd-deadline'); if(el3) el3.value='';
   var el4 = document.getElementById('sd-desc'); if(el4) el4.value='';
+  clearSdFile();
   m.style.display='flex';
 };
 window.closeSupportDocModal = function() {
   var m = document.getElementById('support-doc-modal'); if(m) m.style.display='none';
+  clearSdFile();
+};
+window.previewSdFile = function(input) {
+  var nm = document.getElementById('sd-file-name');
+  var cl = document.getElementById('sd-file-clear');
+  if(input.files && input.files[0]) {
+    var f = input.files[0];
+    if(f.size > 5 * 1024 * 1024) { alert('파일 크기가 5MB를 초과합니다.'); input.value=''; return; }
+    if(nm) nm.textContent = f.name + ' (' + (f.size/1024).toFixed(1) + 'KB)';
+    if(cl) cl.style.display='inline-block';
+  }
+};
+window.clearSdFile = function() {
+  var fi = document.getElementById('sd-file'); if(fi) fi.value='';
+  var nm = document.getElementById('sd-file-name'); if(nm) nm.textContent='선택된 파일 없음';
+  var cl = document.getElementById('sd-file-clear'); if(cl) cl.style.display='none';
 };
 window.saveSupportDoc = function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
-  var item = {
-    id: Date.now(),
-    title: title.trim(),
-    program: ((document.getElementById('sd-program')||{}).value||'').trim(),
-    deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim(),
-    desc: ((document.getElementById('sd-desc')||{}).value||'').trim(),
-    date: new Date().toISOString().slice(0,10)
-  };
-  var arr = _loadSD(); arr.unshift(item); _saveSD(arr);
-  closeSupportDocModal();
-  _renderSupportDocTable();
-  _renderDashSupportDocs();
+  var fi = document.getElementById('sd-file');
+  var file = fi && fi.files && fi.files[0] ? fi.files[0] : null;
+  function doSave(fileData, fileName, fileType) {
+    var item = {
+      id: Date.now(),
+      title: title.trim(),
+      program: ((document.getElementById('sd-program')||{}).value||'').trim(),
+      deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim(),
+      desc: ((document.getElementById('sd-desc')||{}).value||'').trim(),
+      date: new Date().toISOString().slice(0,10),
+      fileName: fileName || null,
+      fileType: fileType || null,
+      fileData: fileData || null
+    };
+    var arr = _loadSD(); arr.unshift(item); _saveSD(arr);
+    closeSupportDocModal();
+    _renderSupportDocTable();
+    _renderDashSupportDocs();
+  }
+  if(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) { doSave(e.target.result, file.name, file.type); };
+    reader.onerror = function() { alert('파일 읽기 실패. 다시 시도해주세요.'); };
+    reader.readAsDataURL(file);
+  } else {
+    doSave(null, null, null);
+  }
 };
 window.deleteSupportDoc = function(id) {
   if(!confirm('삭제하시겠습니까?')) return;
@@ -5841,23 +5873,38 @@ function _renderSupportDocTable() {
   var tbody = document.getElementById('support-doc-body');
   if(!tbody) return;
   var arr = _loadSD();
-  // 카운트 업데이트
   var cnt = document.getElementById('dashboard-support-count');
   if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr>';
     return;
   }
   tbody.innerHTML = arr.map(function(item){
+    var fileBtn = item.fileData
+      ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.fileName||'다운로드')+'</button>'
+      : '<span style="color:#94a3b8;font-size:12px;">-</span>';
     return '<tr>'+
       '<td>'+_esc(item.title)+'</td>'+
       '<td>'+_esc(item.program||'-')+'</td>'+
       '<td>'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
       '<td>'+_esc(item.date||'')+'</td>'+
+      '<td>'+fileBtn+'</td>'+
       '<td><button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
       '</tr>';
   }).join('');
 }
+
+window.downloadSdFile = function(id) {
+  var arr = _loadSD();
+  var item = arr.find(function(x){ return x.id===id; });
+  if(!item || !item.fileData) { alert('첨부파일이 없습니다.'); return; }
+  var a = document.createElement('a');
+  a.href = item.fileData;
+  a.download = item.fileName || '첨부파일';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
 
 /* ── 공지사항 모달 ── */
 window.openNoticeModal = function() {
