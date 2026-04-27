@@ -4145,6 +4145,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var isSmartLogistics = ind.includes('물류') && (ind.includes('스마트') || ind.includes('이커머스') || ind.includes('전자상거래'));
   var isLocalCreator = ind.includes('로컈크리에이터') || ind.includes('지역특산') || ind.includes('로컈');
   // 중진공 접수 가능 업종 여부 (제조업 외 확대 조건 포함)
+  // 2026년 기준: 중진공 접수 가능 업종 (제조업은 무조건 가능, 비제조업은 혁신성장분야 + isLargeScale 조건 필요)
   var isJjgEligible = isManu || isIT || isKnowledgeSvc || isSmartLogistics || isLocalCreator || (isLargeScale && (isService || isTour || ind.includes('보건') || ind.includes('교육')));
   var isRoot = ind.includes('주조') || ind.includes('금형') || ind.includes('소성가공') || ind.includes('용접') || ind.includes('표면처리') || ind.includes('열처리');
   var isMaterial = ind.includes('소재') || ind.includes('부품') || ind.includes('장비') || ind.includes('전기전자') || ind.includes('자동차') || ind.includes('기계') || ind.includes('금속') || ind.includes('화학');
@@ -4223,9 +4224,8 @@ function getIndustryCerts(ind, nm, itm, cData) {
       {rank:5,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']}
     ];
   } else if (isRetail || isService) {
-    // 도소매/서비스: 중진공은 매출 10억이상 또는 직원 5명이상일 때만 추천
-    var _retJjg = (prevRevBillion >= 10 || empNum >= 5);
-    if (_retJjg) {
+    // 도소매/서비스: 중진공은 isLargeScale(매출 50억 이상 OR 직원 5명 이상)일 때만 추천 (2026년 기준 통일)
+    if (isLargeScale) {
       funds = [
         {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
         {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
@@ -4234,7 +4234,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
         {rank:5,name:'기보 기술보증 (특허 우대)',limit:'3억',tags:['보증료 0.5%','특허 1건 우대','90% 보증']}
       ];
     } else {
-      // 매출 10억 미만 + 직원 5명 미만: 중진공 제외
+      // 매출 50억 미만 AND 직원 5명 미만: 중진공 완전 제외
       funds = [
         {rank:1,name:'소진공 소상공인 정책자금',limit:'7천만',tags:['금리 2.0%','온라인 신청','도소매 우대']},
         {rank:2,name:'지역신보 소액보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','빠른 처리']},
@@ -4291,8 +4291,8 @@ function getIndustryCerts(ind, nm, itm, cData) {
       _f.push({rank:5,name:'창업진흥원 K-Startup 지원',limit:'1억',tags:['스타트업 특화','비대면 심사','성장성 평가']});
     } else {
       // ===== 비제조업 (서비스·도소매·관광 등) =====
-      // 1순위: 중진공 (매출 10억↑ 또는 직원 5명↑ 조건부)
-      if (isJjgEligible && isJjgCredit) {
+      // 1순위: 중진공 (isLargeScale + isJjgEligible + isJjgCredit 모두 충족 시만 추천, 2026년 기준)
+      if (isLargeScale && isJjgEligible && isJjgCredit) {
         _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
       }
       // 2순위: 신용보증기금(신보) — 비제조업 주력 기관
