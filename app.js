@@ -5976,15 +5976,49 @@ async function _renderNoticeTable() {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공지사항이 없습니다.</td></tr>';
     return;
   }
+  var session = JSON.parse(localStorage.getItem('biz_session')||'null');
+  var isAdmin = session && session.isAdmin;
   tbody.innerHTML = arr.map(function(item){
-    return '<tr>'+
-      '<td>'+_esc(item.title)+'</td>'+
+    var adminBtns = isAdmin
+      ? '<button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'
+      : '<span style="font-size:12px;color:#94a3b8;">-</span>';
+    return '<tr style="cursor:pointer;" onclick="openNoticeDetail('+item.id+')">'+
+      '<td style="color:#1e293b;font-weight:500;">'+_esc(item.title)+'</td>'+
       '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#f0f9ff;color:#0369a1;">'+_esc(item.category||'공지')+'</span></td>'+
       '<td>'+_esc(item.date||'')+'</td>'+
-      '<td><button onclick="deleteNotice('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '<td onclick="event.stopPropagation()">'+adminBtns+'</td>'+
       '</tr>';
   }).join('');
 }
+/* ── 공지사항 상세보기 ── */
+window.openNoticeDetail = function(id) {
+  _loadNTFromServer().then(function(arr) {
+    var item = arr.find(function(x){ return x.id == id; });
+    if(!item) return;
+    var m = document.getElementById('notice-detail-modal');
+    if(!m) {
+      m = document.createElement('div');
+      m.id = 'notice-detail-modal';
+      m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
+      m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);" onclick="event.stopPropagation()">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">'+
+        '<div id="nd-category" style="font-size:12px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:3px 10px;"></div>'+
+        '<button onclick="document.getElementById(\'notice-detail-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">✕</button>'+
+        '</div>'+
+        '<h3 id="nd-title" style="font-size:18px;font-weight:700;color:#1e293b;margin:0 0 12px;"></h3>'+
+        '<div id="nd-date" style="font-size:12px;color:#94a3b8;margin-bottom:20px;"></div>'+
+        '<div id="nd-desc" style="font-size:14px;color:#334155;line-height:1.8;white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:16px;"></div>'+
+        '</div>';
+      m.addEventListener('click', function(){ m.style.display='none'; });
+      document.body.appendChild(m);
+    }
+    document.getElementById('nd-category').textContent = item.category || '공지';
+    document.getElementById('nd-title').textContent = item.title || '';
+    document.getElementById('nd-date').textContent = '등록일: ' + (item.date || '');
+    document.getElementById('nd-desc').textContent = item.description || '(내용 없음)';
+    m.style.display = 'flex';
+  });
+};
 
 /* ── 대시보드 카드 렌더 ── */
 async function _renderDashSupportDocs() {
@@ -6016,9 +6050,9 @@ async function _renderDashNotices() {
     return;
   }
   el.innerHTML = arr.slice(0,3).map(function(item){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="openNoticeDetail('+item.id+')">'+
       '<span style="font-size:11px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:2px 7px;">'+_esc(item.category||'공지')+'</span>'+
-      '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
+      '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:#cbd5e1;">'+_esc(item.title)+'</span>'+
       '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+_esc(item.date||'')+'</span>'+
       '</div>';
   }).join('');
