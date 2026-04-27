@@ -828,6 +828,20 @@ window.deleteUser=async function(userId){
   } catch(e) { alert(e.message); }
 };
 
+// 비밀번호 초기화 (관리자 전용)
+window.resetUserPassword=async function(userId, userName){
+  var newPw = prompt('▪ ' + userName + ' 님의 비밀번호를 초기화합니다.\n\n새 비밀번호를 입력하세요.\n(비워두면 기본값 User1234! 로 초기화)', 'User1234!');
+  if(newPw === null) return; // 취소
+  if(!newPw.trim()) { alert('비밀번호를 입력해주세요.'); return; }
+  try {
+    var result = await apiCall('/api/admin/users/'+userId+'/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPw.trim() })
+    });
+    alert('✅ ' + result.message + '\n\n새 비밀번호: ' + newPw.trim());
+  } catch(e) { alert('❌ 실패: ' + e.message); }
+};
+
 // ===========================
 // ★ 관리자 탭 렌더링
 // ===========================
@@ -895,10 +909,11 @@ function renderAdminTab(){
             ? '<span class="status-badge success">승인 완료</span>'
             : '<span class="status-badge warning">승인 대기</span>';
           var actions=u.approved
-            ? '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.id + '\')"> 승인 취소</button>'
-              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.id + '\')"> 삭제</button>'
-            : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.id + '\')"> 승인</button>'
-              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.id + '\')"> 삭제</button>';
+            ? '<button onclick="resetUserPassword(\'' + u.id + '\',\'' + (u.name||'사용자') + '\')" style="font-size:12px;padding:6px 12px;border:1px solid #fcd34d;border-radius:8px;background:#fffbeb;color:#d97706;cursor:pointer;font-weight:600;">🔑 비밀번호 초기화</button>'
+              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.id + '\')">✕ 승인 취소</button>'
+              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>'
+            : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.id + '\')">✔ 승인</button>'
+              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>';
           return '<div class="admin-member-card">'
             + '<div class="admin-member-info">'
             +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'

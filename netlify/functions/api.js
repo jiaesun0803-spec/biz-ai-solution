@@ -153,6 +153,21 @@ app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, 
   res.json({ message: '삭제되었습니다.' });
 });
 
+// 비밀번호 초기화 (관리자만)
+app.post('/api/admin/users/:id/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
+  const bcrypt = require('bcryptjs');
+  const defaultPw = req.body.new_password || 'User1234!';
+  const hash = await bcrypt.hash(defaultPw, 10);
+  const { data, error } = await supabase
+    .from('users')
+    .update({ pw: hash })
+    .eq('id', req.params.id)
+    .select('id,email,name')
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true, message: `${data.name}(${data.email}) 비밀번호가 초기화되었습니다.`, email: data.email, name: data.name });
+});
+
 // 통계
 app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
   const [users, pending, approved, reports] = await Promise.all([
