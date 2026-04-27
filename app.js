@@ -2701,14 +2701,17 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var _taxO = cData.taxOver || '없음';
   var _bizYrs = _industryCerts.bizYears || 0;
   var _hasOvd = _industryCerts.hasOverdue || (_finO==='있음'||_taxO==='있음');
-  // checks 동적 생성
+  // checks 동적 생성 (2026년 기관별 신용점수 기준 반영)
+  // 신보: NICE 800점이상 우대, 중진공·기보: 750점이상 권장
+  var _csStatus = _cs === 0 ? 'cond' : _cs >= 800 ? 'pass' : _cs >= 750 ? 'cond' : _cs >= 600 ? 'cond' : 'fail';
+  var _csNote = _cs > 0 ? ' (' + (_kcb ? 'KCB ' : '') + (_nice ? 'NICE ' : '') + _cs + '점' + (_cs >= 800 ? ' — 신보 우대' : _cs >= 750 ? ' — 중진공·기보 신청 가능' : _cs >= 600 ? ' — 저신용 전용상품 검토' : ' — 신용 개선 필요') + ')' : '';
   var checks = d.checks || [
     {text:'중소기업 해당 여부',status:'pass'},
     {text:'국세·지방세 체납 없음',status:_taxO==='있음'?'fail':'pass'},
     {text:'금융 연체 이력 없음',status:_finO==='있음'?'fail':'pass'},
-    {text:'사업자 등록 유효',status:'pass'},
+    {text:'사업자 등록 유효 (휴·폐업 아님)',status:'pass'},
     {text:'업력 조건 충족'+(_bizYrs>0?' ('+_bizYrs+'년)':''),status:_bizYrs===0?'cond':_bizYrs>=2?'pass':'cond'},
-    {text:'신용점수'+(_cs>0?' ('+(_kcb?'KCB ':'')+(_nice?'NICE ':'')+_cs+'점)':''),status:_cs===0?'cond':_cs>=700?'pass':_cs>=600?'cond':'fail'},
+    {text:'대표자 신용점수'+_csNote,status:_csStatus},
     {text:'벤처·이노비즈 인증 보유',status:'fail'}
   ];
   var score  = d.score || (_cs>0 ? Math.min(95,Math.max(40,Math.round(_cs/10-5))) : 78);
@@ -2744,8 +2747,10 @@ function buildFundHTML(d, cData, rev, dateStr) {
   // 4. 예상 한도 = 예상 연매출 × 업종비율 - 기대출
   var _baseLimit = _revNum > 0 ? Math.round(_revNum * _limitRatio) : 0;
   var _fundLimit = Math.max(0, _baseLimit - _debtTotal);
-  // 5. 부채비율 높으면 추가 하향 (200~300%: ×0.8, 300%↑: ×0.6)
-  var _adj = _debtRatio > 300 ? 0.6 : _debtRatio > 200 ? 0.8 : 1.0;
+  // 5. 부채비율 높으면 추가 하향 (2026년 기준)
+  // 중진공: 500% 이하 권장, 기보·신보: 400~500% 이내
+  // 자본잠식(부채비율 무한대): 기보 원칙적 불가
+  var _adj = _debtRatio > 500 ? 0.4 : _debtRatio > 400 ? 0.6 : _debtRatio > 300 ? 0.75 : _debtRatio > 200 ? 0.9 : 1.0;
   var _fundLimitAdj = Math.round(_fundLimit * _adj);
   function fLimitStr(n){ if(n>=100000000) return (n/100000000).toFixed(1).replace(/\.0$/,'')+'억'; if(n>=10000000) return (n/10000000).toFixed(0)+'천만'; if(n>=10000) return (n/10000).toFixed(0)+'만'; return n+''; }
   // 6. 필요자금 상한 적용 (필요자금이 있으면 계산값과 비교해 작은 값 사용)
@@ -2765,7 +2770,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var _limitBasis = _revNum > 0
     ? '예상 연매출 '+fLimitStr(_revNum)+' × '+(_isMfg?'25%(1/4, 제조업)':'14%(1/7, 비제조업)')+' 기준'
       +(_debtTotal>0?' − 기대출 '+fLimitStr(_debtTotal):'')
-      +(_adj<1?' × 부채비율 조정('+Math.round(_adj*100)+'%)':'')
+      +(_adj<1?' × 부채비율 조정 '+Math.round(_adj*100)+'%'+(_debtRatio>500?' (심한 과입채)':_debtRatio>400?' (과입채 주의)':_debtRatio>300?' (부채 과다)':' (부채 높음)')+'':'')
       +' | 2026년 기준'
     : '매출 미입력 — 기관별 공식 한도 기준 산정 (2026년)';
   // 매출이 없어도 기관별 공식 한도 기준으로 항상 금액 표시 (별도 산정 필요 제거)
@@ -2910,17 +2915,31 @@ function buildFundHTML(d, cData, rev, dateStr) {
       // 필요자금 초과 불가
       if (_needFundNum > 0) calcAmt = Math.min(calcAmt, _needFundNum);
     }
+    // 신보 운전자금: 매출의 1/4~1/6 기준으로 추가 상한 적용
+    if (orgKey === '신보') {
+      var shinboRevCap = Math.round(_revNum * (1/4)); // 매출 1/4 상한
+      calcAmt = Math.min(calcAmt, shinboRevCap);
+    }
+    // 기보 부채비율 자본잠식 체크
+    var orgLimitNote = null;
+    if (orgKey === '기보' && _debtRatio > 500) {
+      orgLimitNote = '부채비율 ' + _debtRatio + '% — 기보 원칙적 불가 수준 (자본잠식 위험). 재무 개선 선행 필요';
+    } else if ((orgKey === '신보' || orgKey === '기보') && _debtRatio > 400) {
+      orgLimitNote = '부채비율 ' + _debtRatio + '% — 신보·기보 심사 불이익 수준. 재무 개선 또는 담보 보강 필요';
+    } else if (orgKey === '중진공' && _debtRatio > 500) {
+      orgLimitNote = '부채비율 ' + _debtRatio + '% — 중진공 권장 기준(500%) 초과. 심사 불이익 가능성 높음';
+    }
     // 최소 한도 미충족 여부 판단
     var belowMin = (orgMin > 0 && calcAmt < orgMin);
     // 최소 한도 미충족 시 최소값으로 표시 (단, 신보·기보는 안내 메모 추가)
-    var limitNote = null;
+    var limitNote = orgLimitNote; // 부채비율 경고 메모 우선
     if (belowMin) {
       if (orgKey === '신보' || orgKey === '기보') {
         // 신보·기보: 예상 한도가 최소 3천만 미만이면 안내 메모
-        limitNote = '예상 한도 ' + fLimitStr(calcAmt) + ' — 최소 3천만 미만, 인증 취득 또는 매출 확대 후 재신청 권장';
+        limitNote = limitNote || ('예상 한도 ' + fLimitStr(calcAmt) + ' — 최소 3천만 미만, 인증 취득 또는 매출 확대 후 재신청 권장');
         calcAmt = orgMin; // 최소값으로 표시
       } else if (orgKey === '중진공') {
-        limitNote = '예상 한도 ' + fLimitStr(calcAmt) + ' — 실무상 5천만 이상 신청 시 심사 원활';
+        limitNote = limitNote || ('예상 한도 ' + fLimitStr(calcAmt) + ' — 실무상 5천만 이상 신청 시 심사 원활');
         calcAmt = orgMin;
       } else {
         calcAmt = orgMin; // 기타 기관은 최소값 보장
@@ -3012,8 +3031,58 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
+  // 기관별 업종·신용 조건 안내 (실제 신청 전 체크용)
+  var _orgConditions = [
+    {org:'소진공', color:'#ea580c', bg:'#fff7ed', border:'#fed7aa',
+     cond:'상시 근로자 5인 미만(제조·건설 10인 미만) 소상공인 대상. 신용취약자는 NICE 839점 이하 전용상품 이용 가능',
+     credit:'일반: 840점이상 | 저신용: 839점 이하 전용상품'},
+    {org:'중진공', color:'#0369a1', bg:'#eff6ff', border:'#bfdbfe',
+     cond:'비제조업은 혁신성장분야(SW·에듀테크·스마트물류 등) 해당 시 접수 원활. 부채비율 500% 이하 권장',
+     credit:'NICE 750점 이상 권장 | 이자보상배율 1.0 이상'},
+    {org:'기보', color:'#0f766e', bg:'#f0fdfa', border:'#99f6e4',
+     cond:'특허·기업부설연구소·벤처인증 중 1개 이상 보유 시 승인율 급상승. 부채비율 400~500% 이내 권장',
+     credit:'NICE 750점 이상 | 기술등급 B등급 이상'},
+    {org:'신보', color:'#7c3aed', bg:'#faf5ff', border:'#ddd6fe',
+     cond:'도소매·유통·수출입·병의원·학원 등 대부분 서비스업 가능. 운전자금 한도: 매출의 1/4~1/6',
+     credit:'NICE 800점 이상 우대 | 부채비율 업종평균 2배 이내'},
+    {org:'지역신보', color:'#15803d', bg:'#f0fdf4', border:'#86efac',
+     cond:'해당 지역 내 사업장을 둔 모든 소상공인 대상. 저신용자 특례보증 수시 운영',
+     credit:'신용점수 제한 없음 | 업력 3개월 이상 권장'}
+  ];
   var s3 = fundCat('기관 비교 및 서류 준비','비교표 · 준비 현황 · 실행 체크',
-    '<div class="rp-2col" style="margin-bottom:14px">'
+    // 기관별 업종·신용 조건 안내
+    '<div style="margin-bottom:14px">'
+    + '<div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e2e8f0">🏦 기관별 업종·신용 조건 안내 (2026년 기준)</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">'
+    + _orgConditions.map(function(oc){
+        return '<div style="background:'+oc.bg+';border:1.5px solid '+oc.border+';border-radius:8px;padding:10px 11px">'
+          + '<div style="font-size:11px;font-weight:800;color:'+oc.color+';margin-bottom:5px">'+oc.org+'</div>'
+          + '<div style="font-size:9.5px;color:#374151;line-height:1.55;margin-bottom:5px;word-break:keep-all">'+oc.cond+'</div>'
+          + '<div style="font-size:9px;color:'+oc.color+';background:white;border-radius:4px;padding:3px 6px;line-height:1.4">신용: '+oc.credit+'</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '</div>'
+    // 공통 탈락 체크리스트
+    + '<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:12px;font-weight:800;color:#dc2626;margin-bottom:10px;padding-bottom:7px;border-bottom:1.5px solid #fca5a5">⚠️ 전 기관 공통 즉시 탈락 체크리스트 — 신청 전 반드시 확인</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + [
+        {ic:'①', txt:'세금 체납: 국세·지방세·4대보험 중 하나라도 체납 중이면 즉시 거부. 완납 즉시 신청 가능'},
+        {ic:'②', txt:'연체 기록: 최근 3개월 내 10일 이상 연체 3회 이상, 또는 현재 연체 중인 경우'},
+        {ic:'③', txt:'자금 용도 외 사용: 과거 정책자금을 주식·부동산 투자 등 목적 외 사용 이력이 있는 경우'},
+        {ic:'④', txt:'휴·폐업: 서류 접수 시점에 사업자 상태가 정상이어야 함. 휴업 중이면 신청 불가'},
+        {ic:'⑤', txt:'허위 사실: 재무제표 분식·허위 고용 적발 시 향후 5년간 신청 금지'}
+      ].map(function(item){
+        return '<div style="display:flex;gap:8px;align-items:flex-start;background:white;border-radius:6px;padding:8px 10px">'
+          + '<span style="font-size:12px;font-weight:800;color:#dc2626;flex-shrink:0">'+item.ic+'</span>'
+          + '<span style="font-size:10.5px;color:#374151;line-height:1.55;word-break:keep-all">'+item.txt+'</span>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '</div>'
+    // 서류 준비 현황
+    + '<div class="rp-2col" style="margin-bottom:14px">'
     + '<div class="rp-col50">'
     +   '<div style="background:white;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px 18px;height:100%">'
     +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #dcfce7">✅ 준비 완료 서류</div>'
@@ -3031,15 +3100,18 @@ function buildFundHTML(d, cData, rev, dateStr) {
     +   '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 15px">'
     +     '<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fed7aa">핵심 비교 포인트</div>'
     +     rpLst([
-              '중진공·소진공은 상대적으로 접근성이 높아 초기 확보용 자금으로 적합함',
-              '기보·신보는 보증 구조상 한도가 크지만 기술성과 자료 완성도가 중요함'
+              '소진공·지역신보: 접근성 높음, 저신용자도 신청 가능한 소상공인 전용 기관',
+              '중진공: 혁신성장분야 중소기업 대상, 운전자금 연간 최대 5억',
+              '기보: 기술력·특허 중심 평가, IT·SW·제조업 우대',
+              '신보: 매출·재무 건전성 중시, 대부분 서비스업 신청 가능'
             ], color)
     +   '</div>'
     +   '<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px 15px">'
     +     '<div style="font-size:13px;font-weight:700;color:#ca8a04;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fde68a">심사 대응 팁</div>'
     +     rpLst([
               '최근 매출 흐름과 자금 사용계획을 연결해 상환 가능성을 수치 중심으로 설명함',
-              '대표자 신용·세금·4대보험 이슈를 사전에 점검해 서류 보완 발생을 최소화함'
+              '대표자 신용·세금·4대보험 이슈를 사전에 점검해 서류 보완 발생을 최소화함',
+              '기보 신청 시 특허명세서·기술설명서를 미리 준비하면 심사 속도 단축'
             ], '#ca8a04')
     +   '</div>'
     +   '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 15px">'
