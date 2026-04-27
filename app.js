@@ -2809,8 +2809,43 @@ function buildFundHTML(d, cData, rev, dateStr) {
       + '</div>';
   }
 
-  var topFunds = funds.slice(0, 3);
-  var otherFunds = funds.slice(3);
+  // ===== 개별 카드 금액을 업체 현황 기반 현실적 예상 한도로 계산 =====
+  // 기관별 공식 최대 한도 (2026년 기준)
+  var _orgMaxLimits = {
+    '소진공': 70000000,       // 7천만
+    '소진공저신용': 70000000,  // 7천만
+    '중진공': 100000000,      // 1억
+    '신보': 200000000,        // 2억
+    '기보': 300000000,        // 3억
+    '지역신보': 50000000,     // 5천만
+    '재단': 30000000,         // 3천만
+    'default': 70000000
+  };
+  function getOrgMaxLimit(fname) {
+    if (!fname) return _orgMaxLimits['default'];
+    var n = fname;
+    if (n.includes('저신용') || n.includes('소상공인 전용')) return _orgMaxLimits['소진공저신용'];
+    if (n.includes('소진공') || n.includes('소상공인')) return _orgMaxLimits['소진공'];
+    if (n.includes('중진공') || n.includes('중소벤처')) return _orgMaxLimits['중진공'];
+    if (n.includes('신보') || n.includes('신용보증기금')) return _orgMaxLimits['신보'];
+    if (n.includes('기보') || n.includes('기술보증기금')) return _orgMaxLimits['기보'];
+    if (n.includes('지역신보') || n.includes('신용보증재단')) return _orgMaxLimits['지역신보'];
+    if (n.includes('재단') || n.includes('소진공재단')) return _orgMaxLimits['재단'];
+    return _orgMaxLimits['default'];
+  }
+  // 각 기관별 현실적 예상 한도 계산: min(_maxAdj, 기관별 공식 최대 한도)
+  // 단, 매출 미입력 시에는 기존 AI 생성 한도 유지
+  var fundsWithCalcLimit = funds.map(function(f, i) {
+    if (_revNum === 0) return f; // 매출 없으면 AI 생성값 유지
+    var orgMax = getOrgMaxLimit(f.name);
+    // 전체 예상 한도(_maxAdj)와 기관 공식 최대 한도 중 작은 값
+    var calcAmt = Math.min(_maxAdj, orgMax);
+    // 최소 500만원 보장
+    calcAmt = Math.max(calcAmt, 5000000);
+    return Object.assign({}, f, { limit: fLimitStr(calcAmt) });
+  });
+  var topFunds = fundsWithCalcLimit.slice(0, 3);
+  var otherFunds = fundsWithCalcLimit.slice(3);
 
   var s1 = fundCat('신청 가능성 종합 진단','자격 체크 · 매칭 스코어 · 핵심 판단',
     '<div style="display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:12px;align-items:stretch">'
