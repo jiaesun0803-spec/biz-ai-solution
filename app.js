@@ -55,10 +55,39 @@ window._reportsCache = [];
 // 서버에서 보고서 목록 로드 후 메모리 캐시에 저장
 async function syncReportsFromServer() {
   try {
-    const data = await apiCall('/api/reports');
-    if (!Array.isArray(data)) { console.warn('보고서 서버 데이터 형식 오류'); return; }
-    window._reportsCache = data;
-    console.log('보고서 서버 로드 완료:', data.length, '개');
+    const serverData = await apiCall('/api/reports');
+    if (!Array.isArray(serverData)) { console.warn('보고서 서버 데이터 형식 오류'); return; }
+
+    // localStorage에 저장된 기존 보고서 자동 마이그레이션
+    const localReports = JSON.parse(localStorage.getItem(DB_REPORTS)||'[]');
+    if (localReports.length > 0) {
+      const serverIds = new Set(serverData.map(r => r.id));
+      const toMigrate = localReports.filter(r => r.id && !serverIds.has(r.id));
+      if (toMigrate.length > 0) {
+        console.log('localStorage 보고서 마이그레이션 시작:', toMigrate.length, '개');
+        for (const rpt of toMigrate) {
+          try {
+            await apiCall('/api/reports', { method:'POST', body: JSON.stringify(rpt) });
+          } catch(e) {
+            console.warn('마이그레이션 실패 (개별):', rpt.id, e.message);
+          }
+        }
+        // 마이그레이션 완료 후 서버에서 다시 로드
+        const refreshed = await apiCall('/api/reports');
+        window._reportsCache = Array.isArray(refreshed) ? refreshed : serverData;
+        // 마이그레이션 완료 후 localStorage 기록 제거 (중복 방지)
+        localStorage.removeItem(DB_REPORTS);
+        console.log('localStorage 보고서 마이그레이션 완료');
+      } else {
+        window._reportsCache = serverData;
+        // 서버에 이미 모두 있으면 localStorage 정리
+        localStorage.removeItem(DB_REPORTS);
+      }
+    } else {
+      window._reportsCache = serverData;
+    }
+
+    console.log('보고서 서버 로드 완료:', window._reportsCache.length, '개');
     updateDataLists();
     if (typeof updateDashboardReports === 'function') updateDashboardReports();
   } catch(e) {
