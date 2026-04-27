@@ -2787,7 +2787,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     _maxAdj = parseLimitNum(funds[0].limit) || 70000000;
     _minAdj = Math.round(_maxAdj * 0.5);
   }
-  var totalRange = d.total_range || '기본 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj);
+  var totalRange = d.total_range || '예상 '+fLimitStr(_minAdj)+' ~ 최대 '+fLimitStr(_maxAdj);
   var rColors= [color,'#f97316','#fb923c','#94a3b8','#94a3b8'];
   var comp   = d.comparison||[{org:'소진공',limit:funds[0]&&funds[0].limit||'7시만',rate:'2.0%',period:'5년',diff:'easy'},{org:'지역신보',limit:'5천만',rate:'0.8%',period:'3년',diff:'easy'},{org:'신보',limit:'2억',rate:'0.5%',period:'7년',diff:'mid'},{org:'기보',limit:'3억',rate:'0.5%',period:'7년',diff:'hard'}];
   var dMap   = {easy:{bg:'#dcfce7',tc:'#166534',l:'쉬움'},mid:{bg:'#fef9c3',tc:'#854d0e',l:'보통'},hard:{bg:'#fee2e2',tc:'#991b1b',l:'어려움'}};
@@ -2966,7 +2966,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     });
     if (_needFundNum > 0 && _calcMax > _needFundNum) _calcMax = _needFundNum;
     if (_calcMax > 0) {
-      totalRange = '기본 ' + fLimitStr(_calcMin) + ' ~ 최대 ' + fLimitStr(_calcMax);
+      totalRange = '예상 ' + fLimitStr(_calcMin) + ' ~ 최대 ' + fLimitStr(_calcMax);
     }
   }
   // scoreItems: 재계산된 totalRange 반영
