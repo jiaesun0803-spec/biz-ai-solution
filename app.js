@@ -4271,14 +4271,22 @@ function getIndustryCerts(ind, nm, itm, cData) {
       _f.push({rank:5,name:'지역 특례자금(시·도 지원)',limit:'5천만',tags:['지자체 직접 지원','무이자 또는 저리','빠른 승인']});
     } else if (isIT || isKnowledgeSvc) {
       // ===== IT/지식서비스업 =====
-      // 1순위: 중진공 (2026년 확대 업종)
-      if (isJjgEligible && isJjgCredit) {
+      // 1순위: 중진공 (2026년 확대 업종, 최소 매출 5천만 이상 조건 추가)
+      var _itMinRev = prevRev >= 50000000; // 최소 매출 5천만원 기준
+      if (_itMinRev && isJjgEligible && isJjgCredit) {
         _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','IT·지식서비스 가능']});
-      } else {
+      } else if (_itMinRev) {
         _f.push({rank:1,name:'중진공 신성장기반자금',limit:'1억',tags:['NICE 750점 권장','IT 업종 가능','시설·운전 자금']});
+      } else {
+        // 매출 5천만 미만: 중진공 제외, 기보·신보 우선
+        _f.push({rank:1,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기술력 우선 심사','IT·SW 특화']});
       }
-      // 2순위: 기보 또는 신보 (중복 불가)
-      if (hasKiboLoan || (!hasShinboLoan && !hasKiboLoan)) {
+      // 2순위: 기보 또는 신보 (중복 불가, 매출 5천만 미만으로 기보가 이미 1순위인 경우 신보로 대체)
+      if (!_itMinRev) {
+        // 매출 5천만 미만: 기보가 이미 1순위 → 2순위는 신보
+        var _shinboTagIT = isShinboCredit ? '기존 신보 거래 우대' : 'KCB/NICE 800점 권장';
+        _f.push({rank:2,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTagIT,'95% 보증']});
+      } else if (hasKiboLoan || (!hasShinboLoan && !hasKiboLoan)) {
         _f.push({rank:2,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기술력 우선 심사','IT·SW 특화']});
       } else if (hasShinboLoan) {
         _f.push({rank:2,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%','기존 신보 거래 우대','95% 보증']});
