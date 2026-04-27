@@ -691,6 +691,16 @@ function loadUserProfile() {
   // 관리자 메뉴 탭 표시/숨김
   var adminMenu = document.getElementById('menu-admin');
   if(adminMenu) adminMenu.style.display = user.isAdmin ? 'flex' : 'none';
+  // 공지사항 카드 버튼 분기: 관리자=등록, 일반=더보기
+  var btnNtReg = document.getElementById('btn-nt-register');
+  var btnNtMore = document.getElementById('btn-nt-more');
+  if(btnNtReg) btnNtReg.style.display = user.isAdmin ? 'inline-flex' : 'none';
+  if(btnNtMore) btnNtMore.style.display = user.isAdmin ? 'none' : 'inline-flex';
+  // 지원사업공문 카드 버튼 분기: 관리자=등록, 일반=더보기
+  var btnSdReg = document.getElementById('btn-sd-register');
+  var btnSdMore = document.getElementById('btn-sd-more');
+  if(btnSdReg) btnSdReg.style.display = user.isAdmin ? 'inline-flex' : 'none';
+  if(btnSdMore) btnSdMore.style.display = user.isAdmin ? 'none' : 'inline-flex';
 }
 function updateUserDB(u, prevEmail){
   let users=getUsers();
