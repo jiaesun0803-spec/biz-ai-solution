@@ -1185,7 +1185,7 @@ window.saveCompanyData=function(){
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
   const address=document.getElementById('biz_address')?.value||'-';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,salesChannel:document.querySelector('input[name="sales_channel"]:checked')?.value||'',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
@@ -4057,16 +4057,74 @@ function buildMgmtCombinedPrompt(cData, fRev) {
 }
 
 function buildTradePrompt(cData, fRev) {
-  var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품';
-  var r25=fRev.매출_2025년||'0원';
-  return '상권분석 전문가. \''+nm+'\' 상권분석. 기업명과 실제 데이터 반드시 반영. JSON만.\n\n'
-    +'{"traffic":"2,400명","competitors":7,"grade":"B+","radar":[82,75,68,72,80],'
-    +'"features":["'+nm+'의 '+itm+' 판매 상권 특성 5개 60자이상"],'
-    +'"comp_direct":7,"comp_strong":3,"diff_potential":"高",'
-    +'"target":{"age":"30~40대","household":"1~2인","channel":"온라인","cycle":"월 2~3회"},'
-    +'"strategy":["'+nm+'의 '+itm+'을 활용한 차별화 전략 5개 60자이상"],'
-    +'"sim":{"s0":9000,"s1":12000,"s2":16000,"s3":24000}}\n\n'
-    +'[기업] 기업명:'+nm+', 업종:'+ind+', 핵심아이템:'+itm+', 전년매출:'+r25;
+  var nm  = cData.name;
+  var ind = cData.industry || '제조업';
+  var subInd = cData.subIndustry || '';
+  var itm = cData.coreItem || '주력제품';
+  var r25 = fRev['매출_2025년'] || '0원';
+  var addr = cData.address && cData.address !== '-' ? cData.address : '주소 미입력';
+  var sc  = cData.salesChannel || '';
+
+  // 판매채널 기반 상권 유형 판단
+  var isB2B     = sc.indexOf('B2B') !== -1 || sc.indexOf('공장') !== -1 || sc.indexOf('사무실') !== -1;
+  var isOnline  = sc.indexOf('온라인') !== -1;
+  var isOffline = sc.indexOf('B2C') !== -1 || sc.indexOf('오프라인') !== -1;
+  var isMixed   = sc.indexOf('혼합') !== -1;
+
+  // 업종 기반 상권 특성 힌트
+  var indHint = '';
+  if (ind.indexOf('식품') !== -1 || ind.indexOf('음료') !== -1) {
+    indHint = '식품·음료 업종: HACCP 인증 여부, 대형마트·온라인몰 납품 가능성, 위생·식품안전 이슈 상권 특성 반영';
+  } else if (ind.indexOf('제조') !== -1) {
+    var mfgHint = subInd ? '세부업종(' + subInd + ') 기반' : '제조업';
+    if (isB2B) {
+      indHint = mfgHint + ': B2B 직납 중심, 공단·산업단지 입지, 동종 제조업체 집적도, 원자재 조달 접근성 반영';
+    } else {
+      indHint = mfgHint + ': 제조업 상권 특성, 공단 집적 효과, 물류 접근성 반영';
+    }
+  } else if (ind.indexOf('IT') !== -1 || ind.indexOf('정보') !== -1 || ind.indexOf('소프트') !== -1) {
+    indHint = 'IT·정보통신업: 오피스 상권, 테크 클러스터 인접 여부, 인재 풀 접근성 반영';
+  } else if (ind.indexOf('도매') !== -1 || ind.indexOf('소매') !== -1) {
+    indHint = '도소매업: 유동인구, 경쟁 점포 밀도, 소비자 접근성 반영';
+  } else if (ind.indexOf('음식') !== -1 || ind.indexOf('식당') !== -1 || ind.indexOf('카페') !== -1) {
+    indHint = '음식점업: 유동인구, 주변 경쟁 음식점 수, 배달 수요, 주거/오피스 상권 구분 반영';
+  } else if (ind.indexOf('건설') !== -1) {
+    indHint = '건설업: 지역 개발 호재, 공공발주 접근성, 하도급 네트워크 반영';
+  } else {
+    indHint = ind + ' 업종 특성에 맞는 상권 분석 반영';
+  }
+
+  // 채널별 분석 지시
+  var channelInstr = '';
+  if (isB2B && !isOffline) {
+    channelInstr = 'B2B 직납 전용 기업이므로 유동인구(traffic)는 "해당없음(B2B전용)"으로, 경쟁업체는 동종 B2B 공급사 기준으로 분석할 것. 상권 전략은 거래처 확보·단가 경쟁력·납품 안정성 중심으로 작성.';
+  } else if (isOnline && !isOffline) {
+    channelInstr = '온라인 전용 기업이므로 오프라인 유동인구보다 온라인 검색량·이커머스 경쟁 강도·배송 인프라를 상권 분석 핵심 지표로 활용할 것.';
+  } else if (isOffline || isMixed) {
+    channelInstr = 'B2C 오프라인 매장 또는 혼합 채널 기업이므로 실제 주소(' + addr + ') 기반 유동인구, 반경 1km 경쟁업체 수, 상권 등급을 구체적으로 분석할 것.';
+  } else {
+    channelInstr = '판매채널 미입력 상태이므로 주소(' + addr + ')와 업종을 기반으로 가장 적합한 상권 유형을 판단하여 분석할 것.';
+  }
+
+  return '너는 대한민국 최고 수준의 상권분석 전문가야.\n'
+    + '아래 기업 정보를 기반으로 해당 기업에 특화된 상권분석 데이터를 생성해. 모든 수치와 내용은 기업 특성(주소, 업종, 판매채널)에 맞게 실제적으로 차별화하여 작성해.\n\n'
+    + '[필수 규칙]\n'
+    + '- 기업명 \'' + nm + '\', 주소 \'' + addr + '\', 업종 \'' + ind + (subInd ? '(' + subInd + ')' : '') + '\' 를 반드시 반영\n'
+    + '- 판매채널: ' + (sc || '미입력') + '\n'
+    + '- ' + channelInstr + '\n'
+    + '- ' + indHint + '\n'
+    + '- traffic(유동인구), competitors(경쟁업체수), grade(입지등급), comp_direct, comp_strong 수치는 업종·주소·채널에 맞게 실제적으로 다르게 생성할 것 (절대 고정값 사용 금지)\n'
+    + '- features 5개 항목은 \'' + nm + '\'의 실제 주소·업종·채널 특성을 반영하여 구체적으로 작성 (60자 이상)\n'
+    + '- strategy 5개 항목은 \'' + nm + '\'의 \'' + itm + '\' 판매 채널과 상권 특성에 맞는 차별화 전략으로 작성 (60자 이상)\n'
+    + '- JSON만 출력 (마크다운·설명 텍스트 없이)\n\n'
+    + 'JSON 구조:\n'
+    + '{"traffic":"유동인구(B2B면 해당없음 표기)","competitors":경쟁업체수,"grade":"입지등급(A+~D)","radar":[접근성,경쟁강도,수요잠재력,성장성,인프라],'
+    + '"features":["' + nm + '의 ' + addr + ' 기반 상권 특성 5개 각 60자이상"],'
+    + '"comp_direct":직접경쟁수,"comp_strong":강성경쟁수,"diff_potential":"高/中/低",'
+    + '"target":{"age":"주요연령대","household":"가구유형","channel":"주구매채널","cycle":"구매주기"},'
+    + '"strategy":["' + nm + '의 ' + itm + ' 상권 차별화 전략 5개 각 60자이상"],'
+    + '"sim":{"s0":현재월매출추정,"s1":3개월후목표,"s2":6개월후목표,"s3":12개월후목표}}\n\n'
+    + '[기업] 기업명:' + nm + ', 주소:' + addr + ', 업종:' + ind + (subInd ? '(' + subInd + ')' : '') + ', 판매채널:' + (sc || '미입력') + ', 핵심아이템:' + itm + ', 전년매출:' + r25;
 }
 
 function buildMarketingPrompt(cData, fRev) {
