@@ -1002,14 +1002,14 @@ window.showCompanyForm = function(editName=null) {
         const addrEl = document.getElementById('biz_address');
         if (addrEl && !addrEl.value) addrEl.value = comp.address;
       }
-      calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
+      calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); if(typeof toggleSubIndustry==="function")toggleSubIndustry();
     }
   } else {
     if(titleEl) titleEl.textContent = '기업 정보 등록';
     // 신규 등록 시 폼 완전 초기화
     const form = document.getElementById('companyForm');
     if (form) form.reset();
-    calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
+    calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); if(typeof toggleSubIndustry==="function")toggleSubIndustry();
   }
   const ct = document.getElementById('company');
   if (!ct.classList.contains('active')) {
@@ -1185,7 +1185,7 @@ window.saveCompanyData=function(){
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
   const address=document.getElementById('biz_address')?.value||'-';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
@@ -1209,6 +1209,7 @@ window.saveCompanyData=function(){
     }
   })();
 };
+window.toggleSubIndustry=function(){var ind=document.getElementById("comp_industry")?.value||"";var wrap=document.getElementById("sub-industry-wrap");if(wrap){wrap.style.display=(ind==="제조업")?"block":"none";if(ind!=="제조업"){var sub=document.getElementById("comp_sub_industry");if(sub)sub.value="";}}};
 window.toggleExportInputs=function(){const isExp=[...document.getElementsByName('export')].some(r=>r.checked&&r.value==='수출중');document.querySelectorAll('.export-money').forEach(i=>{i.disabled=!isExp;if(!isExp)i.value='';});};
 window.toggleCorpNumber=function(){const isC=[...document.getElementsByName('biz_type')].some(r=>r.checked&&r.value==='법인');const el=document.getElementById('corp_number');if(el){el.disabled=!isC;if(!isC)el.value='';}};
 window.toggleRentInputs=function(){const isR=[...document.getElementsByName('rent_type')].some(r=>r.checked&&r.value==='임대');['rent_deposit','rent_monthly'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=!isR;if(!isR)el.value='';}});};
@@ -4016,19 +4017,22 @@ function initReportCharts(rev) {
 // ===========================
 function buildMgmtCombinedPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
-  var r25=fRev.매출_2025년||'0원', r24=fRev.매출_2024년||'0원', rExp=fRev.금년예상연간매출||'0원', rCur=fRev.금년매출_전월말기준||'0원';
-  return '너는 대한민국 최고 수준의 경영컨설턴트야. \n'
+  var r25=fRev['매출_2025년']||'0원', r24=fRev['매출_2024년']||'0원', rExp=fRev['금년예상연간매출']||'0원', rCur=fRev['금년매출_전월말기준']||'0원';
+  return '너는 대한민국 최고 수준의 경영컨설턴트야.\n'
     +'아래 기업 데이터를 기반으로 경영진단보고서에 필요한 전체 데이터를 한 번에 생성해.\n'
     +'클라이언트용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
-    +'【필수 규칙】\n'
+    +'[필수 규칙]\n'
     +'- 기업명 \''+nm+'\', 핵심아이템 \''+itm+'\', 실제 수치('+r25+', '+rExp+') 를 각 항목에 반드시 자연스럽게 포함\n'
     +'- 모든 텍스트 항목은 반드시 60자 이상, 구체적이고 실질적인 내용으로 작성\n'
-    +'- JSON만 출력 (마크다운·설명 텍스트 없이)\n\n'
+    +'- JSON만 출력 (마크다운·설명 텍스트 없이)\n'
+    +'- [균형 진단 규칙] 장점과 단점을 반드시 균형 있게 서술할 것. 단점과 리스크는 수치 근거를 들어 구체적으로 지적할 것\n'
+    +'- [수치 기반 서술] 매출 성장률, 부채비율, 업종 평균 대비 비교 수치를 직접 언급하여 서술할 것\n'
+    +'- [리스크 섹션] 주요 리스크 3가지를 반드시 명시하고, 각 리스크에 대한 원인과 대응방안을 구체적으로 서술할 것\n'
+    +'- [컨설턴트용 솔직한 진단] 컨설턴트용 데이터에는 업체에 직접 전달하기 어려운 솔직한 진단 의견과 개선 필요 사항을 구체적으로 포함할 것\n\n'
     +'JSON 구조:\n'
     +'{'
     +'"grade":"A- 등 등급",'
     +'"grade_desc":"고성장 유망기업 등 8자이내",'
-
     // ── 공통 데이터 (클라이언트용·컨설턴트용 모두 사용) ──
     +'"overview":["'+nm+'의 현황 5개항목 각60자이상"],'
     +'"finance_strengths":["'+nm+'의 재무강점 4개 각60자이상"],'
@@ -4082,12 +4086,39 @@ function buildMarketingPrompt(cData, fRev) {
 
 function buildFundPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'';
-  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
+  var r25=fRev['매출_2025년']||'0원', rExp=fRev['금년예상연간매출']||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
+  // 세부 업종 및 인증 기반 중진공 지원분야 판단
+  var subInd = cData.subIndustry||'';
+  var certList = cData.certList||[];
+  var hasPpuri = certList.some(function(c){return c.includes('뿌리');});
+  var hasSobujang = certList.some(function(c){return c.includes('소부장');});
+  var hasHaccp = certList.some(function(c){return c.includes('HACCP');});
+  var hasVenture = certList.some(function(c){return c.includes('벤처');});
+  var hasInnobiz = certList.some(function(c){return c.includes('이노비즈');});
+  var hasExport = certList.some(function(c){return c.includes('수출');});
+  var ppuriKeywords = ['주물','주조','금형','절삭','프레스','판금','용접','표면처리','열처리'];
+  var isPpuriTarget = ppuriKeywords.some(function(k){return subInd.includes(k);});
+  var sobujangKeywords = ['반도체','디스플레이','이차전지','배터리','전자부품','소재','부품','장비','공작기계','자동차 엔진','자동차 차체','자동차 전장','선박','철도','항공'];
+  var isSobujangTarget = sobujangKeywords.some(function(k){return subInd.includes(k);});
+  var foodKeywords = ['식품','음료','건강기능식품','농수산물 가공','사료'];
+  var isFoodTarget = foodKeywords.some(function(k){return subInd.includes(k)||ind.includes(k);});
+  var jjgFundTypes = [];
+  if(isPpuriTarget && !hasPpuri) jjgFundTypes.push('뿌리기업 전용자금 (운전자금 우선) — 뿌리기업확인서 취득 후 신청 가능');
+  if(isSobujangTarget && !hasSobujang) jjgFundTypes.push('소부장 특별자금 (운전자금 우선) — 소부장확인서 취득 후 신청 가능');
+  if(isFoodTarget && !hasHaccp) jjgFundTypes.push('식품기업 시설·운전자금 (운전자금 우선) — HACCP 취득 시 한도 상향');
+  if(hasExport) jjgFundTypes.push('신시장진출지원자금 (운전자금) — 수출 실적 보유 기업 우대');
+  if(hasVenture||hasInnobiz) jjgFundTypes.push('혁신성장유형 운전자금 — 벤처·이노비즈 보유 기업 우대');
+  if(jjgFundTypes.length===0) jjgFundTypes.push('중진공 일반 운전자금 (매출 1/3~1/4 한도)');
+  var jjgNote = '\n[중진공 추천 지원분야] '+jjgFundTypes.join(' | ');
+  var certRecNote = '';
+  if(isPpuriTarget && !hasPpuri) certRecNote += ' | 뿌리기업확인서 미보유 → 취득 시 중진공 전용자금 신청 가능';
+  if(isSobujangTarget && !hasSobujang) certRecNote += ' | 소부장확인서 미보유 → 취득 시 소부장 특별자금 신청 가능';
+  if(isFoodTarget && !hasHaccp) certRecNote += ' | HACCP 미보유 → 취득 시 정책자금 한도 상향 및 공공조달 납품 가능';
+  if(certRecNote) certRecNote = '\n[인증 취득 추천]'+certRecNote;
   var indData = getIndustryCerts(ind, nm, itm, cData);
   var indFunds = indData.funds;
   var top1 = indFunds[0]||{};
-  // 기존 대출 기관 조건 판단
   var _dKibo   = parseInt(cData.debtKibo)   || 0;
   var _dShinbo = parseInt(cData.debtShinbo) || 0;
   var _dJjg    = parseInt(cData.debtJjg)    || 0;
@@ -4096,7 +4127,6 @@ function buildFundPrompt(cData, fRev) {
   else if (_dShinbo > 0 && _dKibo === 0) loanNote = '신보 기존 대출 있음 → 신보 위주 추천, 기보 중복 제외';
   else if (_dKibo > 0 && _dShinbo > 0)  loanNote = '기보·신보 모두 대출 있음 → 잔액 큰 기관 위주 추천';
   else                                   loanNote = '기보·신보 기존 대출 없음 → 업종 기준 최적 기관 추천';
-  // 2026년 기관별 심사기준 정보 구성
   var _kcbS  = parseInt(cData.kcbScore)  || 0;
   var _niceS = parseInt(cData.niceScore) || 0;
   var _cs    = _kcbS || _niceS || 0;
@@ -4116,7 +4146,6 @@ function buildFundPrompt(cData, fRev) {
     ? '\n[연체/체납] 금융연체:'+_finO+', 세금체납:'+_taxO+' — 완납 후 1개월 경과 후 재신청 권장'
     : '';
   var bizYrsNote = _bizYrs > 0 ? '\n[업력] 창업일 기준 '+_bizYrs+'년 경과'+(_bizYrs<=3?' (소진공 성장촉진자금 조건 충족)':_bizYrs<=7?' (중진공 혁신창업 조건 충족)':' (중진공 신성장기반자금 대상)') : '';
-  // checks 동적 생성
   var _checksArr = [
     {text:'중소기업 해당 여부',status:'pass'},
     {text:'국세·지방세 체납 없음',status:(_taxO==='있음'?'fail':'pass')},
@@ -4142,7 +4171,9 @@ function buildFundPrompt(cData, fRev) {
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
     +'"checklist_need":["사업계획서 (기보 필수)","벤처인증서 (취득 후)"],'
     +'"rejection_checklist":["세금 체납 절대 불가 (국세·지방세·4대보험료 완납 후 1개월 경과 권장)","가지급금 정리 (대표자 회사돈 차용 가지급금 감점 최대 요인)","자본잠식 해결 (증자 또는 이익잉여금 확보로 자본총계 유지)","최근 3개월 연체 기록 없어야 함 (단 하루라도 3개월 이내 연체 시 심사 불리)","사업장·주거지 압류 없어야 함 (대표자 개인 소유 부동산 가압류·압류 시 100% 부결)"]}'
-    +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote+creditNote+overdueNote+bizYrsNote
+    +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+(subInd?'(세부:'+subInd+')':'')+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote+creditNote+overdueNote+bizYrsNote
+    +jjgNote+certRecNote
+    +'\n[운전자금 우선 원칙] 모든 자금 추천은 운전자금 위주로 하되, 시설자금은 대표자가 명확히 요청할 경우에만 언급할 것'
     +'\n[2026년 기관별 심사기준] 중진공: NICE 750점 이상 권장, 운전자금 매출 1/3~1/4, 시설자금 견적서 80~100% | 기보: 기술력 우선(연체/체납 시 즉시 부결), B등급 이상, 자본잠식 없어야 함 | 신보: KCB/NICE 800점 이상 선호, 매출 1/4~1/6 한도 | 소진공: 839점 이하 저신용 전용자금 별도 배정, 다중송무자 제한';
 }
 
