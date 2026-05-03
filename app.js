@@ -4038,6 +4038,17 @@ function initReportCharts(rev) {
     // ─ 매출 라인
     var li = document.getElementById('rp-linechart');
     if(li && li.dataset) {
+      // 부모 컨테이너가 숨겨진 탭 내부일 때 offsetHeight=0 → 강제 크기 지정
+      var liParent = li.parentElement;
+      if (liParent && liParent.offsetHeight === 0) {
+        liParent.style.height = (liParent.style.height || '198px');
+        liParent.style.minHeight = liParent.style.height;
+      }
+      li.style.width = '100%';
+      li.style.height = (liParent ? (liParent.style.height || '198px') : '198px');
+      var liH = parseInt(li.style.height) || 198;
+      li.width = li.offsetWidth || 400;
+      li.height = liH;
       safeDestroyChart(li);
       try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
     }
@@ -5546,24 +5557,24 @@ window.generateFinanceReport = async function(event) {
   if(inputStep2) inputStep2.style.display = 'none';
   if(resultStep2) resultStep2.style.display = 'block';
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
-  // canvas 크기 확보 후 차트 렌더링 (resultStep display:block 후 브라우저 레이아웃 완료 대기)
+  // canvas 크기 강제 지정 후 차트 렌더링 (탭 숨김 상태에서도 동작하도록)
   setTimeout(function(){
     var li = document.getElementById('rp-linechart');
-    if (li && li.offsetHeight === 0) {
-      // offsetHeight=0이면 레이아웃 미완료 → 추가 대기 후 재시도
-      setTimeout(function(){
-        var li2 = document.getElementById('rp-linechart');
-        if (li2 && li2.offsetHeight === 0) {
-          // 강제로 높이 설정 후 차트 초기화
-          li2.style.height = '198px';
-          li2.height = 198;
-        }
-        initReportCharts(rev);
-      }, 600);
-    } else {
-      initReportCharts(rev);
+    if (li) {
+      // 부모 컨테이너 높이 강제 지정 (숨겨진 탭 내부여도 렌더링 가능하게)
+      var liParent = li.parentElement;
+      if (liParent) {
+        var targetH = liParent.style.height || '198px';
+        liParent.style.height = targetH;
+        liParent.style.minHeight = targetH;
+      }
+      li.style.width = '100%';
+      li.style.height = '198px';
+      li.width = 400;
+      li.height = 198;
     }
-  }, 300);
+    initReportCharts(rev);
+  }, 200);
 };
 
 // 보고서 면책 문구 추가 공통 함수
@@ -5624,7 +5635,15 @@ window.generateAnyReport = async function(type, version, event) {
     if (scriptBtn) { scriptBtn.disabled = false; scriptBtn.style.opacity = '1'; }
   }
   addDisclaimerToReport(cfg.contentAreaId);
-  setTimeout(function(){ initReportCharts(rev); }, 150);
+  setTimeout(function(){
+    var li = document.getElementById('rp-linechart');
+    if (li) {
+      var liParent = li.parentElement;
+      if (liParent) { liParent.style.height = liParent.style.height || '198px'; liParent.style.minHeight = liParent.style.height; }
+      li.style.width = '100%'; li.style.height = '198px'; li.width = 400; li.height = 198;
+    }
+    initReportCharts(rev);
+  }, 200);
   // 사업계획서 landscape 미리보기 자동 스케일 조정
   if (cfg.landscape) {
     setTimeout(function() {
@@ -5685,13 +5704,12 @@ window.viewReport = function(id) {
       _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
       setTimeout(function(){
         var li = document.getElementById('rp-linechart');
-        if (li && li.offsetHeight === 0) {
-          li.style.height = '198px';
-          li.height = 198;
-          setTimeout(function(){ initReportCharts(rev); }, 400);
-        } else {
-          initReportCharts(rev);
+        if (li) {
+          var liParent = li.parentElement;
+          if (liParent) { liParent.style.height = liParent.style.height || '198px'; liParent.style.minHeight = liParent.style.height; }
+          li.style.width = '100%'; li.style.height = '198px'; li.width = 400; li.height = 198;
         }
+        initReportCharts(rev);
       }, 200);
       // landscape 미리보기 자동 스케일
       if (cfg.landscape) {
