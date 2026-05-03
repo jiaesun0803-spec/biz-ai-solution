@@ -3235,6 +3235,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
           + (f.limit==='심사불가' ? '<div style="font-size:10px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">🛑 자본잠식 상태 — 해당 기관 심사 불가. 자본 확충 또는 재무 개선 선행 필요'+(f.limitNote&&f.limitNote!=='심사불가 상태'?' | '+f.limitNote:'')+'</div>' : (f.limitNote ? '<div style="font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">⚠ '+f.limitNote+'</div>' : ''))
           + '<div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:8px">'+(isTop?'우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함':'추가 검토 가능한 자금으로 조건 충족 시 신청 가능함')+'</div>'
           + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+';font-size:10px">'+t+'</span>'; }).join('')+'</div>'
+          + (f.consultNote ? '<div style="font-size:10px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:4px 8px;margin-top:6px;line-height:1.5;word-break:keep-all">📋 '+f.consultNote+'</div>' : '')
           + '</div>';
       }).join('')
     + '</div>'
@@ -4563,7 +4564,8 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var isLocalCreator = ind.includes('로컈크리에이터') || ind.includes('지역특산') || ind.includes('로컈');
   // 중진공 접수 가능 업종 여부 (제조업 외 확대 조건 포함)
   // 2026년 기준: 중진공 접수 가능 업종 (제조업은 무조건 가능, 비제조업은 혁신성장분야 + isLargeScale 조건 필요)
-  var isJjgEligible = isManu || isIT || isKnowledgeSvc || isSmartLogistics || isLocalCreator || (isLargeScale && (isService || isTour || ind.includes('보건') || ind.includes('교육')));
+  // [2×2 단순화] 비제조업에서 중진공 원칙적 배제 → isJjgEligible은 제조/IT 계열만
+  var isJjgEligible = isManu || isIT || isKnowledgeSvc || isSmartLogistics || isLocalCreator;
   var isRoot = ind.includes('주조') || ind.includes('금형') || ind.includes('소성가공') || ind.includes('용접') || ind.includes('표면처리') || ind.includes('열처리');
   var isMaterial = ind.includes('소재') || ind.includes('부품') || ind.includes('장비') || ind.includes('전기전자') || ind.includes('자동차') || ind.includes('기계') || ind.includes('금속') || ind.includes('화학');
   var isExport = ind.includes('수출') || ind.includes('무역');
@@ -4715,19 +4717,16 @@ function getIndustryCerts(ind, nm, itm, cData) {
       // 5순위: 업종 특화 (K-STARTUP 등)
       _f.push({rank:5,name:'창업진흥원 K-Startup 지원',limit:'1억',tags:['스타트업 특화','비대면 심사','성장성 평가']});
     } else {
-      // ===== 비제조업 (서비스·도소매·관광 등) =====
-      // 1순위: 중진공 (isLargeScale + isJjgEligible + isJjgCredit 모두 충족 시만 추천, 2026년 기준)
-      if (isLargeScale && isJjgEligible && isJjgCredit) {
-        _f.push({rank:1,name:'중진공 혁신창업사업화자금',limit:'1억',tags:['금리 2.5%','창업 7년 미만','성장성 평가']});
-      }
-      // 2순위: 신용보증기금(신보) — 비제조업 주력 기관
+      // ===== 비제조업 (서비스·도소매·관광 등) — 2×2 단순화 매트릭스 적용 =====
+      // [핵심 원칙] 비제조업에서 중진공·기보는 원칙적으로 추천하지 않음
+      // 예외 조건(매출 50억↑ + 업력 7년↓ + NICE 750점↑)은 컨설턴트 참고 메모로만 안내
+      // 1순위: 신용보증기금(신보) — 비제조업 주력 기관
       if (hasShinboLoan || (!hasKiboLoan && !hasShinboLoan)) {
-        // 신보 이용 중이거나 둘 다 없으면 신보 추천
         var _shinboTag2 = isShinboCredit ? '기존 신보 거래 우대' : 'KCB/NICE 800점 권장';
-        _f.push({rank:_f.length+1,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTag2,'95% 보증']});
+        _f.push({rank:1,name:'신용보증기금(신보) 특례보증',limit:'2억',tags:['보증료 0.5%',_shinboTag2,'95% 보증']});
       } else if (hasKiboLoan) {
-        // 기보 이용 중이면 기보 추천
-        _f.push({rank:_f.length+1,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
+        // 기보 이용 중이면 기보 추천 (기존 거래 유지 목적)
+        _f.push({rank:1,name:'기술보증기금(기보) 기술보증',limit:'3억',tags:['보증료 0.5%','기존 기보 거래 우대','90% 보증']});
       }
       // 3순위: 신용보증재단 (항상 가능)
       _f.push({rank:_f.length+1,name:'신용보증재단(지역신보) 보증',limit:'5천만',tags:['보증료 0.8%','지역 맞춤형','신보·기보 병행 가능']});
@@ -4747,6 +4746,19 @@ function getIndustryCerts(ind, nm, itm, cData) {
     // 순위 재정렬
     _f.forEach(function(x,i){x.rank=i+1;});
     funds = _f.slice(0,5);
+    // [비제조업 전용] 예외 조건 충족 시 컨설턴트 참고 메모 삽입
+    // 중진공 조건부 검토 가능 여부를 별도 태그로 안내 (추천 목록에는 포함하지 않음)
+    var _isNonMfg = !(isManu || isRoot || isMaterial || isIT || isKnowledgeSvc);
+    if (_isNonMfg && isLargeScale && isJjgEligible && isJjgCredit) {
+      funds = funds.map(function(f, idx) {
+        if (idx === funds.length - 1) {
+          return Object.assign({}, f, {
+            consultNote: '※ 컨설턴트 참고: 매출 50억↑·업력 7년↓·NICE 750점↑ 조건 충족 — 중진공 조건부 검토 가능'
+          });
+        }
+        return f;
+      });
+    }
   }
 
   // ===== 신용점수 기반 후처리 필터 (2026년 기관별 심사기준 적용) =====
