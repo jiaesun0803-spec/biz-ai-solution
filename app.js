@@ -1187,7 +1187,7 @@ window.saveCompanyData=function(){
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
   const address=document.getElementById('biz_address')?.value||'-';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,salesChannel:document.querySelector('input[name="sales_channel"]:checked')?.value||'',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',corpNo:document.getElementById('corp_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,salesChannel:document.querySelector('input[name="sales_channel"]:checked')?.value||'',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
@@ -2017,7 +2017,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     // 최대 한도 강조 박스 (중앙 전체 너비)
     +'<div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">'
     +'<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:6px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +'<div style="font-size:36px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">최대 +'+(totalC2>0?totalC2+'억원':'6.5억원')+'</div>'
+    +'<div style="font-size:36px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">최대 +'+(totalC2>0?totalC2+'억원':'2억원')+'</div>'
     +'<div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:6px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
     +'</div>'
     // 취득 우선순위 전략 (하단 2열)
@@ -2653,12 +2653,12 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'<div class="rp-colF">'
     +'<div class="rp-g2" style="margin-bottom:8px">'
-    +rpMC('현재',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s0),'/월',color)
-    +rpMC('6개월',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s1),'+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('현재',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s0),'/월',color)
+    +rpMC('6개월',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s1),'+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
     +'</div>'
     +'<div class="rp-g2">'
-    +rpMC('1년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s2),'+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
-    +rpMC('2년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;return ok+'억'+(rem>0?' '+Math.round(rem/1000)+'천만원':'억원');}return Math.round(m/1000)+'천만원';  })(sim.s3),'+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('1년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s2),'+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('2년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s3),'+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
     +'</div>'
     +'<div style="font-size:11px;color:#64748b;padding:9px;background:#f0fdfa;border-radius:7px;margin-top:8px">\u203b \uc5c5\uc885 \ud3c9\uade0 \uc131\uc7a5\ub960 \ub2ec\uc131 \uac00\uc815 \uc2dc \ucd94\uc815\uac12 (\uc804\uc81c: \uc6b4\uc601 \uc804\ub7b5 \uc774\ud589, \uacc4\uc808\uc131 \ubc18\uc601, \uacbd\uc7c1 \ud658\uacbd \uc720\uc0ac \uc218\uc900 \uc720\uc9c0)</div>'
     +'</div>'
@@ -2985,7 +2985,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     '소진공': 70000000,          // 일반 경영안정자금 최대 7천만
     '소진공성장': 200000000,     // 성장촉진자금 최대 2억
     '소진공소공인': 500000000,   // 소공인특화자금 최대 5억
-    '소진공저신용': 70000000,    // 저신용 최대 7천만
+    '소진공저신용': 30000000,    // 신용취약자금 최대 3천만
     '중진공': 500000000,         // 운전자금 최대 5억 (시설 60억이나 운전 기준 적용)
     '신보': 3000000000,          // 일반 보증 최대 30억
     '기보': 3000000000,          // 일반 보증 최대 30억
@@ -3020,7 +3020,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   function getOrgKey(fname) {
     if (!fname) return 'default';
     var n = fname;
-    if (n.includes('저신용') || n.includes('소상공인 전용')) return '소진공저신용';
+    if (n.includes('저신용') || n.includes('소상공인 전용') || n.includes('신용취약')) return '소진공저신용';
     if (n.includes('소공인') || n.includes('소공인특화')) return '소진공소공인';
     if (n.includes('성장촉진')) return '소진공성장';
     if (n.includes('소진공') || n.includes('소상공인')) return '소진공';
@@ -3176,7 +3176,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     '<div class="rp-section" style="margin-bottom:12px;background:#fff7ed;border-color:#fed7aa">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
     +   '<div><div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:4px">추천 우선순위 전략</div><div style="font-size:13px;color:#7c2d12">가장 신청 난도가 낮은 자금부터 확보하고, 인증 취득 후 고한도 보증 상품으로 확장하는 구조임</div></div>'
-    +   '<div style="text-align:right"><div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div><div style="font-size:10.5px;color:#92400e;margin-top:3px;line-height:1.5">'+_limitBasis+'</div></div>'
+    +   '<div style="text-align:left"><div style="font-size:26px;font-weight:900;color:'+color+'">'+totalRange+'</div><div style="font-size:10.5px;color:#92400e;margin-top:3px;line-height:1.5">'+_limitBasis+'</div></div>'
     + '</div>'
     + '</div>'
     + '<div class="rp-g2" style="margin-bottom:12px">'
@@ -3356,7 +3356,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
     var n = parseFloat(String(c.amount || '').replace(/[^0-9.]/g, ''));
     return s + (isNaN(n) ? 0 : n);
   }, 0);
-  var _certTotalStr = _certTotalNum > 0 ? '최대 +' + _certTotalNum + '억원' : '최대 +6억원';
+  var _certTotalStr = _certTotalNum > 0 ? '최대 +' + _certTotalNum + '억원' : '최대 +2억원';
   // 현재 보유 인증 목록
   var _ownedCerts = (cData.certList || []);
   // 인증별 카드 색상
@@ -3378,27 +3378,27 @@ function buildFundHTML(d, cData, rev, dateStr) {
   if (_isRootInd) {
     _certStrategy = [
       '1순위: 뿌리기업확인서 (약 2주) — 중진공 뿌리기업 전용자금 신청 자격 즉시 확보, 발급 무료',
-      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 확보 가능',
+      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 7천만 확보 가능',
       '3순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 자격 부여',
       '인증 준비는 뿌리기업확인서 → 벤처 → 이노비즈 순서로 진행하여 자금 조달 속도를 극대화할 것'
     ];
   } else if (_isFoodInd) {
     _certStrategy = [
       '1순위: HACCP 인증 — 대형마트·단체급식 납품 채널 확보, 중진공 식품기업 자금 한도 상향',
-      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 확보 가능',
+      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 7천만 확보 가능',
       '3순위: ISO 22000 (1년 내) — 글로벌 식품 안전 표준, 해외 수출 신뢰도 확보',
       '인증 준비는 HACCP → 벤처 → ISO 22000 순서로 진행하여 채널 확대와 자금 조달을 병행할 것'
     ];
   } else if (_isITInd) {
     _certStrategy = [
-      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 즉시 확보 가능',
+      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 7천만 즉시 확보 가능',
       '2순위: 기업부설연구소 (3개월) — R&D 세액공제 25% + 기보 기술보증 우대 동시 적용',
       '3순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 자격 부여',
       '인증 준비는 벤처 → 기업부설연구소 → 이노비즈 순서로 진행하여 자금 조달 속도를 극대화할 것'
     ];
   } else {
     _certStrategy = [
-      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 즉시 확보 가능',
+      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 7천만 즉시 확보 가능',
       '2순위: 이노비즈/메인비즈 인증 (1년 내) — 중진공 기술개발자금 신청 자격 + 우대 금리 적용',
       '3순위: 기업부설연구소 (중기) — R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',
       '인증 준비는 벤처 → 이노비즈/메인비즈 → 기업부설연구소 순서로 진행하여 자금 조달을 극대화할 것'
@@ -3549,10 +3549,10 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
           + '<tr><th style="color:'+color+'">기업명</th><td colspan="3">'+cData.name+'</td></tr>'
           + '<tr><th style="color:'+color+'">대표자</th><td>'+(cData.rep||'-')+'</td><th style="color:'+color+'">업종</th><td>'+(cData.industry||'-')+'</td></tr>'
           + '<tr><th style="color:'+color+'">설립일</th><td>'+(cData.bizDate||'-')+'</td><th style="color:'+color+'">상시근로자</th><td>'+(cData.empCount||'-')+'명</td></tr>'
-          + '<tr><th style="color:'+color+'">사업자번호</th><td>'+(cData.bizNo||'-')+'</td><th style="color:'+color+'">법인번호</th><td>'+(cData.corpNo||'-')+'</td></tr>'
-          + '<tr><th style="color:'+color+'">사업장주소</th><td colspan="3">'+(cData.addr||'-')+'</td></tr>'
+          + '<tr><th style="color:'+color+'">사업자번호</th><td>'+(cData.bizNum||cData.bizNo||'-')+'</td><th style="color:'+color+'">법인번호</th><td>'+(cData.corpNo||'-')+'</td></tr>'
+          + '<tr><th style="color:'+color+'">사업장주소</th><td colspan="3">'+(cData.address||cData.addr||'-')+'</td></tr>'
           + '<tr><th style="color:'+color+'">수출여부</th><td>'+(cData.exportYn||'해당없음')+'</td><th style="color:'+color+'">전년 매출</th><td>'+fKRW(rev.y25)+'</td></tr>'
-          + '<tr><th style="color:'+color+'">특허·인증</th><td colspan="3">'+(cData.certs||cData.coreItem||'-')+'</td></tr>'
+          + '<tr><th style="color:'+color+'">특허·인증</th><td colspan="3">'+(cData.certs||(cData.certList&&cData.certList.length?cData.certList.join(', '):null)||cData.coreItem||'-')+'</td></tr>'
           + '<tr><th style="color:'+color+'">핵심아이템</th><td colspan="3">'+(cData.coreItem||'-')+'</td></tr>'
           + '</table>'
         )
@@ -3754,7 +3754,7 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '<div class="rp-colF">'
     +   '<div class="rp-section" style="background:#f0fdf4;border-color:#bbf7d0;margin-bottom:10px;text-align:center">'
     +     '<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:8px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +     '<div style="font-size:32px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalBp>0?totalBp+'억원':'6억5천만원')+'</div>'
+    +     '<div style="font-size:32px;font-weight:900;color:'+color+';line-height:1.2">최대 +'+(totalBp>0?totalBp+'억원':'2억원')+'</div>'
     +     '<div style="font-size:13px;color:#64748b;margin-top:6px">현재 신청 한도 + 인증 취득 후 추가 조달 합계 기준</div>'
     +   '</div>'
     +   rpSec('마케팅 및 영업 전략', color,
@@ -3785,35 +3785,16 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {src:'기보 기술 보증', rate:'3.5%', method:'3년 분할 상환', resource:'공공 납품 매출'}
   ];
 
-  var p7 = rpPageAuto(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 집행 구조 · 상환 계획',color,
-    // 상단: 자금조달구조 + 배분비율 (2열)
-    '<div class="rp-2col" style="margin-bottom:10px">'
-    + '<div class="rp-col50">'
-    +   rpSec('자금 조달 구조 (총 '+nf+')', color,
-          fundSources.map(function(s){
-            return '<div style="border:1px solid #e2e8f0;border-left:5px solid '+s.color+';border-radius:8px;padding:9px 12px;margin-bottom:7px;background:white">'
-              + '<div style="display:flex;justify-content:space-between;align-items:center">'
-              + '<div><div style="font-size:11.5px;font-weight:700;color:#1e293b">'+s.name+'</div><div style="font-size:10.5px;color:#64748b;margin-top:2px">'+s.desc+'</div></div>'
-              + '<div style="font-size:18px;font-weight:900;color:'+s.color+'">'+s.amount+'</div>'
-              + '</div></div>';
-          }).join('')
-          + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 12px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">'
-          + '<span style="font-size:12px;font-weight:700;color:#15803d">합계 조달 목표</span>'
-          + '<span style="font-size:20px;font-weight:900;color:'+color+'">'+nf+'</span>'
-          + '</div>'
-        )
-    + '</div>'
-    + '<div class="rp-colF">'
-    +   rpSec('자금 배분 비율', color,
+  var p7 = rpPageAuto(7,'자금 조달 및 사용 계획','필요 자금 '+nf+' · 자금 배분 비율 · 집행 계획',color,
+    // 자금 배분 비율 (전체 너비)
+    rpSec('자금 배분 비율', color,
           (fundRows||[]).map(function(r,idx){
             var barColor = [color,'#2563eb','#7c3aed','#ea580c'][idx%4];
             var ratioNum = parseFloat(String(r.ratio||'0').replace(/[^0-9.]/g,'')) || 0;
             return rpHB(r.item, ratioNum, r.ratio, barColor);
           }).join('')
         )
-    + '</div>'
-    + '</div>'
-    // 하단: 자금 집행 계획표 (전체 너비)
+    // 자금 집행 계획표 (전체 너비)
     + rpSec('자금 집행 계획표', color,
         '<table class="rp-ftb" style="font-size:12px;width:100%"><thead><tr>'
         + '<th style="text-align:left;width:16%">집행항목</th>'
@@ -4361,7 +4342,7 @@ function buildFundPrompt(cData, fRev) {
     +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+(subInd?'(세부:'+subInd+')':'')+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote+creditNote+overdueNote+bizYrsNote
     +jjgNote+certRecNote
     +'\n[운전자금 우선 원칙] 모든 자금 추천은 운전자금 위주로 하되, 시설자금은 대표자가 명확히 요청할 경우에만 언급할 것'
-    +'\n[2026년 기관별 심사기준] 중진공: NICE 750점 이상 권장, 운전자금 매출 1/3~1/4, 시설자금 견적서 80~100% | 기보: 기술력 우선(연체/체납 시 즉시 부결), B등급 이상, 자본잠식 없어야 함 | 신보: KCB/NICE 800점 이상 선호, 매출 1/4~1/6 한도 | 소진공: 839점 이하 저신용 전용자금 별도 배정, 다중송무자 제한';
+    +'\n[2026년 기관별 심사기준] 중진공: NICE 750점 이상 권장, 운전자금 매출 1/3~1/4, 시설자금 견적서 80~100% | 기보: 기술력 우선(연체/체납 시 즉시 부결), B등급 이상, 자본잠식 없어야 함 | 신보: KCB/NICE 800점 이상 선호, 매출 1/4~1/6 한도 | 소진공: 839점 이하 신용취약자금 별도 배정(최대 3천만), 다중채무자 제한';
 }
 
 function buildFinancePrompt(cData, fRev) {
@@ -4518,14 +4499,14 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var isTour = ind.includes('관광') || ind.includes('숙박') || ind.includes('여행');
 
   // 공통 인증 (벤처기업)
-  certs.push({name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 2억 확보 가능',amount:'+2억',period:'6개월 내'});
+  certs.push({name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
 
   if (isManu || isIT || ind.includes('바이오') || isEco) {
-    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
   } else if (isService || isRetail || isTour) {
-    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 마케팅, 판로 개척 및 금융권 대출 금리 우대',amount:'+2억',period:'1년 내'});
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 마케팅, 판로 개척 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
   } else {
-    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+3억',period:'1년 내'});
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
   }
 
   if (isFood) {
@@ -4535,13 +4516,13 @@ function getIndustryCerts(ind, nm, itm, cData) {
     certs.push({name:'뿌리기업 확인',effect:nm+'의 핵심뿌리기술 인정 — 외국인 근로자 고용 한도 확대 및 기술개발 사업 우선 선정',amount:'가점↑',period:'6개월 내'});
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   } else if (isMaterial) {
-    certs.push({name:'소부장 전문기업',effect:nm+'의 소재·부품·장비 기술력 입증 — 특화 R&D 자금 및 산업은행 금융 지원',amount:'+5억',period:'1년 내'});
+    certs.push({name:'소부장 전문기업',effect:nm+'의 소재·부품·장비 기술력 입증 — 특화 R&D 자금 및 산업은행 금융 지원',amount:'+1.7억',period:'1년 내'});
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   } else if (isIT) {
     certs.push({name:'성능인증(EPC)',effect:nm+'의 우수 기술 제품 인증 — 공공기관 수의계약 및 의무구매 비중 적용',amount:'매출↑',period:'1년 내'});
-    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
   } else {
-    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+1.5억',period:'세액공제 병행'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   }
 
@@ -4708,14 +4689,14 @@ function getIndustryCerts(ind, nm, itm, cData) {
   } else if (isCreditWeak) {
     // 신용 600점 미만: 기보·신보·중진공 제외, 미소금융 + 소진공 저신용 전용 상품 추가
     funds = funds.filter(function(f){ return !f.name.includes('기보') && !f.name.includes('신보') && !f.name.includes('중진공'); });
-    funds.unshift({rank:1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
+    funds.unshift({rank:1,name:'소진공 신용취약자금',limit:'3천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
     funds.unshift({rank:1,name:'미소금융 창업·운영자금',limit:'2천만',tags:['무담보·무보증','신용취약자 전용','600점 미만 가능']});
     funds = funds.slice(0,5);
   } else if (isCreditLow) {
     // 신용 600~699점: 기보 제외, 신보 조건부 유지, 소진공 저신용 전용 추가
     funds = funds.filter(function(f){ return !f.name.includes('기보'); });
     if (isSjgLowCredit && !funds.some(function(f){ return f.name.includes('저신용'); })) {
-      funds.unshift({rank:1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
+      funds.unshift({rank:1,name:'소진공 신용취약자금',limit:'3천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
     }
     if (!funds.some(function(f){ return f.name.includes('신보'); })) {
       funds.push({rank:funds.length+1,name:'신보 창업기업 특례보증',limit:'1억',tags:['보증료 0.5%','저신용 조건부','심사 강화']});
@@ -4724,7 +4705,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
   } else if (isSjgLowCredit && !isShinboCredit) {
     // 신용 700~799점 (신보 800점 미만): 소진공 저신용 전용 자금 안내 추가
     if (!funds.some(function(f){ return f.name.includes('저신용'); })) {
-      funds.push({rank:funds.length+1,name:'소진공 저신용 소상공인 전용자금',limit:'7천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
+      funds.push({rank:funds.length+1,name:'소진공 신용취약자금',limit:'3천만',tags:['2026년 별도 배정','839점 이하 전용','온라인 신청']});
     }
     funds = funds.slice(0,5);
   }
@@ -5844,8 +5825,8 @@ function buildFundCriteriaHTML() {
     <div class="fc-org sjg">
       <div class="fc-org-hd"><div class="fc-org-ic sjg">🏪</div><div><div class="fc-org-nm">소진공</div><div class="fc-org-full">소상공인시장진흥공단</div></div></div>
       <div class="fc-org-bd">
-        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>2026년 신설</strong> <span class="fc-chip sjg">839점 이하</span> 저신용 전용자금 별도 배정 — 일반 자금과 분리 운영</div></div>
-        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>한도</strong> 일반 7천만원 / 저신용 전용 7천만원 / 성장촉진자금 1억</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>2026년 신설</strong> <span class="fc-chip sjg">839점 이하</span> 신용취약자금 별도 배정 — 일반 자금과 분리 운영, 최대 3천만원</div></div>
+        <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>한도</strong> 일반 7천만원 / 신용취약자금 3천만원 / 성장촉진자금 1억</div></div>
         <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>업력 조건</strong> 성장촉진자금: 창업 <strong>3년 이내</strong> / 일반경영안정자금: 업력 무관</div></div>
         <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>제한 대상</strong> 다중채무자(3개 이상 금융기관 동시 연체) 제한 / 유흥업종 제외</div></div>
         <div class="fc-cr"><div class="fc-dot sjg"></div><div class="fc-ct"><strong>금리</strong> 정책금리 연 2.0~3.0% / 온라인 신청 가능 / 처리 기간 2~4주</div></div>
