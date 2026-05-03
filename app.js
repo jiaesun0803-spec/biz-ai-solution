@@ -3501,7 +3501,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + s4 + '</div>';
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s4 + s3 + '</div>';
 }
 
 // ===========================
