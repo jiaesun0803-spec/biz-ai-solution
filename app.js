@@ -3323,7 +3323,130 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + '</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + '</div>';
+  // ===== S4: 인증 취득 시 추가자금 확보 전략 =====
+  var _fundCerts = _industryCerts.certs || [];
+  // 인증별 추가 한도 합산
+  var _certTotalNum = _fundCerts.reduce(function(s, c) {
+    var n = parseFloat(String(c.amount || '').replace(/[^0-9.]/g, ''));
+    return s + (isNaN(n) ? 0 : n);
+  }, 0);
+  var _certTotalStr = _certTotalNum > 0 ? '최대 +' + _certTotalNum + '억원' : '최대 +6억원';
+  // 현재 보유 인증 목록
+  var _ownedCerts = (cData.certList || []);
+  // 인증별 카드 색상
+  var _certBgs  = ['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed','#f0fdf4','#eff6ff'];
+  var _certBds  = ['#86efac','#93c5fd','#d8b4fe','#fdba74','#86efac','#93c5fd'];
+  var _certTcs  = ['#15803d','#1d4ed8','#6d28d9','#c2410c','#15803d','#1d4ed8'];
+  var _certIcos = ['🏆','📜','🔬','✅','🎯','⭐'];
+  // 현재 미보유 인증만 추천 (보유 인증은 제외)
+  var _recCerts = _fundCerts.filter(function(c) {
+    return !_ownedCerts.some(function(o) { return o.includes(c.name.split(' ')[0]); });
+  });
+  if (_recCerts.length === 0) _recCerts = _fundCerts; // 전부 보유 시 전체 표시
+
+  // 인증 취득 우선순위 전략 텍스트 (업종별 동적 생성)
+  var _certStrategy = [];
+  var _isRootInd = (cData.industry||'').includes('금형')||(cData.industry||'').includes('주조')||(cData.industry||'').includes('뿌리')||(cData.subIndustry||'').includes('금형')||(cData.subIndustry||'').includes('주조');
+  var _isFoodInd  = (cData.industry||'').includes('식품')||(cData.industry||'').includes('음식')||(cData.industry||'').includes('외식');
+  var _isITInd    = (cData.industry||'').includes('IT')||(cData.industry||'').includes('소프트')||(cData.industry||'').includes('SW')||(cData.industry||'').includes('플랫폼');
+  if (_isRootInd) {
+    _certStrategy = [
+      '1순위: 뿌리기업확인서 (약 2주) — 중진공 뿌리기업 전용자금 신청 자격 즉시 확보, 발급 무료',
+      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 확보 가능',
+      '3순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 자격 부여',
+      '인증 준비는 뿌리기업확인서 → 벤처 → 이노비즈 순서로 진행하여 자금 조달 속도를 극대화할 것'
+    ];
+  } else if (_isFoodInd) {
+    _certStrategy = [
+      '1순위: HACCP 인증 — 대형마트·단체급식 납품 채널 확보, 중진공 식품기업 자금 한도 상향',
+      '2순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 확보 가능',
+      '3순위: ISO 22000 (1년 내) — 글로벌 식품 안전 표준, 해외 수출 신뢰도 확보',
+      '인증 준비는 HACCP → 벤처 → ISO 22000 순서로 진행하여 채널 확대와 자금 조달을 병행할 것'
+    ];
+  } else if (_isITInd) {
+    _certStrategy = [
+      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 즉시 확보 가능',
+      '2순위: 기업부설연구소 (3개월) — R&D 세액공제 25% + 기보 기술보증 우대 동시 적용',
+      '3순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 자격 부여',
+      '인증 준비는 벤처 → 기업부설연구소 → 이노비즈 순서로 진행하여 자금 조달 속도를 극대화할 것'
+    ];
+  } else {
+    _certStrategy = [
+      '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 2억 즉시 확보 가능',
+      '2순위: 이노비즈/메인비즈 인증 (1년 내) — 중진공 기술개발자금 신청 자격 + 우대 금리 적용',
+      '3순위: 기업부설연구소 (중기) — R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',
+      '인증 준비는 벤처 → 이노비즈/메인비즈 → 기업부설연구소 순서로 진행하여 자금 조달을 극대화할 것'
+    ];
+  }
+
+  var s4 = fundCat('인증 취득 시 추가자금 확보 전략','현재 미보유 인증 · 취득 후 추가 조달 한도 · 우선순위',
+    // 상단 배너: 인증 완료 시 총 추가 조달 가능 한도
+    '<div style="background:linear-gradient(135deg,#ea580c 0%,#f97316 100%);border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px">'  
+    + '<div>'  
+    +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:4px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'  
+    +   '<div style="font-size:32px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">' + _certTotalStr + '</div>'  
+    +   '<div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:4px">아래 인증 취득 완료 시 추가 확보 가능한 한도 기준</div>'  
+    + '</div>'  
+    + '<div style="text-align:right">'  
+    +   '<div style="font-size:11px;color:rgba(255,255,255,0.8);margin-bottom:6px">현재 조달 가능 범위</div>'  
+    +   '<div style="font-size:18px;font-weight:800;color:#ffffff">' + totalRange + '</div>'  
+    +   '<div style="font-size:10px;color:rgba(255,255,255,0.65);margin-top:3px">인증 취득 후 최대 ' + (totalRange + ' + ' + _certTotalStr) + '</div>'  
+    + '</div>'  
+    + '</div>'
+    // 인증 카드 그리드
+    + '<div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0">📜 추천 인증 목록 (우선순위 순) — 취득 시 추가 정책자금 한도 확보</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">'
+    + _recCerts.map(function(c, i) {
+        var bg  = _certBgs[i % 6];
+        var bd  = _certBds[i % 6];
+        var tc  = _certTcs[i % 6];
+        var ico = _certIcos[i % 6];
+        var amtNum = parseFloat(String(c.amount || '').replace(/[^0-9.]/g, ''));
+        var amtColor = (!isNaN(amtNum) && amtNum > 0) ? '#ea580c' : '#64748b';
+        return '<div style="background:white;border:1.5px solid ' + bd + ';border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">'
+          +   '<div style="width:30px;height:30px;border-radius:7px;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">' + ico + '</div>'
+          +   '<div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.3">' + c.name + '</div>'
+          + '</div>'
+          + '<div style="font-size:10.5px;color:#64748b;line-height:1.55">' + c.effect + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:6px;border-top:1px solid #f1f5f9">'
+          +   '<span style="font-size:10px;color:#94a3b8">' + (c.period || '취득 후 적용') + '</span>'
+          +   '<span style="font-size:13px;font-weight:800;color:' + amtColor + '">' + (c.amount || '한도 우대') + '</span>'
+          + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    // 취득 우선순위 전략
+    + '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px;margin-bottom:14px">'
+    +   '<div style="font-size:12px;font-weight:700;color:#ea580c;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #fed7aa">🎯 인증 취득 우선순위 전략</div>'
+    +   _certStrategy.map(function(t) {
+          return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:#7c2d12;line-height:1.6;margin-bottom:6px">'
+            + '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#ea580c"></div>'
+            + '<span>' + t + '</span>'
+            + '</div>';
+        }).join('')
+    + '</div>'
+    // 인증별 담당 기관 안내
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">'
+    + [
+        {ico:'🏛', title:'중진공 연계 인증', items:['뿌리기업확인서 → 중진공 뿌리기업 전용자금','벤처·이노비즈 → 혁신성장유형 운전자금','소부장확인서 → 소부장 특별자금'], color:'#0369a1', bg:'#eff6ff', bd:'#bfdbfe'},
+        {ico:'🔬', title:'기보·신보 연계 인증', items:['벤처기업 인증 → 기보 우대보증 + 신보 특례보증','기업부설연구소 → 기보 기술보증 우대 적용','이노비즈 인증 → 기보 기술등급 우대 + 신보 한도 확대'], color:'#0f766e', bg:'#f0fdfa', bd:'#99f6e4'},
+        {ico:'📋', title:'소진공·지역신보 연계', items:['벤처·메인비즈 → 소진공 성장촉진자금 우대','HACCP → 식품기업 정책자금 한도 상향','업종별 인증 → 지역신보 특례보증 가점'], color:'#15803d', bg:'#f0fdf4', bd:'#86efac'}
+      ].map(function(box) {
+          return '<div style="background:' + box.bg + ';border:1.5px solid ' + box.bd + ';border-radius:10px;padding:12px 14px">'
+            + '<div style="font-size:11px;font-weight:800;color:' + box.color + ';margin-bottom:8px">' + box.ico + ' ' + box.title + '</div>'
+            + box.items.map(function(it) {
+                return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:10.5px;color:#374151;line-height:1.55;margin-bottom:5px">'
+                  + '<div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:' + box.color + '"></div>'
+                  + '<span>' + it + '</span>'
+                  + '</div>';
+              }).join('')
+            + '</div>';
+        }).join('')
+    + '</div>'
+  );
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + s4 + '</div>';
 }
 
 // ===========================
