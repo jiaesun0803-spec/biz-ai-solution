@@ -2884,7 +2884,24 @@ function buildFundHTML(d, cData, rev, dateStr) {
   ];
   var score  = d.score || (_cs>0 ? Math.min(95,Math.max(40,Math.round(_cs/10-5))) : 78);
   var gda    = Math.round((score/100)*151);
-  var funds  = d.funds||_industryCerts.funds;
+  // AI 환각 방지: _industryCerts.funds의 기관 구성을 강제 (AI가 임의로 중진공 등을 추가하는 것 차단)
+  var _baseFunds = _industryCerts.funds || [];
+  var _aiFunds = d.funds || [];
+  var funds = _baseFunds.map(function(bf) {
+    // AI 응답에서 같은 기관명을 찾음
+    var match = _aiFunds.find(function(af) {
+      var bn = bf.name.split('(')[0].trim().substring(0,2);
+      var an = (af.name||'').split('(')[0].trim().substring(0,2);
+      return bn === an;
+    });
+    if (match) {
+      // AI가 생성한 태그나 한도가 있으면 병합하되, 기관명과 기본 틀은 유지
+      return Object.assign({}, bf, { tags: match.tags || bf.tags });
+    }
+    return bf;
+  });
+  if (funds.length === 0) funds = _aiFunds; // fallback
+
   // 심사불가(자본잠식) 펀드는 한도 계산에서 제외
   var fundsForCalc = funds.filter(function(f){ return f && f.limit && f.limit !== '심사불가'; });
   // totalRange: funds 기반 동적 계산
@@ -4389,7 +4406,7 @@ function buildFundPrompt(cData, fRev) {
     +'"rejection_checklist":["세금 체납 절대 불가 (국세·지방세·4대보험료 완납 후 1개월 경과 권장)","가지급금 정리 (대표자 회사돈 차용 가지급금 감점 최대 요인)","자본잠식 해결 (증자 또는 이익잉여금 확보로 자본총계 유지)","최근 3개월 연체 기록 없어야 함 (단 하루라도 3개월 이내 연체 시 심사 불리)","사업장·주거지 압류 없어야 함 (대표자 개인 소유 부동산 가압류·압류 시 100% 부결)"]}'
     +'\n\n[기업] 기업명:'+nm+', 업종:'+ind+(subInd?'(세부:'+subInd+')':'')+', 필요자금:'+nf+', 전년매출:'+r25+', 금년예상:'+rExp+', [대출조건] '+loanNote+creditNote+overdueNote+bizYrsNote
     +jjgNote+certRecNote
-    +'\n[운전자금 우선 원칙] 모든 자금 추천은 운전자금 위주로 하되, 시설자금은 대표자가 명확히 요청할 경우에만 언급할 것'
+    +'\n[운전자금 우선 원칙] 모든 자금 추천은 운전자금 위주로 하되, 시설자금은 대표자가 명확히 요청할 경우에만 언급할 것\n[절대 규칙] 제공된 funds 배열에 없는 기관(예: 도소매업에 중진공 등)은 절대 임의로 추가하거나 추천하지 말 것'
     +'\n[2026년 기관별 심사기준] 중진공: NICE 750점 이상 권장, 운전자금 매출 1/3~1/4, 시설자금 견적서 80~100% | 기보: 기술력 우선(연체/체납 시 즉시 부결), B등급 이상, 자본잠식 없어야 함 | 신보: KCB/NICE 800점 이상 선호, 매출 1/4~1/6 한도 | 소진공: 839점 이하 신용취약자금 별도 배정(최대 3천만), 다중채무자 제한';
 }
 
