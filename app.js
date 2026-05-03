@@ -2885,6 +2885,8 @@ function buildFundHTML(d, cData, rev, dateStr) {
   var score  = d.score || (_cs>0 ? Math.min(95,Math.max(40,Math.round(_cs/10-5))) : 78);
   var gda    = Math.round((score/100)*151);
   var funds  = d.funds||_industryCerts.funds;
+  // 심사불가(자본잠식) 펀드는 한도 계산에서 제외
+  var fundsForCalc = funds.filter(function(f){ return f && f.limit && f.limit !== '심사불가'; });
   // totalRange: funds 기반 동적 계산
   function parseLimitNum(s) {
     if (!s) return 0;
@@ -2929,7 +2931,7 @@ function buildFundHTML(d, cData, rev, dateStr) {
   // 매출 없으면 기관별 한도 합산 방식 fallback
   if (_revNum === 0) {
     var _minLim = 0, _maxLim = 0;
-    funds.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
+    fundsForCalc.forEach(function(f){ var n=parseLimitNum(f.limit); if(n>0){_maxLim+=n; if(_minLim===0)_minLim=n;} });
     _maxAdj = Math.round(_maxLim * _adj);
     if (_needFundNum > 0 && _maxAdj > _needFundNum) _maxAdj = _needFundNum;
     _minAdj = Math.round(_minLim * _adj);
@@ -3063,8 +3065,23 @@ function buildFundHTML(d, cData, rev, dateStr) {
   // 각 기관별 현실적 예상 한도 계산
   // 핵심 기준: 매출의 25~35% = 최대 부채 한도, 기존 대출 잔액 차감
   // 단, 매출 미입력 시에는 기존 AI 생성 한도 유지
+  // fundsWithCalcLimit 계산 전 자본잠식 판단
+  var _fsD3 = cData.fsData || {};
+  var _totEquity3 = parseInt(_fsD3.total_equity) || 0;
+  var _totLiab3   = parseInt(_fsD3.total_liab) || (parseInt(_fsD3.cur_liab)||0) + (parseInt(_fsD3.fix_liab)||0) || 0;
+  var _isInsolvent3 = _totEquity3 < 0; // 자본잠식: 자본잠식이면 기보·신보·중진공 원체 차단
+  var _debtRatio3 = (_totEquity3 > 0 && _totLiab3 > 0) ? Math.round(_totLiab3 / _totEquity3 * 100) : (_isInsolvent3 ? 9999 : 0);
   var fundsWithCalcLimit = funds.map(function(f, i) {
     if (_revNum === 0) return f; // 매출 없으면 AI 생성값 유지
+    // ===== 자본잠식 하드 필터 (fundsWithCalcLimit 레벨) =====
+    var _isMainOrg3 = f.name.includes('중진공') || f.name.includes('기보') || f.name.includes('기술보증') ||
+                      (f.name.includes('신보') && !f.name.includes('지역') && !f.name.includes('재단'));
+    if (_isInsolvent3 && _isMainOrg3) {
+      return Object.assign({}, f, {
+        limit: '심사불가',
+        limitNote: '자본잠식 상태 — 기보·신보·중진공 원체적 심사 불가. 자본 확충 또는 재무 개선 선행 필요'
+      });
+    }
     var orgKey = getOrgKey(f.name);
     var orgMax = getOrgMaxLimit(f.name);
     var orgMin = getOrgMinLimit(f.name);
@@ -3088,15 +3105,28 @@ function buildFundHTML(d, cData, rev, dateStr) {
       var shinboRevCap = Math.round(_revNum * (1/4)); // 매출 1/4 상한
       calcAmt = Math.min(calcAmt, shinboRevCap);
     }
-    // 기보 부채비율 자본잠식 체크
+    // ===== 부체비율 페널티 직접 연동 (fundsWithCalcLimit 레벨) =====
     var orgLimitNote = null;
-    if (orgKey === '기보' && _debtRatio > 500) {
-      orgLimitNote = '부채비율 ' + _debtRatio + '% — 기보 원칙적 불가 수준 (자본잠식 위험). 재무 개선 선행 필요';
-    } else if ((orgKey === '신보' || orgKey === '기보') && _debtRatio > 400) {
-      orgLimitNote = '부채비율 ' + _debtRatio + '% — 신보·기보 심사 불이익 수준. 재무 개선 또는 담보 보강 필요';
-    } else if (orgKey === '중진공' && _debtRatio > 500) {
-      orgLimitNote = '부채비율 ' + _debtRatio + '% — 중진공 권장 기준(500%) 초과. 심사 불이익 가능성 높음';
+    var _drPenalty3 = 1.0;
+    var _dr3 = _debtRatio3 > 0 ? _debtRatio3 : _debtRatio; // fsData 부체비율 우선, 없으면 기대출 기반 부체비율
+    if (orgKey === '소진공') {
+      if (_dr3 > 300)      { _drPenalty3 = 0.4; orgLimitNote = '부체비율 '+_dr3+'% — 소진공 권장 기준(200%) 대폭 초과. 한도 40%로 조정'; }
+      else if (_dr3 > 200) { _drPenalty3 = 0.6; orgLimitNote = '부체비율 '+_dr3+'% — 소진공 권장 기준 초과. 한도 60%로 조정'; }
+      else if (_dr3 > 150) { _drPenalty3 = 0.8; orgLimitNote = '부체비율 '+_dr3+'% — 소진공 주의 구간. 한도 80%로 조정'; }
+    } else if (orgKey === '기보' || orgKey === '신보') {
+      if (_dr3 > 300)      { _drPenalty3 = 0.3; orgLimitNote = '부체비율 '+_dr3+'% — 기보·신보 권장 기준(250%) 대폭 초과. 한도 30%로 조정'; }
+      else if (_dr3 > 250) { _drPenalty3 = 0.6; orgLimitNote = '부체비율 '+_dr3+'% — 기보·신보 권장 기준 초과. 한도 60%로 조정'; }
+      else if (_dr3 > 200) { _drPenalty3 = 0.8; orgLimitNote = '부체비율 '+_dr3+'% — 기보·신보 주의 구간. 한도 80%로 조정'; }
+    } else if (orgKey === '중진공') {
+      if (_dr3 > 400)      { _drPenalty3 = 0.3; orgLimitNote = '부체비율 '+_dr3+'% — 중진공 권장 기준(300%) 대폭 초과. 한도 30%로 조정'; }
+      else if (_dr3 > 300) { _drPenalty3 = 0.5; orgLimitNote = '부체비율 '+_dr3+'% — 중진공 권장 기준 초과. 한도 50%로 조정'; }
+      else if (_dr3 > 200) { _drPenalty3 = 0.8; orgLimitNote = '부체비율 '+_dr3+'% — 중진공 주의 구간. 한도 80%로 조정'; }
+    } else {
+      // 지역신보 등 기타
+      if (_dr3 > 300)      { _drPenalty3 = 0.6; orgLimitNote = '부체비율 '+_dr3+'% — 권장 기준 초과. 한도 60%로 조정'; }
+      else if (_dr3 > 200) { _drPenalty3 = 0.8; orgLimitNote = '부체비율 '+_dr3+'% — 주의 구간. 한도 80%로 조정'; }
     }
+    if (_drPenalty3 < 1.0) calcAmt = Math.round(calcAmt * _drPenalty3);
     // 최소 한도 미충족 여부 판단
     var belowMin = (orgMin > 0 && calcAmt < orgMin);
     // 최소 한도 미충족 시 최소값으로 표시 (단, 신보·기보는 안내 메모 추가)
@@ -3122,10 +3152,11 @@ function buildFundHTML(d, cData, rev, dateStr) {
   });
   var topFunds = fundsWithCalcLimit.slice(0, 3);
   var otherFunds = fundsWithCalcLimit.slice(3);
-  // fundsWithCalcLimit 기반으로 totalRange 재계산 (매출 입력 시)
+  // fundsWithCalcLimit 기반으로 totalRange 재계산 (매출 입력 시) - 심사불가 제외
   if (_revNum > 0) {
     var _calcMin = 0, _calcMax = 0;
     fundsWithCalcLimit.forEach(function(f) {
+      if (f.limit === '심사불가') return; // 자본잠식 펀드 제외
       var n = parseLimitNum(f.limit);
       if (n > 0) {
         _calcMax += n;
@@ -3183,8 +3214,8 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + topFunds.concat(otherFunds).slice(0,4).map(function(f,i){
         var isTop = i < 3;
         return '<div class="rp-rank" style="margin-bottom:0;border-top:4px solid '+rColors[Math.min(i,4)]+';min-height:130px">'
-          + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+rColors[Math.min(i,4)]+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.4;word-break:keep-all">'+f.name+'</div><div style="font-size:14px;font-weight:900;color:'+rColors[Math.min(i,4)]+';margin-top:2px">'+f.limit+'</div></div></div>'
-          + (f.limitNote ? '<div style="font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">⚠ '+f.limitNote+'</div>' : '')
+          + '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div class="rp-rn" style="background:'+(f.limit==='심사불가'?'#94a3b8':rColors[Math.min(i,4)])+';flex-shrink:0">'+f.rank+'</div><div style="flex:1"><div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.4;word-break:keep-all">'+f.name+'</div><div style="font-size:14px;font-weight:900;color:'+(f.limit==='심사불가'?'#ef4444':rColors[Math.min(i,4)])+';margin-top:2px">'+(f.limit==='심사불가'?'🚫 심사불가':f.limit)+'</div></div></div>'
+          + (f.limit==='심사불가' ? '<div style="font-size:10px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">🛑 자본잠식 상태 — 해당 기관 심사 불가. 자본 확충 또는 재무 개선 선행 필요'+(f.limitNote&&f.limitNote!=='심사불가 상태'?' | '+f.limitNote:'')+'</div>' : (f.limitNote ? '<div style="font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:5px 8px;margin-bottom:7px;line-height:1.5;word-break:keep-all">⚠ '+f.limitNote+'</div>' : ''))
           + '<div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:8px">'+(isTop?'우선 검토 대상 자금으로 즉시 신청 가능성·한도·조건을 기준으로 선별함':'추가 검토 가능한 자금으로 조건 충족 시 신청 가능함')+'</div>'
           + '<div class="rp-rtgs">'+f.tags.map(function(t,j){ return '<span class="rp-rtg" style="background:'+(j===0?'#fff7ed':'#f8fafc')+';color:'+(j===0?'#c2410c':'#475569')+';font-size:10px">'+t+'</span>'; }).join('')+'</div>'
           + '</div>';
@@ -4460,6 +4491,14 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var prevRevBillion = prevRev / 100000000; // 억 단위 변환 (원 → 억원)
   var empNum = parseInt(cData.empCount) || 0;
   var isLargeScale = prevRevBillion >= 50 || empNum >= 5; // 매출 50억 이상 OR 직원 5명 이상
+  // ===== 부채비율 및 자본잠식 판단 (2026년 기관별 심사 기준) =====
+  var _fsD2 = cData.fsData || {};
+  var _totLiab2  = parseInt(_fsD2.total_liab) || (parseInt(_fsD2.cur_liab)||0) + (parseInt(_fsD2.fix_liab)||0) || 0;
+  var _totEquity2 = parseInt(_fsD2.total_equity) || 0;
+  // 자본잠식: 자본총계가 0 이하이거나 total_equity 미입력 시 등록 부채 합계로 추정
+  var _isInsolvent = _totEquity2 < 0; // 자본총계 음수 = 자본잠식
+  // 부채비율: 자본총계 > 0이면 정상 계산, 자본잠식이면 9999로 처리
+  var _debtRatio2 = (_totEquity2 > 0 && _totLiab2 > 0) ? Math.round(_totLiab2 / _totEquity2 * 100) : (_isInsolvent ? 9999 : 0);
   // 신용점수 및 업력 조건
   var kcbScore  = parseInt(cData.kcbScore)  || 0;
   var niceScore = parseInt(cData.niceScore) || 0;
@@ -4768,9 +4807,45 @@ function getIndustryCerts(ind, nm, itm, cData) {
       else if (f.name.includes('소진공')) _dynNum = _orgLimits['소진공'];
       else if (f.name.includes('농신보')) _dynNum = _orgLimits['농신보'];
       if (_dynNum > 0 && _officialNum > 0) {
-        // 공식 한도와 매출 기반 계산값 중 작은 값 사용 (단, 최소 1천만 보장)
-        var _finalNum = Math.max(10000000, Math.min(_officialNum, _dynNum));
-        return Object.assign({}, f, { limit: _fls(_finalNum) });
+        // ===== 자본잠식 하드 필터 (기보·신보·중진공 원천 차단) =====
+        var _isMainOrg = f.name.includes('중진공') || f.name.includes('기보') || f.name.includes('기술보증') ||
+                         (f.name.includes('신보') && !f.name.includes('지역') && !f.name.includes('재단'));
+        if (_isInsolvent && _isMainOrg) {
+          // 자본잠식 기업: 1금융권 보증기관 추천 불가 → limit을 '심사불가'로 표시
+          return Object.assign({}, f, { limit: '심사불가', tags: (f.tags||[]).concat(['자본잠식 — 재무개선 선행 필요']) });
+        }
+        // ===== 부채비율 페널티 직접 연동 (기관별 권장 기준 초과 시 한도 삭감) =====
+        var _drPenalty = 1.0;
+        if (f.name.includes('소진공')) {
+          // 소진공: 권장 200% 이하
+          if (_debtRatio2 > 300)      _drPenalty = 0.4;
+          else if (_debtRatio2 > 200) _drPenalty = 0.6;
+          else if (_debtRatio2 > 150) _drPenalty = 0.8;
+        } else if (f.name.includes('기보') || f.name.includes('기술보증') ||
+                   (f.name.includes('신보') && !f.name.includes('지역') && !f.name.includes('재단'))) {
+          // 기보/신보: 권장 250% 이하
+          if (_debtRatio2 > 300)      _drPenalty = 0.3;
+          else if (_debtRatio2 > 250) _drPenalty = 0.6;
+          else if (_debtRatio2 > 200) _drPenalty = 0.8;
+        } else if (f.name.includes('중진공')) {
+          // 중진공: 권장 300% 이하
+          if (_debtRatio2 > 400)      _drPenalty = 0.3;
+          else if (_debtRatio2 > 300) _drPenalty = 0.5;
+          else if (_debtRatio2 > 200) _drPenalty = 0.8;
+        } else {
+          // 지역신보 등 기타
+          if (_debtRatio2 > 300)      _drPenalty = 0.6;
+          else if (_debtRatio2 > 200) _drPenalty = 0.8;
+        }
+        // 공식 한도와 매출 기반 계산값 중 작은 값 × 부채비율 페널티 (최소 1천만 보장)
+        var _baseCalc = Math.min(_officialNum, _dynNum);
+        var _finalNum = Math.max(10000000, Math.round(_baseCalc * _drPenalty));
+        // 페널티 적용 시 태그에 부채비율 경고 추가
+        var _fTags = f.tags || [];
+        if (_drPenalty < 1.0 && !_fTags.some(function(t){ return t.includes('부채비율'); })) {
+          _fTags = _fTags.concat(['부채비율 ' + _debtRatio2 + '% — 한도 ' + Math.round(_drPenalty*100) + '%로 조정']);
+        }
+        return Object.assign({}, f, { limit: _fls(_finalNum), tags: _fTags });
       }
       return f;
     });
