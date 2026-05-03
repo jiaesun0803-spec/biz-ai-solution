@@ -1470,9 +1470,9 @@ function tplStyle(color, orientation) {
   + '.rp-gsub  { font-size:12px; color:#94a3b8; margin-top:3px; }'
 
   // ── 지표 카드 ──
-  + '.rp-mc  { background:white; border-radius:8px; padding:12px 10px; border:1px solid #e2e8f0; text-align:center; page-break-inside:avoid; }'
+  + '.rp-mc  { background:white; border-radius:8px; padding:12px 10px; border:1px solid #e2e8f0; text-align:center; page-break-inside:avoid; overflow:hidden; min-width:0; }'
   + '.rp-mcl { font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:400; }'
-  + '.rp-mcv { font-size:20px; font-weight:700; line-height:1.2; word-break:break-all; overflow-wrap:anywhere; }'
+  + '.rp-mcv { font-size:18px; font-weight:700; line-height:1.2; word-break:break-all; overflow-wrap:anywhere; overflow:hidden; }'
   + '.rp-mcd { font-size:11px; color:#94a3b8; margin-top:4px; font-weight:400; }'
 
   // ── 리스트 ──
@@ -1777,7 +1777,7 @@ function buildUnifiedCover(reportTitle, versionLabel, cData, dateStr, accentColo
     +'<div class="rp-cover-company-name">'+companyName+'</div>'
     +'</div>'
     +'</div>'
-     +'<div style="padding:0 32px 12px 32px">'    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;table-layout:fixed;word-break:keep-all">'
+     +'<div style="padding:0 32px 12px 32px">'    +'<table style="width:100%;border-collapse:collapse;font-size:12px;border:1.5px solid #cbd5e1;border-radius:8px;table-layout:fixed;word-break:break-all">'
     +'<tr style="background:#f1f5f9">'
       +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:13%">상호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:37%">'+companyName+'</td>'    +'<th style="padding:7px 12px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:15%">사업자등록번호</th>'    +'<td style="padding:7px 12px;font-weight:600;color:#1e293b;border-bottom:1px solid #e2e8f0;width:35%">'+((cData&&cData.bizNum)||'-')+'</td>'
     +'</tr>'
@@ -1855,17 +1855,17 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var cover = mgmtCover(cData, rev, exp, dateStr, 'client');
 
   // ── CAT1: 경영진단 개요 ──────────────────
-  var _nw = 'white-space:nowrap;';
-  var _th = 'background:#eff6ff;padding:10px 14px;color:'+C+';font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;';
-  var _td = 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;';
-  var _thb= 'background:#eff6ff;padding:10px 14px;color:'+C+';font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;';
-  var _tdb= 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;';
+  var _nw = 'word-break:break-all;overflow:hidden;';
+  var _th = 'background:#eff6ff;padding:8px 10px;color:'+C+';font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:11px;';
+  var _td = 'padding:8px 10px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:11px;';
+  var _thb= 'background:#eff6ff;padding:8px 10px;color:'+C+';font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;font-size:11px;';
+  var _tdb= 'padding:8px 10px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;font-size:11px;';
 
   var infoTbl = '<div style="border:1.5px solid #bfdbfe;border-radius:10px;overflow:hidden;margin-bottom:12px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;word-break:break-all">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
+    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+'">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+'">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
     +'</table></div>';
 
   var gradeCards = '<div style="display:flex;gap:10px;margin-bottom:12px;align-items:stretch">'
@@ -2104,17 +2104,17 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   }
 
   // ── CAT1: 경영진단 개요 ──────────────────
-  var _nw = 'white-space:nowrap;';
-  var _th = 'background:#f8fafc;padding:10px 14px;color:#475569;font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;';
-  var _td = 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;';
-  var _thb= 'background:#f8fafc;padding:10px 14px;color:#475569;font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;';
-  var _tdb= 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;';
+  var _nw = 'word-break:break-all;overflow:hidden;';
+  var _th = 'background:#f8fafc;padding:8px 10px;color:#475569;font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:11px;';
+  var _td = 'padding:8px 10px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:11px;';
+  var _thb= 'background:#f8fafc;padding:8px 10px;color:#475569;font-weight:700;'+_nw+'text-align:left;border-right:1px solid #e2e8f0;font-size:11px;';
+  var _tdb= 'padding:8px 10px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;font-size:11px;';
 
   var infoTbl = '<div style="border:1.5px solid #cbd5e1;border-radius:10px;overflow:hidden;margin-bottom:12px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;word-break:break-all">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
-    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
+    +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+'">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+'">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
     +'</table></div>';
   // 정책자금 totalRange 계산 (buildFundHTML과 동일 로직) - 추가조달가능금액 연동
   var _clientFunds = getIndustryCerts(ind, nm, itm, cData).funds;
@@ -2604,8 +2604,8 @@ function buildTradeHTML(d, cData, rev, dateStr) {
 
   var p1 = rpPage(1,'상권 현황 분석','핵심 입지 지표 · 경쟁 분석',color,
     '<div class="rp-2col" style="margin-bottom:12px">'
-    +'<div class="rp-col50" style="display:flex;flex-direction:column;gap:10px">'
-    +'<div class="rp-g3">'
+    +'<div class="rp-col50" style="display:flex;flex-direction:column;gap:10px;min-width:0;overflow:hidden">'
+    +'<div class="rp-g3" style="overflow:hidden">'
     +rpMC('유동인구 (일평균)',d.traffic||'2,400명','일평균 유동량',color)
     +rpMC('반경1km 경쟁업체',(d.competitors||7)+'개','직접 경쟁',parseInt(d.competitors||7)>5?'#f97316':'#16a34a')
     +rpMC('입지 경쟁력 등급',d.grade||'B+','상위 30%',color)
@@ -3515,6 +3515,10 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '</div>';
 
   var swot = d.s2_swot||{strength:['창업 1년 만에 13억 8천만원 폭발적 매출 달성 — 시장성 검증 완료'],weakness:['상시근로자 4명의 소규모 인력으로 사업 확장 속도에 제약이 있음'],opportunity:['HMR 시장 연 18% 성장 — 돈육·육수 세그먼트 최우수 성장 구간'],threat:['대형 식품기업의 후발 진입 가능성 상시 존재 — 특허 방어 필수']};
+  // SWOT/교차전략 항목에서 업체명 제거 필터
+  var _bizNm = cData.name || '';
+  function _rmNm(arr){ if(!_bizNm) return arr||[]; return (arr||[]).map(function(s){ return typeof s==='string' ? s.replace(new RegExp(_bizNm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(의|은|는|이|가|을|를|에서|에게|으로|로|와|과|도)?\\s*','g'),'').trim() : s; }); }
+  if(_bizNm){ swot = {strength:_rmNm(swot.strength),weakness:_rmNm(swot.weakness),opportunity:_rmNm(swot.opportunity),threat:_rmNm(swot.threat)}; }
   var compRows = d.s4_competitor||[{item:'제품 경쟁력',self:'★★★★★',a:'★★★★',b:'★★★'},{item:'기술력(특허)',self:'★★★★★',a:'★★★',b:'★★★'},{item:'가격 경쟁력',self:'★★★★',a:'★★★★★',b:'★★★★'},{item:'유통망',self:'★★★',a:'★★★★★',b:'★★★★'},{item:'성장성',self:'★★★★★',a:'★★★',b:'★★★'}];
   var diffs = d.s5_items||[{title:'기술 차별화',text:'돈육 사골 농축 압축 기술 특허 보유 — 경쟁사의 동일 제품 제조를 원천 차단하는 진입 장벽 구축',color:'#16a34a'},{title:'제품 차별화',text:'1회 분량 개별 포장으로 위생·편의성·보관성을 동시에 충족 — 소비자 불편을 해소한 혁신 제품',color:'#2563eb'},{title:'시장 포지셔닝',text:'HMR 내 돈육 특화 세그먼트 선점 — 틈새 독점 포지션 구축으로 경쟁 압력을 원천 최소화',color:'#7c3aed'},{title:'성장 증명력',text:'창업 1년 만에 11억 달성 — 투자·자금 심사 기관이 가장 신뢰하는 시장성 검증 완료 상태',color:'#ea580c'}];
   var bgMap = {'#16a34a':'#f0fdf4','#2563eb':'#eff6ff','#7c3aed':'#fdf4ff','#ea580c':'#fff7ed'};
@@ -3654,6 +3658,8 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
 
   // ── P4: SWOT 교차 전략 ──
   var cross = d.s2_cross || {so:['SO전략 1: 기술 특허 × 시장 성장 — 독점 포지션 강화로 시장 점유율 확대','SO전략 2: 인증 취득 × 정책 지원 — 공공기관 수의계약 채널 집중 공략','SO전략 3: 매출 실적 × 이커머스 성장 — 풀필먼트 센터 전용 패키지 출시','SO전략 4: 인건비 절감 트렌드 × 2주 설치 강점 — ROI 계산기로 도입 결정 가속'],wo:['WO전략 1: 정책자금 조달 × 영업 인력 부족 — 정책자금으로 영업 인력 2→5명 확충','WO전략 2: 이커머스 풀필먼트 전용 패키지 개발 — 쿠팡·네이버 물류 파트너 채널 진입','WO전략 3: IoT 하드웨어 파트너사 2곳 이상 다변화 — 공급망 리스크 분산 및 원가 절감','WO전략 4: 정부 스마트공장 보조금 연계 영업 — 고객 초기 도입 비용 50% 절감 지원'],st:['ST전략 1: AI 특허 + 실증 데이터로 중소기업 전문 포지셔닝 — 대형 SI 진입 방어','ST전략 2: SaaS 구독 모델 + 고객 유지율 96% — 경기 침체 시에도 안정적 반복 매출','ST전략 3: ISO 27001 취득 추진 — 보안 우려 선제 해소, 공공기관 신뢰도 강화','ST전략 4: 조달청 우수제품 등록 유지 — 유사 스타트업 대비 공공 채널 진입 장벽 구축'],wt:['WT전략 1: 기존 고객 전담 CS 체계 강화 — 유지율 97% 이상 유지로 매출 기반 방어','WT전략 2: 데이터 암호화·접근 권한 관리 고도화 — IoT 보안 취약점 이슈 선제 대응','WT전략 3: 핵심 기능 특허 추가 출원 — 유사 스타트업의 기능 복제 법적 차단','WT전략 4: 파트너사 다변화로 하드웨어 의존도 감소 — 경기 침체 시 원가 구조 유연화']};
+  // 교차전략 업체명 제거 필터 적용
+  if(_bizNm && d.s2_cross){ cross = {so:_rmNm(cross.so),wo:_rmNm(cross.wo),st:_rmNm(cross.st),wt:_rmNm(cross.wt)}; }
   var crossColors = {so:color, wo:'#2563eb', st:'#7c3aed', wt:'#ea580c'};
   var crossBgs    = {so:'#f0fdf4', wo:'#eff6ff', st:'#fdf4ff', wt:'#fff7ed'};
   var crossBds    = {so:'#86efac', wo:'#93c5fd', st:'#d8b4fe', wt:'#fdba74'};
@@ -4000,7 +4006,7 @@ function initReportCharts(rev) {
     }
     // ─ 매출 라인
     var li = document.getElementById('rp-linechart');
-    if(li && li.dataset && li.dataset.y23 !== undefined) {
+    if(li && li.dataset) {
       safeDestroyChart(li);
       try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
     }
@@ -4408,7 +4414,7 @@ function buildBizPlanPrompt(cData, fRev) {
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
   return '사업계획서 전문가. \''+nm+'\' 완성형 AI 사업계획서. 기업명·제품명·실제수치를 모든 항목에 반드시 포함. JSON만.\n\n'
     +'{"s1_items":["'+nm+'는 '+itm+'을 통해 5개 70자이상"],'
-    +'"s2_swot":{"strength":["'+nm+'의 강점 4개 50자이상"],"weakness":["'+nm+'의 약점 3개 50자이상"],"opportunity":["'+nm+'의 기회 4개 50자이상"],"threat":["'+nm+'의 위협 3개 50자이상"]},'
+    +'"s2_swot":{"strength":["강점 4개 50자이상 (업체명 절대 포함 금지)"],"weakness":["약점 3개 50자이상 (업체명 절대 포함 금지)"],"opportunity":["기회 4개 50자이상 (업체명 절대 포함 금지)"],"threat":["위협 3개 50자이상 (업체명 절대 포함 금지)"]},'
     +'"s2_cross":{"so":["SO전략 4개 50자이상"],"wo":["WO전략 4개 50자이상"],"st":["ST전략 4개 50자이상"],"wt":["WT전략 4개 50자이상"]},'
     +'"s3_mktLabel":"'+ind+' 시장",'
     +'"s3_mktSize":"시장 규모 숫자+단위",'
@@ -4451,9 +4457,9 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var revY24 = parseInt((cData.revenueData && cData.revenueData.y24) || 0);
   var revY25 = parseInt((cData.revenueData && cData.revenueData.y25) || 0);
   var prevRev = revY25 || revY24 || 0;
-  var prevRevBillion = prevRev / 10000;
+  var prevRevBillion = prevRev / 100000000; // 억 단위 변환 (원 → 억원)
   var empNum = parseInt(cData.empCount) || 0;
-  var isLargeScale = prevRevBillion >= 50 || empNum >= 5;
+  var isLargeScale = prevRevBillion >= 50 || empNum >= 5; // 매출 50억 이상 OR 직원 5명 이상
   // 신용점수 및 업력 조건
   var kcbScore  = parseInt(cData.kcbScore)  || 0;
   var niceScore = parseInt(cData.niceScore) || 0;
@@ -5469,11 +5475,20 @@ window.generateFinanceReport = async function(event) {
   setTimeout(function(){
     var li = document.getElementById('rp-linechart');
     if (li && li.offsetHeight === 0) {
-      setTimeout(function(){ initReportCharts(rev); }, 500);
+      // offsetHeight=0이면 레이아웃 미완료 → 추가 대기 후 재시도
+      setTimeout(function(){
+        var li2 = document.getElementById('rp-linechart');
+        if (li2 && li2.offsetHeight === 0) {
+          // 강제로 높이 설정 후 차트 초기화
+          li2.style.height = '198px';
+          li2.height = 198;
+        }
+        initReportCharts(rev);
+      }, 600);
     } else {
       initReportCharts(rev);
     }
-  }, 200);
+  }, 300);
 };
 
 // 보고서 면책 문구 추가 공통 함수
@@ -5593,7 +5608,16 @@ window.viewReport = function(id) {
       ca2.innerHTML = cfg.buildHTML(data,cData,rev,r.date);
       addDisclaimerToReport(cfg.contentAreaId);
       _currentReport = {company:cData.name, type:r.title, contentAreaId:cfg.contentAreaId, landscape:cfg.landscape===true};
-      setTimeout(function(){ initReportCharts(rev); }, 150);
+      setTimeout(function(){
+        var li = document.getElementById('rp-linechart');
+        if (li && li.offsetHeight === 0) {
+          li.style.height = '198px';
+          li.height = 198;
+          setTimeout(function(){ initReportCharts(rev); }, 400);
+        } else {
+          initReportCharts(rev);
+        }
+      }, 200);
       // landscape 미리보기 자동 스케일
       if (cfg.landscape) {
         setTimeout(function() {
