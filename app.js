@@ -417,6 +417,8 @@ window.printReport = function() {
     }
     .rp-cover {
       background: white !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
       border-radius: 8px !important;
       margin: 0 0 14px 0 !important;
       padding: ${layout.coverPadding} !important;
@@ -1155,7 +1157,7 @@ window.downloadReportById=function(id){
   if(!pw){alert('팝업이 차단되었음. 팝업을 허용해 주세요.');return;}
   // 사업계획서는 표지 배경(네이비 그라데이션)을 보존하기 위해 background 강제 설정 제외
   var coverBgCSS = isLandscape
-    ? 'border-radius:8px!important;margin:0 0 14px 0!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;'
+    ? '-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border-radius:8px!important;margin:0 0 14px 0!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;'
     : 'background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:'+layout.coverPadding+'!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;';
   var printCSS=`@page{size:${layout.pageSize};margin:${layout.printMargin};}html,body{margin:0;padding:0;background:#e8eaed;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;min-width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0 auto;padding:${layout.wrapPadding} 0;background:#e8eaed;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#e8eaed!important;padding:${layout.wrapPadding}!important;}.rp-cover{${coverBgCSS}}.rp-page{background:white!important;border-radius:8px!important;margin:0 0 14px 0!important;padding:${layout.pagePadding}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}@media print{html,body{background:white!important;}.pdf-shell{width:100%!important;padding:0!important;background:white!important;}.rp-wrap{width:100%!important;padding:0!important;background:white!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;}}`;
   pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${htmlContent}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
@@ -1447,7 +1449,7 @@ function tplStyle(color, orientation) {
   + '.rp-col38 { width:38%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col40 { width:40%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-col35 { width:35%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
-  + '.rp-col45 { width:45%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
+  + '.rp-col45 { width:48%; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }'
   + '.rp-col50 { width:50%; flex-shrink:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-colF  { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }'
   + '.rp-3col  { display:flex; gap:12px; flex:1; }'
@@ -1470,7 +1472,7 @@ function tplStyle(color, orientation) {
   // ── 지표 카드 ──
   + '.rp-mc  { background:white; border-radius:8px; padding:12px 10px; border:1px solid #e2e8f0; text-align:center; page-break-inside:avoid; }'
   + '.rp-mcl { font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:400; }'
-  + '.rp-mcv { font-size:20px; font-weight:700; line-height:1.2; }'
+  + '.rp-mcv { font-size:20px; font-weight:700; line-height:1.2; word-break:break-all; overflow-wrap:anywhere; }'
   + '.rp-mcd { font-size:11px; color:#94a3b8; margin-top:4px; font-weight:400; }'
 
   // ── 리스트 ──
@@ -1536,9 +1538,9 @@ function tplStyle(color, orientation) {
   + '.rp-ftb tr:nth-child(even) td { background:#f8fafc; } .rp-ftb tfoot td { background:#f0fdf4; font-weight:700; color:#15803d; }'
 
   // ── 기업현황 테이블 ──
-  + '.rp-ovt { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:12px; border-top:2px solid #1e3a8a; }'
-  + '.rp-ovt th { background:#eff6ff; border:1px solid #bfdbfe; padding:8px 11px; text-align:left; color:#1e40af; font-weight:700; white-space:nowrap; }'
-  + '.rp-ovt td { border:1px solid #e2e8f0; padding:8px 11px; color:#1e293b; font-weight:500; }'
+  + '.rp-ovt { width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:8px; border-top:2px solid #1e3a8a; table-layout:fixed; word-break:keep-all; }'
+  + '.rp-ovt th { background:#eff6ff; border:1px solid #bfdbfe; padding:5px 8px; text-align:left; color:#1e40af; font-weight:700; white-space:nowrap; width:70px; }'
+  + '.rp-ovt td { border:1px solid #e2e8f0; padding:5px 8px; color:#1e293b; font-weight:500; overflow:hidden; text-overflow:ellipsis; }'
 
   // ── 가점 카드 ──
   + '.rp-cert { display:flex; align-items:flex-start; gap:12px; background:white; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; margin-bottom:9px; page-break-inside:avoid; }'
@@ -1860,7 +1862,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var _tdb= 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;';
 
   var infoTbl = '<div style="border:1.5px solid #bfdbfe;border-radius:10px;overflow:hidden;margin-bottom:12px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
     +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
@@ -2109,7 +2111,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var _tdb= 'padding:10px 14px;font-weight:600;'+_nw+'border-right:1px solid #e2e8f0;';
 
   var infoTbl = '<div style="border:1.5px solid #cbd5e1;border-radius:10px;overflow:hidden;margin-bottom:12px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
     +'<tr><th style="'+_th+'width:13%">기업명</th><td style="'+_td+'">'+nm+'</td><th style="'+_th+'width:10%">대표자</th><td style="'+_td+'">'+(cData.rep||'-')+'</td><th style="'+_th+'width:10%">업종</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.industry||'-')+'</td></tr>'
     +'<tr><th style="'+_th+'">설립일</th><td style="'+_td+'">'+(cData.bizDate||'-')+'</td><th style="'+_th+'">사업자번호</th><td style="'+_td+'">'+(cData.bizNum||'-')+'</td><th style="'+_th+'">상시근로자</th><td style="padding:10px 14px;font-weight:600;'+_nw+'border-bottom:1px solid #e2e8f0">'+(cData.empCount||'-')+'명</td></tr>'
     +'<tr><th style="'+_thb+'">전년 매출</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(rev.y25)+'</td><th style="'+_thb+'">금년 예상</th><td style="'+_tdb+';white-space:nowrap">'+fKRWRound(exp)+'</td><th style="'+_thb+'">핵심아이템</th><td style="padding:10px 14px;font-weight:600;'+_nw+'">'+(cData.coreItem||'-')+'</td></tr>'
@@ -2639,7 +2641,7 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     rpSec('타겟 고객 프로파일', color,
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">'
       +[['\uc8fc \uc5f0\ub839\ub300',target.age],['\uac00\uad6c \uc720\ud615',target.household],['\uad6c\ub9e4 \ucc44\ub110',target.channel],['\uad6c\ub9e4 \uc8fc\uae30',target.cycle]].map(function(pair){
-        return '<div style="background:white;border-radius:8px;padding:11px 9px;border:1px solid #e2e8f0;text-align:center"><div style="font-size:12px;color:#64748b;margin-bottom:4px">'+pair[0]+'</div><div style="font-size:16px;font-weight:700;color:'+color+'">'+pair[1]+'</div></div>';
+        return '<div style="background:white;border-radius:8px;padding:11px 9px;border:1px solid #e2e8f0;text-align:center"><div style="font-size:12px;color:#64748b;margin-bottom:4px">'+pair[0]+'</div><div style="font-size:13px;font-weight:700;color:'+color+';line-height:1.4;word-break:keep-all">'+pair[1]+'</div></div>';
       }).join('')
       +'</div>'
     )
@@ -2822,7 +2824,27 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
       '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px">'
       +roadmap.map(roadmapCard).join('')
       +'</div>'
-      +'<div style="background:#fdf2f8;border:1px solid #f5c2da;border-radius:10px;padding:14px;margin-top:4px">'      +'<div style="font-size:13px;font-weight:800;color:#9d174d;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f5c2da">📅 분기별 실행 계획</div>'      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'      +(d.quarterly_plan||[        {q:'1분기',tasks:['채널별 콘텐츠 기초 세팅','SNS 계정 최적화 및 팔로워 확보','초기 광고 집행 및 반응 데이터 수집']},        {q:'2분기',tasks:['성과 데이터 기반 채널 집중화','인플루언서 협업 1~2건 진행','리뷰·후기 콘텐츠 강화']},        {q:'3분기',tasks:['고성과 채널 예산 확대','신규 고객 유입 캠페인 집중','재구매율 향상 프로모션 운영']},        {q:'4분기',tasks:['연간 성과 분석 및 KPI 점검','차년도 마케팅 전략 수립','충성 고객 리텐션 프로그램 운영']}      ]).map(function(q){        return '<div style="background:white;border:1px solid #fce7f3;border-radius:8px;padding:12px">'          +'<div style="font-size:12px;font-weight:800;color:#9d174d;margin-bottom:8px">'+q.q+'</div>'          +(q.tasks||[]).map(function(t){            return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">'              +'<div style="width:5px;height:5px;border-radius:50%;background:#e879a0;flex-shrink:0;margin-top:5px"></div>'              +'<span style="font-size:11px;color:#52525b;line-height:1.55">'+t+'</span>'              +'</div>';          }).join('')          +'</div>';      }).join('')      +'</div>'      +'</div>'
+      +'</div>'
+    )
+    +rpSec('분기별 실행 계획', color,
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+      +(d.quarterly_plan||[
+        {q:'1분기',tasks:['채널별 콘텐츠 기초 세팅','SNS 계정 최적화 및 팔로워 확보','초기 광고 집행 및 반응 데이터 수집']},
+        {q:'2분기',tasks:['성과 데이터 기반 채널 집중화','인플루언서 협업 1~2건 진행','리뷰·후기 콘텐츠 강화']},
+        {q:'3분기',tasks:['고성과 채널 예산 확대','신규 고객 유입 캠페인 집중','재구매율 향상 프로모션 운영']},
+        {q:'4분기',tasks:['연간 성과 분석 및 KPI 점검','차년도 마케팅 전략 수립','충성 고객 리텐션 프로그램 운영']}
+      ]).map(function(q){
+        return '<div style="background:white;border:1px solid #fce7f3;border-radius:8px;padding:12px">'
+          +'<div style="font-size:12px;font-weight:800;color:#9d174d;margin-bottom:8px">'+q.q+'</div>'
+          +(q.tasks||[]).map(function(t){
+            return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">'
+              +'<div style="width:5px;height:5px;border-radius:50%;background:#e879a0;flex-shrink:0;margin-top:5px"></div>'
+              +'<span style="font-size:11px;color:#52525b;line-height:1.55">'+t+'</span>'
+              +'</div>';
+          }).join('')
+          +'</div>';
+      }).join('')
+      +'</div>'
     )
     +'</div>'
   );
@@ -3112,7 +3134,11 @@ function buildFundHTML(d, cData, rev, dateStr) {
     });
     if (_needFundNum > 0 && _calcMax > _needFundNum) _calcMax = _needFundNum;
     if (_calcMax > 0) {
-      totalRange = '예상 ' + fLimitStr(_calcMin) + ' ~ 최대 ' + fLimitStr(_calcMax);
+      if (_calcMin === _calcMax) {
+        totalRange = '예상 ' + fLimitStr(_calcMax);
+      } else {
+        totalRange = '예상 ' + fLimitStr(_calcMin) + ' ~ 최대 ' + fLimitStr(_calcMax);
+      }
     }
   }
   // scoreItems: 재계산된 totalRange 반영
@@ -3381,10 +3407,10 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   var s4 = fundCat('인증 취득 시 추가자금 확보 전략','현재 미보유 인증 · 취득 후 추가 조달 한도 · 우선순위',
     // 상단 배너: 인증 완료 시 총 추가 조달 가능 한도
-    '<div style="background:linear-gradient(135deg,#ea580c 0%,#f97316 100%);border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px">'  
+    '<div style="background:linear-gradient(135deg,#ea580c 0%,#f97316 100%);border-radius:10px;padding:12px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px">'  
     + '<div>'  
     +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:4px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'  
-    +   '<div style="font-size:32px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">' + _certTotalStr + '</div>'  
+    +   '<div style="font-size:22px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-0.5px">' + _certTotalStr + '</div>'  
     +   '<div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:4px">아래 인증 취득 완료 시 추가 확보 가능한 한도 기준</div>'  
     + '</div>'  
     + '<div style="text-align:right">'  
@@ -3395,55 +3421,35 @@ function buildFundHTML(d, cData, rev, dateStr) {
     + '</div>'
     // 인증 카드 그리드
     + '<div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0">📜 추천 인증 목록 (우선순위 순) — 취득 시 추가 정책자금 한도 확보</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">'
-    + _recCerts.map(function(c, i) {
+    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">'
+    + _recCerts.slice(0,4).map(function(c, i) {
         var bg  = _certBgs[i % 6];
         var bd  = _certBds[i % 6];
         var tc  = _certTcs[i % 6];
         var ico = _certIcos[i % 6];
         var amtNum = parseFloat(String(c.amount || '').replace(/[^0-9.]/g, ''));
         var amtColor = (!isNaN(amtNum) && amtNum > 0) ? '#ea580c' : '#64748b';
-        return '<div style="background:white;border:1.5px solid ' + bd + ';border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">'
-          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">'
-          +   '<div style="width:30px;height:30px;border-radius:7px;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">' + ico + '</div>'
-          +   '<div style="font-size:12px;font-weight:700;color:#1e293b;line-height:1.3">' + c.name + '</div>'
+        return '<div style="background:white;border:1.5px solid ' + bd + ';border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px">'
+          + '<div style="width:28px;height:28px;border-radius:6px;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + ico + '</div>'
+          + '<div style="flex:1;min-width:0">'
+          +   '<div style="font-size:11.5px;font-weight:700;color:#1e293b;line-height:1.3">' + c.name + '</div>'
+          +   '<div style="font-size:10px;color:#64748b;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (c.period || '취득 후 적용') + '</div>'
           + '</div>'
-          + '<div style="font-size:10.5px;color:#64748b;line-height:1.55">' + c.effect + '</div>'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:6px;border-top:1px solid #f1f5f9">'
-          +   '<span style="font-size:10px;color:#94a3b8">' + (c.period || '취득 후 적용') + '</span>'
-          +   '<span style="font-size:13px;font-weight:800;color:' + amtColor + '">' + (c.amount || '한도 우대') + '</span>'
-          + '</div>'
+          + '<div style="font-size:13px;font-weight:800;color:' + amtColor + ';flex-shrink:0">' + (c.amount || '우대') + '</div>'
           + '</div>';
       }).join('')
     + '</div>'
     // 취득 우선순위 전략
     + '<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px;margin-bottom:14px">'
     +   '<div style="font-size:12px;font-weight:700;color:#ea580c;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #fed7aa">🎯 인증 취득 우선순위 전략</div>'
-    +   _certStrategy.map(function(t) {
-          return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:#7c2d12;line-height:1.6;margin-bottom:6px">'
-            + '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#ea580c"></div>'
+    +   _certStrategy.slice(0,3).map(function(t) {
+          return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#7c2d12;line-height:1.5;margin-bottom:4px">'
+            + '<div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:#ea580c"></div>'
             + '<span>' + t + '</span>'
             + '</div>';
         }).join('')
     + '</div>'
-    // 인증별 담당 기관 안내
-    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">'
-    + [
-        {ico:'🏛', title:'중진공 연계 인증', items:['뿌리기업확인서 → 중진공 뿌리기업 전용자금','벤처·이노비즈 → 혁신성장유형 운전자금','소부장확인서 → 소부장 특별자금'], color:'#0369a1', bg:'#eff6ff', bd:'#bfdbfe'},
-        {ico:'🔬', title:'기보·신보 연계 인증', items:['벤처기업 인증 → 기보 우대보증 + 신보 특례보증','기업부설연구소 → 기보 기술보증 우대 적용','이노비즈 인증 → 기보 기술등급 우대 + 신보 한도 확대'], color:'#0f766e', bg:'#f0fdfa', bd:'#99f6e4'},
-        {ico:'📋', title:'소진공·지역신보 연계', items:['벤처·메인비즈 → 소진공 성장촉진자금 우대','HACCP → 식품기업 정책자금 한도 상향','업종별 인증 → 지역신보 특례보증 가점'], color:'#15803d', bg:'#f0fdf4', bd:'#86efac'}
-      ].map(function(box) {
-          return '<div style="background:' + box.bg + ';border:1.5px solid ' + box.bd + ';border-radius:10px;padding:12px 14px">'
-            + '<div style="font-size:11px;font-weight:800;color:' + box.color + ';margin-bottom:8px">' + box.ico + ' ' + box.title + '</div>'
-            + box.items.map(function(it) {
-                return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:10.5px;color:#374151;line-height:1.55;margin-bottom:5px">'
-                  + '<div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;background:' + box.color + '"></div>'
-                  + '<span>' + it + '</span>'
-                  + '</div>';
-              }).join('')
-            + '</div>';
-        }).join('')
-    + '</div>'
+
   );
 
   return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s3 + s4 + '</div>';
@@ -5478,8 +5484,15 @@ window.generateFinanceReport = async function(event) {
   if(inputStep2) inputStep2.style.display = 'none';
   if(resultStep2) resultStep2.style.display = 'block';
   _currentReport = {company:cData.name, type:rptTitle, contentAreaId:'finance-content-area', landscape:false};
-  // canvas 크기 확보 후 차트 렌더링 (즉시 호출 시 height=0으로 그래프 안 나옴)
-  setTimeout(function(){ initReportCharts(rev); }, 150);
+  // canvas 크기 확보 후 차트 렌더링 (resultStep display:block 후 브라우저 레이아웃 완료 대기)
+  setTimeout(function(){
+    var li = document.getElementById('rp-linechart');
+    if (li && li.offsetHeight === 0) {
+      setTimeout(function(){ initReportCharts(rev); }, 500);
+    } else {
+      initReportCharts(rev);
+    }
+  }, 200);
 };
 
 // 보고서 면책 문구 추가 공통 함수
