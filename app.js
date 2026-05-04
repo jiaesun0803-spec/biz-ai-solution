@@ -1619,7 +1619,8 @@ function calcExp(cData, rev) {
 
 function rpLst(items, color) {
   return '<div class="rp-lst">' + (items||[]).map(function(i) {
-    return '<div class="rp-li"><div class="rp-dot" style="background:'+color+'"></div><span>'+i+'</span></div>';
+    var txt = (typeof i === 'string') ? i : (i && (i.text || i.content || i.description || i.value || JSON.stringify(i)));
+    return '<div class="rp-li"><div class="rp-dot" style="background:'+color+'"></div><span>'+txt+'</span></div>';
   }).join('') + '</div>';
 }
 
@@ -1705,25 +1706,23 @@ function mgmtSec(title, icon, color, items, extraCSS) {
   return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:13px 16px;'+bg+'">'
     +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e9ecef">'+icon+' '+title+'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+t+'</span></div>';}).join('')
+    +items.map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>';
 }
-
 function mgmtWideSec(title, icon, color, items, extraCSS) {
   var bg = extraCSS||'background:#f8fafc';
   return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;'+bg+'">'
     +'<div style="font-size:14px;font-weight:800;color:'+color+';margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(148,163,184,0.25)">'+icon+' '+title+'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px">'
-    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#334155;line-height:1.7"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+t+'</span></div>';}).join('')
+     +items.map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#334155;line-height:1.7"><div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+color+'"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>';
 }
-
 // ── 컨설턴트 피드백 박스
 function mgmtFB(items) {
   return '<div style="border-radius:8px;padding:12px 15px;border:1px solid #fed7aa;border-left:4px solid #f97316;background:#fff7ed">'
     +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 컨설턴트 피드백</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
+    +items.map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>';
 }
 
@@ -1734,11 +1733,10 @@ function mgmtRoadmapPhase(phaseLabel, bgColor, borderColor, textColor, items) {
     +'<span style="background:'+bgColor+';border-radius:20px;padding:3px 12px">'+phaseLabel+'</span>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +items.map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+borderColor+'"></div><span>'+t+'</span></div>';}).join('')
+    +items.map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;line-height:1.6"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:'+borderColor+'"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>';
 }
-
-// ── 페이지 래퍼 (컨설턴트용 등 페이지 단위 보고서용)
+// ── 페이지 래퍼퍼 (컨설턴트용 등 페이지 단위 보고서용)
 function mgmtPage(num, title, sub, accentColor, content) {
   var numBg = accentColor==='#1e293b'?'#f1f5f9':'#eff6ff';
   var numTc = accentColor==='#1e293b'?'#475569':accentColor;
@@ -2182,7 +2180,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
         '재고 회전율이 업종 평균 대비 양호한 수준을 유지하여 운전자본 효율성이 상대적으로 높음',
         '매출채권 회수 기간이 짧아 현금 전환 주기(CCC)가 경쟁사 대비 유리한 편이며 유동성 리스크가 낮음',
         '고정비 최소화 구조로 손익분기점이 낮게 형성되어 매출 변동에도 흑자 구조를 유지할 가능성이 높음'
-      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#1e3a5f;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+t+'</span></div>';}).join('')
+      ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#1e3a5f;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#3b82f6"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>'
     +'<div style="border:1.5px solid #f97316;border-radius:10px;padding:14px 16px;background:#fff7ed">'
     +'<div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid #fed7aa">⚠️ 재무 리스크</div>'
@@ -2194,7 +2192,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
         '내부 통제 및 재무 관리 시스템 미흡 — 규모 확장에 따른 회계 오류 및 부정 리스크가 증대됨',
         '부채 의존도 증가 추세 — 차입금 증가로 인한 이자 부담이 영업이익을 잠식할 가능성이 있음',
         '매출 급증 대비 자본 적립 속도 부족 — 자기자본비율 하락 시 금융기관 신용 평가에 부정적 영향이 있음'
-      ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#7c2d12;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+t+'</span></div>';}).join('')
+      ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#7c2d12;line-height:1.65"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#f97316"></div><span>'+s+'</span></div>';}).join('')
     +'</div></div>'
     +'</div>'
     +'<div style="page-break-before:always;break-before:page"></div>'
@@ -2359,7 +2357,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +(d.consultant_certs||[
       '벤처인증 우선 취득 — 기술평가 방식 활용(현장 심사 불요), 현재 매출·역량으로 즉시 신청이 가능함',
       '이노비즈 인증은 벤처인증 취득 후 1년 내 추진 — 기술 경쟁력 지표 사전 정비가 필요함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+s+'</span></div>';}).join('')
     +certs.map(function(c,i){
       return '<div style="background:white;border:1px solid #fcd34d;border-radius:8px;padding:9px 11px;margin-top:6px;display:flex;align-items:flex-start;gap:9px">'
         +'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:2px">'+c.name+'</div><div style="font-size:11px;color:#64748b;line-height:1.5">'+c.effect+'</div></div>'
@@ -2385,7 +2383,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
       '2순위: 기보 기술보증(3억) — 현재 역량 기반 우대 적용, 사업계획서 준비 후 병행 신청 권고',
       '3순위: 벤처인증 취득 후 신보 특례보증(2억) — 총 6억+ 조달 시나리오 실행이 가능함',
       '병행 전략: 소진공 성장촉진자금(1억) 추가 신청으로 최대 7억+ 조달 극대화가 가능함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+s+'</span></div>';}).join('')
     +'</div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
@@ -2396,7 +2394,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
       'B2B 영업 강화: 기존 거래처 관리 효율화 및 신규 거래처 발굴을 위한 영업 프로세스 개선 방안을 제안함',
       '콘텐츠 마케팅: 전문 블로그·유튜브 채널 운영으로 업계 신뢰도를 높이고 인바운드 리드를 창출함',
       '리뷰·UGC 전략: 기존 고객의 후기를 적극 수집·활용하여 신규 고객 전환율을 높이는 방안을 실행함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+s+'</span></div>';}).join('')
     +'</div>'
     +'<div style="background:#fef9ec;border:1.5px solid #fcd34d;border-radius:10px;padding:13px 14px">'
     +'<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #fcd34d">💳 신용 개선</div>'
@@ -2405,12 +2403,11 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
       '부채 비율 관리: 정책자금 상환 계획을 수립하여 안정적인 자금 흐름으로 신용도를 지속 향상시킴',
       '연체 이력 관리: 기존 대출 원리금 연체 없이 관리하여 신용등급 유지 및 추가 조달 여력을 확보함',
       '세금 완납 유지: 국세·지방세 완납 상태를 유지하여 정책자금 심사 시 결격 사유를 사전에 차단함'
-    ]).map(function(t){return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+t+'</span></div>';}).join('')
+    ]).map(function(t){var s=(typeof t==='string')?t:(t&&(t.text||t.content||t.description||t.value||JSON.stringify(t)));return '<div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:7px"><div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#d97706"></div><span>'+s+'</span></div>';}).join('')
     +'</div>'
     +'</div>'
     +'</div>'
     +'</div>';
-
   return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
 }
 
@@ -4299,7 +4296,8 @@ function buildTradePrompt(cData, fRev) {
     + '"comp_direct":직접경쟁수,"comp_strong":강성경쟁수,"diff_potential":"高/中/低",'
     + '"target":{"age":"주요연령대","household":"가구유형","channel":"주구매채널","cycle":"구매주기"},'
     + '"strategy":["' + nm + '의 ' + itm + ' 상권 차별화 전략 5개 각 60자이상"],'
-    + '"sim":{"s0":현재월매출추정,"s1":3개월후목표,"s2":6개월후목표,"s3":12개월후목표}}\n\n'
+    + '"sim":{"s0":현재월매출추정(만원단위정수),"s1":3개월후목표(만원단위정수),"s2":6개월후목표(만원단위정수),"s3":12개월후목표(만원단위정수)}}\n\n'
+    + '[sim 단위 규칙] s0~s3은 반드시 만원 단위 정수. 예: 월매출 9600만원→9600, 1억5000만원→15000. 원 단위(96000000) 절대 사용 금지.\n\n'
     + '[기업] 기업명:' + nm + ', 주소:' + addr + ', 업종:' + ind + (subInd ? '(' + subInd + ')' : '') + ', 판매채널:' + (sc || '미입력') + ', 핵심아이템:' + itm + ', 전년매출:' + r25;
 }
 
@@ -4571,36 +4569,75 @@ function getIndustryCerts(ind, nm, itm, cData) {
   var isExport = ind.includes('수출') || ind.includes('무역');
   var isEco = ind.includes('환경') || ind.includes('에너지') || ind.includes('재활용');
   var isSports = ind.includes('스포츠') || ind.includes('체육') || ind.includes('헬스');
-  var isTour = ind.includes('관광') || ind.includes('숙박') || ind.includes('여행');
+  var isTour = ind.includes('관광') || ind.includes('숙박') || ind.includes('여행') || ind.includes('호텔') || ind.includes('펜션') || ind.includes('리조트') || ind.includes('게스트하우스');
+  var isConstruct = ind.includes('건설') || ind.includes('인테리어') || ind.includes('인테리어디자인');
+  var isBio = ind.includes('바이오') || ind.includes('의료') || ind.includes('제약') || ind.includes('헬스케어');
 
-  // 공통 인증 (벤처기업)
-  certs.push({name:'벤처기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
-
-  if (isManu || isIT || ind.includes('바이오') || isEco) {
-    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
-  } else if (isService || isRetail || isTour) {
-    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 마케팅, 판로 개척 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
-  } else {
-    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
-  }
-
-  if (isFood) {
-    certs.push({name:'HACCP 인증',effect:nm+' 제품의 대형마트·단체급식 납품 채널 확대 직접 연결',amount:'채널↑',period:'매출 확대'});
+  // 업종별 인증 추천 (업종에 맞는 인증만 표시)
+  if (isTour) {
+    // 숙박·관광·여행업: 관광품질인증 → 메인비즈 → ISO 9001 → 녹색기업
+    certs.push({name:'관광품질인증',effect:nm+'의 서비스 품질 공식 인증 — 문화체육관광부 인증으로 예약 플랫폼 노출 우대 및 정부 지원사업 우선 선정',amount:'매출↑',period:'6개월 내'});
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 관광·숙박업 전용 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
+    certs.push({name:'ISO 9001',effect:nm+'의 서비스 품질 경영 체계 증명 — 대기업 협력업체 등록 및 조달청 입찰 기본 요건',amount:'입찰↑',period:'6개월 내'});
+    certs.push({name:'녹색기업 인증',effect:nm+'의 에너지 절감 설비 투자 시 환경부 세제 혜택 및 정부 지원사업 우선 선정',amount:'세제↑',period:'1년 내'});
+  } else if (isFood) {
+    // 식품·외식업: HACCP → ISO 22000 → 메인비즈
+    certs.push({name:'HACCP 인증',effect:nm+' 제품의 대형마트·단체급식 납품 체널 확대 직접 연결',amount:'체널↑',period:'매출 확대'});
     certs.push({name:'ISO 22000',effect:nm+'의 글로벌 식품 안전 표준 경영 체계 구축 — 해외 수출 신뢰도 확보',amount:'수출↑',period:'1년 내'});
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 식품·외식 업종 전용 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
   } else if (isRoot) {
-    certs.push({name:'뿌리기업 확인',effect:nm+'의 핵심뿌리기술 인정 — 외국인 근로자 고용 한도 확대 및 기술개발 사업 우선 선정',amount:'가점↑',period:'6개월 내'});
+    // 듸리기업: 벤쳐 → 듸리기업확인 → ISO 9001
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
+    certs.push({name:'듸리기업 확인',effect:nm+'의 핵심듸리기술 인정 — 외국인 근로자 고용 한도 확대 및 기술개발 사업 우선 선정',amount:'가점↑',period:'6개월 내'});
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   } else if (isMaterial) {
+    // 소재·부품·장비: 벤쳐 → 소부장전문기업 → ISO 9001
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
     certs.push({name:'소부장 전문기업',effect:nm+'의 소재·부품·장비 기술력 입증 — 특화 R&D 자금 및 산업은행 금융 지원',amount:'+1.7억',period:'1년 내'});
     certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
   } else if (isIT) {
+    // IT·SW: 벤쳐 → 기업부설연구소 → 이노비즈 → 성능인증(EPC)
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
     certs.push({name:'성능인증(EPC)',effect:nm+'의 우수 기술 제품 인증 — 공공기관 수의계약 및 의무구매 비중 적용',amount:'매출↑',period:'1년 내'});
+  } else if (isBio) {
+    // 바이오·의료: 벤쳐 → 이노비즈 → 기업부설연구소
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 바이오·의료 분야 R&D 자금 우대 지원',amount:'+1억',period:'1년 내'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
+  } else if (isEco) {
+    // 환경·에너지: 벤쳐 → 녹색기업 → ISO 50001 → 기업부설연구소
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
+    certs.push({name:'녹색기업 인증',effect:nm+'의 환경부 인증 — 에너지 절감 설비 투자 시 세제 혜택 및 정부 지원사업 우선 선정',amount:'세제↑',period:'1년 내'});
+    certs.push({name:'ISO 50001 (에너지경영)',effect:nm+'의 에너지 경영 체계 국제 표준 인증 — 수출 신뢰도 및 공공기관 납품 우대',amount:'수출↑',period:'1년 내'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
+  } else if (isRetail) {
+    // 도소매·유통: 메인비즈 → ISO 9001 → 벤쳐(조건부)
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 도소매·유통업 전용 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
+    certs.push({name:'ISO 9001',effect:nm+'의 품질 경영 체계 증명 — 대기업 협력업체 등록 및 조달청 입찰 기본 요건',amount:'입찰↑',period:'6개월 내'});
+  } else if (isService) {
+    // 서비스·물류: 메인비즈 → ISO 9001 → 기업부설연구소(조건부)
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 서비스·물류업 전용 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
+    certs.push({name:'ISO 9001',effect:nm+'의 품질 경영 체계 증명 — 대기업 협력업체 등록 및 조달청 입찰 기본 요건',amount:'입찰↑',period:'6개월 내'});
+    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능(연구개발성 조건부)',amount:'+5천만',period:'세액공제 병행'});
+  } else if (isConstruct) {
+    // 건설·인테리어: ISO 9001 → 메인비즈 → 벤쳐(조건부)
+    certs.push({name:'ISO 9001',effect:nm+'의 품질 경영 체계 증명 — 건설업 조달청 입찰 및 대기업 협력업체 등록 기본 요건',amount:'입찰↑',period:'6개월 내'});
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 건설·인테리어 업종 전용 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능(기술력 조건부)',amount:'+7천만',period:'6개월 내'});
+  } else if (isManu) {
+    // 제조업 (일반): 벤쳐 → 이노비즈 → ISO 9001 → 기업부설연구소
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능',amount:'+7천만',period:'6개월 내'});
+    certs.push({name:'이노비즈 인증',effect:nm+'의 기술혁신형 기업 인증 — 중진공 기술개발자금 신청 자격 부여',amount:'+1억',period:'1년 내'});
+    certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
     certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
   } else {
-    certs.push({name:'기업부설연구소',effect:nm+'의 R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',amount:'+5천만',period:'세액공제 병행'});
-    certs.push({name:'ISO 9001/14001',effect:nm+'의 품질/환경 경영 체계 증명 — 조달청 입찰 및 대기업 협력업체 등록 기본 사양',amount:'입찰↑',period:'6개월 내'});
+    // 기타 업종: 메인비즈 → ISO 9001 → 벤쳐(조건부)
+    certs.push({name:'메인비즈 인증',effect:nm+'의 경영혁신형 기업 인증 — 업종 특성에 맞는 정책자금 우대 및 금융권 대출 금리 우대',amount:'+7천만',period:'1년 내'});
+    certs.push({name:'ISO 9001',effect:nm+'의 품질 경영 체계 증명 — 대기업 협력업체 등록 및 조달청 입찰 기본 요건',amount:'입찰↑',period:'6개월 내'});
+    certs.push({name:'벤쳐기업 인증',effect:nm+'의 기술력 인정 — 중진공·기보 우대금리 + 추가 자금 한도 7천만 확보 가능(기술력 조건부)',amount:'+7천만',period:'6개월 내'});
   }
-
   // 자금 추천
   if (isFood) {
     funds = [
