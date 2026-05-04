@@ -1231,8 +1231,50 @@ function initInputHandlers(){
 
 // ===========================
 // ★ 유틸리티
-
 // ===========================
+
+/**
+ * [전역 금액 정규화]
+ * AI가 원 단위 / 만원 단위 / 억원 단위 어느 것으로 반환해도 원 단위로 통일
+ * 기준:
+ *  - n >= 100,000,000,000 (1000억 이상) → 원 단위로 보기엔 너무 큼 → 만원 단위로 판단 → ×10000
+ *  - n >= 10,000,000 (1000만 이상) → 원 단위로 판단 → 그대로
+ *  - n >= 10,000 (1만 이상) → 만원 단위로 판단 → ×10000
+ *  - n < 10,000 → 만원 단위로 판단 → ×10000
+ * 단, 매출/자금 데이터는 이미 원 단위로 저장되어 있으므로 fKRW/fKRWRound는 그대로 사용
+ * sim.s0~s3 전용 정규화: AI 프롬프트는 만원 단위 지시이나 원 단위로 반환할 수 있음
+ */
+function normSimToMan(n) {
+  // sim 값(만원 단위 기준)을 정규화
+  // AI가 원 단위로 반환한 경우 (예: 96000000 → 9600만원) 만원 단위로 변환
+  var v = parseInt(String(n).replace(/,/g,''), 10);
+  if (isNaN(v) || v <= 0) return v || 0;
+  // 1억(10000만) 이상이면 원 단위로 판단 → 만원 단위로 변환
+  if (v >= 100000000) return Math.round(v / 10000);
+  // 10만 이상이면 원 단위로 판단 → 만원 단위로 변환
+  if (v >= 100000) return Math.round(v / 10000);
+  // 그 외는 이미 만원 단위
+  return v;
+}
+
+/**
+ * sim 만원 단위 값을 한국어 금액 문자열로 변환
+ * 예: 9600 → '9600만원', 15000 → '1억5000만원', 100000 → '10억원'
+ */
+function fSimMan(n) {
+  var v = normSimToMan(n);
+  if (!v || v <= 0) return '0원';
+  if (v >= 10000) {
+    var eok = Math.floor(v / 10000);
+    var rem = v % 10000;
+    if (rem === 0) return eok + '억원';
+    if (rem % 1000 === 0) return eok + '억 ' + (rem/1000) + '천만원';
+    return eok + '억 ' + rem + '만원';
+  }
+  if (v >= 1000) return (Math.round(v/100)*100) + '만원';
+  return v + '만원';
+}
+
 function fKRW(n){
   // 원 단위 숫자를 자연스러운 한국어 금액으로 변환
   // 예: 113,000,000 → 1억1300만원 / 1,153,000,000 → 11억5300만원
@@ -2646,17 +2688,17 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     +'<div class="rp-2col">'
     +'<div class="rp-col50">'
     +rpSec('매출 잠재력 시뮬레이션 (월 매출)', color,
-      '<div class="rp-ch" style="height:200px"><canvas id="tp-linechart" data-s0="'+sim.s0+'" data-s1="'+sim.s1+'" data-s2="'+sim.s2+'" data-s3="'+sim.s3+'" style="width:100%;height:100%"></canvas></div>'
+      '<div class="rp-ch" style="height:200px"><canvas id="tp-linechart" data-s0="'+normSimToMan(sim.s0)+'" data-s1="'+normSimToMan(sim.s1)+'" data-s2="'+normSimToMan(sim.s2)+'" data-s3="'+normSimToMan(sim.s3)+'" style="width:100%;height:100%"></canvas></div>'
     )
     +'</div>'
     +'<div class="rp-colF">'
     +'<div class="rp-g2" style="margin-bottom:8px">'
-    +rpMC('현재',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s0),'/월',color)
-    +rpMC('6개월',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s1),'+'+Math.round((sim.s1-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('현재',fSimMan(sim.s0),'/월',color)
+    +rpMC('6개월',fSimMan(sim.s1),'+'+(function(){var s0=normSimToMan(sim.s0),s1=normSimToMan(sim.s1);return s0>0?Math.round((s1-s0)/s0*100)+'%':'-%';})(),color)
     +'</div>'
     +'<div class="rp-g2">'
-    +rpMC('1년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s2),'+'+Math.round((sim.s2-sim.s0)/sim.s0*100)+'%',color)
-    +rpMC('2년',(function(n){var m=Math.round(n/100)*100;if(m>=10000){var ok=Math.floor(m/10000);var rem=m%10000;if(rem>0)return ok+'억 '+Math.round(rem/1000)+'천만원';return ok+'억원';;}return Math.round(m/1000)+'천만원';  })(sim.s3),'+'+Math.round((sim.s3-sim.s0)/sim.s0*100)+'%',color)
+    +rpMC('1년',fSimMan(sim.s2),'+'+(function(){var s0=normSimToMan(sim.s0),s2=normSimToMan(sim.s2);return s0>0?Math.round((s2-s0)/s0*100)+'%':'-%';})(),color)
+    +rpMC('2년',fSimMan(sim.s3),'+'+(function(){var s0=normSimToMan(sim.s0),s3=normSimToMan(sim.s3);return s0>0?Math.round((s3-s0)/s0*100)+'%':'-%';})(),color)
     +'</div>'
     +'<div style="font-size:11px;color:#64748b;padding:9px;background:#f0fdfa;border-radius:7px;margin-top:8px">\u203b \uc5c5\uc885 \ud3c9\uade0 \uc131\uc7a5\ub960 \ub2ec\uc131 \uac00\uc815 \uc2dc \ucd94\uc815\uac12 (\uc804\uc81c: \uc6b4\uc601 \uc804\ub7b5 \uc774\ud589, \uacc4\uc808\uc131 \ubc18\uc601, \uacbd\uc7c1 \ud658\uacbd \uc720\uc0ac \uc218\uc900 \uc720\uc9c0)</div>'
     +'</div>'
@@ -4119,7 +4161,7 @@ function initReportCharts(rev) {
     var tl = document.getElementById('tp-linechart');
     if(tl && tl.dataset && tl.dataset.s0) {
       safeDestroyChart(tl);
-      try { var td=tl.dataset; new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){return Math.round(v/100)*100+'만';}}}}}}); } catch(e){}
+      try { var td=tl.dataset; new Chart(tl.getContext('2d'),{type:'line',data:{labels:['현재','6개월','1년','2년'],datasets:[{data:[+td.s0,+td.s1,+td.s2,+td.s3],borderColor:'#0d9488',backgroundColor:'rgba(13,148,136,0.12)',borderWidth:3,pointRadius:6,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){if(v>=10000){var r=(v/10000);return (Math.round(r*10)/10)+'억';}return Math.round(v/100)*100+'만';}}}}}}); } catch(e){}
     }
     // ─ 마케팅 도넛
     var md = document.getElementById('mp-donut');
