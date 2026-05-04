@@ -1836,7 +1836,8 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var certs = d.certs||getIndustryCerts(ind, nm, itm, cData).certs;
   var certBgs=['#f0fdf4','#eff6ff','#fdf4ff','#fff7ed'];
   var certIcons=['🏆','📜','🔬','✅'];
-  var totalC = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
+  function _parseCertAmt(a){var s=String(a||'');if(s.includes('억')){var m=s.match(/([0-9.]+)\s*억/);return m?parseFloat(m[1]):0;}if(s.includes('천만')){var m=s.match(/([0-9.]+)\s*천만/);return m?parseFloat(m[1])*0.1:0;}if(s.includes('만')){var m=s.match(/([0-9.]+)\s*만/);return m?parseFloat(m[1])*0.0001:0;}return 0;}
+  var totalC = certs.reduce(function(s,c){return s+_parseCertAmt(c.amount);},0);
 
   // 카테고리 헬퍼 — page-break-inside:avoid
   function cat(numLabel, title, sub, content) {
@@ -1999,7 +2000,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   );
 
   // ── CAT5: 가점추천 ──────────────────────────
-  var totalC2 = certs.reduce(function(s,c){var n=parseFloat(c.amount.replace(/[^0-9.]/g,''));return s+(isNaN(n)?0:n);},0);
+  var totalC2 = certs.reduce(function(s,c){return s+_parseCertAmt(c.amount);},0);
   var cat5 = cat(5,'가점추천','인증 취득으로 정책자금 한도 최대화',
     // 인증 카드 2열 그리드 (상단)
     '<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:10px">📜 추천 인증 목록 (우선순위 순)</div>'
@@ -2015,7 +2016,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     // 최대 한도 강조 박스 (중앙 전체 너비)
     +'<div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">'
     +'<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:6px">인증 완료 시 총 추가 조달 가능 한도</div>'
-    +'<div style="font-size:36px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">최대 +'+(totalC2>0?totalC2+'억원':'2억원')+'</div>'
+    +'<div style="font-size:36px;font-weight:900;color:#ffffff;line-height:1.1;letter-spacing:-1px">'+(totalC2<=0?'최대 +2억원':totalC2<1?'최대 +'+Math.round(totalC2*10)+'천만원':'최대 +'+(Math.round(totalC2*10)/10)+'억원')+'</div>'
     +'<div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:6px">현재 신청 가능 한도 + 인증 취득 후 추가 조달 합계</div>'
     +'</div>'
     // 취득 우선순위 전략 (하단 2열)
@@ -3397,12 +3398,32 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   // ===== S4: 인증 취득 시 추가자금 확보 전략 =====
   var _fundCerts = _industryCerts.certs || [];
-  // 인증별 추가 한도 합산
+  // 인증별 추가 한도 합산 (억/천만/만 단위 통합 파싱)
+  function _parseAmountToOk(amtStr) {
+    var s = String(amtStr || '');
+    if (s.includes('억')) {
+      var m = s.match(/([0-9.]+)\s*억/);
+      return m ? parseFloat(m[1]) : 0;
+    } else if (s.includes('천만')) {
+      var m = s.match(/([0-9.]+)\s*천만/);
+      return m ? parseFloat(m[1]) * 0.1 : 0;
+    } else if (s.includes('만')) {
+      var m = s.match(/([0-9.]+)\s*만/);
+      return m ? parseFloat(m[1]) * 0.0001 : 0;
+    }
+    return 0;
+  }
   var _certTotalNum = _fundCerts.reduce(function(s, c) {
-    var n = parseFloat(String(c.amount || '').replace(/[^0-9.]/g, ''));
-    return s + (isNaN(n) ? 0 : n);
+    return s + _parseAmountToOk(c.amount);
   }, 0);
-  var _certTotalStr = _certTotalNum > 0 ? '최대 +' + _certTotalNum + '억원' : '최대 +2억원';
+  // 억원 단위 표시 (소수점 1자리)
+  function _fmtOk(n) {
+    if (n <= 0) return '최대 +2억원';
+    if (n < 1) return '최대 +' + Math.round(n * 10) + '천만원';
+    var r = Math.round(n * 10) / 10;
+    return '최대 +' + r + '억원';
+  }
+  var _certTotalStr = _fmtOk(_certTotalNum);
   // 현재 보유 인증 목록
   var _ownedCerts = (cData.certList || []);
   // 인증별 카드 색상
