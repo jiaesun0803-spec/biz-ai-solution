@@ -3515,9 +3515,14 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   // 인증 취득 우선순위 전략 텍스트 (업종별 동적 생성)
   var _certStrategy = [];
-  var _isRootInd = (cData.industry||'').includes('금형')||(cData.industry||'').includes('주조')||(cData.industry||'').includes('뿌리')||(cData.subIndustry||'').includes('금형')||(cData.subIndustry||'').includes('주조');
-  var _isFoodInd  = (cData.industry||'').includes('식품')||(cData.industry||'').includes('음식')||(cData.industry||'').includes('외식');
-  var _isITInd    = (cData.industry||'').includes('IT')||(cData.industry||'').includes('소프트')||(cData.industry||'').includes('SW')||(cData.industry||'').includes('플랫폼');
+  var _ind = (cData.industry||'') + (cData.subIndustry||'');
+  var _isRootInd    = _ind.includes('금형')||_ind.includes('주조')||_ind.includes('뿌리');
+  var _isFoodInd    = _ind.includes('식품')||_ind.includes('음식')||_ind.includes('외식')||_ind.includes('농림')||_ind.includes('수산');
+  var _isITInd      = _ind.includes('IT')||_ind.includes('소프트')||_ind.includes('SW')||_ind.includes('플랫폼')||_ind.includes('정보통신');
+  var _isRetailInd  = _ind.includes('도소매')||_ind.includes('도매')||_ind.includes('소매')||_ind.includes('유통')||_ind.includes('판매업')||_ind.includes('상사')||_ind.includes('리테일')||_ind.includes('마트')||_ind.includes('슈퍼')||_ind.includes('편의점');
+  var _isTourInd    = _ind.includes('관광')||_ind.includes('숙박')||_ind.includes('여행')||_ind.includes('호텔')||_ind.includes('펜션')||_ind.includes('리조트');
+  var _isServiceInd = _ind.includes('서비스')||_ind.includes('물류')||_ind.includes('컨설팅');
+  var _isManuInd    = _ind.includes('제조');
   if (_isRootInd) {
     _certStrategy = [
       '1순위: 뿌리기업확인서 (약 2주) — 중진공 뿌리기업 전용자금 신청 자격 즉시 확보, 발급 무료',
@@ -3539,12 +3544,40 @@ function buildFundHTML(d, cData, rev, dateStr) {
       '3순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 자격 부여',
       '인증 준비는 벤처 → 기업부설연구소 → 이노비즈 순서로 진행하여 자금 조달 속도를 극대화할 것'
     ];
-  } else {
+  } else if (_isRetailInd) {
+    _certStrategy = [
+      '1순위: 메인비즈 인증 (1년 내) — 도소매·유통업 전용 정책자금 우대 및 금융권 대출 금리 우대 적용',
+      '2순위: ISO 9001 (6개월 내) — 대기업 협력업체 등록 및 조달청 입찰 기본 요건 충족',
+      '3순위: 벤처기업 인증 (조건부) — 기술·혁신 요소 보유 시 기보·신보 우대금리 추가 확보 가능',
+      '인증 준비는 메인비즈 → ISO 9001 순서로 진행하여 정책자금 우대와 영업 채널 확대를 동시에 추진할 것'
+    ];
+  } else if (_isTourInd) {
+    _certStrategy = [
+      '1순위: 관광품질인증 (6개월 내) — 문화체육관광부 인증으로 예약 플랫폼 노출 우대 및 지원사업 우선 선정',
+      '2순위: 메인비즈 인증 (1년 내) — 관광·숙박업 전용 정책자금 우대 및 금융권 대출 금리 우대',
+      '3순위: ISO 9001 (6개월 내) — 서비스 품질 경영 체계 증명, 대기업 협력업체 등록 기본 요건',
+      '인증 준비는 관광품질인증 → 메인비즈 → ISO 9001 순서로 진행하여 매출 확대와 자금 조달을 병행할 것'
+    ];
+  } else if (_isServiceInd) {
+    _certStrategy = [
+      '1순위: 메인비즈 인증 (1년 내) — 서비스·물류업 전용 정책자금 우대 및 금융권 대출 금리 우대 적용',
+      '2순위: ISO 9001 (6개월 내) — 서비스 품질 경영 체계 증명, 대기업 협력업체 등록 기본 요건',
+      '3순위: 기업부설연구소 (조건부) — 연구개발 요소 보유 시 R&D 세액공제 25% + 기보 기술보증 우대',
+      '인증 준비는 메인비즈 → ISO 9001 순서로 진행하고, 연구개발 역량 보유 시 기업부설연구소를 병행 추진할 것'
+    ];
+  } else if (_isManuInd) {
     _certStrategy = [
       '1순위: 벤처기업 인증 (약 6개월) — 기보·신보 우대금리 + 추가 한도 7천만 즉시 확보 가능',
-      '2순위: 이노비즈/메인비즈 인증 (1년 내) — 중진공 기술개발자금 신청 자격 + 우대 금리 적용',
+      '2순위: 이노비즈 인증 (1년 내) — 벤처 취득 후 연속 추진, 중진공 기술개발자금 신청 자격 부여',
       '3순위: 기업부설연구소 (중기) — R&D 세액공제 25% + 기보 기술보증 우대 동시 적용 가능',
-      '인증 준비는 벤처 → 이노비즈/메인비즈 → 기업부설연구소 순서로 진행하여 자금 조달을 극대화할 것'
+      '인증 준비는 벤처 → 이노비즈 → 기업부설연구소 순서로 진행하여 자금 조달과 세제 혜택을 극대화할 것'
+    ];
+  } else {
+    _certStrategy = [
+      '1순위: 메인비즈 인증 (1년 내) — 업종 특성에 맞는 정책자금 우대 및 금융권 대출 금리 우대 적용',
+      '2순위: ISO 9001 (6개월 내) — 품질 경영 체계 증명, 대기업 협력업체 등록 및 조달청 입찰 기본 요건',
+      '3순위: 벤처기업 인증 (조건부) — 기술·혁신 요소 보유 시 기보·신보 우대금리 + 추가 한도 확보 가능',
+      '인증 준비는 메인비즈 → ISO 9001 순서로 진행하고, 기술 역량 보유 시 벤처 인증을 병행 추진할 것'
     ];
   }
 
@@ -4675,7 +4708,7 @@ function getIndustryCerts(ind, nm, itm, cData) {
   }
   var isNewBiz   = bizYears > 0 && bizYears <= 3;  // 창업 3년 이하
   var isEarlyBiz = bizYears > 0 && bizYears <= 7;  // 창업 7년 이하 (중진공 혁신창업 조건)
-  var isRetail = ind.includes('도소매') || ind.includes('유통');
+  var isRetail = ind.includes('도소매') || ind.includes('유통') || ind.includes('도매') || ind.includes('소매') || ind.includes('판매업') || ind.includes('상사') || ind.includes('리테일') || ind.includes('마트') || ind.includes('슈퍼') || ind.includes('편의점');
   var isService = ind.includes('서비스') || ind.includes('물류');
   var isIT = ind.includes('IT') || ind.includes('소프트웨어') || ind.includes('SW') || ind.includes('정보');
   // 2026년 중진공 확대 업종 (지식서비스업/유망서비스업)
