@@ -317,11 +317,11 @@ window.printCompanyForm = function() {
     <div class="section">
       <div class="section-title">4. 매출 현황</div>
       <table>
-        <tr><th>금년 매출(연환산)</th><td>${g('rev_cur')}원</td><th>2025년 매출</th><td>${g('rev_25')}원</td></tr>
-        <tr><th>2024년 매출</th><td>${g('rev_24')}원</td><th>2023년 매출</th><td>${g('rev_23')}원</td></tr>
+        <tr><th>금년 매출(연환산)</th><td>${g('rev_cur')}원</td><th>${new Date().getFullYear()-1}년 매출</th><td>${g('rev_25')}원</td></tr>
+        <tr><th>${new Date().getFullYear()-2}년 매출</th><td>${g('rev_24')}원</td><th>${new Date().getFullYear()-3}년 매출</th><td>${g('rev_23')}원</td></tr>
         <tr><th>수출 여부</th><td colspan="3">${gR('export')}</td></tr>
-        <tr><th>금년 수출매출</th><td>${expCur}원</td><th>2025년 수출매출</th><td>${exp25}원</td></tr>
-        <tr><th>2024년 수출매출</th><td>${exp24}원</td><th>2023년 수출매출</th><td>${exp23}원</td></tr>
+        <tr><th>금년 수출매출</th><td>${expCur}원</td><th>${new Date().getFullYear()-1}년 수출매출</th><td>${exp25}원</td></tr>
+        <tr><th>${new Date().getFullYear()-2}년 수출매출</th><td>${exp24}원</td><th>${new Date().getFullYear()-3}년 수출매출</th><td>${exp23}원</td></tr>
       </table>
     </div>
 
@@ -1377,7 +1377,7 @@ function migrateRevenueToWon() {
   }
 }
 
-function fRevAI(cData,rev){const regMonth=parseInt((cData.date||'').split('-')[1])||1;const months=Math.max(regMonth-1,1);const expectedCur=Math.round(((rev.cur||0)/months)*12);return{금년매출_전월말기준:fKRW(rev.cur),금년예상연간매출:fKRW(expectedCur)+` (${months}개월 연간환산)`,매출_2025년:fKRW(rev.y25),매출_2024년:fKRW(rev.y24),매출_2023년:fKRW(rev.y23),_raw:rev,_expected:expectedCur,_months:months};}
+function fRevAI(cData,rev){const regMonth=parseInt((cData.date||'').split('-')[1])||1;const months=Math.max(regMonth-1,1);const expectedCur=Math.round(((rev.cur||0)/months)*12);const _cy=new Date().getFullYear();const _py=_cy-1;const _p2y=_cy-2;const _p3y=_cy-3;const _r={};_r['금년매출_전월말기준']=fKRW(rev.cur);_r['금년예상연간매출']=fKRW(expectedCur)+` (${months}개월 연간환산)`;_r['매출_'+_py+'년']=fKRW(rev.y25);_r['매출_'+_p2y+'년']=fKRW(rev.y24);_r['매출_'+_p3y+'년']=fKRW(rev.y23);_r['매출_2025년']=fKRW(rev.y25);_r['매출_2024년']=fKRW(rev.y24);_r['매출_2023년']=fKRW(rev.y23);_r._raw=rev;_r._expected=expectedCur;_r._months=months;_r._curYear=_cy;_r._prevYear=_py;_r._prev2Year=_p2y;_r._prev3Year=_p3y;return _r;}
 function calcExpected(cData,rev){const regMonth=parseInt((cData.date||'').split('-')[1])||1;const months=Math.max(regMonth-1,1);return Math.round(((rev.cur||0)/months)*12);}
 function tpList(items,color='#3b82f6'){return`<div class="tp-list">${items.map(i=>`<div class="tp-li"><div class="tp-dot" style="background:${color}"></div><span>${i}</span></div>`).join('')}</div>`;}
 function tpHBar(label,value,display,color){return`<div class="hbr"><div class="hbl"><span>${label}</span><span style="color:${color};font-weight:500">${display}</span></div><div class="hbt"><div class="hbf" style="width:${Math.min(value,100)}%;background:${color}"></div></div></div>`;}
@@ -1967,7 +1967,7 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:13px;font-weight:700;color:'+C+';margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
     +'<div class="rp-ch" style="height:140px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">'
-    +[['전년 매출',fKRW(rev.y25),'2025년','#475569'],['금년 예상',fKRW(exp),'연환산',C],['YoY 성장',growRate,'전년 대비','#16a34a'],['2년 성장',(rev.y23>0&&rev.y25>0?'+'+Math.round(((rev.y25-rev.y23)/rev.y23)*100)+'%':'분석중'),'2년누계','#16a34a']].map(function(v){
+    +[['전년 매출',fKRW(rev.y25),(new Date().getFullYear()-1)+'년','#475569'],['금년 예상',fKRW(exp),'연환산',C],['YoY 성장',growRate,'전년 대비','#16a34a'],['2년 성장',(rev.y23>0&&rev.y25>0?'+'+Math.round(((rev.y25-rev.y23)/rev.y23)*100)+'%':'분석중'),'2년누계','#16a34a']].map(function(v){
       return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:16px;font-weight:800;color:'+v[3]+'">'+v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>'
@@ -2242,7 +2242,7 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e9ecef">📈 연도별 매출 추이</div>'
     +'<div class="rp-ch" style="height:140px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>'
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">'
-    +[['전년 매출',fKRWRound(rev.y25),'2025년','#475569'],['금년 예상',fKRWRound(exp),'연환산','#475569'],['YoY 성장',growRate,'전년 대비','#16a34a'],['현금흐름','주의','관리 필요','#f97316']].map(function(v){
+    +[['전년 매출',fKRWRound(rev.y25),(new Date().getFullYear()-1)+'년','#475569'],['금년 예상',fKRWRound(exp),'연환산','#475569'],['YoY 성장',growRate,'전년 대비','#16a34a'],['현금흐름','주의','관리 필요','#f97316']].map(function(v){
       return '<div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">'+v[0]+'</div><div style="font-size:15px;font-weight:800;color:'+v[3]+';white-space:nowrap">' +v[1]+'</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">'+v[2]+'</div></div>';
     }).join('')
     +'</div></div>'
@@ -2594,7 +2594,7 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
     +'<div style="display:grid;grid-template-columns:1.45fr 1fr;gap:14px;align-items:stretch">'
     +rpSec('연도별 매출 추이', color, '<div class="rp-ch" style="height:198px"><canvas id="rp-linechart" data-y23="'+(rev.y23||0)+'" data-y24="'+(rev.y24||0)+'" data-y25="'+(rev.y25||0)+'" data-exp="'+(exp||0)+'" style="width:100%;height:100%"></canvas></div>')
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-    +financeMetricCard('전년 매출', fKRWRound(rev.y25), '2025년', color)
+    +financeMetricCard('전년 매출', fKRWRound(rev.y25), (new Date().getFullYear()-1)+'년', color)
     +financeMetricCard('금년 예상', fKRWRound(exp), '연환산', color)
     +financeMetricCard('성장률', yoy, 'YoY', '#16a34a')
     +financeMetricCard('종합 점수', totalScore+'점', '100점 만점', color)
@@ -3856,9 +3856,9 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     +   rpSec('전략 실행 우선순위', color,
           '<table class="rp-ftb"><thead><tr><th style="text-align:left;width:72px;white-space:nowrap">전략</th><th style="width:120px;white-space:nowrap">핵심 방향</th><th style="text-align:left">주요 실행 과제</th><th style="width:80px">우선순위</th><th style="width:70px;white-space:nowrap">실행 시기</th></tr></thead>'
           + '<tbody>'
-          + '<tr><td style="font-weight:700;color:'+color+'">SO 전략</td><td style="text-align:center;white-space:nowrap">공공 시장 집중 공략</td><td>'+(cross.so&&cross.so[0]?cross.so[0].replace(/SO전략 [0-9]+: /g,'').split('—')[0].trim():'조달·인증 활용 공공기관 영업 강화')+'</td><td style="text-align:center;color:'+color+';font-weight:700">★★★★★</td><td style="text-align:center">26년 Q1~Q2</td></tr>'
-          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#2563eb">WO 전략</td><td style="text-align:center;white-space:nowrap">인력·채널 확충</td><td>'+(cross.wo&&cross.wo[0]?cross.wo[0].replace(/WO전략 [0-9]+: /g,'').split('—')[0].trim():'정책자금으로 영업 인력 확충 및 채널 진입')+'</td><td style="text-align:center;color:#2563eb;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q2~Q3</td></tr>'
-          + '<tr><td style="font-weight:700;color:#7c3aed">ST 전략</td><td style="text-align:center;white-space:nowrap">기술 포지셔닝 강화</td><td>'+(cross.st&&cross.st[0]?cross.st[0].replace(/ST전략 [0-9]+: /g,'').split('—')[0].trim():'특허·실증 데이터로 전문 포지셔닝 강화')+'</td><td style="text-align:center;color:#7c3aed;font-weight:700">★★★★☆</td><td style="text-align:center">26년 Q3</td></tr>'
+          + '<tr><td style="font-weight:700;color:'+color+'">SO 전략</td><td style="text-align:center;white-space:nowrap">공공 시장 집중 공략</td><td>'+(cross.so&&cross.so[0]?cross.so[0].replace(/SO전략 [0-9]+: /g,'').split('—')[0].trim():'조달·인증 활용 공공기관 영업 강화')+'</td><td style="text-align:center;color:'+color+';font-weight:700">★★★★★</td><td style="text-align:center">'+(new Date().getFullYear()).toString().slice(-2)+'년 Q1~Q2</td></tr>'
+          + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#2563eb">WO 전략</td><td style="text-align:center;white-space:nowrap">인력·채널 확충</td><td>'+(cross.wo&&cross.wo[0]?cross.wo[0].replace(/WO전략 [0-9]+: /g,'').split('—')[0].trim():'정책자금으로 영업 인력 확충 및 채널 진입')+'</td><td style="text-align:center;color:#2563eb;font-weight:700">★★★★☆</td><td style="text-align:center">'+(new Date().getFullYear()).toString().slice(-2)+'년 Q2~Q3</td></tr>'
+          + '<tr><td style="font-weight:700;color:#7c3aed">ST 전략</td><td style="text-align:center;white-space:nowrap">기술 포지셔닝 강화</td><td>'+(cross.st&&cross.st[0]?cross.st[0].replace(/ST전략 [0-9]+: /g,'').split('—')[0].trim():'특허·실증 데이터로 전문 포지셔닝 강화')+'</td><td style="text-align:center;color:#7c3aed;font-weight:700">★★★★☆</td><td style="text-align:center">'+(new Date().getFullYear()).toString().slice(-2)+'년 Q3</td></tr>'
           + '<tr style="background:#f8fafc"><td style="font-weight:700;color:#ea580c">WT 전략</td><td style="text-align:center;white-space:nowrap">기존 고객 방어</td><td>'+(cross.wt&&cross.wt[0]?cross.wt[0].replace(/WT전략 [0-9]+: /g,'').split('—')[0].trim():'고객 유지율 97% 이상 유지 및 특허 추가 출원')+'</td><td style="text-align:center;color:#ea580c;font-weight:700">★★★☆☆</td><td style="text-align:center">상시</td></tr>'
           + '</tbody></table>'
         )
@@ -3906,10 +3906,11 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     {role:'생산관리', name:'생산담당', spec:'제조·품질', career:'생산 공정 관리 및 품질 인증 담당'},
     {role:'마케팅', name:'마케팅담당', spec:'온라인 마케팅', career:'SNS·이커머스 채널 운영 전문'}
   ];
+  var _bpCy=new Date().getFullYear();
   var mktPlan = d.s6_mktplan||[
-    {period:'금년(26년): 공공 시장 집중 공략', detail:'인증 활용 공공기관 영업 강화 · 전시회 참가 2회 · 신규 고객 15개 목표 · 공공 납품 5개소 · 연매출 목표 달성'},
-    {period:'27년: 이커머스 풀필먼트 공략', detail:'이커머스 플랫폼 연동 기능 출시 · 풀필먼트 전용 패키지 개발 · 이노비즈 인증 취득 · 신규 고객 30개 목표'},
-    {period:'28년: 제조업 자재창고 확장', detail:'제조업 자재창고 전용 모듈 개발 · 이노비즈 인증 활용 제조 고객 공략 · 고객사 100개 달성 · 총 매출 목표 달성'}
+    {period:'금년('+String(_bpCy).slice(-2)+'년): 공공 시장 집중 공략', detail:'인증 활용 공공기관 영업 강화 · 전시회 참가 2회 · 신규 고객 15개 목표 · 공공 납품 5개소 · 연매출 목표 달성'},
+    {period:String(_bpCy+1).slice(-2)+'년: 이커머스 풀필먼트 공략', detail:'이커머스 플랫폼 연동 기능 출시 · 풀필먼트 전용 패키지 개발 · 이노비즈 인증 취득 · 신규 고객 30개 목표'},
+    {period:String(_bpCy+2).slice(-2)+'년: 제조업 자재창고 확장', detail:'제조업 자재창고 전용 모듈 개발 · 이노비즈 인증 활용 제조 고객 공략 · 고객사 100개 달성 · 연매출 목표 달성'}
   ];
 
   var p6 = rpPageAuto(6,'인증·조달 레버리지 전략','가점 확보 · 정책자금 확장 · 핵심 인력',color,
@@ -3985,8 +3986,8 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
         + '<th style="text-align:left">집행전략</th>'
         + '<th style="width:12%">집행시기</th>'
         + '</tr></thead>'
-        + '<tbody>'+fundRows.map(function(r,i){ return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td><td style="text-align:center;font-size:11px">'+(r.timing||'26년 Q2~Q3')+'</td></tr>'; }).join('')
-        + '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2">26년 Q2 ~ 27년 Q1 (약 12개월 집행)</td></tr>'
+        + '<tbody>'+fundRows.map(function(r,i){ var _fcy=new Date().getFullYear(); return '<tr'+(i%2===1?' style="background:#f8fafc"':'')+'><td style="font-weight:700">'+r.item+'</td><td style="text-align:center">'+r.amount+'</td><td style="text-align:center;font-weight:700;color:'+color+'">'+r.ratio+'</td><td>'+r.purpose+'</td><td style="text-align:center;font-size:11px">'+(r.timing||String(_fcy).slice(-2)+'년 Q2~Q3')+'</td></tr>'; }).join('')
+        + (function(){ var _fcy2=new Date().getFullYear(); return '<tr style="background:#f0fdf4"><td style="font-weight:700">합계</td><td style="text-align:center;font-weight:700;color:'+color+'">'+nf+'</td><td style="text-align:center;font-weight:700;color:'+color+'">100%</td><td colspan="2">'+String(_fcy2).slice(-2)+'년 Q2 ~ '+String(_fcy2+1).slice(-2)+'년 Q1 (약 12개월 집행)</td></tr>'; })()
         + '</tbody></table>'
       )
   );
@@ -4195,7 +4196,7 @@ function initReportCharts(rev) {
       li.width = li.offsetWidth || 400;
       li.height = liH;
       safeDestroyChart(li);
-      try { var ld=li.dataset; new Chart(li.getContext('2d'),{type:'line',data:{labels:['2023년','2024년','2025년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
+      try { var ld=li.dataset; var _cy2=new Date().getFullYear(); new Chart(li.getContext('2d'),{type:'line',data:{labels:[(_cy2-3)+'년',(_cy2-2)+'년',(_cy2-1)+'년','금년(예)'],datasets:[{data:[+ld.y23||0,+ld.y24||0,+ld.y25||0,+ld.exp||0],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.12)',borderWidth:3,pointRadius:6,pointHoverRadius:8,fill:true,tension:0.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11},callback:function(v){var e=Math.floor(v/100000000),r=v%100000000,c=Math.floor(r/10000000),m=Math.floor((r%10000000)/10000);if(e>0)return e+(c>0?c+'천만':'')+'억';if(c>0)return c+'천만';if(m>0)return m+'만';return v>0?v.toLocaleString()+'원':'0';}}}}}}); } catch(e){console.error('라인 오류:',e);}
     }
     // ─ 재무 도넛
     var de = document.getElementById('fp-donut');
@@ -4320,7 +4321,8 @@ function initReportCharts(rev) {
 // ===========================
 function buildMgmtCombinedPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
-  var r25=fRev['매출_2025년']||'0원', r24=fRev['매출_2024년']||'0원', rExp=fRev['금년예상연간매출']||'0원', rCur=fRev['금년매출_전월말기준']||'0원';
+  var _curYr=new Date().getFullYear(), _prevYr=_curYr-1, _prev2Yr=_curYr-2;
+  var r25=fRev['매출_'+_prevYr+'년']||fRev['매출_2025년']||'0원', r24=fRev['매출_'+_prev2Yr+'년']||fRev['매출_2024년']||'0원', rExp=fRev['금년예상연간매출']||'0원', rCur=fRev['금년매출_전월말기준']||'0원';
   // 신용점수 / 연체 / 과세 데이터 추출
   var _kcb  = parseInt(cData.kcbScore)  || 0;
   var _nice = parseInt(cData.niceScore) || 0;
@@ -4349,6 +4351,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'클라이언트용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
     +'[필수 규칙]\n'
     +'- 기업명 \''+nm+'\', 핵심아이템 \''+itm+'\', 실제 수치('+r25+', '+rExp+') 를 각 항목에 반드시 자연스럽게 포함\n'
+    +'- [연도 규칙] 현재 연도는 '+_curYr+'년입니다. 전년도는 '+_prevYr+'년, 2년전은 '+_prev2Yr+'년입니다. 텍스트에 연도를 언급할 때 반드시 이 연도를 사용하세요. 2023년, 2024년 등 과거 연도를 잘못 사용하지 마세요.\n'
     +'- 모든 텍스트 항목은 반드시 60자 이상, 구체적이고 실질적인 내용으로 작성\n'
     +'- JSON만 출력 (마크다운·설명 텍스트 없이)\n'
     +'- [균형 진단 규칙] 장점과 단점을 반드시 균형 있게 서술할 것. 단점과 리스크는 수치 근거를 들어 구체적으로 지적할 것\n'
@@ -4389,7 +4392,8 @@ function buildTradePrompt(cData, fRev) {
   var ind = cData.industry || '제조업';
   var subInd = cData.subIndustry || '';
   var itm = cData.coreItem || '주력제품';
-  var r25 = fRev['매출_2025년'] || '0원';
+  var _prevYrT=new Date().getFullYear()-1;
+  var r25 = fRev['매출_'+_prevYrT+'년']||fRev['매출_2025년'] || '0원';
   var addr = cData.address && cData.address !== '-' ? cData.address : '주소 미입력';
   var sc  = cData.salesChannel || '';
 
@@ -4451,15 +4455,17 @@ function buildTradePrompt(cData, fRev) {
     + '"comp_direct":직접경쟁수,"comp_strong":강성경쟁수,"diff_potential":"高/中/低",'
     + '"target":{"age":"주요연령대","household":"가구유형","channel":"주구매채널","cycle":"구매주기"},'
     + '"strategy":["' + nm + '의 ' + itm + ' 상권 차별화 전략 5개 각 60자이상"],'
-    + '"sim":{"s0":현재월매출추정(만원단위정수),"s1":3개월후목표(만원단위정수),"s2":6개월후목표(만원단위정수),"s3":12개월후목표(만원단위정수)}}\n\n'
-    + '[sim 단위 규칙] s0~s3은 반드시 만원 단위 정수. 예: 월매출 9600만원→9600, 1억5000만원→15000. 원 단위(96000000) 절대 사용 금지.\n\n'
+    + '"sim":{"s0":현재월매출추정(만원단위정수),"s1":3개월후목표(만원단위정수),"s2":6개월후목표(만원단위정수),"s3":12개월후목표(만원단위정수)}}\n\n'    + '[sim 단위 규칙] s0~s3은 반드시 만원 단위 정수. 예: 월매출 9600만원→9600, 1억15000만원→15000. 원 단위(96000000) 절대 사용 금지.\n'
+    + '[연도 규칙] 현재 연도 '+_prevYrT+1+'년, 전년도 '+_prevYrT+'년. 텍스트에 연도 언급 시 이 연도를 사용할 것.\n\n'
     + '[기업] 기업명:' + nm + ', 주소:' + addr + ', 업종:' + ind + (subInd ? '(' + subInd + ')' : '') + ', 판매채널:' + (sc || '미입력') + ', 핵심아이템:' + itm + ', 전년매출:' + r25;
 }
 
 function buildMarketingPrompt(cData, fRev) {
   var nm=cData.name, itm=cData.coreItem||'주력제품';
-  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원';
-  return '디지털마케팅 전문가. \''+nm+'\'의 \''+itm+'\' 마케팅 제안서. 기업명·제품명·실제 매출수치 반영. JSON만.\n\n'
+  var _prevYrM=new Date().getFullYear()-1;
+  var r25=fRev['매출_'+_prevYrM+'년']||fRev['매출_2025년']||'0원', rExp=fRev.금년예상연간매출||'0원';
+  return '디지털마케팅 전문가. \''+nm+'\'의 \''+itm+'\' 마케팅 제안서. 기업명·제품명·실제 매출수치 반영. JSON만.\n'
+    + '[연도 규칙] 현재 연도 '+(_prevYrM+1)+'년, 전년도 '+_prevYrM+'년. 텍스트에 연도 언급 시 이 연도를 사용할 것.\n\n'
     +'{"channels":[{"name":"SNS (인스타그램, 유튜브 쇼츠, 틱톡)","score":92},{"name":"네이버 검색광고 및 블로그 체험단","score":85},{"name":"인플루언서 협업 및 리뷰 마케팅","score":80},{"name":"쿠팡·마켓컬리 등 이커머스 광고","score":75},{"name":"제휴 마케팅 (밀키트·HMR 브랜드)","score":60}],'
     +'"strategies":["'+nm+'의 '+itm+' 마케팅 전략 5개 각 60자 이상"],'
     +'"budget_total":"700만원/월",'
@@ -4473,7 +4479,8 @@ function buildMarketingPrompt(cData, fRev) {
 
 function buildFundPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'';
-  var r25=fRev['매출_2025년']||'0원', rExp=fRev['금년예상연간매출']||'0원';
+  var _prevYrF=new Date().getFullYear()-1;
+  var r25=fRev['매출_'+_prevYrF+'년']||fRev['매출_2025년']||'0원', rExp=fRev['금년예상연간매출']||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
   // 세부 업종 및 인증 기반 중진공 지원분야 판단
   var subInd = cData.subIndustry||'';
@@ -4551,8 +4558,8 @@ function buildFundPrompt(cData, fRev) {
     .replace('관광진흥개발기금','관광기금');
   return '정책자금 전문 컨설턴트. \''+nm+'\' 정책자금 매칭. 기업명 반드시 반영. JSON만.\n\n'
     +'{"checks":'+JSON.stringify(_checksArr)+','
-    +'"score":'+_scoreVal+',"score_desc":"'+nm+' 2026년 정책자금 심사기준 분석","match_count":5,'
-    +'"score_items":["'+nm+'는 2026년 정책자금 심사기준 기반 분석 결과 60자이상"],'
+    +'"score":'+_scoreVal+',"score_desc":"'+nm+' '+(_prevYrF+1)+'년 정책자금 심사기준 분석","match_count":5,'
+    +'"score_items":["'+nm+'는 '+(_prevYrF+1)+'년 정책자금 심사기준 기반 분석 결과 60자이상"],'
     +'"funds":'+JSON.stringify(indFunds)+','
     +'"comparison":[{"org":"'+compOrg+'","limit":"'+(top1.limit||'1억')+'","rate":"'+(top1.tags&&top1.tags[0]||'우대금리')+'","period":"5년","diff":"easy"},{"org":"기보","limit":"3억","rate":"0.5%","period":"7년","diff":"mid"},{"org":"소진공","limit":"1억","rate":"3.0%","period":"5년","diff":"easy"},{"org":"지역신보","limit":"5천만","rate":"0.8%","period":"3년","diff":"easy"}],'
     +'"checklist_ready":["사업자등록증 사본","부가세 신고서 2년","국세납부증명서","신용정보 동의서"],'
@@ -4566,7 +4573,8 @@ function buildFundPrompt(cData, fRev) {
 
 function buildFinancePrompt(cData, fRev) {
   var nm  = cData.name, ind = cData.industry||'제조업';
-  var r25 = fRev.매출_2025년||'0원', rExp = fRev.금년예상연간매출||'0원';
+  var _prevYrFin=new Date().getFullYear()-1;
+  var r25 = fRev['매출_'+_prevYrFin+'년']||fRev['매출_2025년']||'0원', rExp = fRev.금년예상연간매출||'0원';
   // 재무제표 입력 데이터 (fsData에 저장된 값 우선, 없으면 기존 revenueData 활용)
   var fs  = cData.fsData || {};
   // revenueData는 원 단위로 저장됨 (만원 곱하기 제거)
@@ -4606,8 +4614,8 @@ function buildFinancePrompt(cData, fRev) {
   var icr       = intY24   > 0 ? Math.round((opY24 / intY24) * 10) / 10 : 0;
   var assetTurn = totAsset > 0 ? Math.round((revY24 / totAsset) * 100) / 100 : 0;
   var revGrowth = revY23   > 0 ? Math.round(((revY24-revY23)/revY23)*1000)/10 : 0;
-  var opGrowth  = 0; // 전전년 영업이익 미입력 시 0
-  return '재무제표 분석 전문가. \''+nm+'\' 기업 재무제표 분석 리포트. 기업명 반드시 반영. JSON만.\n\n'
+  var opGrowth  = 0; // 전전년 영업이익 미입력 시   return '재무제표 분석 전문가. \''+nm+'\'의 재무제표 분석 보고서. 기업명·실제 매출수치 반영. JSON만.\n'
+    + '[연도 규칙] 현재 연도 '+(_prevYrFin+1)+'년, 전년도 '+_prevYrFin+'년. 텍스트에 연도 언급 시 이 연도를 사용할 것.\n\n'
     +'{"scores":{"profit":'+Math.min(100,Math.max(0,Math.round(50+(opMargin-5)*2)))+',"stable":'+Math.min(100,Math.max(0,Math.round(80-(debtRatio-100)*0.1)))+',"growth":'+Math.min(100,Math.max(0,Math.round(50+revGrowth*1.5)))+'},'
     +'"score_descs":{"profit":"영업이익률 '+opMargin+'%","stable":"부채비율 '+debtRatio+'%","growth":"매출성장률 '+revGrowth+'%"},'
     +'"profit_bars":[{"label":"매출 성장률(YoY)","value":'+Math.min(100,Math.max(0,50+revGrowth))+',"display":"'+revGrowth+'%"},{"label":"매출총이익률","value":'+Math.min(100,grossMargin)+',"display":"'+grossMargin+'%"},{"label":"영업이익률","value":'+Math.min(100,Math.max(0,opMargin*2))+',"display":"'+opMargin+'%"},{"label":"이자보상배율","value":'+Math.min(100,icr*10)+',"display":"'+icr+'배"}],'
@@ -4623,9 +4631,11 @@ function buildFinancePrompt(cData, fRev) {
 }
 function buildBizPlanPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
-  var r25=fRev.매출_2025년||'0원', rExp=fRev.금년예상연간매출||'0원', r24=fRev.매출_2024년||'0원';
+  var _prevYrB=new Date().getFullYear()-1, _prev2YrB=new Date().getFullYear()-2;
+  var r25=fRev['매출_'+_prevYrB+'년']||fRev['매출_2025년']||'0원', rExp=fRev.금년예상연간매출||'0원', r24=fRev['매출_'+_prev2YrB+'년']||fRev['매출_2024년']||'0원';
   var nf=cData.needFund>0?fKRW(cData.needFund):'4억원';
-  return '사업계획서 전문가. \''+nm+'\' 완성형 AI 사업계획서. 기업명·제품명·실제수치를 모든 항목에 반드시 포함. JSON만.\n\n'
+  return '사업계획서 전문가. \''+nm+'\' 완성형 AI 사업계획서. 기업명·제품명·실제수치를 모든 항목에 반드시 포함. JSON만.\n'
+    + '[연도 규칙] 현재 연도 '+(_prevYrB+1)+'년, 전년도 '+_prevYrB+'년, 2년전 '+_prev2YrB+'년. 텍스트에 연도 언급 시 이 연도를 사용할 것.\n\n'
     +'{"s1_items":["'+nm+'는 '+itm+'을 통해 5개 70자이상"],'
     +'"s2_swot":{"strength":["강점 4개 50자이상 (업체명 절대 포함 금지)"],"weakness":["약점 3개 50자이상 (업체명 절대 포함 금지)"],"opportunity":["기회 4개 50자이상 (업체명 절대 포함 금지)"],"threat":["위협 3개 50자이상 (업체명 절대 포함 금지)"]},'
     +'"s2_cross":{"so":["SO전략 4개 50자이상"],"wo":["WO전략 4개 50자이상"],"st":["ST전략 4개 50자이상"],"wt":["WT전략 4개 50자이상"]},'
