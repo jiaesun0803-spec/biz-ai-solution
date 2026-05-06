@@ -1871,7 +1871,24 @@ function buildMgmtClientHTML(d, cData, rev, dateStr) {
   var radar = (d.radar||[72,80,68,70,58]).join(',');
   var bars  = d.marketing_bars||{finance:82,strategy:80,operation:68,hr:64,it:55};
   var nm = cData.name;
-  var gradeVal = (d.grade||'A-').replace(/등급/g,'').trim();
+  // grade 폴백: AI 응답 없으면 신용점수 기반으로 코드에서 직접 계산
+  var _fbKcb  = parseInt(cData.kcbScore)  || 0;
+  var _fbNice = parseInt(cData.niceScore) || 0;
+  var _fbCs   = _fbKcb || _fbNice || 0;
+  var _fbFin  = cData.finOver || '없음';
+  var _fbTax  = cData.taxOver || '없음';
+  var _fbGrade = (function() {
+    if (_fbFin==='있음' || _fbTax==='있음') return 'C';
+    if (_fbCs === 0) return 'B+';
+    if (_fbCs >= 850) return 'A+';
+    if (_fbCs >= 800) return 'A';
+    if (_fbCs >= 750) return 'A-';
+    if (_fbCs >= 700) return 'B+';
+    if (_fbCs >= 650) return 'B';
+    if (_fbCs >= 600) return 'B-';
+    return 'C+';
+  })();
+  var gradeVal = (d.grade ? d.grade : _fbGrade).replace(/등급/g,'').trim();
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
@@ -2115,7 +2132,24 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
   var radar = (d.radar||[72,75,50,55,45]).join(',');
   var bars  = d.marketing_bars||{finance:82,strategy:75,operation:50,hr:30,it:45};
   var nm = cData.name;
-  var gradeVal = (d.grade||'A-').replace(/등급/g,'').trim();
+  // grade 폴백: AI 응답 없으면 신용점수 기반으로 코드에서 직접 계산
+  var _fbKcb2  = parseInt(cData.kcbScore)  || 0;
+  var _fbNice2 = parseInt(cData.niceScore) || 0;
+  var _fbCs2   = _fbKcb2 || _fbNice2 || 0;
+  var _fbFin2  = cData.finOver || '없음';
+  var _fbTax2  = cData.taxOver || '없음';
+  var _fbGrade2 = (function() {
+    if (_fbFin2==='있음' || _fbTax2==='있음') return 'C';
+    if (_fbCs2 === 0) return 'B+';
+    if (_fbCs2 >= 850) return 'A+';
+    if (_fbCs2 >= 800) return 'A';
+    if (_fbCs2 >= 750) return 'A-';
+    if (_fbCs2 >= 700) return 'B+';
+    if (_fbCs2 >= 650) return 'B';
+    if (_fbCs2 >= 600) return 'B-';
+    return 'C+';
+  })();
+  var gradeVal = (d.grade ? d.grade : _fbGrade2).replace(/등급/g,'').trim();
   var growRate = (rev.y24>0&&rev.y25>0)?'+'+Math.round(((rev.y25-rev.y24)/rev.y24)*100)+'%':'-';
   var ind = cData.industry||'제조업';
   var itm = cData.coreItem||'주력제품';
@@ -4254,6 +4288,29 @@ function initReportCharts(rev) {
 function buildMgmtCombinedPrompt(cData, fRev) {
   var nm=cData.name, ind=cData.industry||'제조업', itm=cData.coreItem||'주력제품', emp=cData.empCount||'4', rep=cData.rep||'대표';
   var r25=fRev['매출_2025년']||'0원', r24=fRev['매출_2024년']||'0원', rExp=fRev['금년예상연간매출']||'0원', rCur=fRev['금년매출_전월말기준']||'0원';
+  // 신용점수 / 연체 / 과세 데이터 추출
+  var _kcb  = parseInt(cData.kcbScore)  || 0;
+  var _nice = parseInt(cData.niceScore) || 0;
+  var _cs   = _kcb || _nice || 0;
+  var _finO = cData.finOver || '없음';
+  var _taxO = cData.taxOver || '없음';
+  // 신용점수 기반 등급 사전 계산 (폴백용)
+  var _csGrade = (function() {
+    if (_finO==='있음' || _taxO==='있음') return 'C';
+    if (_cs === 0) return 'B+';
+    if (_cs >= 850) return 'A+';
+    if (_cs >= 800) return 'A';
+    if (_cs >= 750) return 'A-';
+    if (_cs >= 700) return 'B+';
+    if (_cs >= 650) return 'B';
+    if (_cs >= 600) return 'B-';
+    return 'C+';
+  })();
+  var _creditNote = _cs > 0
+    ? '[신용정보] ' + (_kcb ? 'KCB ' + _kcb + '점' : '') + (_nice ? ' NICE ' + _nice + '점' : '')
+      + ' / 금융연체:' + _finO + ' / 과세체납:' + _taxO
+      + ' / 신용점수 기반 예상등급:' + _csGrade
+    : '[신용정보] 신용점수 미입력 / 금융연체:' + _finO + ' / 과세체납:' + _taxO;
   return '너는 대한민국 최고 수준의 경영컨설턴트야.\n'
     +'아래 기업 데이터를 기반으로 경영진단보고서에 필요한 전체 데이터를 한 번에 생성해.\n'
     +'클라이언트용(긍정적 톤)과 컨설턴트 내부용(리스크 솔직 기술) 데이터를 하나의 JSON에 모두 담아줘.\n\n'
@@ -4267,7 +4324,7 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'- [컨설턴트용 솔직한 진단] 컨설턴트용 데이터에는 업체에 직접 전달하기 어려운 솔직한 진단 의견과 개선 필요 사항을 구체적으로 포함할 것\n\n'
     +'JSON 구조:\n'
     +'{'
-    +'"grade":"A- 등 등급",'
+    +'"grade":"'+_csGrade+' (신용점수 기반 예상등급: '+_csGrade+', 실제 종합 진단 반영 필수)",'
     +'"grade_desc":"고성장 유망기업 등 8자이내",'
     // ── 공통 데이터 (클라이언트용·컨설턴트용 모두 사용) ──
     +'"overview":["'+nm+'의 현황 5개항목 각60자이상"],'
@@ -4284,12 +4341,14 @@ function buildMgmtCombinedPrompt(cData, fRev) {
     +'"score_descs":{"profit":"'+nm+' 수익성 10자","stable":"'+nm+' 안정성 10자","growth":"'+nm+' 성장성 10자"},'
     +'"profit_bars":[{"label":"매출 성장률(YoY)","value":80,"display":"+21%"},{"label":"매출이익률","value":62,"display":"38%"},{"label":"영업이익률","value":45,"display":"23%"},{"label":"현금흐름 안정성","value":70,"display":"양호"}],'
     +'"debt":[{"name":"중진공","ratio":54},{"name":"기보","ratio":27},{"name":"재단","ratio":19}],'
-    +'"stable_metrics":[{"label":"부채비율","value":"낮음","desc":"정책자금 중심"},{"label":"KCB신용","value":"710점","desc":"3등급"},{"label":"연체이력","value":"없음","desc":"청결"},{"label":"종합등급","value":"A-","desc":"우수"}],'
+    +'"stable_metrics":[{"label":"부채비율","value":"실제 부채비율 반영","desc":"정책자금 심사 기준"},{"label":"'+(_kcb?'KCB':_nice?'NICE':'KCB')+'신용","value":"'+(_cs>0?_cs+'점':'미입력')+'","desc":"'+(_cs>=800?'우대':_cs>=750?'양호':_cs>=700?'보통':_cs>=600?'주의':'미입력')+'"},{"label":"연체이력","value":"'+(_finO==='있음'?'있음':'없음')+'","desc":"'+(_finO==='있음'?'심사 불리':'정상')+'"},{"label":"종합등급","value":"'+_csGrade+'","desc":"'+(_csGrade.startsWith('A')?'양호':_csGrade.startsWith('B')?'보통':'주의')+'"},{"label":"과세체납","value":"'+(_taxO==='있음'?'체납있음':'정상')+'","desc":"'+(_taxO==='있음'?'개선 필요':'정상')+'"}],'
     +'"growth_items":["'+nm+'의 '+r25+' 매출은 5개 60자이상"],'
     +'"action_urgent":"'+nm+' 즉시실행 2문장",'
     +'"action_short":"'+nm+' 단기실행 2문장",'
     +'"action_mid":"'+nm+' 중기실행 2문장"}\n\n'
-    +'[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp;
+    +'[기업] 기업명:'+nm+', 업종:'+ind+', 전년매출:'+r25+', 금년예상:'+rExp+', 직원수:'+emp+'명'
+    +' / '+_creditNote
+    +' / [grade 산정 지시] 위 신용점수·연체·과세 정보를 반드시 반영하여 grade를 결정할 것. 연체·과세 있으면 C등급, 신용점수 850이상 A+, 800이상 A, 750이상 A-, 700이상 B+, 650이상 B, 600이상 B-, 600미만 C+. 신용점수 미입력 시 매출성장률·업력·부채비율 종합 판단';
 }
 
 function buildTradePrompt(cData, fRev) {
