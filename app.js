@@ -7067,7 +7067,7 @@ async function _renderDashSupportDocs() {
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
       '<span style="font-size:11px;font-weight:600;color:#ea580c;background:#fff7ed;border-radius:8px;padding:2px 7px;">공문</span>'+
       '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
-      (item.deadline?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;">~'+_esc(item.deadline)+'</span>':'<span style="font-size:11px;color:#94a3b8;">'+_esc(item.date||'')+'</span>')+
+      (item.is_limitless?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;font-weight:600;">소진시마감</span>':(item.deadline?'<span style="font-size:11px;color:#ef4444;white-space:nowrap;">~'+_esc(item.deadline)+'</span>':'<span style="font-size:11px;color:#94a3b8;">'+_esc(item.date||'')+'</span>'))+
       '</div>';
   }).join('');
 }
