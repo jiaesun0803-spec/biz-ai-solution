@@ -6449,6 +6449,7 @@ window.crawlSupportDocUrl = async function() {
   }
 };
 var _sdSelectedFiles = [];
+var _sdFileChanged = false; // 파일 변경 여부 추적
 window.handleSdFiles = function(input) {
   var files = Array.from(input.files);
   if(_sdSelectedFiles.length + files.length > 5) {
@@ -6461,6 +6462,7 @@ window.handleSdFiles = function(input) {
     var reader = new FileReader();
     reader.onload = function(e) {
       _sdSelectedFiles.push({ name: f.name, type: f.type, data: e.target.result });
+      _sdFileChanged = true; // 파일 추가 시 변경 플래그 설정
       _renderSdFileList();
     };
     reader.readAsDataURL(f);
@@ -6478,6 +6480,7 @@ function _renderSdFileList() {
 }
 window._removeSdFile = function(idx) {
   _sdSelectedFiles.splice(idx, 1);
+  _sdFileChanged = true; // 파일 삭제 시 변경 플래그 설정
   _renderSdFileList();
 };
 window.saveSupportDoc = async function() {
@@ -6487,15 +6490,20 @@ window.saveSupportDoc = async function() {
   var payload = {
     title: title.trim(),
     category: '공문',
-    program: ((document.getElementById('sd-program')||{}).value||'').trim(),
     agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
     source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
     deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
-    is_limitless: (document.getElementById('sd-is-limitless')||{}).checked ? 1 : 0,
-    description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
-    file_name: _sdSelectedFiles.length > 0 ? _sdSelectedFiles[0].name : null,
-    file_url: JSON.stringify(_sdSelectedFiles.map(function(f){ return {name:f.name, url:f.url || f.data}; }))
+    description: ((document.getElementById('sd-desc')||{}).value||'').trim()
   };
+
+  // 파일이 실제로 변경된 경우에만 file_url 포함 (수정 시 미변경이면 기존 파일 유지)
+  if(!_sdEditId || _sdFileChanged) {
+    var newFiles = _sdSelectedFiles.filter(function(f){ return f.data; }); // 새로 추가된 파일만
+    var keepFiles = _sdSelectedFiles.filter(function(f){ return f.url && !f.data; }); // 기존 파일 유지
+    var allFiles = keepFiles.concat(newFiles);
+    payload.file_name = allFiles.length > 0 ? allFiles[0].name : null;
+    payload.file_url = JSON.stringify(allFiles.map(function(f){ return {name:f.name, url:f.url || f.data}; }));
+  }
   
   try {
     if(_sdEditId) {
@@ -6505,6 +6513,7 @@ window.saveSupportDoc = async function() {
       await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
     }
     _sdSelectedFiles = [];
+    _sdFileChanged = false;
     _sdEditId = null;
     closeSupportDocModal();
     await _renderSupportDocTable();
@@ -6541,6 +6550,7 @@ window.openSupportDocEditModal = function(id) {
   var item = _sdCache.find(function(x){ return x.id == id; });
   if(!item) return;
   _sdEditId = id;
+  _sdFileChanged = false; // 수정 모드 진입 시 파일 변경 플래그 초기화
   openSupportDocModal();
   
   // 기존 데이터 채우기
@@ -6552,14 +6562,25 @@ window.openSupportDocEditModal = function(id) {
   var a = document.getElementById('sd-agency'); if(a) a.value = item.agency || '';
   var u = document.getElementById('sd-source-url'); if(u) u.value = item.source_url || '';
   
-  // 파일 데이터 복원
-  try {
-    _sdSelectedFiles = JSON.parse(item.file_url || '[]');
-  } catch(e) {
-    if(item.file_url) _sdSelectedFiles = [{ name: item.file_name, url: item.file_url }];
-    else _sdSelectedFiles = [];
-  }
+  // 목록 API에는 file_url이 없으므로 단건 API로 파일 정보 로드
+  _sdSelectedFiles = [];
   _renderSdFileList();
+  apiCall('/api/support-docs/' + id)
+    .then(function(detail) {
+      try {
+        var files = JSON.parse(detail.file_url || '[]');
+        // 기존 파일은 url 속성으로 저장 (data 없음 = 새로 추가된 파일 아님)
+        _sdSelectedFiles = files.map(function(f){ return {name: f.name, url: f.url}; });
+      } catch(e) {
+        if(detail.file_url) _sdSelectedFiles = [{ name: detail.file_name, url: detail.file_url }];
+        else _sdSelectedFiles = [];
+      }
+      _renderSdFileList();
+    })
+    .catch(function() {
+      _sdSelectedFiles = [];
+      _renderSdFileList();
+    });
   
   // 버튼 텍스트 변경
   var btn = document.querySelector('#support-doc-modal .btn-primary');
