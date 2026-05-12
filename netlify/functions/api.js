@@ -471,7 +471,8 @@ app.patch('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) 
 app.get('/api/support-docs', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('support_docs')
-    .select('id,title,category,date,deadline,description,file_name,agency,source_url,created_at')
+    .select('id,title,category,date,deadline,description,file_name,agency,source_url,created_at,is_limitless,is_pinned')
+    .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
@@ -501,6 +502,7 @@ app.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) 
       category: category || '공문',
       date: date || new Date().toISOString().slice(0,10),
       deadline: deadline || null,
+      is_limitless: is_limitless || 0,
       description: description || '',
       file_name: file_name || null,
       file_url: file_url || null
@@ -513,15 +515,17 @@ app.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) 
 
 // 지원사업공문 수정 (관리자만)
 app.patch('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const { title, agency, source_url, deadline, description, file_name, file_url } = req.body;
+  const { title, agency, source_url, deadline, is_limitless, description, file_name, file_url, is_pinned } = req.body;
   const updates = {};
   if (title !== undefined) updates.title = title;
   if (agency !== undefined) updates.agency = agency;
   if (source_url !== undefined) updates.source_url = source_url;
   if (deadline !== undefined) updates.deadline = deadline;
+  if (is_limitless !== undefined) updates.is_limitless = is_limitless;
   if (description !== undefined) updates.description = description;
   if (file_name !== undefined) updates.file_name = file_name;
   if (file_url !== undefined) updates.file_url = file_url;
+  if (is_pinned !== undefined) updates.is_pinned = is_pinned;
 
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: '수정할 내용이 없습니다.' });
 

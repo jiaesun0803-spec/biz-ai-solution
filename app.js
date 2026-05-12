@@ -6388,10 +6388,12 @@ async function _loadSDFromServer() {
 window.openSupportDocModal = function() {
   var m = document.getElementById('support-doc-modal');
   if(!m) return;
-  _sdEditId = null;
+  // _sdEditId는 openSupportDocEditModal에서 설정하므로 여기서 null로 초기화하지 않음
+  // 신규 등록 시에는 openSupportDocNewModal()을 사용
   var el = document.getElementById('sd-title'); if(el) el.value='';
   var el2 = document.getElementById('sd-program'); if(el2) el2.value='';
   var el3 = document.getElementById('sd-deadline'); if(el3) el3.value='';
+  var elLimitless = document.getElementById('sd-is-limitless'); if(elLimitless) elLimitless.checked = false;
   var el4 = document.getElementById('sd-desc'); if(el4) el4.value='';
   var el5 = document.getElementById('sd-agency'); if(el5) el5.value='';
   var el6 = document.getElementById('sd-source-url'); if(el6) el6.value='';
@@ -6403,6 +6405,11 @@ window.openSupportDocModal = function() {
   if(btn) btn.textContent = '공문 등록';
   
   m.style.display='flex';
+};
+window.openSupportDocNewModal = function() {
+  _sdEditId = null;
+  _sdFileChanged = false;
+  openSupportDocModal();
 };
 window.closeSupportDocModal = function() {
   var m = document.getElementById('support-doc-modal'); if(m) m.style.display='none';
@@ -6487,12 +6494,15 @@ window.saveSupportDoc = async function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
   
+  var isLimitlessEl = document.getElementById('sd-is-limitless');
+  var isLimitless = isLimitlessEl && isLimitlessEl.checked ? 1 : 0;
   var payload = {
     title: title.trim(),
     category: '공문',
     agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
     source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
-    deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
+    deadline: isLimitless ? null : (((document.getElementById('sd-deadline')||{}).value||'').trim() || null),
+    is_limitless: isLimitless,
     description: ((document.getElementById('sd-desc')||{}).value||'').trim()
   };
 
