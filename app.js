@@ -7056,8 +7056,8 @@ function _esc(s) {
 (function() {
   var _origShowTab = window.showTab;
   if(typeof _origShowTab === 'function') {
-    window.showTab = function(tab) {
-      _origShowTab(tab);
+    window.showTab = function(tab, updateUrl) {
+      _origShowTab(tab, updateUrl);
       if(tab === 'dashboard') { _renderDashSupportDocs(); _renderDashNotices(); }
       if(tab === 'supportDocs') { _renderSupportDocTable(); }
       if(tab === 'notices') { _renderNoticeTable(); }
