@@ -6491,6 +6491,7 @@ window.saveSupportDoc = async function() {
     agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
     source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
     deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
+    is_limitless: (document.getElementById('sd-is-limitless')||{}).checked ? 1 : 0,
     description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
     file_name: _sdSelectedFiles.length > 0 ? _sdSelectedFiles[0].name : null,
     file_url: JSON.stringify(_sdSelectedFiles.map(function(f){ return {name:f.name, url:f.url || f.data}; }))
@@ -6546,6 +6547,7 @@ window.openSupportDocEditModal = function(id) {
   var t = document.getElementById('sd-title'); if(t) t.value = item.title || '';
   var p = document.getElementById('sd-program'); if(p) p.value = item.program || '';
   var d = document.getElementById('sd-deadline'); if(d) d.value = item.deadline || '';
+  var isl = document.getElementById('sd-is-limitless'); if(isl) isl.checked = !!item.is_limitless;
   var desc = document.getElementById('sd-desc'); if(desc) desc.value = item.description || '';
   var a = document.getElementById('sd-agency'); if(a) a.value = item.agency || '';
   var u = document.getElementById('sd-source-url'); if(u) u.value = item.source_url || '';
@@ -6589,7 +6591,7 @@ async function _renderSupportDocTable() {
     var adminBtns = isAdmin
       ? '<div style="display:flex;gap:4px;justify-content:center;white-space:nowrap;">'+
         '<button onclick="event.stopPropagation();openSupportDocEditModal('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">수정</button>'+
-        '<button onclick="event.stopPropagation();toggleSupportDocPin('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:6px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;">'+(item.is_pinned?'📌 고정해제':'📌 고정')+'</button>'+
+        '<button onclick="event.stopPropagation();toggleSupportDocPin('+item.id+')" style="padding:4px 8px;font-size:14px;border:1px solid '+(item.is_pinned?'#86efac':'#fca5a5')+';border-radius:6px;background:'+(item.is_pinned?'#f0fdf4':'#fff5f5')+';cursor:pointer;" title="'+(item.is_pinned?'고정해제':'상단고정')+'">'+(item.is_pinned?'<span style="filter:hue-rotate(90deg);">📌</span>':'<span style="filter:hue-rotate(300deg);">📌</span>')+'</button>'+
         '<button onclick="event.stopPropagation();deleteSupportDoc('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'+
         '</div>'
       : '-';
@@ -6600,7 +6602,7 @@ async function _renderSupportDocTable() {
         fileHtml +
       '</td>'+
       '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;color:#64748b;font-size:13px;">'+_esc(item.date||'')+'</td>'+
-      '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;">'+(item.deadline?'<span style="color:#ef4444;font-weight:600;font-size:13px;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
+      '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;">'+(item.is_limitless ? '<span style="color:#ef4444;font-weight:600;font-size:13px;">소진시마감</span>' : (item.deadline?'<span style="color:#ef4444;font-weight:600;font-size:13px;">'+_esc(item.deadline)+'</span>':'-'))+'</td>'+
       '<td style="text-align:center;">'+adminBtns+'</td>'+
       '</tr>';
   }).join('');
@@ -6850,7 +6852,7 @@ window._renderNoticeBoard = async function(resetPage) {
       var adminBtns = isAdmin
         ? '<div style="display:flex;gap:4px;justify-content:center;white-space:nowrap;">'+
           '<button onclick="event.stopPropagation();openNoticeEditModal('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">수정</button>'+
-          '<button onclick="event.stopPropagation();toggleNoticePin('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:6px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;">'+(item.is_pinned?'📌 고정해제':'📌 고정')+'</button>'+
+          '<button onclick="event.stopPropagation();toggleNoticePin('+item.id+')" style="padding:4px 8px;font-size:14px;border:1px solid '+(item.is_pinned?'#86efac':'#fca5a5')+';border-radius:6px;background:'+(item.is_pinned?'#f0fdf4':'#fff5f5')+';cursor:pointer;" title="'+(item.is_pinned?'고정해제':'상단고정')+'">'+(item.is_pinned?'<span style="filter:hue-rotate(90deg);">📌</span>':'<span style="filter:hue-rotate(300deg);">📌</span>')+'</button>'+
           '<button onclick="event.stopPropagation();deleteNotice('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'+
           '</div>'
         : '-';
@@ -6917,7 +6919,7 @@ window.openNoticeBoardDetail = function(id) {
       adminArea.style.display = 'flex';
       adminArea.innerHTML =
         '<button onclick="openNoticeEditModal('+item.id+')" style="padding:6px 14px;font-size:12px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:600;">✏️ 수정</button>'+
-        '<button onclick="toggleNoticePin('+item.id+')" style="padding:6px 14px;font-size:12px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:8px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;font-weight:600;">'+(item.is_pinned?'📌 고정해제':'📌 상단고정')+'</button>'+
+        '<button onclick="toggleNoticePin('+item.id+')" style="padding:6px 14px;font-size:14px;border:1px solid '+(item.is_pinned?'#86efac':'#fca5a5')+';border-radius:8px;background:'+(item.is_pinned?'#f0fdf4':'#fff5f5')+';cursor:pointer;font-weight:600;" title="'+(item.is_pinned?'고정해제':'상단고정')+'">'+(item.is_pinned?'<span style="filter:hue-rotate(90deg);">📌</span>':'<span style="filter:hue-rotate(300deg);">📌</span>')+'</button>'+
         '<button onclick="deleteNotice('+item.id+');_showNoticeList();" style="padding:6px 14px;font-size:12px;border:1px solid #fca5a5;border-radius:8px;background:#fff5f5;color:#ef4444;cursor:pointer;font-weight:600;">🗑️ 삭제</button>';
     } else {
       adminArea.style.display = 'none';

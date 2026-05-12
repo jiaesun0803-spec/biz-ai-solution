@@ -1218,7 +1218,15 @@
       <div class="form-group"><label>공고문명 <span style="color:#ef4444;">*</span></label><input type="text" id="sd-title" placeholder="공고 제목을 입력하세요"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group"><label>주관기관</label><input type="text" id="sd-agency" placeholder="예: 중소벤처기업부"></div>
-        <div class="form-group"><label>마감일</label><input type="date" id="sd-deadline"></div>
+        <div class="form-group">
+          <label>마감일</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="date" id="sd-deadline" style="flex:1;">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" id="sd-is-limitless" style="width:14px;height:14px;"> 소진시마감
+            </label>
+          </div>
+        </div>
       </div>
       <div class="form-group"><label>관련 지원사업명</label><input type="text" id="sd-program" placeholder="예: 2026년 중소기업 스마트공장사업"></div>
       <div class="form-group"><label>내용 요약</label><textarea id="sd-desc" rows="4" placeholder="공고 주요 내용 요약 (URL 자동 추출 또는 직접 입력)"></textarea></div>
