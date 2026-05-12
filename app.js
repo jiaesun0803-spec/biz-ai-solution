@@ -6626,6 +6626,13 @@ window.openSdViewModal = function(id) {
   var m = document.getElementById('sd-view-modal');
   var body = document.getElementById('sd-view-body');
   if(!m || !body) return;
+  
+  // 모달 먼저 열고 로딩 표시
+  m.style.display = 'flex';
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;">불러오는 중...</div>';
+  var fileBtn = document.getElementById('sd-view-file-btn');
+  if(fileBtn) fileBtn.style.display = 'none';
+
   function row(label, value, isLink) {
     if(!value || value==='-') return '';
     var val = isLink
@@ -6635,31 +6642,40 @@ window.openSdViewModal = function(id) {
       +'<span style="font-size:12px;font-weight:600;color:#64748b;">'+label+'</span>'
       +val+'</div>';
   }
-  var files = [];
-  try { files = JSON.parse(item.file_url || '[]'); } catch(e) { if(item.file_url) files = [{url:item.file_url, name:item.file_name}]; }
-  
-  var fileListHtml = files.length > 0 
-    ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:8px;">첨부파일 ('+files.length+')</span>'
-      + files.map(function(f, i){
-          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">'
-            +'<span style="font-size:13px;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;">📎 '+_esc(f.name)+'</span>'
-            +'<button onclick="downloadSdFileDirect(\''+f.url+'\', \''+f.name+'\')" style="padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:600;">다운로드</button></div>';
-        }).join('') + '</div>'
-    : '';
 
-  body.innerHTML =
-    row('공문명', item.title) +
-    row('주관기관', item.agency) +
-    row('관련 지원사업', item.program) +
-    row('등록일', item.date) +
-    row('마감일', item.deadline) +
-    row('출처 URL', item.source_url, true) +
-    fileListHtml +
-    (item.description ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">내용 요약</span><p style="margin:0;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap;">'+_esc(item.description)+'</p></div>' : '');
-  
-  var fileBtn = document.getElementById('sd-view-file-btn');
-  if(fileBtn) fileBtn.style.display = 'none';
-  m.style.display = 'flex';
+  function renderBody(detail) {
+    var files = [];
+    try { files = JSON.parse(detail.file_url || '[]'); } catch(e) { if(detail.file_url) files = [{url:detail.file_url, name:detail.file_name}]; }
+    
+    var fileListHtml = files.length > 0 
+      ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:8px;">첨부파일 ('+files.length+')</span>'
+        + files.map(function(f){
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">'
+              +'<span style="font-size:13px;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;">📎 '+_esc(f.name)+'</span>'
+              +'<button onclick="downloadSdFileDirect(\''+f.url+'\', \''+f.name+'\')" style="padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:600;">다운로드</button></div>';
+          }).join('') + '</div>'
+      : '';
+
+    body.innerHTML =
+      row('공문명', detail.title) +
+      row('주관기관', detail.agency) +
+      row('등록일', detail.date) +
+      row('마감일', detail.deadline) +
+      row('출처 URL', detail.source_url, true) +
+      fileListHtml +
+      (detail.description ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">내용 요약</span><p style="margin:0;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap;">'+_esc(detail.description)+'</p></div>' : '');
+  }
+
+  // 단건 API 호출로 file_url 포함 상세 데이터 로드
+  apiCall('/api/support-docs/' + id)
+    .then(function(detail) {
+      _sdViewCurrentItem = detail;
+      renderBody(detail);
+    })
+    .catch(function() {
+      // API 실패 시 캐시 데이터로 렌더링
+      renderBody(item);
+    });
 };
 window.closeSdViewModal = function() {
   var m = document.getElementById('sd-view-modal');

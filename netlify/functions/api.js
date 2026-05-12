@@ -467,31 +467,40 @@ app.patch('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) 
 
 // ===== 지원사업공문 API (모든 인증된 사용자 조회, 관리자만 등록/삭제) =====
 
-// 지원사업공문 목록 조회
+// 지원사업공문 목록 조회 (file_url 제외 - 크기 초과 방지)
 app.get('/api/support-docs', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('support_docs')
-    .select('*')
+    .select('id,title,category,date,deadline,description,file_name,agency,source_url,created_at')
     .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
 });
 
+// 지원사업공문 단건 조회 (file_url 포함 - 상세 보기용)
+app.get('/api/support-docs/:id', authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from('support_docs')
+    .select('*')
+    .eq('id', req.params.id)
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // 지원사업공문 등록 (관리자만)
 app.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) => {
-  const { title, program, agency, source_url, category, date, deadline, is_limitless, description, file_name, file_url } = req.body;
+  const { title, agency, source_url, category, date, deadline, is_limitless, description, file_name, file_url } = req.body;
   if (!title) return res.status(400).json({ error: '제목을 입력해주세요.' });
   const { data, error } = await supabase
     .from('support_docs')
     .insert({
       title,
-      program: program || null,
       agency: agency || null,
       source_url: source_url || null,
       category: category || '공문',
       date: date || new Date().toISOString().slice(0,10),
       deadline: deadline || null,
-      is_limitless: is_limitless || false,
       description: description || '',
       file_name: file_name || null,
       file_url: file_url || null
@@ -504,18 +513,15 @@ app.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) 
 
 // 지원사업공문 수정 (관리자만)
 app.patch('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const { title, program, agency, source_url, deadline, is_limitless, description, file_name, file_url, is_pinned } = req.body;
+  const { title, agency, source_url, deadline, description, file_name, file_url } = req.body;
   const updates = {};
   if (title !== undefined) updates.title = title;
-  if (program !== undefined) updates.program = program;
   if (agency !== undefined) updates.agency = agency;
   if (source_url !== undefined) updates.source_url = source_url;
   if (deadline !== undefined) updates.deadline = deadline;
-  if (is_limitless !== undefined) updates.is_limitless = is_limitless;
   if (description !== undefined) updates.description = description;
   if (file_name !== undefined) updates.file_name = file_name;
   if (file_url !== undefined) updates.file_url = file_url;
-  if (is_pinned !== undefined) updates.is_pinned = is_pinned;
 
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: '수정할 내용이 없습니다.' });
 
