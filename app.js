@@ -6388,6 +6388,7 @@ async function _loadSDFromServer() {
 window.openSupportDocModal = function() {
   var m = document.getElementById('support-doc-modal');
   if(!m) return;
+  _sdEditId = null;
   var el = document.getElementById('sd-title'); if(el) el.value='';
   var el2 = document.getElementById('sd-program'); if(el2) el2.value='';
   var el3 = document.getElementById('sd-deadline'); if(el3) el3.value='';
@@ -6395,7 +6396,12 @@ window.openSupportDocModal = function() {
   var el5 = document.getElementById('sd-agency'); if(el5) el5.value='';
   var el6 = document.getElementById('sd-source-url'); if(el6) el6.value='';
   var el7 = document.getElementById('sd-crawl-status'); if(el7) el7.textContent='';
-  clearSdFile();
+  _sdSelectedFiles = [];
+  _renderSdFileList();
+  
+  var btn = document.querySelector('#support-doc-modal .btn-primary');
+  if(btn) btn.textContent = '공문 등록';
+  
   m.style.display='flex';
 };
 window.closeSupportDocModal = function() {
@@ -6486,14 +6492,19 @@ window.saveSupportDoc = async function() {
     source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
     deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
     description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
-    date: new Date().toISOString().slice(0,10),
     file_name: _sdSelectedFiles.length > 0 ? _sdSelectedFiles[0].name : null,
-    file_url: JSON.stringify(_sdSelectedFiles.map(function(f){ return {name:f.name, url:f.data}; }))
+    file_url: JSON.stringify(_sdSelectedFiles.map(function(f){ return {name:f.name, url:f.url || f.data}; }))
   };
   
   try {
-    await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
+    if(_sdEditId) {
+      await apiCall('/api/support-docs/' + _sdEditId, { method:'PATCH', body: JSON.stringify(payload) });
+    } else {
+      payload.date = new Date().toISOString().slice(0,10);
+      await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
+    }
     _sdSelectedFiles = [];
+    _sdEditId = null;
     closeSupportDocModal();
     await _renderSupportDocTable();
     await _renderDashSupportDocs();
@@ -6510,6 +6521,47 @@ window.deleteSupportDoc = async function(id) {
   } catch(e) {
     alert('삭제 실패: ' + e.message);
   }
+};
+window.toggleSupportDocPin = async function(id) {
+  var item = _sdCache.find(function(x){ return x.id == id; });
+  if(!item) return;
+  try {
+    await apiCall('/api/support-docs/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_pinned: !item.is_pinned })
+    });
+    await _renderSupportDocTable();
+  } catch(e) {
+    alert('고정 상태 변경 실패: ' + e.message);
+  }
+};
+var _sdEditId = null;
+window.openSupportDocEditModal = function(id) {
+  var item = _sdCache.find(function(x){ return x.id == id; });
+  if(!item) return;
+  _sdEditId = id;
+  openSupportDocModal();
+  
+  // 기존 데이터 채우기
+  var t = document.getElementById('sd-title'); if(t) t.value = item.title || '';
+  var p = document.getElementById('sd-program'); if(p) p.value = item.program || '';
+  var d = document.getElementById('sd-deadline'); if(d) d.value = item.deadline || '';
+  var desc = document.getElementById('sd-desc'); if(desc) desc.value = item.description || '';
+  var a = document.getElementById('sd-agency'); if(a) a.value = item.agency || '';
+  var u = document.getElementById('sd-source-url'); if(u) u.value = item.source_url || '';
+  
+  // 파일 데이터 복원
+  try {
+    _sdSelectedFiles = JSON.parse(item.file_url || '[]');
+  } catch(e) {
+    if(item.file_url) _sdSelectedFiles = [{ name: item.file_name, url: item.file_url }];
+    else _sdSelectedFiles = [];
+  }
+  _renderSdFileList();
+  
+  // 버튼 텍스트 변경
+  var btn = document.querySelector('#support-doc-modal .btn-primary');
+  if(btn) btn.textContent = '수정 완료';
 };
 async function _renderSupportDocTable() {
   var tbody = document.getElementById('support-doc-body');
@@ -6529,14 +6581,27 @@ async function _renderSupportDocTable() {
       ? '<div style="margin-top:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;"><span style="color:#2563eb;">📎</span> '+_esc(firstFile.name)+'</div>'
       : '';
     
-    return '<tr style="cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'" >'+
+    var session = JSON.parse(localStorage.getItem('biz_session')||'null');
+    var isAdmin = session && session.isAdmin;
+    var pinIcon = item.is_pinned ? '<span style="color:#f59e0b;margin-right:4px;" title="상단고정">📌</span>' : '';
+    var pinRowStyle = item.is_pinned ? 'background:#fffbeb;' : '';
+    
+    var adminBtns = isAdmin
+      ? '<div style="display:flex;gap:4px;justify-content:center;white-space:nowrap;">'+
+        '<button onclick="event.stopPropagation();openSupportDocEditModal('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">수정</button>'+
+        '<button onclick="event.stopPropagation();toggleSupportDocPin('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:6px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;">'+(item.is_pinned?'📌 고정해제':'📌 고정')+'</button>'+
+        '<button onclick="event.stopPropagation();deleteSupportDoc('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'+
+        '</div>'
+      : '-';
+
+    return '<tr style="cursor:pointer;'+pinRowStyle+'" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\''+(item.is_pinned?'#fffbeb':'')+'\'" >'+
       '<td onclick="openSdViewModal('+item.id+')" style="padding:14px 12px;">'+
-        '<div style="color:#1e40af;font-weight:600;font-size:14px;">'+_esc(item.title)+'</div>'+
+        '<div style="color:#1e40af;font-weight:600;font-size:14px;">'+pinIcon+_esc(item.title)+'</div>'+
         fileHtml +
       '</td>'+
       '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;color:#64748b;font-size:13px;">'+_esc(item.date||'')+'</td>'+
       '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;">'+(item.deadline?'<span style="color:#ef4444;font-weight:600;font-size:13px;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
-      '<td style="text-align:center;"><button onclick="deleteSupportDoc('+item.id+')" style="padding:5px 12px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#ef4444;cursor:pointer;transition:all .2s;" onmouseover="this.style.background=\'#fff5f5\'" onmouseout="this.style.background=\'#fff\'">삭제</button></td>'+
+      '<td style="text-align:center;">'+adminBtns+'</td>'+
       '</tr>';
   }).join('');
 }
@@ -6783,7 +6848,7 @@ window._renderNoticeBoard = async function(resetPage) {
       var pinIcon = item.is_pinned ? '<span style="color:#f59e0b;margin-right:4px;" title="상단고정">📌</span>' : '';
       var pinRowStyle = item.is_pinned ? 'background:#fffbeb;' : '';
       var adminBtns = isAdmin
-        ? '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">'+
+        ? '<div style="display:flex;gap:4px;justify-content:center;white-space:nowrap;">'+
           '<button onclick="event.stopPropagation();openNoticeEditModal('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">수정</button>'+
           '<button onclick="event.stopPropagation();toggleNoticePin('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid '+(item.is_pinned?'#fcd34d':'#d1d5db')+';border-radius:6px;background:'+(item.is_pinned?'#fffbeb':'#f9fafb')+';color:'+(item.is_pinned?'#d97706':'#6b7280')+';cursor:pointer;">'+(item.is_pinned?'📌 고정해제':'📌 고정')+'</button>'+
           '<button onclick="event.stopPropagation();deleteNotice('+item.id+')" style="padding:4px 8px;font-size:11px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button>'+
