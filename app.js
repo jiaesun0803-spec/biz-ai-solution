@@ -6442,42 +6442,63 @@ window.crawlSupportDocUrl = async function() {
     if(btn) { btn.disabled=false; btn.textContent='자동 추출'; }
   }
 };
+var _sdSelectedFiles = [];
+window.handleSdFiles = function(input) {
+  var files = Array.from(input.files);
+  if(_sdSelectedFiles.length + files.length > 5) {
+    alert('파일은 최대 5개까지 등록 가능합니다.');
+    input.value = '';
+    return;
+  }
+  files.forEach(function(f) {
+    if(f.size > 5 * 1024 * 1024) { alert(f.name + ' 파일이 5MB를 초과합니다.'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      _sdSelectedFiles.push({ name: f.name, type: f.type, data: e.target.result });
+      _renderSdFileList();
+    };
+    reader.readAsDataURL(f);
+  });
+  input.value = '';
+};
+function _renderSdFileList() {
+  var list = document.getElementById('sd-file-list');
+  if(!list) return;
+  list.innerHTML = _sdSelectedFiles.map(function(f, idx) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#475569;">'
+      +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">📎 '+_esc(f.name)+'</span>'
+      +'<button onclick="_removeSdFile('+idx+')" style="border:none;background:none;color:#ef4444;cursor:pointer;font-weight:700;padding:2px 6px;">✕</button></div>';
+  }).join('');
+}
+window._removeSdFile = function(idx) {
+  _sdSelectedFiles.splice(idx, 1);
+  _renderSdFileList();
+};
 window.saveSupportDoc = async function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
-  var fi = document.getElementById('sd-file');
-  var file = fi && fi.files && fi.files[0] ? fi.files[0] : null;
-
-  async function doSave(fileData, fileName, fileType) {
-    var payload = {
-      title: title.trim(),
-      category: '공문',
-      program: ((document.getElementById('sd-program')||{}).value||'').trim(),
-      agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
-      source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
-      deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
-      description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
-      date: new Date().toISOString().slice(0,10),
-      file_name: fileName || null,
-      file_url: fileData || null
-    };
-    try {
-      await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
-      closeSupportDocModal();
-      await _renderSupportDocTable();
-      await _renderDashSupportDocs();
-    } catch(e) {
-      alert('저장 실패: ' + e.message);
-    }
-  }
-
-  if(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) { doSave(e.target.result, file.name, file.type); };
-    reader.onerror = function() { alert('파일 읽기 실패. 다시 시도해주세요.'); };
-    reader.readAsDataURL(file);
-  } else {
-    doSave(null, null, null);
+  
+  var payload = {
+    title: title.trim(),
+    category: '공문',
+    program: ((document.getElementById('sd-program')||{}).value||'').trim(),
+    agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
+    source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
+    deadline: ((document.getElementById('sd-deadline')||{}).value||'').trim() || null,
+    description: ((document.getElementById('sd-desc')||{}).value||'').trim(),
+    date: new Date().toISOString().slice(0,10),
+    file_name: _sdSelectedFiles.length > 0 ? _sdSelectedFiles[0].name : null,
+    file_url: JSON.stringify(_sdSelectedFiles.map(function(f){ return {name:f.name, url:f.data}; }))
+  };
+  
+  try {
+    await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
+    _sdSelectedFiles = [];
+    closeSupportDocModal();
+    await _renderSupportDocTable();
+    await _renderDashSupportDocs();
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
   }
 };
 window.deleteSupportDoc = async function(id) {
@@ -6497,20 +6518,25 @@ async function _renderSupportDocTable() {
   var cnt = document.getElementById('dashboard-support-count');
   if(cnt) cnt.textContent = arr.length+'건';
   if(!arr.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8;">등록된 공문이 없습니다.</td></tr>';
     return;
   }
   tbody.innerHTML = arr.map(function(item){
-    var fileBtn = item.file_url
-      ? '<button onclick="downloadSdFile('+item.id+')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;">📎 '+_esc(item.file_name||'다운로드')+'</button>'
-      : '<span style="color:#94a3b8;font-size:12px;">-</span>';
+    var files = [];
+    try { files = JSON.parse(item.file_url || '[]'); } catch(e) { if(item.file_url) files = [{url:item.file_url, name:item.file_name}]; }
+    var firstFile = files[0];
+    var fileHtml = firstFile 
+      ? '<div style="margin-top:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;"><span style="color:#2563eb;">📎</span> '+_esc(firstFile.name)+'</div>'
+      : '';
+    
     return '<tr style="cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'" >'+
-      '<td onclick="openSdViewModal('+item.id+')" style="color:#1e40af;font-weight:600;">'+_esc(item.title)+'</td>'+
-      '<td onclick="openSdViewModal('+item.id+')">'+_esc(item.program||'-')+'</td>'+
-      '<td onclick="openSdViewModal('+item.id+')">'+(item.deadline?'<span style="color:#ef4444;font-weight:600;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
-      '<td onclick="openSdViewModal('+item.id+')">'+_esc(item.date||'')+'</td>'+
-      '<td>'+fileBtn+'</td>'+
-      '<td><button onclick="deleteSupportDoc('+item.id+')" style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#ef4444;cursor:pointer;">삭제</button></td>'+
+      '<td onclick="openSdViewModal('+item.id+')" style="padding:14px 12px;">'+
+        '<div style="color:#1e40af;font-weight:600;font-size:14px;">'+_esc(item.title)+'</div>'+
+        fileHtml +
+      '</td>'+
+      '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;color:#64748b;font-size:13px;">'+_esc(item.date||'')+'</td>'+
+      '<td onclick="openSdViewModal('+item.id+')" style="text-align:center;">'+(item.deadline?'<span style="color:#ef4444;font-weight:600;font-size:13px;">'+_esc(item.deadline)+'</span>':'-')+'</td>'+
+      '<td style="text-align:center;"><button onclick="deleteSupportDoc('+item.id+')" style="padding:5px 12px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#ef4444;cursor:pointer;transition:all .2s;" onmouseover="this.style.background=\'#fff5f5\'" onmouseout="this.style.background=\'#fff\'">삭제</button></td>'+
       '</tr>';
   }).join('');
 }
@@ -6542,16 +6568,30 @@ window.openSdViewModal = function(id) {
       +'<span style="font-size:12px;font-weight:600;color:#64748b;">'+label+'</span>'
       +val+'</div>';
   }
+  var files = [];
+  try { files = JSON.parse(item.file_url || '[]'); } catch(e) { if(item.file_url) files = [{url:item.file_url, name:item.file_name}]; }
+  
+  var fileListHtml = files.length > 0 
+    ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:8px;">첨부파일 ('+files.length+')</span>'
+      + files.map(function(f, i){
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">'
+            +'<span style="font-size:13px;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;">📎 '+_esc(f.name)+'</span>'
+            +'<button onclick="downloadSdFileDirect(\''+f.url+'\', \''+f.name+'\')" style="padding:4px 10px;font-size:12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;color:#2563eb;cursor:pointer;font-weight:600;">다운로드</button></div>';
+        }).join('') + '</div>'
+    : '';
+
   body.innerHTML =
     row('공문명', item.title) +
     row('주관기관', item.agency) +
     row('관련 지원사업', item.program) +
-    row('마감일', item.deadline) +
     row('등록일', item.date) +
+    row('마감일', item.deadline) +
     row('출처 URL', item.source_url, true) +
+    fileListHtml +
     (item.description ? '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">내용 요약</span><p style="margin:0;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap;">'+_esc(item.description)+'</p></div>' : '');
+  
   var fileBtn = document.getElementById('sd-view-file-btn');
-  if(fileBtn) fileBtn.style.display = item.file_url ? 'inline-flex' : 'none';
+  if(fileBtn) fileBtn.style.display = 'none';
   m.style.display = 'flex';
 };
 window.closeSdViewModal = function() {
@@ -6559,11 +6599,10 @@ window.closeSdViewModal = function() {
   if(m) m.style.display = 'none';
   _sdViewCurrentItem = null;
 };
-window.downloadSdFileFromView = function() {
-  if(!_sdViewCurrentItem || !_sdViewCurrentItem.file_url) { alert('첨부파일이 없습니다.'); return; }
+window.downloadSdFileDirect = function(url, name) {
   var a = document.createElement('a');
-  a.href = _sdViewCurrentItem.file_url;
-  a.download = _sdViewCurrentItem.file_name || '첨부파일';
+  a.href = url;
+  a.download = name || '첨부파일';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
