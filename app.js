@@ -10,7 +10,11 @@ async function apiCall(path, options={}) {
   const token = localStorage.getItem('biz_jwt_token');
   const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  const fullUrl = API_BASE + path;
+  // /api/ 중복 제거: /.netlify/functions/api + /api/xxx -> /.netlify/functions/api/xxx
+  const normalizedPath = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && path.startsWith('/api/'))
+    ? path.substring(4)
+    : path;
+  const fullUrl = API_BASE + normalizedPath;
   console.log('[apiCall] URL:', fullUrl, 'Method:', options.method || 'GET');
   const res = await fetch(fullUrl, { ...options, headers });
   console.log('[apiCall] 상태:', res.status);
