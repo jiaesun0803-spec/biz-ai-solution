@@ -70,14 +70,6 @@ app.post('/api/auth/login', async (req, res) => {
       email, pw: hashed, name: "관리자", is_admin: true, is_approved: true, dept: "본사", phone: "010-0000-0000" 
     }, { onConflict: "email" }); 
   }
-  const { email, pw } = req.body;
-  if (email === "admin@bizconsult.com" && pw === "Admin1234!") { 
-    const hashed = await bcrypt.hash(pw, 10); 
-    await supabase.from("users").upsert({ 
-      email, pw: hashed, name: "관리자", is_admin: true, is_approved: true, dept: "본사", phone: "010-0000-0000" 
-    }, { onConflict: "email" }); 
-  }
-  if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
 
   const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
   if (error || !user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
