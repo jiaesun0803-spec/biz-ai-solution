@@ -58,6 +58,45 @@ app.post('/api/auth/signup', async (req, res) => {
 // 로그인
 app.post('/api/auth/login', async (req, res) => {
   const { email, pw } = req.body;
+  if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
+
+  if (email === "admin@bizconsult.com" && pw === "Admin1234!") {
+    const hashed = await bcrypt.hash(pw, 10);
+    await supabase.from("users").upsert({
+      email, pw: hashed, name: "관리자", is_admin: true, is_approved: true, dept: "본사", phone: "010-0000-0000"
+    }, { onConflict: "email" });
+    const token = jwt.sign({ id: 'admin-id', email, is_admin: true }, JWT_SECRET, { expiresIn: '7d' });
+    return res.json({ token, user: { id: 'admin-id', email, name: "관리자", is_admin: true } });
+  }
+
+  const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
+  if (error || !user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+  if (!user.is_approved) return res.status(403).json({ error: '관리자 승인 대기 중인 계정입니다.' });
+  const match = await bcrypt.compare(pw, user.pw);
+  if (!match) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+  const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin } });
+});
+app.post('/api/auth/signup', async (req, res) => {
+  const { email, pw, name, dept, phone } = req.body;
+  if (!email || !pw || !name) return res.status(400).json({ error: '필수 항목을 입력해주세요.' });
+
+  const { data: existing } = await supabase.from('users').select('id').eq('email', email).single();
+  if (existing) return res.status(409).json({ error: '이미 사용 중인 이메일입니다.' });
+
+  const hashed = await bcrypt.hash(pw, 10);
+  const { data, error } = await supabase.from('users').insert({
+    email, pw: hashed, name, dept: dept || '', phone: phone || '',
+    is_admin: false, approved: false
+  }).select().single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ message: '가입 신청이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.' });
+});
+
+// 로그인
+app.post('/api/auth/login', async (req, res) => {
+  const { email, pw } = req.body;
   if (email === "admin@bizconsult.com" && pw === "Admin1234!") { 
     const hashed = await bcrypt.hash(pw, 10); 
     await supabase.from("users").upsert({ 
