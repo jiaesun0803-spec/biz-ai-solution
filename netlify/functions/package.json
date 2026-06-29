@@ -2,13 +2,13 @@
   "name": "biz-ai-functions",
   "version": "1.0.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "axios": "^1.15.2",
+    "@supabase/supabase-js": "^2.108.2",
+    "axios": "^1.18.1",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.2.0",
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.6",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.3",
     "serverless-http": "^3.2.0"
   }
 }

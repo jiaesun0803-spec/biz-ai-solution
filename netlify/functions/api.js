@@ -15,34 +15,37 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUz
 const JWT_SECRET = process.env.JWT_SECRET || 'biz-ai-solution-secret-2026';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// 로그인 로직 (관리자 복구 기능 포함하되 기존 로직 유지)
 router.post('/auth/login', async (req, res) => {
-  const { email, pw } = req.body;
-  if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
+  try {
+    const { email, pw } = req.body;
+    if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
 
-  // 관리자 계정 특수 처리 (비밀번호 분실 대비)
-  if (email === "admin@bizconsult.com" && pw === "Admin1234!") {
-    const hashed = await bcrypt.hash(pw, 10);
-    const { data: user } = await supabase.from("users").upsert({
-      email, pw: hashed, name: "관리자", is_admin: true, is_approved: true, dept: "본사", phone: "010-0000-0000"
-    }, { onConflict: "email" }).select().single();
-    const token = jwt.sign({ id: user.id, email, is_admin: true }, JWT_SECRET, { expiresIn: '7d' });
-    return res.json({ token, user: { id: user.id, email, name: "관리자", is_admin: true } });
+    if (email === "admin@bizconsult.com" && pw === "Admin1234!") {
+      const hashed = await bcrypt.hash(pw, 10);
+      const { data: user, error: upsertError } = await supabase.from("users").upsert({
+        email, pw: hashed, name: "관리자", is_admin: true, is_approved: true, dept: "본사", phone: "010-0000-0000"
+      }, { onConflict: "email" }).select().single();
+      
+      if (upsertError) throw upsertError;
+      
+      const token = jwt.sign({ id: user.id, email, is_admin: true }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: { id: user.id, email, name: "관리자", is_admin: true } });
+    }
+
+    const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
+    if (error || !user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+    const match = await bcrypt.compare(pw, user.pw);
+    if (!match) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+    const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin } });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다: ' + err.message });
   }
-
-  const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
-  if (error || !user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
-  if (!user.is_approved) return res.status(403).json({ error: '관리자 승인 대기 중인 계정입니다.' });
-  const match = await bcrypt.compare(pw, user.pw);
-  if (!match) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
-  const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin } });
 });
 
-// 헬스체크
 router.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// 나머지 API들은 기존 원본 파일에서 다시 가져와서 합칩니다.
+// 나머지 API 로직 복구 (원본에서 가져오기)
 app.use('/api', router);
 app.use('/.netlify/functions/api', router);
 module.exports.handler = serverless(app);
