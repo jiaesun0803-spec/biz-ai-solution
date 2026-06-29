@@ -10,8 +10,12 @@ async function apiCall(path, options={}) {
   const token = localStorage.getItem('biz_jwt_token');
   const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(API_BASE + path, { ...options, headers });
+  const fullUrl = API_BASE + path;
+  console.log('[apiCall] URL:', fullUrl, 'Method:', options.method || 'GET');
+  const res = await fetch(fullUrl, { ...options, headers });
+  console.log('[apiCall] 상태:', res.status);
   const data = await res.json().catch(()=>({}));
+  console.log('[apiCall] 응답:', typeof data === 'object' ? JSON.stringify(data).substring(0, 100) : data);
   if (!res.ok) {
     // 401: 토큰 만료 또는 인증 실패 → 로컬 데이터 보존 후 재로그인 안내
     if (res.status === 401) {
