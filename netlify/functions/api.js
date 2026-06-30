@@ -39,7 +39,7 @@ function adminMiddleware(req, res, next) {
 // ===== 인증 API =====
 
 // 회원가입
-router.post('/api/auth/signup', async (req, res) => {
+router.post('/auth/signup', async (req, res) => {
   const { email, pw, name, dept, phone } = req.body;
   if (!email || !pw || !name) return res.status(400).json({ error: '필수 항목을 입력해주세요.' });
 
@@ -57,7 +57,7 @@ router.post('/api/auth/signup', async (req, res) => {
 });
 
 // 로그인
-router.post('/api/auth/login', async (req, res) => {
+router.post('/auth/login', async (req, res) => {
   const { email, pw } = req.body;
   if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
 
@@ -82,14 +82,14 @@ router.post('/api/auth/login', async (req, res) => {
 });
 
 // 내 정보 조회
-router.get('/api/auth/me', authMiddleware, async (req, res) => {
+router.get('/auth/me', authMiddleware, async (req, res) => {
   const { data, error } = await supabase.from('users').select('id,email,name,dept,phone,api_key,is_admin,approved,created_at').eq('id', req.user.id).single();
   if (error) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
   res.json(data);
 });
 
 // 내 정보 수정
-router.put('/api/auth/me', authMiddleware, async (req, res) => {
+router.put('/auth/me', authMiddleware, async (req, res) => {
   const { name, dept, phone, api_key } = req.body;
   const updates = {};
   if (name !== undefined) updates.name = name;
@@ -103,7 +103,7 @@ router.put('/api/auth/me', authMiddleware, async (req, res) => {
 });
 
 // 비밀번호 변경
-router.put('/api/auth/change-password', authMiddleware, async (req, res) => {
+router.put('/auth/change-password', authMiddleware, async (req, res) => {
   const { current_pw, new_pw } = req.body;
   if (!current_pw || !new_pw) return res.status(400).json({ error: '현재 비밀번호와 새 비밀번호를 입력해주세요.' });
   if (new_pw.length < 4) return res.status(400).json({ error: '새 비밀번호는 4자 이상이어야 합니다.' });
@@ -129,35 +129,35 @@ router.put('/api/auth/change-password', authMiddleware, async (req, res) => {
 // ===== 관리자 API =====
 
 // 전체 사용자 목록
-router.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   const { data, error } = await supabase.from('users').select('id,email,name,dept,phone,is_admin,approved,created_at,approved_at').order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 // 가입 승인
-router.put('/api/admin/users/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/admin/users/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   const { data, error } = await supabase.from('users').update({ approved: true, approved_at: new Date().toISOString() }).eq('id', req.params.id).select('id,email,name,approved').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 // 가입 거절
-router.put('/api/admin/users/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/admin/users/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
   const { data, error } = await supabase.from('users').update({ approved: false, approved_at: null }).eq('id', req.params.id).select('id,email,name,approved').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 // 사용자 삭제
-router.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { error } = await supabase.from('users').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: '삭제되었습니다.' });
 });
 
 // 비밀번호 초기화 (관리자만)
-router.post('/api/admin/users/:id/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/admin/users/:id/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
   const bcrypt = require('bcryptjs');
   const defaultPw = req.body.new_password || 'User1234!';
   const hash = await bcrypt.hash(defaultPw, 10);
@@ -172,7 +172,7 @@ router.post('/api/admin/users/:id/reset-password', authMiddleware, adminMiddlewa
 });
 
 // 통계
-router.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
   const [users, pending, approved, reports] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true }),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('approved', false).eq('is_admin', false),
@@ -190,7 +190,7 @@ router.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res)
 
 // ===== 업체 데이터 API (사용자별 서버 저장) =====
 // 업체 목록 조회
-router.get('/api/companies', authMiddleware, async (req, res) => {
+router.get('/companies', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('companies')
     .select('*')
@@ -201,7 +201,7 @@ router.get('/api/companies', authMiddleware, async (req, res) => {
 });
 
 // 업체 단건 조회
-router.get('/api/companies/:id', authMiddleware, async (req, res) => {
+router.get('/companies/:id', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('companies')
     .select('*')
@@ -213,7 +213,7 @@ router.get('/api/companies/:id', authMiddleware, async (req, res) => {
 });
 
 // 업체 등록
-router.post('/api/companies', authMiddleware, async (req, res) => {
+router.post('/companies', authMiddleware, async (req, res) => {
   const c = req.body;
   const name = c.name;
   if (!name) return res.status(400).json({ error: '업체명이 필요합니다.' });
@@ -249,7 +249,7 @@ router.post('/api/companies', authMiddleware, async (req, res) => {
 });
 
 // 업체 수정 (name 기준 upsert)
-router.put('/api/companies/:id', authMiddleware, async (req, res) => {
+router.put('/companies/:id', authMiddleware, async (req, res) => {
   const c = req.body;
   const name = c.name;
   const payload = {
@@ -281,7 +281,7 @@ router.put('/api/companies/:id', authMiddleware, async (req, res) => {
 });
 
 // 업체 삭제
-router.delete('/api/companies/:id', authMiddleware, async (req, res) => {
+router.delete('/companies/:id', authMiddleware, async (req, res) => {
   const { error } = await supabase
     .from('companies')
     .delete()
@@ -292,7 +292,7 @@ router.delete('/api/companies/:id', authMiddleware, async (req, res) => {
 });
 
 // 업체 전체 동기화 (로컬 → 서버 일괄 업로드용)
-router.post('/api/companies/sync', authMiddleware, async (req, res) => {
+router.post('/companies/sync', authMiddleware, async (req, res) => {
   const { companies } = req.body;
   if (!Array.isArray(companies)) return res.status(400).json({ error: 'companies 배열이 필요합니다.' });
   const results = [];
@@ -339,7 +339,7 @@ router.post('/api/companies/sync', authMiddleware, async (req, res) => {
 // 테이블 콜럼: id(uuid), user_id(uuid), company_id(nullable), type(text), title(text), html(text), data(jsonb), created_at
 
 // 보고서 목록 조회
-router.get('/api/reports', authMiddleware, async (req, res) => {
+router.get('/reports', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('reports')
     .select('*')
@@ -366,7 +366,7 @@ router.get('/api/reports', authMiddleware, async (req, res) => {
 });
 
 // 보고서 저장
-router.post('/api/reports', authMiddleware, async (req, res) => {
+router.post('/reports', authMiddleware, async (req, res) => {
   const r = req.body;
   if (!r.type || !r.company) return res.status(400).json({ error: '필수 항목 누락' });
   const payload = {
@@ -382,7 +382,7 @@ router.post('/api/reports', authMiddleware, async (req, res) => {
 });
 
 // 보고서 삭제 (data.id 기준으로 조회 후 삭제)
-router.delete('/api/reports/:reportId', authMiddleware, async (req, res) => {
+router.delete('/reports/:reportId', authMiddleware, async (req, res) => {
   // data jsonb 내 id 필드로 검색
   const { data: rows, error: findErr } = await supabase
     .from('reports')
@@ -414,7 +414,7 @@ async function ensureNoticesTable() {
 }
 
 // 공지사항 목록 조회 (로그인 사용자 모두 가능)
-router.get('/api/notices', authMiddleware, async (req, res) => {
+router.get('/notices', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('notices')
     .select('*')
@@ -424,7 +424,7 @@ router.get('/api/notices', authMiddleware, async (req, res) => {
 });
 
 // 공지사항 등록 (관리자만)
-router.post('/api/notices', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/notices', authMiddleware, adminMiddleware, async (req, res) => {
   const { title, category, date, description } = req.body;
   if (!title) return res.status(400).json({ error: '제목을 입력해주세요.' });
   const { data, error } = await supabase
@@ -437,7 +437,7 @@ router.post('/api/notices', authMiddleware, adminMiddleware, async (req, res) =>
 });
 
 // 공지사항 삭제 (관리자만)
-router.delete('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { error } = await supabase
     .from('notices')
     .delete()
@@ -447,7 +447,7 @@ router.delete('/api/notices/:id', authMiddleware, adminMiddleware, async (req, r
 });
 
 // 공지사항 수정 (관리자만)
-router.patch('/api/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.patch('/notices/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { title, category, date, description, is_pinned } = req.body;
   const updates = {};
   if (title !== undefined) updates.title = title;
@@ -469,7 +469,7 @@ router.patch('/api/notices/:id', authMiddleware, adminMiddleware, async (req, re
 // ===== 지원사업공문 API (모든 인증된 사용자 조회, 관리자만 등록/삭제) =====
 
 // 지원사업공문 목록 조회 (file_url 제외 - 크기 초과 방지)
-router.get('/api/support-docs', authMiddleware, async (req, res) => {
+router.get('/support-docs', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('support_docs')
     .select('id,title,category,date,deadline,description,file_name,agency,source_url,created_at,is_limitless,is_pinned')
@@ -480,7 +480,7 @@ router.get('/api/support-docs', authMiddleware, async (req, res) => {
 });
 
 // 지원사업공문 단건 조회 (file_url 포함 - 상세 보기용)
-router.get('/api/support-docs/:id', authMiddleware, async (req, res) => {
+router.get('/support-docs/:id', authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from('support_docs')
     .select('*')
@@ -491,7 +491,7 @@ router.get('/api/support-docs/:id', authMiddleware, async (req, res) => {
 });
 
 // 지원사업공문 등록 (관리자만)
-router.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/support-docs', authMiddleware, adminMiddleware, async (req, res) => {
   const { title, agency, source_url, category, date, deadline, is_limitless, description, file_name, file_url } = req.body;
   if (!title) return res.status(400).json({ error: '제목을 입력해주세요.' });
   const { data, error } = await supabase
@@ -515,7 +515,7 @@ router.post('/api/support-docs', authMiddleware, adminMiddleware, async (req, re
 });
 
 // 지원사업공문 수정 (관리자만)
-router.patch('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.patch('/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { title, agency, source_url, deadline, is_limitless, description, file_name, file_url, is_pinned } = req.body;
   const updates = {};
   if (title !== undefined) updates.title = title;
@@ -542,7 +542,7 @@ router.patch('/api/support-docs/:id', authMiddleware, adminMiddleware, async (re
 });
 
 // 지원사업공문 삭제 (관리자만)
-router.delete('/api/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/support-docs/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { error } = await supabase
     .from('support_docs')
     .delete()
@@ -552,7 +552,7 @@ router.delete('/api/support-docs/:id', authMiddleware, adminMiddleware, async (r
 });
 
 // ── URL 크롤링 API ──
-router.post('/api/crawl-url', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/crawl-url', authMiddleware, adminMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url || !url.startsWith('http')) return res.status(400).json({ error: '올바른 URL을 입력해주세요.' });
   try {
@@ -636,7 +636,7 @@ router.post('/api/crawl-url', authMiddleware, adminMiddleware, async (req, res) 
   }
 });
 
-router.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 
 app.use('/api', router);
