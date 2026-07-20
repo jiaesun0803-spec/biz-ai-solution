@@ -111,11 +111,37 @@ router.post('/companies', authMiddleware, async (req, res) => {
 
 router.get('/companies', authMiddleware, async (req, res) => {
   try {
-    const { data, error } = await supabase.from('companies').select('*').eq('user_id', req.user.id);
-    if (error) return res.json([]);
+    const { data, error } = await supabase.from('companies').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+    if (error) {
+      console.error('Companies fetch error:', JSON.stringify(error));
+      return res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
+    }
     res.json(data || []);
   } catch (e) {
-    res.json([]);
+    console.error('Companies fetch exception:', e.message);
+    res.status(503).json({ error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+  }
+});
+
+router.put('/companies/:id', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('companies').update(req.body).eq('id', req.params.id).eq('user_id', req.user.id).select();
+    if (error) throw error;
+    res.json(data[0]);
+  } catch (e) {
+    console.error('Company update error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+  }
+});
+
+router.delete('/companies/:id', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase.from('companies').delete().eq('id', req.params.id).eq('user_id', req.user.id);
+    if (error) throw error;
+    res.json({ message: '업체가 삭제되었습니다.' });
+  } catch (e) {
+    console.error('Company delete error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
   }
 });
 
