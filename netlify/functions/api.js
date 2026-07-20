@@ -21,11 +21,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // 로컬 백업 데이터 (Supabase 장애 시 사용)
 const BACKUP_USERS = [
-  {"id": 1, "email": "jiae.sun0803@gmail.com", "name": "선지애", "is_admin": true, "approved": true, "pw": "1234"},
-  {"id": 2, "email": "user1@example.com", "name": "사용자1", "is_admin": false, "approved": true, "pw": "1234"},
-  {"id": 3, "email": "user2@example.com", "name": "사용자2", "is_admin": false, "approved": true, "pw": "1234"},
-  {"id": 4, "email": "user3@example.com", "name": "사용자3", "is_admin": false, "approved": true, "pw": "1234"},
-  {"id": 5, "email": "user4@example.com", "name": "사용자4", "is_admin": false, "approved": true, "pw": "1234"}
+  {"id": "admin-id", "email": "admin@bizconsult.com", "name": "관리자", "is_admin": true, "approved": true, "pw": "Admin1234!"},
+  {"id": "jiae-id", "email": "jiae.sun0803@gmail.com", "name": "선지애", "is_admin": true, "approved": true, "pw": "1234"}
 ];
 
 // JWT 인증 미들웨어
@@ -47,7 +44,7 @@ function adminMiddleware(req, res, next) {
 }
 
 // 헬스체크
-router.get('/health', (req, res) => res.json({ status: 'ok', mode: 'hybrid' }));
+router.get('/health', (req, res) => res.json({ status: 'ok', mode: 'hybrid-v2' }));
 
 // 로그인
 router.post('/auth/login', async (req, res) => {
@@ -55,19 +52,20 @@ router.post('/auth/login', async (req, res) => {
   if (!email || !pw) return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
 
   let user = null;
-  try {
-    // 1. Supabase 시도
-    const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
-    if (!error && data) {
-      user = data;
-    }
-  } catch (e) {
-    console.error('Supabase error, falling back to backup');
-  }
-
-  // 2. Supabase 실패 시 백업 데이터 확인
+  
+  // 1. 백업 데이터 우선 확인 (관리자 계정 등 긴급 로그인 보장)
+  user = BACKUP_USERS.find(u => u.email === email);
+  
   if (!user) {
-    user = BACKUP_USERS.find(u => u.email === email);
+    try {
+      // 2. Supabase 시도
+      const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
+      if (!error && data) {
+        user = data;
+      }
+    } catch (e) {
+      console.error('Supabase error');
+    }
   }
 
   if (!user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
