@@ -1167,7 +1167,7 @@ window.downloadReportById=function(id){
   var coverBgCSS = isLandscape
     ? '-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border-radius:0!important;margin:0!important;width:'+layout.contentWidth+'!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;'
     : 'background:white!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border-radius:0!important;margin:0!important;padding:'+layout.coverPadding+'!important;width:'+layout.contentWidth+'!important;height:'+layout.contentHeight+'!important;min-height:'+layout.contentHeight+'!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;page-break-inside:avoid!important;box-shadow:none!important;';
-  var printCSS=`@page{size:${layout.pageSize};margin:0;}html,body{margin:0;padding:0;background:#ffffff;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0;padding:0;background:#ffffff;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#ffffff!important;padding:0!important;margin:0!important;}.rp-cover{${coverBgCSS}}.rp-page{background:white!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border-radius:0!important;margin:0!important;padding:${layout.pagePadding}!important;width:${layout.contentWidth}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}@media print{html,body{background:white!important;}.pdf-shell{width:${layout.contentWidth}!important;padding:0!important;margin:0!important;}.rp-wrap{width:100%!important;padding:0!important;margin:0!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;width:${layout.contentWidth}!important;height:${layout.contentHeight}!important;}}`;
+  var printCSS=`@page{size:${layout.pageSize};margin:0;}html,body{margin:0;padding:0;background:#ffffff;}*{-webkit-print-color-adjust:exact!important;color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;}body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;width:${layout.contentWidth};}.pdf-shell{width:${layout.contentWidth};margin:0;padding:0;background:#ffffff;}.pdf-shell>*{width:100%;}.rp-wrap{width:100%!important;max-width:none!important;background:#ffffff!important;padding:0!important;margin:0!important;}.rp-cover{${coverBgCSS}} .rp-cover{page-break-after:always!important;break-after:page!important;} .rp-page-break{page-break-before:always!important;break-before:page!important;}.rp-page{background:white!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border-radius:0!important;margin:0!important;padding:${layout.pagePadding}!important;width:${layout.contentWidth}!important;height:${layout.contentHeight}!important;min-height:${layout.contentHeight}!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;page-break-before:always!important;break-before:page!important;page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important;}.rp-flow-tight .rp-cat{page-break-inside:avoid!important;break-inside:avoid!important;}.rp-cat{page-break-inside:avoid!important;break-inside:avoid!important;}@media print{html,body{background:white!important;}.pdf-shell{width:${layout.contentWidth}!important;padding:0!important;margin:0!important;}.rp-wrap{width:100%!important;padding:0!important;margin:0!important;}.rp-cover,.rp-page{border-radius:0!important;margin:0!important;width:${layout.contentWidth}!important;height:${layout.contentHeight}!important;}}`;
   pw.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${rep.type||'보고서'} - ${rep.company}</title><style>${printCSS}</style><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script></head><body><div class="pdf-shell">${htmlContent}</div><script>${safeDestroyChart.toString()}${initReportCharts.toString()}var _popupRev=${JSON.stringify(rev||{})};window.onload=function(){initReportCharts(_popupRev);setTimeout(function(){window.print();},900);};<\/script></body></html>`);
   pw.document.close();
 };
@@ -1653,9 +1653,9 @@ function tplStyle(color, orientation) {
   + '}'
   + '.rp-cat { background:white; border-radius:8px; margin-bottom:12px; padding:18px 20px; page-break-inside:avoid; break-inside:avoid; }'
   + '.rp-flow { background:#e8eaed; }'
-  + '.rp-flow-tight .rp-cat { margin-bottom:8px; page-break-inside:auto; break-inside:auto; }'
+  + '.rp-flow-tight .rp-cat { margin-bottom:8px; page-break-inside:avoid !important; break-inside:avoid !important; }'
   + '.rp-flow-tight .rp-section, .rp-flow-tight .rp-fb, .rp-flow-tight .rp-rank, .rp-flow-tight .rp-cert, .rp-flow-tight .rp-chk { page-break-inside:avoid; break-inside:avoid; }'
-  + '@media print { .rp-flow .rp-cat { border-radius:0 !important; margin:0 !important; page-break-inside:avoid !important; break-inside:avoid !important; } .rp-flow-tight .rp-cat { page-break-inside:auto !important; break-inside:auto !important; } }'
+  + '@media print { .rp-flow .rp-cat { border-radius:0 !important; margin:0 !important; page-break-inside:avoid !important; break-inside:avoid !important; } .rp-flow-tight .rp-cat { page-break-inside:avoid !important; break-inside:avoid !important; } }'
   + '</style>';
 }
 
@@ -2493,7 +2493,12 @@ function buildMgmtConsultantHTML(d, cData, rev, dateStr) {
     +'</div>'
     +'</div>'
     +'</div>';
-  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow">' + cover + cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [cat1, cat2, cat3, cat4, cat5, cat6, cat7].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(C,'portrait') + '<div class="rp-wrap rp-flow">' + cover + sections + '</div>';
 }
 
 
@@ -2671,7 +2676,12 @@ function buildFinanceHTML(d, cData, rev, dateStr) {
 
   // p2: 신용개선방향 등 내용 잘림 방지 - rp-page-auto 사용 (높이 제한 없음)
   var p2Auto = p2.replace('class="rp-page"', 'class="rp-page-auto"');
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2Auto + p3 + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [p1, p2Auto, p3].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + sections + '</div>';
 }
 
 // ===========================
@@ -2752,10 +2762,15 @@ function buildTradeHTML(d, cData, rev, dateStr) {
     ], color))
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover
-    + p1.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto')
-    + p2.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto')
-    + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [
+    p1.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto'),
+    p2.replace('class="rp-page"','class="rp-page-auto"').replace(/min-height:\s*\d+px/g,'min-height:auto')
+  ].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + sections + '</div>';
 }
 
 // ===========================
@@ -2931,7 +2946,12 @@ function buildMarketingHTML(d, cData, rev, dateStr) {
     +'</div>'
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + p1 + p2 + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [p1, p2].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap">' + cover + sections + '</div>';
 }
 
 // ===========================
@@ -3636,7 +3656,12 @@ function buildFundHTML(d, cData, rev, dateStr) {
 
   );
 
-  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + s1 + s2 + s4 + s3 + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [s1, s2, s4, s3].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(color, 'portrait') + '<div class="rp-wrap rp-flow rp-flow-tight">' + cover + sections + '</div>';
 }
 
 // ===========================
@@ -4169,7 +4194,12 @@ function buildBizPlanHTML(d, cData, rev, dateStr) {
     + '.rp-section h4 { color:#1e2d4a !important; border-left:3px solid #c0392b; padding-left:8px; }'
     + '.rp-page-auto { overflow:visible !important; height:auto !important; min-height:auto !important; max-height:none !important; }'
     + '</style>';
-  return tplStyle(color, 'landscape') + bizPlanExtraCSS + '<div class="rp-wrap">' + cover + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + '</div>';
+  // 각 섹션에 페이지 나누기 적용
+  var sections = [p1, p2, p3, p4, p5, p6, p7, p8, p9].map(function(sec) {
+    return '<div class="rp-page-break">' + sec + '</div>';
+  }).join('');
+
+  return tplStyle(color, 'landscape') + bizPlanExtraCSS + '<div class="rp-wrap">' + cover + sections + '</div>';
 }
 
 // ===========================
