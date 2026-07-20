@@ -119,6 +119,87 @@ router.get('/companies', authMiddleware, async (req, res) => {
   }
 });
 
+// 관리자용: 전체 사용자 목록 조회
+router.get('/admin/users', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  
+  try {
+    const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+    if (!error && data && data.length > 0) {
+      return res.json(data.map(u => {
+        const { pw, ...safe } = u;
+        return safe;
+      }));
+    }
+  } catch (e) {
+    console.error('Admin users fetch error:', e);
+  }
+  
+  res.json(BACKUP_USERS.map(u => {
+    const { pw, ...safe } = u;
+    return safe;
+  }));
+});
+
+// 관리자용: 통계 조회
+router.get('/admin/stats', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  
+  try {
+    const { data, error } = await supabase.from('users').select('*');
+    if (!error && data) {
+      const stats = {
+        total: data.length,
+        pending: data.filter(u => !u.is_admin && !u.approved).length,
+        approved: data.filter(u => !u.is_admin && u.approved).length,
+        reports: 0
+      };
+      return res.json(stats);
+    }
+  } catch (e) {
+    console.error('Admin stats fetch error:', e);
+  }
+  
+  const stats = {
+    total: BACKUP_USERS.length,
+    pending: BACKUP_USERS.filter(u => !u.is_admin && !u.approved).length,
+    approved: BACKUP_USERS.filter(u => !u.is_admin && u.approved).length,
+    reports: 0
+  };
+  res.json(stats);
+});
+
+// 관리자용: 사용자 승인
+router.put('/admin/users/:userId/approve', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  
+  try {
+    const { data, error } = await supabase.from('users')
+      .update({ approved: true, approved_at: new Date().toISOString() })
+      .eq('id', req.params.userId)
+      .select();
+    if (error) throw error;
+    res.json({ message: '사용자가 승인되었습니다.', user: data[0] });
+  } catch (e) {
+    console.error('User approve error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+  }
+});
+
+// 관리자용: 사용자 삭제
+router.delete('/admin/users/:userId', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  
+  try {
+    const { error } = await supabase.from('users').delete().eq('id', req.params.userId);
+    if (error) throw error;
+    res.json({ message: '사용자가 삭제되었습니다.' });
+  } catch (e) {
+    console.error('User delete error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+  }
+});
+
 app.use('/api', router);
 app.use('/.netlify/functions/api', router);
 
