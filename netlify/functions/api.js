@@ -47,7 +47,7 @@ function authMiddleware(req, res, next) {
 
 router.get('/health', (req, res) => res.json({ 
   status: 'ok', 
-  mode: 'full-recovery-v2',
+  mode: 'stable-v3',
   noticesCount: noticesData.length,
   docsCount: supportDocsData.length 
 }));
@@ -69,20 +69,14 @@ router.post('/auth/login', async (req, res) => {
   res.json({ token, user: safeUser });
 });
 
-// 사용자 정보 업데이트 (API 키 저장 등)
 router.put('/auth/me', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase.from('users').update(req.body).eq('id', req.user.id).select();
-    if (error) {
-      console.error('Supabase update error:', error);
-      // Supabase 장애 시에도 성공 응답을 주어 프론트엔드 오류 방지 (로컬 세션에는 저장됨)
-      return res.json({ message: '설정이 임시 저장되었습니다. (서버 복구 중)', user: { ...req.user, ...req.body } });
-    }
+    if (error) throw error;
     res.json({ message: '저장되었습니다.', user: data[0] });
   } catch (e) {
-    console.error('Auth update exception:', e);
-    // 예외 발생 시에도 사용자 경험을 위해 성공 응답 반환
-    res.json({ message: '설정이 로컬에 저장되었습니다.', user: { ...req.user, ...req.body } });
+    console.error('Auth update error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
   }
 });
 
@@ -105,14 +99,11 @@ router.get('/support-docs', async (req, res) => {
 router.post('/companies', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase.from('companies').insert([{ ...req.body, user_id: req.user.id }]).select();
-    if (error) {
-      console.error('Supabase insert error:', error);
-      return res.json({ message: '업체가 임시 등록되었습니다. (서버 복구 중)', data: [req.body] });
-    }
+    if (error) throw error;
     res.json(data[0]);
   } catch (e) {
-    console.error('Company insert exception:', e);
-    res.json({ message: '업체가 로컬에 등록되었습니다.', data: [req.body] });
+    console.error('Company insert error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
   }
 });
 
