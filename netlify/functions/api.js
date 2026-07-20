@@ -30,8 +30,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'biz-ai-solution-secret-2026';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const BACKUP_USERS = [
-  {"id": "admin-id", "email": "admin@bizconsult.com", "name": "관리자", "is_admin": true, "approved": true, "pw": "Admin1234!"},
-  {"id": "jiae-id", "email": "jiae.sun0803@gmail.com", "name": "선지애", "is_admin": true, "approved": true, "pw": "1234"}
+  {"id":"6b360e07-9e52-4038-95f6-8be3cc2dba95","email":"qwpp123@naver.com","pw":"$2a$10$glw3kcYdwYYfvv.UBLjale0ZBaRlJzI1gN/aJvMzpQ1UuG4TgBBOC","name":"지애","dept":"솔리드빌더스","phone":"01038471210","is_admin":false,"approved":true},
+  {"id":"88632e9a-a31c-4be9-b0f8-eb316146762a","email":"admin@bizconsult.com","pw":"$2a$10$bXtOZ1R2uj6w8toHiO3mXe.ktA4xvq6Ztr1GGW3rEe7h.emHFHjia","name":"관리자","dept":"AI BizConsult","phone":"","is_admin":true,"approved":true},
+  {"id":"cc42663b-a9e8-41fe-8391-ce3b66470e7f","email":"lik5496@naver.com","pw":"$2a$10$X6jYISCm3grK.Wzhe3KXmeDVJdHxg756pR5iIXjZ909MaavpAeoYi","name":"이인국","dept":"씨이오솔루션","phone":"01026535496","is_admin":false,"approved":true},
+  {"id":"5b2ad056-1928-49fa-acc1-bef8cf29dda9","email":"dpgy2024@naver.com","pw":"$2a$10$5CgD3endCRDH6KGloozbMexeofVNE.lQdvUyaOdV5z0gJJ4dYoZ5O","name":"컨설턴트","dept":"DPPT","phone":"01092558402","is_admin":false,"approved":true}
 ];
 
 function authMiddleware(req, res, next) {
