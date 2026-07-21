@@ -226,6 +226,58 @@ router.delete('/admin/users/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+// 보고서 목록 조회
+router.get('/reports', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('reports').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+    if (error) {
+      console.error('Reports fetch error:', JSON.stringify(error));
+      return res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
+    }
+    res.json(data || []);
+  } catch (e) {
+    console.error('Reports fetch exception:', e.message);
+    res.status(503).json({ error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+  }
+});
+
+// 보고서 저장
+router.post('/reports', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('reports').insert([{ ...req.body, user_id: req.user.id }]).select();
+    if (error) throw error;
+    res.json(data[0]);
+  } catch (e) {
+    console.error('Report insert error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
+  }
+});
+
+// 보고서 삭제
+router.delete('/reports/:id', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase.from('reports').delete().eq('id', req.params.id).eq('user_id', req.user.id);
+    if (error) throw error;
+    res.json({ message: '보고서가 삭제되었습니다.' });
+  } catch (e) {
+    console.error('Report delete error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+  }
+});
+
+// 관리자용: 전체 보고서 통계 포함 stats 업데이트
+router.get('/admin/reports', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  try {
+    const { data, error } = await supabase.from('reports').select('id,user_id,type,created_at').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) {
+    console.error('Admin reports fetch error:', e);
+    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+  }
+});
+
 app.use('/api', router);
 app.use('/.netlify/functions/api', router);
 
