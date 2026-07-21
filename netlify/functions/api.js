@@ -172,13 +172,16 @@ router.get('/admin/stats', authMiddleware, async (req, res) => {
   if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
   
   try {
-    const { data, error } = await supabase.from('users').select('*');
-    if (!error && data) {
+    const [usersResult, reportsResult] = await Promise.all([
+      supabase.from('users').select('*'),
+      supabase.from('reports').select('id', { count: 'exact' })
+    ]);
+    if (!usersResult.error && usersResult.data) {
       const stats = {
-        total: data.length,
-        pending: data.filter(u => !u.is_admin && !u.approved).length,
-        approved: data.filter(u => !u.is_admin && u.approved).length,
-        reports: 0
+        total: usersResult.data.length,
+        pending: usersResult.data.filter(u => !u.is_admin && !u.approved).length,
+        approved: usersResult.data.filter(u => !u.is_admin && u.approved).length,
+        reports: reportsResult.error ? 0 : (reportsResult.data ? reportsResult.data.length : 0)
       };
       return res.json(stats);
     }
