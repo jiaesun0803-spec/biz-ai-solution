@@ -61,6 +61,20 @@ let _currentReport = { company:'', type:'', contentAreaId:'', landscape:true };
 window._reportsCache = [];
 
 // 서버에서 보고서 목록 로드 후 메모리 캐시에 저장
+// ★ 서버 보고서 데이터 정규화: data 콼럼 안의 필드를 최상위로 펼쳐 캐시에 저장
+// (reports 테이블에 company/content/date 콼럼이 없고 data JSON 안에 있음)
+function normalizeServerReport(r) {
+  var d = (r.data && typeof r.data === 'object') ? r.data : {};
+  return Object.assign({}, r, {
+    company:    d.company    || r.company    || '',
+    title:      d.title     || r.title      || '',
+    date:       d.date      || r.date       || '',
+    content:    d.content   || r.content    || '',
+    revenueData:d.revenueData || r.revenueData || {},
+    reportType: d.reportType || r.reportType || 'management',
+    version:    d.version   || r.version    || 'client',
+  });
+}
 async function syncReportsFromServer() {
   try {
     const serverData = await apiCall('/api/reports');
@@ -82,17 +96,17 @@ async function syncReportsFromServer() {
         }
         // 마이그레이션 완료 후 서버에서 다시 로드
         const refreshed = await apiCall('/api/reports');
-        window._reportsCache = Array.isArray(refreshed) ? refreshed : serverData;
+        window._reportsCache = (Array.isArray(refreshed) ? refreshed : serverData).map(normalizeServerReport);
         // 마이그레이션 완료 후 localStorage 기록 제거 (중복 방지)
         localStorage.removeItem(DB_REPORTS);
         console.log('localStorage 보고서 마이그레이션 완료');
       } else {
-        window._reportsCache = serverData;
+        window._reportsCache = serverData.map(normalizeServerReport);
         // 서버에 이미 모두 있으면 localStorage 정리
         localStorage.removeItem(DB_REPORTS);
       }
     } else {
-      window._reportsCache = serverData;
+      window._reportsCache = serverData.map(normalizeServerReport);
     }
 
     console.log('보고서 서버 로드 완료:', window._reportsCache.length, '개');
@@ -1187,29 +1201,33 @@ window.downloadReportById=function(id){
   var reports=window._reportsCache||[];
   var rep=reports.find(function(x){return x.id===id;});
   if(!rep){alert('보고서를 찾을 수 없음.');return;}
+  // ★ 서버 응답 구조: rep.data 안에 company, content, revenueData, reportType이 있음
+  var repData = (rep.data && typeof rep.data === 'object') ? rep.data : {};
+  var repCompany = repData.company || rep.company || '';
   var cs=window._companiesCache||[];
-  var cData=cs.find(function(x){return x.name===rep.company;})||{name:rep.company,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:rep.date};
-  var rev={};
-  try{if(cData&&cData.revenueData)rev=cData.revenueData;}catch(e){}
+  var cData=cs.find(function(x){return x.name===repCompany;})||{name:repCompany,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:rep.date||repData.date};
+  var rev = repData.revenueData || rep.revenueData || {};
+  try{if(!rev.cur && cData&&cData.revenueData)rev=cData.revenueData;}catch(e){}
   // content가 JSON이면 파싱하여 HTML 재빌드
   var htmlContent='';
   try{
-    var data=JSON.parse(rep.content);
-    var type=rep.reportType||'management';
+    var rawContent = repData.content || rep.content;
+    var data = (typeof rawContent==='string') ? JSON.parse(rawContent) : (rawContent||{});
+    var type = repData.reportType || rep.reportType || 'management';
     var cfg=REPORT_CONFIGS[type];
     if(cfg&&cfg.buildHTML){
-      htmlContent=cfg.buildHTML(data,cData,rev,rep.date);
+      htmlContent=cfg.buildHTML(data,cData,rev,rep.date||repData.date);
     } else if(type==='management'){
-      var ver=rep.version||'client';
-      htmlContent=ver==='client'?buildMgmtClientHTML(data,cData,rev,rep.date):buildMgmtConsultantHTML(data,cData,rev,rep.date);
+      var ver = repData.version || rep.version || 'client';
+      htmlContent=ver==='client'?buildMgmtClientHTML(data,cData,rev,rep.date||repData.date):buildMgmtConsultantHTML(data,cData,rev,rep.date||repData.date);
     } else {
-      htmlContent='<pre style="padding:20px;font-size:12px;">'+(rep.content||'')+'</pre>';
+      htmlContent='<pre style="padding:20px;font-size:12px;">'+(JSON.stringify(data)||'')+'</pre>';
     }
   }catch(e){
-    // content가 이미 HTML인 경우
-    htmlContent=rep.content||'';
+    // content 파싱 실패 시 html 컬럼 사용
+    htmlContent=rep.html||'';
   }
-  var isLandscape=(rep.reportType==='aiBiz'||rep.type==='사업계획서'||rep.type==='AI 사업계획서');
+  var isLandscape=(repData.reportType==='aiBiz'||rep.type==='사업계획서'||rep.type==='AI 사업계획서');
   var layout=getReportLayoutConfig(isLandscape);
   var pw=window.open('','_blank','width=1600,height=1000,scrollbars=yes');
   if(!pw){alert('팝업이 차단되었음. 팝업을 허용해 주세요.');return;}
@@ -5993,11 +6011,14 @@ window.generateAnyReport = async function(type, version, event) {
 // ===========================
 window.viewReport = function(id) {
   var r = (window._reportsCache||[]).find(function(x){return x.id===id;}); if(!r) return;
+  // ★ 서버 응답 구조: r.data 안에 company, content, revenueData, reportType이 있음
+  var rData = (r.data && typeof r.data === 'object') ? r.data : {};
+  var rCompany = rData.company || r.company || '';
   var cs = (window._companiesCache||[]);
-  var cData = cs.find(function(c){return c.name===r.company;})||{name:r.company,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:r.date};
-  var rev = r.revenueData||{cur:0,y25:0,y24:0,y23:0};
-  var data; try{data=JSON.parse(r.content);}catch(e){data={};}
-  var type = r.reportType||'management';
+  var cData = cs.find(function(c){return c.name===rCompany;})||{name:rCompany,bizNum:'-',industry:'-',rep:'-',coreItem:'-',bizDate:'-',empCount:'-',date:r.date||rData.date};
+  var rev = rData.revenueData || r.revenueData || {cur:0,y25:0,y24:0,y23:0};
+  var data; try{ var rawContent = rData.content || r.content; data = (typeof rawContent==='string') ? JSON.parse(rawContent) : (rawContent||{}); }catch(e){data={};}
+  var type = rData.reportType || r.reportType || 'management';
   if (type==='management') {
     showTab('report');
     setTimeout(function(){
