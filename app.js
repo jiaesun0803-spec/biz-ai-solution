@@ -1002,41 +1002,67 @@ window.showCompanyForm = function(editName=null) {
   if (editName) {
     if(titleEl) titleEl.textContent = `기업 정보 수정 - ${editName}`;
     const comp = (window._companiesCache||[]).find(c=>c.name===editName);
-    if (comp?.rawData) {
-      const els = document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea');
-      // 타입 일치 여부를 확인하여 안전하게 복원 (폼 구조 변경 시에도 체크박스 값이 텍스트 필드에 들어가지 않도록)
-      var rdIdx = 0;
-      for (var ei = 0; ei < els.length && rdIdx < comp.rawData.length; ei++) {
-        var el = els[ei]; var d = comp.rawData[rdIdx];
-        // 타입이 맞지 않으면 rawData에서 같은 타입을 찾아 맞춤
-        if (d && d.type && el.type !== d.type) {
-          // checkbox/radio는 checked만 설정, text/textarea/select는 value 설정
-          if ((el.type === 'checkbox' || el.type === 'radio') && d.type !== 'checkbox' && d.type !== 'radio') { rdIdx++; ei--; continue; }
-        }
-        if (el.type === 'checkbox' || el.type === 'radio') { if(d) el.checked = d.checked; }
-        else { if(d && d.value !== 'on') el.value = d.value || ''; }
-        rdIdx++;
-      }
-      // address 필드가 따로 저장된 경우 biz_address 입력란에 동기화
-      if (comp.address && comp.address !== '-') {
-        const addrEl = document.getElementById('biz_address');
-        if (addrEl && !addrEl.value) addrEl.value = comp.address;
-      }
-      // 주요 필드를 extra 데이터로 직접 복원 (rawData 순서 불일치 보완)
-      var ex = comp; // extra 데이터는 최상위에 펼쳐져 있음
-      var fieldMap = {
-        'biz_number': ex.bizNum, 'corp_number': ex.corpNo, 'comp_industry': ex.industry,
-        'biz_date': ex.bizDate, 'emp_count': ex.empCount, 'core_item': ex.coreItem,
-        'biz_address': ex.address, 'debt_jjg': ex.debtJjg, 'debt_sjg': ex.debtSjg,
-        'debt_shinbo': ex.debtShinbo, 'debt_kibo': ex.debtKibo, 'debt_jaidan': ex.debtJaidan,
-        'debt_corp_collateral': ex.debtCorpCollateral, 'debt_rep_credit': ex.debtRepCredit,
-        'debt_rep_collateral': ex.debtRepCollateral, 'kcb_score': ex.kcbScore, 'nice_score': ex.niceScore
+    if (comp) {
+      // ── 1단계: id 기반 직접 복원 (가장 신뢰성 높음) ──
+      var ex = comp;
+      var idFieldMap = {
+        'comp_name': ex.name, 'biz_number': ex.bizNum, 'corp_number': ex.corpNo,
+        'comp_industry': ex.industry, 'biz_date': ex.bizDate, 'emp_count': ex.empCount,
+        'biz_address': ex.address, 'core_item': ex.coreItem,
+        'market_status': ex.marketStatus, 'sales_route': ex.salesRoute,
+        'revenue_model': ex.revenueModel, 'competitiveness': ex.competitiveness,
+        'future_plan': ex.futurePlan, 'fund_plan': ex.fundPlan,
+        'need_fund': ex.needFund ? String(ex.needFund) : '',
+        'debt_jjg': ex.debtJjg !== undefined ? String(ex.debtJjg) : '',
+        'debt_sjg': ex.debtSjg !== undefined ? String(ex.debtSjg) : '',
+        'debt_shinbo': ex.debtShinbo !== undefined ? String(ex.debtShinbo) : '',
+        'debt_kibo': ex.debtKibo !== undefined ? String(ex.debtKibo) : '',
+        'debt_jaidan': ex.debtJaidan !== undefined ? String(ex.debtJaidan) : '',
+        'debt_corp_collateral': ex.debtCorpCollateral !== undefined ? String(ex.debtCorpCollateral) : '',
+        'debt_rep_credit': ex.debtRepCredit !== undefined ? String(ex.debtRepCredit) : '',
+        'debt_rep_collateral': ex.debtRepCollateral !== undefined ? String(ex.debtRepCollateral) : '',
+        'rent_monthly': ex.rentMonthly !== undefined ? String(ex.rentMonthly) : '',
+        'kcb_score': ex.kcbScore !== undefined ? String(ex.kcbScore) : '',
+        'nice_score': ex.niceScore !== undefined ? String(ex.niceScore) : '',
+        'consultant_memo': ex.consultantMemo || ''
       };
-      Object.entries(fieldMap).forEach(function(kv){
+      Object.entries(idFieldMap).forEach(function(kv){
         var fel = document.getElementById(kv[0]);
-        if (fel && kv[1] !== undefined && kv[1] !== null && kv[1] !== '-') fel.value = kv[1];
+        if (fel && kv[1] !== undefined && kv[1] !== null && kv[1] !== '' && kv[1] !== '-') {
+          fel.value = kv[1];
+        }
       });
-      calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); if(typeof toggleSubIndustry==="function")toggleSubIndustry();
+
+      // ── 2단계: rawData로 나머지 복원 (checkbox/radio/select 등 id 없는 요소) ──
+      if (comp.rawData && comp.rawData.length > 0) {
+        const els = Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea'));
+        var rdIdx = 0;
+        for (var ei = 0; ei < els.length && rdIdx < comp.rawData.length; ei++) {
+          var el = els[ei]; var d = comp.rawData[rdIdx];
+          if (!d) { rdIdx++; continue; }
+          // id가 있는 요소는 이미 1단계에서 복원했으므로 건너뜀
+          if (el.id && idFieldMap.hasOwnProperty(el.id)) { rdIdx++; continue; }
+          // 타입 불일치 방지: checkbox/radio는 checked만, 나머지는 value만
+          if (el.type === 'checkbox' || el.type === 'radio') {
+            if (d.type === 'checkbox' || d.type === 'radio') { el.checked = !!d.checked; rdIdx++; }
+            else { /* 타입 불일치: rawData 건너뜀 */ rdIdx++; ei--; }
+          } else if (el.type === 'select-one' || el.type === 'select-multiple') {
+            if (d.type === 'select-one' || d.type === 'select-multiple') { el.value = d.value || ''; rdIdx++; }
+            else { rdIdx++; ei--; }
+          } else {
+            // text/textarea: value가 'on'이면 체크박스 값이 잘못 들어온 것이므로 무시
+            if (d.value !== 'on' && d.value !== undefined) { el.value = d.value || ''; }
+            rdIdx++;
+          }
+        }
+      }
+
+      // ── 3단계: 대표자명 복원 (placeholder 기반) ──
+      var repEl = document.querySelector('#companyForm input[placeholder="대표자명을 입력하세요"]');
+      if (repEl && ex.rep && ex.rep !== '-') repEl.value = ex.rep;
+
+      calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs();
+      if(typeof toggleSubIndustry==="function") toggleSubIndustry();
     }
   } else {
     if(titleEl) titleEl.textContent = '기업 정보 등록';
@@ -1219,7 +1245,13 @@ window.saveCompanyData=function(){
   const finOver=document.querySelector('input[name="fin_over"]:checked')?.value||'없음';
   const taxOver=document.querySelector('input[name="tax_over"]:checked')?.value||'없음';
   const address=document.getElementById('biz_address')?.value||'-';
-  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',corpNo:document.getElementById('corp_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',address,salesChannel:document.querySelector('input[name="sales_channel"]:checked')?.value||'',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
+  const marketStatus=document.getElementById('market_status')?.value||'';
+  const salesRoute=document.getElementById('sales_route')?.value||'';
+  const revenueModel=document.getElementById('revenue_model')?.value||'';
+  const competitiveness=document.getElementById('competitiveness')?.value||'';
+  const futurePlan=document.getElementById('future_plan')?.value||'';
+  const consultantMemo=document.getElementById('consultant_memo')?.value||'';
+  const newC={name,rep:document.querySelector('input[placeholder="대표자명을 입력하세요"]')?.value||'-',bizNum:document.getElementById('biz_number')?.value||'-',corpNo:document.getElementById('corp_number')?.value||'-',industry:document.getElementById('comp_industry')?.value||'-',subIndustry:document.getElementById('comp_sub_industry')?.value||'',repGender:document.querySelector('input[name="rep_gender"]:checked')?.value||'',certList:(function(){var ids=['cert_sme','cert_startup','cert_women','cert_sobujang','cert_ppuri','cert_venture','cert_mainbiz','cert_innobiz','cert_iso','cert_haccp','cert_gmp','cert_iso22000','cert_lab','cert_labdept','cert_patent','cert_export'];return ids.filter(function(id){var el=document.getElementById(id);return el&&el.checked;}).map(function(id){var lbl=document.getElementById(id)?.closest('label');return lbl?lbl.textContent.trim():id;});})(),bizDate:document.getElementById('biz_date')?.value||'-',empCount:document.getElementById('emp_count')?.value||'-',coreItem:document.getElementById('core_item')?.value||'-',marketStatus,salesRoute,revenueModel,competitiveness,futurePlan,consultantMemo,address,salesChannel:document.querySelector('input[name="sales_channel"]:checked')?.value||'',date:new Date().toISOString().split('T')[0],revenueData:rev,needFund,fundPlan,debtKibo,debtShinbo,debtJjg,debtSjg,debtJaidan,debtCorpCollateral,rentMonthly,kcbScore,niceScore,finOver,taxOver,rawData:Array.from(document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea')).map(el=>({type:el.type,value:el.value,checked:el.checked}))};
   const cache = window._companiesCache || [];
   const idx = cache.findIndex(c=>c.name===name);
   const existingServerId = idx>-1 ? cache[idx]._serverId : null;
