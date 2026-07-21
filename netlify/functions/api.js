@@ -98,14 +98,78 @@ router.get('/support-docs', async (req, res) => {
   res.json(supportDocsData);
 });
 
+/**
+ * 프론트엔드 newC 객체 → Supabase companies 테이블 컬럼 매핑
+ * Supabase 컬럼: id, user_id, name, reg_no, corp_no, address, industry,
+ *               rep_name, export, certs, revenue_prev, revenue_cur,
+ *               employees, founded, date, extra, created_at, updated_at
+ * extra: 나머지 모든 비즈니스 데이터를 JSON으로 저장
+ */
+function mapCompanyFields(body) {
+  const {
+    // Supabase 직접 컬럼에 매핑되는 필드
+    name,
+    rep,          // → rep_name
+    bizNum,       // → reg_no
+    corpNo,       // → corp_no
+    address,
+    industry,
+    bizDate,      // → founded
+    empCount,     // → employees
+    certList,     // → certs (JSON)
+    date,
+    // extra에 들어갈 나머지 필드들 (구조분해 후 rest로 수집)
+    ...rest
+  } = body;
+
+  // export 필드: salesChannel 값으로 결정
+  const exportVal = rest.salesChannel || null;
+
+  // 매출 데이터: revenueData 배열에서 prev/cur 추출
+  let revenuePrev = null;
+  let revenueCur = null;
+  if (rest.revenueData && Array.isArray(rest.revenueData)) {
+    const rd = rest.revenueData;
+    if (rd.length >= 2) { revenuePrev = rd[rd.length - 2]?.s0 || null; }
+    if (rd.length >= 1) { revenueCur  = rd[rd.length - 1]?.s0 || null; }
+  }
+
+  // extra: 프론트엔드의 나머지 비즈니스 데이터 전체를 JSON으로 저장
+  const extra = { ...rest };
+
+  const mapped = {
+    name:         name         || null,
+    rep_name:     rep          || null,
+    reg_no:       bizNum       || null,
+    corp_no:      corpNo       || null,
+    address:      address      || null,
+    industry:     industry     || null,
+    founded:      bizDate      || null,
+    employees:    empCount     || null,
+    certs:        certList     ? JSON.stringify(certList) : null,
+    export:       exportVal,
+    revenue_prev: revenuePrev,
+    revenue_cur:  revenueCur,
+    date:         date         || new Date().toISOString().slice(0, 10),
+    extra:        extra,
+  };
+
+  // null 값 제거 (UPDATE 시 기존 값 유지)
+  return Object.fromEntries(Object.entries(mapped).filter(([_, v]) => v !== null && v !== undefined));
+}
+
 router.post('/companies', authMiddleware, async (req, res) => {
   try {
-    const { data, error } = await supabase.from('companies').insert([{ ...req.body, user_id: req.user.id }]).select();
-    if (error) throw error;
+    const mapped = mapCompanyFields(req.body);
+    const { data, error } = await supabase.from('companies').insert([{ ...mapped, user_id: req.user.id }]).select();
+    if (error) {
+      console.error('Company insert Supabase error:', JSON.stringify(error));
+      throw error;
+    }
     res.json(data[0]);
   } catch (e) {
-    console.error('Company insert error:', e);
-    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다. 잠시 후 다시 시도해주세요.' });
+    console.error('Company insert error:', e.message || e);
+    res.status(503).json({ error: '저장에 실패했습니다: ' + (e.message || '알 수 없는 오류') });
   }
 });
 
@@ -125,12 +189,19 @@ router.get('/companies', authMiddleware, async (req, res) => {
 
 router.put('/companies/:id', authMiddleware, async (req, res) => {
   try {
-    const { data, error } = await supabase.from('companies').update(req.body).eq('id', req.params.id).eq('user_id', req.user.id).select();
-    if (error) throw error;
+    const mapped = mapCompanyFields(req.body);
+    const { data, error } = await supabase.from('companies').update(mapped).eq('id', req.params.id).eq('user_id', req.user.id).select();
+    if (error) {
+      console.error('Company update Supabase error:', JSON.stringify(error));
+      throw error;
+    }
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: '업체를 찾을 수 없거나 권한이 없습니다.' });
+    }
     res.json(data[0]);
   } catch (e) {
-    console.error('Company update error:', e);
-    res.status(503).json({ error: '데이터베이스 연결이 불안정합니다.' });
+    console.error('Company update error:', e.message || e);
+    res.status(503).json({ error: '저장에 실패했습니다: ' + (e.message || '알 수 없는 오류') });
   }
 });
 
