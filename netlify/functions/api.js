@@ -215,6 +215,75 @@ router.put('/admin/users/:userId/approve', authMiddleware, async (req, res) => {
   }
 });
 
+// 관리자용: 임시 비밀번호 발급 (관리자가 사용자에게 임시 비밀번호 설정)
+router.post('/admin/users/:userId/reset-password', authMiddleware, async (req, res) => {
+  if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });
+  
+  try {
+    // 임시 비밀번호 생성 (8자리 랜덤)
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let tempPw = '';
+    for (let i = 0; i < 8; i++) tempPw += chars[Math.floor(Math.random() * chars.length)];
+    
+    const hashedPw = await bcrypt.hash(tempPw, 10);
+    const { data, error } = await supabase.from('users')
+      .update({ pw: hashedPw, temp_pw: true })
+      .eq('id', req.params.userId)
+      .select('id,name,email');
+    if (error) throw error;
+    
+    // BACKUP_USERS도 업데이트
+    const buIdx = BACKUP_USERS.findIndex(u => u.id === req.params.userId);
+    if (buIdx >= 0) BACKUP_USERS[buIdx].pw = hashedPw;
+    
+    res.json({ message: '임시 비밀번호가 발급되었습니다.', tempPw, user: data[0] });
+  } catch (e) {
+    console.error('Reset password error:', e);
+    res.status(503).json({ error: '비밀번호 재설정에 실패했습니다.' });
+  }
+});
+
+// 사용자 비밀번호 변경 (로그인된 사용자가 직접 변경)
+router.post('/auth/change-password', authMiddleware, async (req, res) => {
+  const { currentPw, newPw } = req.body;
+  if (!newPw || newPw.length < 4) return res.status(400).json({ error: '새 비밀번호는 4자 이상이어야 합니다.' });
+  
+  try {
+    // 현재 비밀번호 확인
+    let user = BACKUP_USERS.find(u => u.id === req.user.id);
+    if (!user) {
+      const { data } = await supabase.from('users').select('*').eq('id', req.user.id).single();
+      if (data) user = data;
+    }
+    if (!user) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    
+    // 임시 비밀번호 상태이거나 현재 비밀번호가 맞으면 변경 허용
+    const isTempPw = user.temp_pw === true;
+    const isCurrentValid = user.pw && user.pw.startsWith('$2') 
+      ? await bcrypt.compare(currentPw, user.pw) 
+      : (currentPw === user.pw);
+    
+    if (!isTempPw && !isCurrentValid) {
+      return res.status(401).json({ error: '현재 비밀번호가 올바르지 않습니다.' });
+    }
+    
+    const hashedPw = await bcrypt.hash(newPw, 10);
+    const { error } = await supabase.from('users')
+      .update({ pw: hashedPw, temp_pw: false })
+      .eq('id', req.user.id);
+    if (error) throw error;
+    
+    // BACKUP_USERS도 업데이트
+    const buIdx = BACKUP_USERS.findIndex(u => u.id === req.user.id);
+    if (buIdx >= 0) { BACKUP_USERS[buIdx].pw = hashedPw; BACKUP_USERS[buIdx].temp_pw = false; }
+    
+    res.json({ message: '비밀번호가 변경되었습니다.' });
+  } catch (e) {
+    console.error('Change password error:', e);
+    res.status(503).json({ error: '비밀번호 변경에 실패했습니다.' });
+  }
+});
+
 // 관리자용: 사용자 삭제
 router.delete('/admin/users/:userId', authMiddleware, async (req, res) => {
   if (!req.user.is_admin) return res.status(403).json({ error: '관리자 권한이 없습니다.' });

@@ -756,7 +756,7 @@ window.savePasswordSettings=async function(){
   if(nextPw.length<4){ alert('새 비밀번호는 4자 이상으로 입력해주세요.'); return; }
   if(nextPw!==confirmPw){ alert('새 비밀번호 확인이 일치하지 않음.'); return; }
   try {
-    await apiCall('/api/auth/change-password', { method:'PUT', body: JSON.stringify({ current_pw: currentPw, new_pw: nextPw }) });
+    await apiCall('/api/auth/change-password', { method:'POST', body: JSON.stringify({ currentPw: currentPw, newPw: nextPw }) });
     ['set-current-pw','set-new-pw','set-confirm-pw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     alert('비밀번호가 변경되었음.');
   } catch(e) {
@@ -840,15 +840,13 @@ window.deleteUser=async function(userId){
 
 // 비밀번호 초기화 (관리자 전용)
 window.resetUserPassword=async function(userId, userName){
-  var newPw = prompt('▪ ' + userName + ' 님의 비밀번호를 초기화합니다.\n\n새 비밀번호를 입력하세요.\n(비워두면 기본값 User1234! 로 초기화)', 'User1234!');
-  if(newPw === null) return; // 취소
-  if(!newPw.trim()) { alert('비밀번호를 입력해주세요.'); return; }
+  if(!confirm('▪ ' + userName + ' 님의 비밀번호를 초기화합니다.\n\n임시 비밀번호가 자동 생성됩니다.\n사용자에게 임시 비밀번호를 전달하면 사용자가 직접 변경할 수 있습니다.\n\n계속하시겠습니까?')) return;
   try {
     var result = await apiCall('/api/admin/users/'+userId+'/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ new_password: newPw.trim() })
+      body: JSON.stringify({})
     });
-    alert('✅ ' + result.message + '\n\n새 비밀번호: ' + newPw.trim());
+    alert('✅ 임시 비밀번호가 발급되었습니다.\n\n' + userName + ' 님의 임시 비밀번호:\n\n  ' + result.tempPw + '\n\n이 비밀번호를 사용자에게 전달해 주세요.\n사용자가 로그인 후 설정 > 비밀번호 변경에서 새 비밀번호로 변경할 수 있습니다.');
   } catch(e) { alert('❌ 실패: ' + e.message); }
 };
 
