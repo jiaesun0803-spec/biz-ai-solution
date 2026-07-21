@@ -1006,12 +1006,38 @@ window.showCompanyForm = function(editName=null) {
     const comp = (window._companiesCache||[]).find(c=>c.name===editName);
     if (comp?.rawData) {
       const els = document.querySelectorAll('#companyForm input,#companyForm select,#companyForm textarea');
-      comp.rawData.forEach((d,i) => { if(els[i]){ if(els[i].type==='checkbox'||els[i].type==='radio') els[i].checked=d.checked; else els[i].value=d.value; } });
+      // 타입 일치 여부를 확인하여 안전하게 복원 (폼 구조 변경 시에도 체크박스 값이 텍스트 필드에 들어가지 않도록)
+      var rdIdx = 0;
+      for (var ei = 0; ei < els.length && rdIdx < comp.rawData.length; ei++) {
+        var el = els[ei]; var d = comp.rawData[rdIdx];
+        // 타입이 맞지 않으면 rawData에서 같은 타입을 찾아 맞춤
+        if (d && d.type && el.type !== d.type) {
+          // checkbox/radio는 checked만 설정, text/textarea/select는 value 설정
+          if ((el.type === 'checkbox' || el.type === 'radio') && d.type !== 'checkbox' && d.type !== 'radio') { rdIdx++; ei--; continue; }
+        }
+        if (el.type === 'checkbox' || el.type === 'radio') { if(d) el.checked = d.checked; }
+        else { if(d && d.value !== 'on') el.value = d.value || ''; }
+        rdIdx++;
+      }
       // address 필드가 따로 저장된 경우 biz_address 입력란에 동기화
       if (comp.address && comp.address !== '-') {
         const addrEl = document.getElementById('biz_address');
         if (addrEl && !addrEl.value) addrEl.value = comp.address;
       }
+      // 주요 필드를 extra 데이터로 직접 복원 (rawData 순서 불일치 보완)
+      var ex = comp; // extra 데이터는 최상위에 펼쳐져 있음
+      var fieldMap = {
+        'biz_number': ex.bizNum, 'corp_number': ex.corpNo, 'comp_industry': ex.industry,
+        'biz_date': ex.bizDate, 'emp_count': ex.empCount, 'core_item': ex.coreItem,
+        'biz_address': ex.address, 'debt_jjg': ex.debtJjg, 'debt_sjg': ex.debtSjg,
+        'debt_shinbo': ex.debtShinbo, 'debt_kibo': ex.debtKibo, 'debt_jaidan': ex.debtJaidan,
+        'debt_corp_collateral': ex.debtCorpCollateral, 'debt_rep_credit': ex.debtRepCredit,
+        'debt_rep_collateral': ex.debtRepCollateral, 'kcb_score': ex.kcbScore, 'nice_score': ex.niceScore
+      };
+      Object.entries(fieldMap).forEach(function(kv){
+        var fel = document.getElementById(kv[0]);
+        if (fel && kv[1] !== undefined && kv[1] !== null && kv[1] !== '-') fel.value = kv[1];
+      });
       calculateTotalDebt(); toggleCorpNumber(); toggleRentInputs(); toggleExportInputs(); if(typeof toggleSubIndustry==="function")toggleSubIndustry();
     }
   } else {
