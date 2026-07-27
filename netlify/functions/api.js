@@ -90,6 +90,69 @@ router.get('/notices', async (req, res) => {
   res.json(noticesData);
 });
 
+// 공지사항 등록
+router.post('/notices', async (req, res) => {
+  try {
+    const body = req.body;
+    const payload = {
+      title: body.title,
+      category: body.category || '공지',
+      date: body.date || new Date().toISOString().slice(0, 10),
+      description: body.description || null,
+      is_pinned: body.is_pinned || false
+    };
+    const { data, error } = await supabase.from('notices').insert([payload]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 공지사항 수정
+router.patch('/notices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase.from('notices').update(req.body).eq('id', id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 공지사항 삭제
+router.delete('/notices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('notices').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 파일 업로드 (공지사항 첨부파일 - Supabase Storage)
+router.post('/upload/notice-file', async (req, res) => {
+  try {
+    const { fileName, fileData, mimeType } = req.body;
+    if (!fileName || !fileData) return res.status(400).json({ error: '파일 정보가 없습니다.' });
+    // base64 → Buffer
+    const base64 = fileData.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    const safeName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const { data, error } = await supabase.storage
+      .from('notices-files')
+      .upload(safeName, buffer, { contentType: mimeType || 'application/octet-stream', upsert: false });
+    if (error) return res.status(500).json({ error: error.message });
+    const { data: urlData } = supabase.storage.from('notices-files').getPublicUrl(safeName);
+    res.json({ url: urlData.publicUrl, name: fileName });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get('/support-docs', async (req, res) => {
   try {
     const { data, error } = await supabase.from('support_docs').select('*').order('created_at', { ascending: false });

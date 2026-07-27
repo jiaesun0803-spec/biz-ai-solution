@@ -6837,25 +6837,82 @@ window.downloadSdFileDirect = function(url, name) {
   document.body.removeChild(a);
 };
 
+/* description JSON 파싱 헬퍼: {text, files} 반환 */
+function _parseNoticeDesc(desc) {
+  if(!desc) return { text: '', files: [] };
+  try {
+    var parsed = JSON.parse(desc);
+    if(parsed && typeof parsed === 'object' && 'text' in parsed) {
+      return { text: parsed.text || '', files: parsed.files || [] };
+    }
+  } catch(e) {}
+  return { text: desc, files: [] };
+}
+
 /* ── 공지사항 모달 ── */
 window.openNoticeModal = function() {
   var m = document.getElementById('notice-modal');
   if(!m) return;
   var el = document.getElementById('nt-title'); if(el) el.value='';
   var el2 = document.getElementById('nt-desc'); if(el2) el2.value='';
+  // 첨부파일 입력 초기화
+  var f1 = document.getElementById('nt-file-1'); if(f1) f1.value='';
+  var f2 = document.getElementById('nt-file-2'); if(f2) f2.value='';
   m.style.display='flex';
 };
 window.closeNoticeModal = function() {
   var m = document.getElementById('notice-modal'); if(m) m.style.display='none';
 };
+/* 파일을 base64로 읽어 /api/upload/notice-file로 업로드 후 URL 반환 */
+async function _uploadNoticeFile(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        var result = await apiCall('/api/upload/notice-file', {
+          method: 'POST',
+          body: JSON.stringify({
+            fileName: file.name,
+            fileData: e.target.result,
+            mimeType: file.type
+          })
+        });
+        resolve({ name: file.name, url: result.url });
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = function() { reject(new Error('파일 읽기 실패')); };
+    reader.readAsDataURL(file);
+  });
+}
+
 window.saveNotice = async function() {
   var title = (document.getElementById('nt-title')||{}).value||'';
   if(!title.trim()){ alert('제목을 입력해주세요.'); return; }
   var cat = ((document.getElementById('nt-category')||{}).value||'공지').trim();
+  var descText = ((document.getElementById('nt-desc')||{}).value||'').trim();
+  // 첨부파일 업로드
+  var uploadedFiles = [];
+  try {
+    var fileInputs = [document.getElementById('nt-file-1'), document.getElementById('nt-file-2')];
+    for(var i = 0; i < fileInputs.length; i++) {
+      var fi = fileInputs[i];
+      if(fi && fi.files && fi.files[0]) {
+        var uploaded = await _uploadNoticeFile(fi.files[0]);
+        uploadedFiles.push(uploaded);
+      }
+    }
+  } catch(e) {
+    alert('파일 업로드 실패: ' + e.message);
+    return;
+  }
+  // description: 파일이 있으면 JSON으로, 없으면 텍스트 그대로
+  var description = uploadedFiles.length > 0
+    ? JSON.stringify({ text: descText, files: uploadedFiles })
+    : descText;
   var payload = {
     title: title.trim(),
     category: cat,
-    description: ((document.getElementById('nt-desc')||{}).value||'').trim(),
+    description: description,
     date: new Date().toISOString().slice(0,10)
   };
   try {
@@ -6905,7 +6962,7 @@ window.openNoticeEditModal = function(id) {
     m.id = 'notice-edit-modal';
     m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;';
     m.innerHTML =
-      '<div style="background:#fff;border-radius:16px;padding:32px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">' +
+      '<div style="background:#fff;border-radius:16px;padding:32px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">'+
       '<h3 style="font-size:18px;font-weight:700;color:#1e293b;">✏️ 공지사항 수정</h3>'+
       '<button onclick="closeNoticeEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;">&times;</button>'+
@@ -6916,8 +6973,15 @@ window.openNoticeEditModal = function(id) {
       '</select></div>'+
       '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">제목 <span style="color:#ef4444;">*</span></label>'+
       '<input id="nt-edit-title" type="text" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;" placeholder="공지 제목을 입력하세요"></div>'+
-      '<div style="margin-bottom:20px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">내용</label>'+
-      '<textarea id="nt-edit-desc" rows="7" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;" placeholder="공지 내용을 입력하세요"></textarea></div>'+
+      '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">내용</label>'+
+      '<textarea id="nt-edit-desc" rows="6" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;" placeholder="공지 내용을 입력하세요"></textarea></div>'+
+      '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">첨부파일 추가 (최대 2개)</label>'+
+      '<div style="display:flex;flex-direction:column;gap:8px;">'+
+      '<input id="nt-edit-file-1" type="file" accept=".pdf,.doc,.docx,.hwp,.xls,.xlsx,.jpg,.jpeg,.png,.zip" style="font-size:13px;">'+
+      '<input id="nt-edit-file-2" type="file" accept=".pdf,.doc,.docx,.hwp,.xls,.xlsx,.jpg,.jpeg,.png,.zip" style="font-size:13px;">'+
+      '</div>'+
+      '<div id="nt-edit-existing-files" style="margin-top:8px;"></div>'+
+      '</div>'+
       '<input type="hidden" id="nt-edit-id">'+
       '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
       '<button onclick="closeNoticeEditModal()" style="padding:10px 20px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#64748b;font-size:14px;cursor:pointer;">취소</button>'+
@@ -6930,10 +6994,30 @@ window.openNoticeEditModal = function(id) {
   var titleInp = document.getElementById('nt-edit-title');
   var descTa = document.getElementById('nt-edit-desc');
   var idInp = document.getElementById('nt-edit-id');
+  var existingFilesDiv = document.getElementById('nt-edit-existing-files');
   if(catSel) catSel.value = item.category || '공지';
   if(titleInp) titleInp.value = item.title || '';
-  if(descTa) descTa.value = item.description || '';
   if(idInp) idInp.value = item.id;
+  // 수정 시 파일 입력 초기화
+  var ef1 = document.getElementById('nt-edit-file-1'); if(ef1) ef1.value='';
+  var ef2 = document.getElementById('nt-edit-file-2'); if(ef2) ef2.value='';
+  // description에서 텍스트와 기존 파일 분리
+  var parsed = _parseNoticeDesc(item.description);
+  if(descTa) descTa.value = parsed.text;
+  // 기존 첨부파일 표시
+  if(existingFilesDiv) {
+    if(parsed.files && parsed.files.length > 0) {
+      existingFilesDiv.innerHTML = '<div style="font-size:12px;color:#64748b;margin-bottom:4px;">현재 첨부파일:</div>' +
+        parsed.files.map(function(f){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">'+
+            '<span style="font-size:13px;">📎</span>'+
+            '<a href="'+f.url+'" target="_blank" style="font-size:13px;color:#3b82f6;text-decoration:none;">'+_esc(f.name)+'</a>'+
+            '</div>';
+        }).join('');
+    } else {
+      existingFilesDiv.innerHTML = '';
+    }
+  }
   m.style.display = 'flex';
 };
 window.closeNoticeEditModal = function() {
@@ -6945,9 +7029,32 @@ window.saveNoticeEdit = async function() {
   var title = ((document.getElementById('nt-edit-title')||{}).value||'').trim();
   if(!title) { alert('제목을 입력해주세요.'); return; }
   var cat = ((document.getElementById('nt-edit-category')||{}).value||'공지').trim();
-  var desc = ((document.getElementById('nt-edit-desc')||{}).value||'').trim();
+  var descText = ((document.getElementById('nt-edit-desc')||{}).value||'').trim();
+  // 기존 파일 유지 (수정 시 새 파일만 추가, 기존 유지)
+  var item = _ntBoardData.find(function(x){ return x.id == id; });
+  var existingFiles = (item ? _parseNoticeDesc(item.description).files : []) || [];
+  // 새 첨부파일 업로드
+  var newFiles = [];
   try {
-    await apiCall('/api/notices/' + id, { method:'PATCH', body: JSON.stringify({ title: title, category: cat, description: desc }) });
+    var fileInputs = [document.getElementById('nt-edit-file-1'), document.getElementById('nt-edit-file-2')];
+    for(var i = 0; i < fileInputs.length; i++) {
+      var fi = fileInputs[i];
+      if(fi && fi.files && fi.files[0]) {
+        var uploaded = await _uploadNoticeFile(fi.files[0]);
+        newFiles.push(uploaded);
+      }
+    }
+  } catch(e) {
+    alert('파일 업로드 실패: ' + e.message);
+    return;
+  }
+  // 기존 + 새 파일 합치 (최대 2개)
+  var allFiles = existingFiles.concat(newFiles).slice(0, 2);
+  var description = allFiles.length > 0
+    ? JSON.stringify({ text: descText, files: allFiles })
+    : descText;
+  try {
+    await apiCall('/api/notices/' + id, { method:'PATCH', body: JSON.stringify({ title: title, category: cat, description: description }) });
     closeNoticeEditModal();
     await _renderNoticeTable();
     await _renderDashNotices();
@@ -7069,8 +7176,21 @@ window.openNoticeBoardDetail = function(id) {
   if(titleEl) titleEl.textContent = (item.is_pinned ? '📌 ' : '') + (item.title || '');
   if(dateEl) dateEl.textContent = item.date || '';
   if(descEl) {
-    // 줄바꾸을 <br>로 변환하여 표시
-    descEl.innerHTML = _esc(item.description || '(내용 없음)').replace(/\n/g, '<br>');
+    var parsed = _parseNoticeDesc(item.description);
+    var textHtml = _esc(parsed.text || '(내용 없음)').replace(/\n/g, '<br>');
+    var filesHtml = '';
+    if(parsed.files && parsed.files.length > 0) {
+      filesHtml = '<div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;">'+
+        '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">📎 첨부파일</div>'+
+        parsed.files.map(function(f){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;">'+
+            '<span style="font-size:16px;">📄</span>'+
+            '<a href="'+f.url+'" target="_blank" download="'+_esc(f.name)+'" style="font-size:14px;color:#3b82f6;text-decoration:none;font-weight:500;">'+_esc(f.name)+'</a>'+
+            '</div>';
+        }).join('')+
+        '</div>';
+    }
+    descEl.innerHTML = textHtml + filesHtml;
   }
   // 관리자 버튼 영역 업데이트
   var session = JSON.parse(localStorage.getItem('biz_session')||'null');
