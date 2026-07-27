@@ -98,6 +98,54 @@ router.get('/support-docs', async (req, res) => {
   res.json(supportDocsData);
 });
 
+router.post('/support-docs', async (req, res) => {
+  try {
+    const body = req.body;
+    const payload = {
+      title: body.title,
+      category: body.category || '공문',
+      agency: body.agency || null,
+      source_url: body.source_url || null,
+      deadline: body.deadline || null,
+      is_limitless: body.is_limitless || 0,
+      description: body.description || null,
+      file_name: body.file_name || null,
+      file_url: body.file_url || null,
+      date: body.date || new Date().toISOString().slice(0, 10),
+      is_pinned: body.is_pinned || false,
+      created_at: new Date().toISOString()
+    };
+    const { data, error } = await supabase.from('support_docs').insert([payload]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.patch('/support-docs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const { data, error } = await supabase.from('support_docs').update(body).eq('id', id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.delete('/support-docs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('support_docs').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /**
  * 프론트엔드 newC 객체 → Supabase companies 테이블 컬럼 매핑
  * Supabase 컬럼: id, user_id, name, reg_no, corp_no, address, industry,
