@@ -153,12 +153,29 @@ router.post('/upload/notice-file', async (req, res) => {
   }
 });
 
+// 지원사업공문 목록 조회 (목록에서는 대용량 file_url 제외하여 6MB 제한 회피)
 router.get('/support-docs', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('support_docs').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('support_docs')
+      .select('id, title, category, agency, source_url, deadline, is_limitless, description, file_name, date, is_pinned, created_at')
+      .order('created_at', { ascending: false });
     if (!error && data && data.length > 0) return res.json(data);
-  } catch (e) {}
+  } catch (e) {
+    console.error('Support docs fetch error:', e);
+  }
   res.json(supportDocsData);
+});
+
+// 지원사업공문 단건 조회 (상세보기 시 file_url 포함)
+router.get('/support-docs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase.from('support_docs').select('*').eq('id', id).single();
+    if (error) return res.status(404).json({ error: '공문을 찾을 수 없습니다.' });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 router.post('/support-docs', async (req, res) => {
