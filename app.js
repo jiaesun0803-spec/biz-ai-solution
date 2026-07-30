@@ -645,6 +645,8 @@ window.handleLogin = async function() {
       approvedAt: res.user.approved_at||'',
       _id: res.user.id
     };
+    // API Key가 있으면 전역 변수에도 즉시 반영
+    if(user.apiKey) window.GEMINI_API_KEY = user.apiKey;
     // 이전 사용자 세션 완전 초기화 (소속정보 꼬임 방지)
     var prevSession = JSON.parse(localStorage.getItem('biz_session')||'null');
     var prevUid = prevSession && prevSession._id ? prevSession._id : null;
@@ -687,6 +689,8 @@ window.handleSessionExpiredRelogin = function() {
 // ===========================
 function loadUserProfile() {
   const user=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if (!user) return;
+  // API Key 전역 변수 동기화
+  if(user.apiKey) window.GEMINI_API_KEY = user.apiKey;
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
   setEl('display-user-name', user.name||'사용자');
   setEl('display-user-dept', user.isAdmin ? '시스템 관리자' : ((user.dept||'소속 미입력') + (user.approved ? '' : ' · 승인대기')));
@@ -7298,7 +7302,7 @@ async function _renderDashSupportDocs() {
     el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공문이 없습니다.</div>';
     return;
   }
-  el.innerHTML = arr.slice(0,3).map(function(item){
+  el.innerHTML = arr.slice(0,5).map(function(item){
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;">'+
       '<span style="font-size:11px;font-weight:600;color:#ea580c;background:#fff7ed;border-radius:8px;padding:2px 7px;">공문</span>'+
       '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(item.title)+'</span>'+
@@ -7316,7 +7320,7 @@ async function _renderDashNotices() {
     el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:8px 0;">등록된 공지가 없습니다.</div>';
     return;
   }
-  el.innerHTML = arr.slice(0,3).map(function(item){
+  el.innerHTML = arr.slice(0,5).map(function(item){
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="openNoticeDetail('+item.id+')">'+
       '<span style="font-size:11px;font-weight:600;color:#3b82f6;background:#eff6ff;border-radius:8px;padding:2px 7px;">'+_esc(item.category||'공지')+'</span>'+
       '<span style="font-size:13px;color:#1e293b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-decoration-color:#cbd5e1;">'+_esc(item.title)+'</span>'+
