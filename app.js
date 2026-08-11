@@ -1,6 +1,7 @@
 // ===== BizConsult AI 보고서 플랫폼 =====
 const DB_USERS       = 'biz_users';
 const DB_SESSION     = 'biz_session';
+const PERMANENT_API_KEY = 'biz_permanent_api_key'; // 브라우저 영구 저장용 키
 // ===== API 서버 URL (Netlify Functions 사용) =====
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3001'
@@ -638,15 +639,22 @@ window.handleLogin = async function() {
       name: res.user.name,
       dept: res.user.dept||'',
       phone: res.user.phone||'',
-      apiKey: res.user.api_key||'',
+      apiKey: res.user.api_key || localStorage.getItem(PERMANENT_API_KEY) || '',
       isAdmin: res.user.is_admin||false,
       approved: res.user.approved||false,
       createdAt: res.user.created_at||'',
       approvedAt: res.user.approved_at||'',
       _id: res.user.id
     };
-    // API Key가 있으면 전역 변수에도 즉시 반영
-    if(user.apiKey) window.GEMINI_API_KEY = user.apiKey;
+    // 서버에 키가 없고 로컬에만 있는 경우, 서버와 동기화 시도
+    if(!res.user.api_key && localStorage.getItem(PERMANENT_API_KEY)) {
+      apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: localStorage.getItem(PERMANENT_API_KEY) }) }).catch(e=>console.warn('API Key 동기화 실패:', e));
+    }
+    // API Key가 있으면 전역 변수 및 로컬 저장소에도 반영
+    if(user.apiKey) {
+      window.GEMINI_API_KEY = user.apiKey;
+      localStorage.setItem(PERMANENT_API_KEY, user.apiKey);
+    }
     // 이전 사용자 세션 완전 초기화 (소속정보 꼬임 방지)
     var prevSession = JSON.parse(localStorage.getItem('biz_session')||'null');
     var prevUid = prevSession && prevSession._id ? prevSession._id : null;
@@ -689,8 +697,13 @@ window.handleSessionExpiredRelogin = function() {
 // ===========================
 function loadUserProfile() {
   const user=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if (!user) return;
+  // API Key 영구 저장소에서 보완
+  if(!user.apiKey) user.apiKey = localStorage.getItem(PERMANENT_API_KEY) || '';
   // API Key 전역 변수 동기화
-  if(user.apiKey) window.GEMINI_API_KEY = user.apiKey;
+  if(user.apiKey) {
+    window.GEMINI_API_KEY = user.apiKey;
+    localStorage.setItem(PERMANENT_API_KEY, user.apiKey);
+  }
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
   setEl('display-user-name', user.name||'사용자');
   setEl('display-user-dept', user.isAdmin ? '시스템 관리자' : ((user.dept||'소속 미입력') + (user.approved ? '' : ' · 승인대기')));
@@ -788,8 +801,10 @@ window.saveApiSettings=async function(){
     await apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: apiKey }) });
     s.apiKey = apiKey;
     localStorage.setItem(DB_SESSION, JSON.stringify(s));
+    localStorage.setItem(PERMANENT_API_KEY, apiKey); // 브라우저 영구 저장
+    window.GEMINI_API_KEY = apiKey; // 즉시 반영
     loadUserProfile();
-    alert('API 키가 저장되었음.');
+    alert('API 키가 브라우저와 계정에 영구 저장되었음.');
   } catch(e) {
     alert('API 키 저장 실패: ' + (e.message||'알 수 없는 오류'));
   }
@@ -1475,7 +1490,7 @@ function tpFeedback(items,color='#f97316'){return`<div class="fb-box"><div class
 // ===========================
 async function _callCore(prompt, maxTokens, maxRetries) {
   const session=JSON.parse(localStorage.getItem('biz_session'));
-  const apiKey=session?.apiKey;
+  const apiKey=session?.apiKey || localStorage.getItem(PERMANENT_API_KEY) || window.GEMINI_API_KEY;
   if(!apiKey){
     alert('⚠️ Gemini API 키가 설정되지 않았음.\n\n설정 방법:\n1. 왼쪽 메뉴 하단 [설정] 탭 클릭\n2. API 키 항목에 Gemini API 키 입력\n3. 저장 후 다시 시도');
     showTab('settings');
