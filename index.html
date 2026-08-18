@@ -97,13 +97,13 @@
                         <div class="welcome-title">BizConsult에 오신 것을 환영합니다</div>
                         <div class="welcome-sub">경영컨설팅 보고서 관리 플랫폼</div>
                     </div>
-                    <div class="welcome-actions">
-                        <button class="welcome-action-btn primary" onclick="showCompanyForm()">＋ 업체 등록</button>
-                        <button class="welcome-action-btn" onclick="showTab('report')">📈 보고서 작성</button>
+                        <div class="welcome-actions">
+                            <button class="welcome-action-btn primary" onclick="showCompanyForm()">＋ 업체 등록</button>
+                            <button class="welcome-action-btn" onclick="showTab('report')">📈 보고서 작성</button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="stat-cards">
+                    <div class="stat-cards">
                     <div class="stat-card" onclick="showTab('company')"><div class="stat-icon blue">🏢</div><div><div class="stat-num" id="stat-companies">0</div><div class="stat-label">관리 업체</div></div></div>
                     <div class="stat-card" onclick="showTab('report')"><div class="stat-icon green">📈</div><div><div class="stat-num" id="stat-mgmt">0</div><div class="stat-label">경영진단보고서</div></div></div>
                     <div class="stat-card" onclick="showTab('aiBiz')"><div class="stat-icon yellow">💡</div><div><div class="stat-num" id="stat-biz">0</div><div class="stat-label">AI 사업계획서</div></div></div>
@@ -143,20 +143,33 @@
                                 <div class="dash-card-title">빠른 실행</div>
                                 <div class="dash-card-subtitle">자주 쓰는 기능을 바로 실행할 수 있도록 모아두었습니다.</div>
                             </div>
-                            <div class="dash-card-chip">추천 작업 순서</div>
                         </div>
-                        <div class="quick-grid-2x2">
-                            <div class="quick-item-sm" onclick="showCompanyForm()"><div class="qi-icon">🏢</div><div>기업 등록</div><div class="qi-desc">새 관리기업을 등록합니다</div></div>
-                            <div class="quick-item-sm" onclick="showTab('report')"><div class="qi-icon">📈</div><div>경영진단보고서</div><div class="qi-desc">AI로 경영진단보고서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiBiz')"><div class="qi-icon">💡</div><div>AI 사업계획서</div><div class="qi-desc">AI 사업계획서 작성</div></div>
-                            <div class="quick-item-sm" onclick="showTab('aiFund')"><div class="qi-icon">🎯</div><div>AI 정책자금매칭</div><div class="qi-desc">AI 정책자금 매칭 리포트 작성</div></div>
-                        </div>
-                        <div class="quick-guide-row">
-                            <div class="quick-guide-item active">① 기업 등록</div>
-                            <div class="quick-guide-arrow">→</div>
-                            <div class="quick-guide-item">② 진단/계획서 작성</div>
-                            <div class="quick-guide-arrow">→</div>
-                            <div class="quick-guide-item">③ 정책자금 검토</div>
+                        <div class="quick-grid-2x4">
+                            <div class="quick-item-guide">
+                                <div class="qi-guide-title">작업 순서</div>
+                                <div class="qi-guide-flow">①등록 ➔ ②진단 ➔ ③매칭</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showCompanyForm()">
+                                <div class="qi-icon">🏢</div><div>기업 등록</div><div class="qi-desc">새 관리기업 등록</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('report')">
+                                <div class="qi-icon">📈</div><div>경영진단보고서</div><div class="qi-desc">AI 경영진단 작성</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('finance')">
+                                <div class="qi-icon">💰</div><div>재무제표분석</div><div class="qi-desc">재무 정밀 분석</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('aiBiz')">
+                                <div class="qi-icon">💡</div><div>AI 사업계획서</div><div class="qi-desc">AI 사업계획서 작성</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('aiFund')">
+                                <div class="qi-icon">🎯</div><div>AI 정책자금매칭</div><div class="qi-desc">최적 자금 매칭</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('aiTrade')">
+                                <div class="qi-icon">🏪</div><div>상권분석</div><div class="qi-desc">지역 상권 분석</div>
+                            </div>
+                            <div class="quick-item-sm" onclick="showTab('aiMarketing')">
+                                <div class="qi-icon">📢</div><div>마케팅제안</div><div class="qi-desc">맞춤 전략 제안</div>
+                            </div>
                         </div>
                     </div>
 
