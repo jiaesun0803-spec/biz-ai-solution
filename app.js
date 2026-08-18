@@ -2,6 +2,11 @@
 const DB_USERS       = 'biz_users';
 const DB_SESSION     = 'biz_session';
 const PERMANENT_API_KEY = 'biz_permanent_api_key'; // 브라우저 영구 저장용 키
+
+// 페이지 로드 시 브라우저 영구 저장소에서 API 키 즉시 로드
+if (localStorage.getItem(PERMANENT_API_KEY)) {
+  window.GEMINI_API_KEY = localStorage.getItem(PERMANENT_API_KEY);
+}
 // ===== API 서버 URL (Netlify Functions 사용) =====
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3001'
@@ -1158,7 +1163,7 @@ function updateDashboardReports() {
   setNum('stat-mgmt',reports.filter(r=>r.type==='경영진단').length);
   setNum('stat-biz',reports.filter(r=>r.type==='사업계획서').length);
   setNum('stat-total',reports.length);
-  setText('dashboard-recent-count', `${Math.min(reports.length,3)}건`);
+  setText('dashboard-recent-count', `${Math.min(reports.length,5)}건`);
   setText('dashboard-company-hint', `업체 ${companies.length}개`);
   // 공지사항·공문 카운트 및 카드는 _renderDashNotices(), _renderDashSupportDocs()가 서버에서 비동기 로드
 
@@ -1167,13 +1172,62 @@ function updateDashboardReports() {
   if (!reports.length) {
     listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없음.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
   } else {
-    const rows=[...reports].reverse().slice(0,3).map(r=>`<tr class="rr-row"><td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td><td class="rr-title-cell"><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></td><td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td><td class="rr-date-cell">${r.date}</td><td class="rr-btn-cell"><button class="btn-small-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap;" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('');
+    const rows=[...reports].reverse().slice(0,5).map(r=>`<tr class="rr-row"><td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td><td class="rr-title-cell"><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></td><td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td><td class="rr-date-cell">${r.date}</td><td class="rr-btn-cell"><button class="btn-small-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap;" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('');
     listEl.innerHTML=`<table class="rr-table"><thead><tr><th class="rr-th" style="width:44px;"></th><th class="rr-th">보고서명 / 업체명</th><th class="rr-th" style="width:90px;">구분</th><th class="rr-th" style="width:90px;">날짜</th><th class="rr-th" style="width:52px;"></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   // 공지사항·공문 카드는 서버 API 기반으로 별도 렌더링
   _renderDashSupportDocs();
   _renderDashNotices();
+  // 통계 그래프 렌더링
+  renderDashboardCharts();
+}
+
+let dashboardChart = null;
+function renderDashboardCharts() {
+  const canvas = document.getElementById('dashboard-stats-chart');
+  if (!canvas) return;
+  const reports = window._reportsCache || [];
+  const types = ['경영진단', '사업계획서', '재무제표 분석', '정책자금매칭', '상권분석', '마케팅제안'];
+  const data = types.map(t => reports.filter(r => r.type === t).length);
+
+  if (dashboardChart) dashboardChart.destroy();
+  dashboardChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: types,
+      datasets: [{
+        label: '보고서 생성 수',
+        data: data,
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#94a3b8', font: { size: 11 } },
+          grid: { color: '#f1f5f9' }
+        },
+        x: {
+          ticks: { color: '#64748b', font: { size: 11, weight: 'bold' } },
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          padding: 10,
+          titleFont: { size: 12 },
+          bodyFont: { size: 12 }
+        }
+      }
+    }
+  });
 }
 
 function renderDashboardBoard(targetId, items, options) {
