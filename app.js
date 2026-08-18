@@ -18,9 +18,9 @@ async function apiCall(path, options={}) {
   if (token) headers['Authorization'] = 'Bearer ' + token;
   // /api/ 중복 제거: /.netlify/functions/api + /api/xxx -> /.netlify/functions/api/xxx
   const normalizedPath = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && path.startsWith('/api/'))
-    ? path.substring(4)
+    ? path.substring(3) // "/auth/login" 형태로 유지하여 슬래시 중복 방지
     : path;
-  const fullUrl = API_BASE + normalizedPath;
+  const fullUrl = API_BASE + (normalizedPath.startsWith('/') ? '' : '/') + normalizedPath;
   console.log('[apiCall] URL:', fullUrl, 'Method:', options.method || 'GET');
   const res = await fetch(fullUrl, { ...options, headers });
   console.log('[apiCall] 상태:', res.status);
