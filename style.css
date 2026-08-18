@@ -170,7 +170,13 @@ body { background-color: #f1f5f9; color: #333; font-size: 15px; }
     .stat-cards,
     .dashboard-bottom-grid,
     .quick-grid-2x2,
+    .quick-grid-2x4,
     .recent-report-summary { grid-template-columns: 1fr; }
+    .welcome-title { font-size: 20px; }
+    .welcome-banner { padding: 20px; flex-direction: column; align-items: flex-start; }
+    .welcome-actions { width: 100%; justify-content: flex-start; margin-top: 15px; }
+    .stat-card { padding: 15px; }
+    .stat-num { font-size: 22px; }
     .main-content { padding: 22px 18px; }
     .dashboard-page-head,
     .welcome-banner,

@@ -153,6 +153,26 @@ router.post('/upload/notice-file', async (req, res) => {
   }
 });
 
+// 파일 업로드 (지원사업공문 첨부파일 - Supabase Storage)
+router.post('/upload/support-file', async (req, res) => {
+  try {
+    const { fileName, fileData, mimeType } = req.body;
+    if (!fileName || !fileData) return res.status(400).json({ error: '파일 정보가 없습니다.' });
+    // base64 → Buffer
+    const base64 = fileData.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    const safeName = Date.now() + '_' + fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const { data, error } = await supabase.storage
+      .from('support-docs-files')
+      .upload(safeName, buffer, { contentType: mimeType || 'application/octet-stream', upsert: false });
+    if (error) return res.status(500).json({ error: error.message });
+    const { data: urlData } = supabase.storage.from('support-docs-files').getPublicUrl(safeName);
+    res.json({ url: urlData.publicUrl, name: fileName });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 지원사업공문 목록 조회 (목록에서는 대용량 file_url 제외하여 6MB 제한 회피)
 router.get('/support-docs', async (req, res) => {
   try {

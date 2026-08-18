@@ -1037,6 +1037,12 @@ window.showCompanyForm = function(editName=null) {
   document.getElementById('company-list-step').style.display = 'none';
   document.getElementById('company-form-step').style.display = 'block';
   const titleEl = document.getElementById('company-form-title');
+  
+  // 히스토리 섹션 초기화
+  const historySection = document.getElementById('company-report-history-section');
+  if(historySection) historySection.style.display = editName ? 'block' : 'none';
+  if(editName) _renderCompanyReportHistory(editName);
+
   if (editName) {
     if(titleEl) titleEl.textContent = `기업 정보 수정 - ${editName}`;
     const comp = (window._companiesCache||[]).find(c=>c.name===editName);
@@ -1228,6 +1234,47 @@ function renderDashboardCharts() {
       }
     }
   });
+}
+
+function _renderCompanyReportHistory(companyName) {
+  const listEl = document.getElementById('company-report-history-list');
+  if (!listEl) return;
+  const reports = (window._reportsCache || []).filter(r => r.company === companyName).reverse();
+  
+  if (!reports.length) {
+    listEl.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8; background:#f8fafc; border-radius:10px; border:1px dashed #e2e8f0;">해당 업체에 대해 발행된 보고서가 없습니다.</div>';
+    return;
+  }
+
+  const typeIcon=t=>({'경영진단':'📈','재무제표 분석':'💰','사업계획서':'💡','정책자금매칭':'🎯','상권분석':'🏪','마케팅제안':'📢'}[t]||'📄');
+
+  const rows = reports.map(r => `
+    <tr class="rr-row">
+      <td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td>
+      <td class="rr-title-cell"><div class="report-item-title">${r.title}</div></td>
+      <td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td>
+      <td class="rr-date-cell">${r.date}</td>
+      <td class="rr-btn-cell" style="width:120px;">
+        <button class="btn-small-outline" onclick="viewReport('${r.id}')">보기</button>
+        <button class="btn-small-outline" style="margin-left:4px; background:#f0fdf4; color:#16a34a; border-color:#bbf7d0;" onclick="downloadReportById('${r.id}')">다운로드</button>
+      </td>
+    </tr>
+  `).join('');
+
+  listEl.innerHTML = `
+    <table class="rr-table">
+      <thead>
+        <tr>
+          <th class="rr-th" style="width:44px;"></th>
+          <th class="rr-th">보고서명</th>
+          <th class="rr-th" style="width:100px; text-align:center;">구분</th>
+          <th class="rr-th" style="width:100px;">날짜</th>
+          <th class="rr-th" style="width:120px;"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 function renderDashboardBoard(targetId, items, options) {
@@ -6653,10 +6700,10 @@ window.handleSdFiles = function(input) {
     return;
   }
   files.forEach(function(f) {
-    if(f.size > 5 * 1024 * 1024) { alert(f.name + ' 파일이 5MB를 초과합니다.'); return; }
+    if(f.size > 10 * 1024 * 1024) { alert(f.name + ' 파일이 10MB를 초과합니다.'); return; }
     var reader = new FileReader();
     reader.onload = function(e) {
-      _sdSelectedFiles.push({ name: f.name, type: f.type, data: e.target.result });
+      _sdSelectedFiles.push({ name: f.name, type: f.type, data: e.target.result, file: f });
       _sdFileChanged = true; // 파일 추가 시 변경 플래그 설정
       _renderSdFileList();
     };
@@ -6678,32 +6725,78 @@ window._removeSdFile = function(idx) {
   _sdFileChanged = true; // 파일 삭제 시 변경 플래그 설정
   _renderSdFileList();
 };
+async function _uploadSupportFile(fObj) {
+  if (fObj.url) return { name: fObj.name, url: fObj.url };
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        var result = await apiCall('/api/upload/support-file', {
+          method: 'POST',
+          body: JSON.stringify({
+            fileName: fObj.name,
+            fileData: e.target.result,
+            mimeType: fObj.type
+          })
+        });
+        resolve({ name: fObj.name, url: result.url });
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = function() { reject(new Error('파일 읽기 실패')); };
+    reader.readAsDataURL(fObj.file);
+  });
+}
+
 window.saveSupportDoc = async function() {
   var title = (document.getElementById('sd-title')||{}).value||'';
   if(!title.trim()){ alert('공문명을 입력해주세요.'); return; }
   
-  var isLimitlessEl = document.getElementById('sd-is-limitless');
-  var isLimitless = isLimitlessEl && isLimitlessEl.checked ? 1 : 0;
-  var payload = {
-    title: title.trim(),
-    category: '공문',
-    agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
-    source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
-    deadline: isLimitless ? null : (((document.getElementById('sd-deadline')||{}).value||'').trim() || null),
-    is_limitless: isLimitless,
-    description: ((document.getElementById('sd-desc')||{}).value||'').trim()
-  };
+  var btn = document.querySelector('#support-doc-modal .btn-primary');
+  var origText = btn ? btn.textContent : '';
+  if(btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
 
-  // 파일이 실제로 변경된 경우에만 file_url 포함 (수정 시 미변경이면 기존 파일 유지)
-  if(!_sdEditId || _sdFileChanged) {
-    var newFiles = _sdSelectedFiles.filter(function(f){ return f.data; }); // 새로 추가된 파일만
-    var keepFiles = _sdSelectedFiles.filter(function(f){ return f.url && !f.data; }); // 기존 파일 유지
-    var allFiles = keepFiles.concat(newFiles);
-    payload.file_name = allFiles.length > 0 ? allFiles[0].name : null;
-    payload.file_url = JSON.stringify(allFiles.map(function(f){ return {name:f.name, url:f.url || f.data}; }));
-  }
-  
   try {
+    var isLimitlessEl = document.getElementById('sd-is-limitless');
+    var isLimitless = isLimitlessEl && isLimitlessEl.checked ? 1 : 0;
+    var payload = {
+      title: title.trim(),
+      category: '공문',
+      agency: ((document.getElementById('sd-agency')||{}).value||'').trim(),
+      source_url: ((document.getElementById('sd-source-url')||{}).value||'').trim(),
+      deadline: isLimitless ? null : (((document.getElementById('sd-deadline')||{}).value||'').trim() || null),
+      is_limitless: isLimitless,
+      description: ((document.getElementById('sd-desc')||{}).value||'').trim()
+    };
+
+    // 파일이 실제로 변경된 경우에만 file_url 포함
+    if(!_sdEditId || _sdFileChanged) {
+      var uploadedFiles = [];
+      for(var i=0; i<_sdSelectedFiles.length; i++) {
+        if(btn) btn.textContent = '파일 업로드 중 ('+(i+1)+'/'+_sdSelectedFiles.length+')...';
+        uploadedFiles.push(await _uploadSupportFile(_sdSelectedFiles[i]));
+      }
+      payload.file_name = uploadedFiles.length > 0 ? uploadedFiles[0].name : null;
+      payload.file_url = JSON.stringify(uploadedFiles);
+    }
+    
+    if(_sdEditId) {
+      await apiCall('/api/support-docs/' + _sdEditId, { method:'PATCH', body: JSON.stringify(payload) });
+    } else {
+      payload.date = new Date().toISOString().slice(0,10);
+      await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
+    }
+    _sdSelectedFiles = [];
+    _sdFileChanged = false;
+    _sdEditId = null;
+    closeSupportDocModal();
+    await _renderSupportDocTable();
+    await _renderDashSupportDocs();
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = origText; }
+  }
+};
     if(_sdEditId) {
       await apiCall('/api/support-docs/' + _sdEditId, { method:'PATCH', body: JSON.stringify(payload) });
     } else {
