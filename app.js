@@ -1163,7 +1163,7 @@ function updateDashboardReports() {
   setNum('stat-mgmt',reports.filter(r=>r.type==='경영진단').length);
   setNum('stat-biz',reports.filter(r=>r.type==='사업계획서').length);
   setNum('stat-total',reports.length);
-  setText('dashboard-recent-count', `${Math.min(reports.length,10)}건`);
+  setText('dashboard-recent-count', `${Math.min(reports.length,5)}건`);
   setText('dashboard-company-hint', `업체 ${companies.length}개`);
   // 공지사항·공문 카운트 및 카드는 _renderDashNotices(), _renderDashSupportDocs()가 서버에서 비동기 로드
 
@@ -1172,7 +1172,7 @@ function updateDashboardReports() {
   if (!reports.length) {
     listEl.innerHTML=`<div class="empty-state"><div class="empty-state-emoji">🗂️</div><div class="empty-state-title">최근 생성된 보고서가 없음.</div><div class="empty-state-desc">기업을 먼저 등록한 뒤 경영진단보고서 또는 AI 사업계획서를 생성해보세요.</div><button class="btn-add-small" onclick="showTab('report')">첫 보고서 만들기</button></div>`;
   } else {
-    const rows=[...reports].reverse().slice(0,10).map(r=>`<tr class="rr-row"><td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td><td class="rr-title-cell"><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></td><td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td><td class="rr-date-cell">${r.date}</td><td class="rr-btn-cell"><button class="btn-small-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap;" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('');
+    const rows=[...reports].reverse().slice(0,5).map(r=>`<tr class="rr-row"><td class="rr-icon-cell"><div class="report-type-icon">${typeIcon(r.type)}</div></td><td class="rr-title-cell"><div class="report-item-title">${r.title}</div><div class="report-item-company">${r.company}</div></td><td class="rr-badge-cell"><span class="report-badge">${r.type}</span></td><td class="rr-date-cell">${r.date}</td><td class="rr-btn-cell"><button class="btn-small-outline" style="font-size:11px;padding:4px 10px;white-space:nowrap;" onclick="viewReport('${r.id}')">보기</button></td></tr>`).join('');
     listEl.innerHTML=`<table class="rr-table"><thead><tr><th class="rr-th" style="width:44px;"></th><th class="rr-th">보고서명 / 업체명</th><th class="rr-th" style="width:90px;">구분</th><th class="rr-th" style="width:90px;">날짜</th><th class="rr-th" style="width:52px;"></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
