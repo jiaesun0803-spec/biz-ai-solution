@@ -18,7 +18,7 @@ async function apiCall(path, options={}) {
   if (token) headers['Authorization'] = 'Bearer ' + token;
   // /api/ 중복 제거: /.netlify/functions/api + /api/xxx -> /.netlify/functions/api/xxx
   const normalizedPath = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && path.startsWith('/api/'))
-    ? path.substring(3) // "/auth/login" 형태로 유지하여 슬래시 중복 방지
+    ? path.substring(4) 
     : path;
   const fullUrl = API_BASE + (normalizedPath.startsWith('/') ? '' : '/') + normalizedPath;
   console.log('[apiCall] URL:', fullUrl, 'Method:', options.method || 'GET');
@@ -6795,22 +6795,6 @@ window.saveSupportDoc = async function() {
     alert('저장 실패: ' + e.message);
   } finally {
     if(btn) { btn.disabled = false; btn.textContent = origText; }
-  }
-};
-    if(_sdEditId) {
-      await apiCall('/api/support-docs/' + _sdEditId, { method:'PATCH', body: JSON.stringify(payload) });
-    } else {
-      payload.date = new Date().toISOString().slice(0,10);
-      await apiCall('/api/support-docs', { method:'POST', body: JSON.stringify(payload) });
-    }
-    _sdSelectedFiles = [];
-    _sdFileChanged = false;
-    _sdEditId = null;
-    closeSupportDocModal();
-    await _renderSupportDocTable();
-    await _renderDashSupportDocs();
-  } catch(e) {
-    alert('저장 실패: ' + e.message);
   }
 };
 window.deleteSupportDoc = async function(id) {
