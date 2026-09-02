@@ -2,11 +2,19 @@
 const DB_USERS       = 'biz_users';
 const DB_SESSION     = 'biz_session';
 const PERMANENT_API_KEY = 'biz_permanent_api_key'; // 브라우저 영구 저장용 키
-
-// 페이지 로드 시 브라우저 영구 저장소에서 API 키 즉시 로드
-if (localStorage.getItem(PERMANENT_API_KEY)) {
-  window.GEMINI_API_KEY = localStorage.getItem(PERMANENT_API_KEY);
+function getPermanentApiKey() {
+  try { return (localStorage.getItem(PERMANENT_API_KEY) || '').trim(); } catch(e) { return ''; }
 }
+function persistApiKey(key) {
+  const value = (key || '').trim();
+  if (!value) return getPermanentApiKey(); // 빈 입력으로 기존 키를 삭제하지 않음
+  localStorage.setItem(PERMANENT_API_KEY, value);
+  window.GEMINI_API_KEY = value;
+  return value;
+}
+// 페이지 로드 시 브라우저 영구 저장소에서 API 키 즉시 로드
+const initialApiKey = getPermanentApiKey();
+if (initialApiKey) window.GEMINI_API_KEY = initialApiKey;
 // ===== API 서버 URL (Netlify Functions 사용) =====
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3001'
@@ -644,22 +652,21 @@ window.handleLogin = async function() {
       name: res.user.name,
       dept: res.user.dept||'',
       phone: res.user.phone||'',
-      apiKey: res.user.api_key || localStorage.getItem(PERMANENT_API_KEY) || '',
+      apiKey: getPermanentApiKey() || (res.user.api_key || '').trim(),
       isAdmin: res.user.is_admin||false,
       approved: res.user.approved||false,
       createdAt: res.user.created_at||'',
       approvedAt: res.user.approved_at||'',
       _id: res.user.id
     };
-    // 서버에 키가 없고 로컬에만 있는 경우, 서버와 동기화 시도
-    if(!res.user.api_key && localStorage.getItem(PERMANENT_API_KEY)) {
-      apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: localStorage.getItem(PERMANENT_API_KEY) }) }).catch(e=>console.warn('API Key 동기화 실패:', e));
+    const savedApiKey = getPermanentApiKey();
+    // 브라우저에 저장된 키를 우선 복구하고, 없을 때만 서버 키를 사용
+    if (savedApiKey) user.apiKey = savedApiKey;
+    if(!res.user.api_key && savedApiKey) {
+      apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: savedApiKey }) }).catch(e=>console.warn('API Key 동기화 실패:', e));
     }
-    // API Key가 있으면 전역 변수 및 로컬 저장소에도 반영
-    if(user.apiKey) {
-      window.GEMINI_API_KEY = user.apiKey;
-      localStorage.setItem(PERMANENT_API_KEY, user.apiKey);
-    }
+    // 빈 서버 값은 기존 브라우저 키를 덮어쓰지 않음
+    if(user.apiKey) persistApiKey(user.apiKey);
     // 이전 사용자 세션 완전 초기화 (소속정보 꼬임 방지)
     var prevSession = JSON.parse(localStorage.getItem('biz_session')||'null');
     var prevUid = prevSession && prevSession._id ? prevSession._id : null;
@@ -702,13 +709,10 @@ window.handleSessionExpiredRelogin = function() {
 // ===========================
 function loadUserProfile() {
   const user=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if (!user) return;
-  // API Key 영구 저장소에서 보완
-  if(!user.apiKey) user.apiKey = localStorage.getItem(PERMANENT_API_KEY) || '';
-  // API Key 전역 변수 동기화
-  if(user.apiKey) {
-    window.GEMINI_API_KEY = user.apiKey;
-    localStorage.setItem(PERMANENT_API_KEY, user.apiKey);
-  }
+  // 브라우저 영구 저장 키를 우선 복구. 빈 세션 값은 기존 키를 덮어쓰지 않음
+  const savedApiKey = getPermanentApiKey();
+  if(savedApiKey) user.apiKey = savedApiKey;
+  else if(user.apiKey) persistApiKey(user.apiKey);
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
   setEl('display-user-name', user.name||'사용자');
   setEl('display-user-dept', user.isAdmin ? '시스템 관리자' : ((user.dept||'소속 미입력') + (user.approved ? '' : ' · 승인대기')));
@@ -801,18 +805,30 @@ window.savePasswordSettings=async function(){
 };
 window.saveApiSettings=async function(){
   let s=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if(!s) return;
-  const apiKey=document.getElementById('set-api-key').value||'';
+  const input=document.getElementById('set-api-key');
+  const apiKey=(input ? input.value : '').trim();
+  const previousKey=getPermanentApiKey() || (s.apiKey||'').trim();
+  if(!apiKey){
+    if(previousKey){
+      persistApiKey(previousKey);
+      s.apiKey=previousKey;
+      localStorage.setItem(DB_SESSION, JSON.stringify(s));
+      loadUserProfile();
+      alert('빈 값으로 기존 API 키를 삭제하지 않았음.');
+    } else alert('저장할 API 키를 입력해주세요.');
+    return;
+  }
+  // 서버 오류가 나도 브라우저 키는 먼저 보존
+  persistApiKey(apiKey);
+  s.apiKey = apiKey;
+  localStorage.setItem(DB_SESSION, JSON.stringify(s));
   try {
     await apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: apiKey }) });
-    s.apiKey = apiKey;
-    localStorage.setItem(DB_SESSION, JSON.stringify(s));
-    localStorage.setItem(PERMANENT_API_KEY, apiKey); // 브라우저 영구 저장
-    window.GEMINI_API_KEY = apiKey; // 즉시 반영
-    loadUserProfile();
     alert('API 키가 브라우저와 계정에 영구 저장되었음.');
   } catch(e) {
-    alert('API 키 저장 실패: ' + (e.message||'알 수 없는 오류'));
+    alert('브라우저에는 저장됨. 서버 동기화는 실패했음: ' + (e.message||'알 수 없는 오류'));
   }
+  loadUserProfile();
 };
 function renderAdminApprovalList(){
   const panel=document.getElementById('admin-settings-panel');
