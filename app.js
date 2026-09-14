@@ -8,7 +8,12 @@ function getPermanentApiKey() {
 function persistApiKey(key) {
   const value = (key || '').trim();
   if (!value) return getPermanentApiKey(); // 빈 입력으로 기존 키를 삭제하지 않음
-  localStorage.setItem(PERMANENT_API_KEY, value);
+  try {
+    localStorage.setItem(PERMANENT_API_KEY, value);
+  } catch (e) {
+    console.warn('API 키 브라우저 저장 실패:', e.message);
+  }
+  // 저장소 접근이 제한되어도 현재 페이지에서는 즉시 사용할 수 있게 유지
   window.GEMINI_API_KEY = value;
   return value;
 }
@@ -711,8 +716,15 @@ function loadUserProfile() {
   const user=normalizeUser(JSON.parse(localStorage.getItem(DB_SESSION)||'null')); if (!user) return;
   // 브라우저 영구 저장 키를 우선 복구. 빈 세션 값은 기존 키를 덮어쓰지 않음
   const savedApiKey = getPermanentApiKey();
+  const sessionApiKey = (user.apiKey || '').trim();
+  // 브라우저 저장값을 최우선으로 사용하고, 없을 때만 세션 값을 복구
   if(savedApiKey) user.apiKey = savedApiKey;
-  else if(user.apiKey) persistApiKey(user.apiKey);
+  else if(sessionApiKey) user.apiKey = persistApiKey(sessionApiKey);
+  // 복구된 키를 세션에도 즉시 반영하여 다음 새로고침에서 빈 값이 되지 않게 함
+  if(user.apiKey) {
+    persistApiKey(user.apiKey);
+    localStorage.setItem(DB_SESSION, JSON.stringify(user));
+  }
   const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el[el.tagName==='INPUT'?'value':'innerText']=val;};
   setEl('display-user-name', user.name||'사용자');
   setEl('display-user-dept', user.isAdmin ? '시스템 관리자' : ((user.dept||'소속 미입력') + (user.approved ? '' : ' · 승인대기')));
