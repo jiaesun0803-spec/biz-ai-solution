@@ -177,7 +177,8 @@ function normalizeUser(u) {
     isAdmin:false,
     approved:false,
     createdAt:'',
-    approvedAt:''
+    approvedAt:'',
+    lastLoginAt:''
   }, u);
   if (nu.isAdmin) nu.approved = true;
   // approved가 명시적으로 저장된 경우 그 값을 그대로 사용 (undefined일 때만 false 유지)
@@ -662,15 +663,17 @@ window.handleLogin = async function() {
       approved: res.user.approved||false,
       createdAt: res.user.created_at||'',
       approvedAt: res.user.approved_at||'',
+      lastLoginAt: res.user.last_login_at||'',
       _id: res.user.id
     };
+    // 서버에 키가 없고 로컬에만 있는 경우, 서버와 동기화 시도
     const savedApiKey = getPermanentApiKey();
     // 브라우저에 저장된 키를 우선 복구하고, 없을 때만 서버 키를 사용
     if (savedApiKey) user.apiKey = savedApiKey;
     if(!res.user.api_key && savedApiKey) {
       apiCall('/api/auth/me', { method:'PUT', body: JSON.stringify({ api_key: savedApiKey }) }).catch(e=>console.warn('API Key 동기화 실패:', e));
     }
-    // 빈 서버 값은 기존 브라우저 키를 덮어쓰지 않음
+    // 서버 키가 새로 내려온 경우에만 브라우저에 저장. 빈 서버 값은 기존 키를 덮어쓰지 않음
     if(user.apiKey) persistApiKey(user.apiKey);
     // 이전 사용자 세션 완전 초기화 (소속정보 꼬임 방지)
     var prevSession = JSON.parse(localStorage.getItem('biz_session')||'null');
@@ -917,6 +920,77 @@ window.resetUserPassword=async function(userId, userName){
 };
 
 // ===========================
+// ★ 관리자 회원 접속 상태 필터
+// ===========================
+window._adminMemberUsers = [];
+window._adminLoginFilter = 'all';
+function getLoginState(user) {
+  var value = user && (user.last_login_at || user.lastLoginAt);
+  if (!value) return 'never';
+  var timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'never';
+  var age = Date.now() - timestamp;
+  if (age <= 7 * 24 * 60 * 60 * 1000) return 'recent7';
+  if (age <= 30 * 24 * 60 * 60 * 1000) return '7to30';
+  return '30plus';
+}
+function formatLoginAt(user) {
+  var value = user && (user.last_login_at || user.lastLoginAt);
+  if (!value) return '마지막 접속: 기록 없음';
+  var date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '마지막 접속: 기록 없음';
+  return '마지막 접속: ' + date.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+}
+function renderAdminMemberList() {
+  var listEl = document.getElementById('admin-tab-all-list');
+  if (!listEl) return;
+  var filter = window._adminLoginFilter || 'all';
+  var users = (window._adminMemberUsers || []).filter(function(u) {
+    return filter === 'all' || getLoginState(u) === filter;
+  });
+  if (!users.length) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">🔎</div><div class="empty-state-title">조건에 맞는 회원이 없음.</div><div class="empty-state-desc">다른 접속 상태 필터를 선택해 주세요.</div></div>';
+    return;
+  }
+  listEl.innerHTML = users.map(function(u){
+    var badge = u.approved
+      ? '<span class="status-badge success">승인 완료</span>'
+      : '<span class="status-badge warning">승인 대기</span>';
+    var loginState = getLoginState(u);
+    var loginBadge = loginState === 'recent7'
+      ? '<span class="status-badge login-recent">최근 접속</span>'
+      : loginState === 'never'
+        ? '<span class="status-badge login-never">미접속</span>'
+        : '<span class="status-badge login-stale">' + (loginState === '30plus' ? '30일 이상' : '7~30일') + '</span>';
+    var actions=u.approved
+      ? '<button onclick="resetUserPassword(\'' + u.id + '\',\'' + (u.name||'사용자') + '\')" style="font-size:12px;padding:6px 12px;border:1px solid #fcd34d;border-radius:8px;background:#fffbeb;color:#d97706;cursor:pointer;font-weight:600;">🔑 비밀번호 초기화</button>'
+        + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.id + '\')">✕ 승인 취소</button>'
+        + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>'
+      : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.id + '\')">✔ 승인</button>'
+        + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>';
+    return '<div class="admin-member-card">'
+      + '<div class="admin-member-info">'
+      +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'
+      +   '<div class="admin-member-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입일: '+(u.created_at?new Date(u.created_at).toLocaleString('ko-KR'):'-')+(u.approved_at?' · 승인일: '+new Date(u.approved_at).toLocaleString('ko-KR'):'')+'<br><strong class="admin-last-login">'+formatLoginAt(u)+'</strong></div>'
+      + '</div>'
+      + '<div class="admin-member-actions">'+ loginBadge + badge + actions +'</div>'
+      + '</div>';
+  }).join('');
+}
+function setupAdminLoginFilters() {
+  document.querySelectorAll('[data-login-filter]').forEach(function(button) {
+    if (button.dataset.loginFilterBound) return;
+    button.dataset.loginFilterBound = 'true';
+    button.addEventListener('click', function() {
+      window._adminLoginFilter = button.getAttribute('data-login-filter') || 'all';
+      document.querySelectorAll('[data-login-filter]').forEach(function(item) { item.classList.remove('active'); });
+      button.classList.add('active');
+      renderAdminMemberList();
+    });
+  });
+}
+
+// ===========================
 // ★ 관리자 탭 렌더링
 // ===========================
 function renderAdminTab(){
@@ -969,35 +1043,13 @@ function renderAdminTab(){
       }
     }
 
-    // 전체 회원 목록
+    // 전체 회원 목록 및 접속 상태 필터
     var allCountEl=el('admin-tab-all-count');
-    var allListEl=el('admin-tab-all-list');
     const nonAdminUsers = allUsers.filter(function(u){ return !u.is_admin; });
+    window._adminMemberUsers = nonAdminUsers;
     if(allCountEl) allCountEl.textContent='전체 '+nonAdminUsers.length+'명';
-    if(allListEl){
-      if(!nonAdminUsers.length){
-        allListEl.innerHTML='<div class="empty-state"><div class="empty-state-emoji">👥</div><div class="empty-state-title">등록된 회원이 없음.</div></div>';
-      } else {
-        allListEl.innerHTML=nonAdminUsers.map(function(u){
-          var badge=u.approved
-            ? '<span class="status-badge success">승인 완료</span>'
-            : '<span class="status-badge warning">승인 대기</span>';
-          var actions=u.approved
-            ? '<button onclick="resetUserPassword(\'' + u.id + '\',\'' + (u.name||'사용자') + '\')" style="font-size:12px;padding:6px 12px;border:1px solid #fcd34d;border-radius:8px;background:#fffbeb;color:#d97706;cursor:pointer;font-weight:600;">🔑 비밀번호 초기화</button>'
-              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="revokeUser(\'' + u.id + '\')">✕ 승인 취소</button>'
-              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;background:#dc2626;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>'
-            : '<button class="btn-primary" style="font-size:12px;padding:6px 12px;" onclick="approveUser(\'' + u.id + '\')">✔ 승인</button>'
-              + '<button class="btn-delete" style="font-size:12px;padding:6px 12px;" onclick="deleteUser(\'' + u.id + '\')">🗑 삭제</button>';
-          return '<div class="admin-member-card">'
-            + '<div class="admin-member-info">'
-            +   '<div class="admin-member-name">'+(u.name||'이름 미입력')+'</div>'
-            +   '<div class="admin-member-meta">'+(u.email||'-')+' · '+(u.dept||'소속 미입력')+(u.phone?' · '+u.phone:'')+'<br>가입일: '+(u.created_at?new Date(u.created_at).toLocaleString('ko-KR'):'-')+(u.approved_at?' · 승인일: '+new Date(u.approved_at).toLocaleString('ko-KR'):'')+'</div>'
-            + '</div>'
-            + '<div class="admin-member-actions">'+ badge + actions +'</div>'
-            + '</div>';
-        }).join('');
-      }
-    }
+    setupAdminLoginFilters();
+    renderAdminMemberList();
   }).catch(function(e){
     console.error('관리자 탭 로드 실패:', e.message);
   });

@@ -932,6 +932,14 @@ input:disabled, select:disabled { background-color: #f1f5f9; color: #94a3b8; cur
 .admin-member-name { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 3px; }
 .admin-member-meta { font-size: 12px; color: #64748b; line-height: 1.5; }
 .admin-member-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.admin-member-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 16px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+.admin-filter-btn { border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #475569; padding: 7px 13px; font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s ease; }
+.admin-filter-btn:hover { border-color: #2563eb; color: #1d4ed8; }
+.admin-filter-btn.active { border-color: #1d4ed8; background: #1d4ed8; color: #fff; }
+.admin-last-login { color: #334155; font-weight: 700; }
+.status-badge.login-recent { background: #dcfce7; color: #15803d; }
+.status-badge.login-stale { background: #fef3c7; color: #b45309; }
+.status-badge.login-never { background: #f1f5f9; color: #64748b; }
 /* 관리자 메뉴 강조 */
 #menu-admin { color: #93c5fd !important; }
 #menu-admin.active { background-color: #1d4ed8 !important; color: white !important; }
