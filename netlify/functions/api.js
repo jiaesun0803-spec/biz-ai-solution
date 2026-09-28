@@ -66,6 +66,25 @@ router.post('/auth/login', async (req, res) => {
   if (!user) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
   let valid = (user.pw && user.pw.startsWith('$2')) ? await bcrypt.compare(pw, user.pw) : (pw === user.pw);
   if (!valid) return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+
+  // 로그인 성공 시각은 사용자 경험을 막지 않도록 별도로 기록함.
+  // DB 컬럼이 아직 배포되지 않은 환경에서도 로그인 자체는 계속 허용함.
+  const loginAt = new Date().toISOString();
+  user.last_login_at = loginAt;
+  const backupIndex = BACKUP_USERS.findIndex(u => u.id === user.id);
+  if (backupIndex >= 0) BACKUP_USERS[backupIndex].last_login_at = loginAt;
+  try {
+    const { data: updatedUser, error: loginUpdateError } = await supabase
+      .from('users')
+      .update({ last_login_at: loginAt })
+      .eq('id', user.id)
+      .select('*')
+      .single();
+    if (!loginUpdateError && updatedUser) user = updatedUser;
+    else if (loginUpdateError) console.warn('last_login_at 저장 실패:', loginUpdateError.message);
+  } catch (e) {
+    console.warn('last_login_at 저장 예외:', e.message);
+  }
   const token = jwt.sign({ id: user.id, email: user.email, name: user.name, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '30d' });
   const { pw: _, ...safeUser } = user;
   res.json({ token, user: safeUser });
